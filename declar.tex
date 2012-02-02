@@ -1,0 +1,1299 @@
+%Part{Declar, Root = "CLM.MSS"}
+%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{ULTIMATE}
+
+\chapter{Declarations}
+\label{DECLAR}
+
+Declarations allow you to specify extra information about your program
+to the Lisp system.  With one exception,
+declarations are completely optional
+and correct declarations do not affect the meaning
+of a correct program.  The exception is that
+\cd{special} declarations {\it do} affect the interpretation of variable
+bindings and references and so {\it must} be specified where appropriate.
+All other declarations are of an advisory nature, and may be used
+by the Lisp system to aid the programmer by performing extra error checking
+or producing more efficient compiled code.  Declarations are also
+a good way to add documentation to a program.
+
+Note that it is considered an error for a program to violate a
+declaration (such as a \cd{type} declaration), but an implementation is
+not required to detect such errors (though such detection, where
+feasible, is to be encouraged).
+
+\section{Declaration Syntax}
+\label{DECLARE-SYNTAX-SECTION}
+
+The \cd{declare} construct is used for embedding declarations within
+executable code.  Global declarations and declarations that are computed
+by a program are established by the \cd{proclaim} construct.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
+to introduce the new macro \cd{declaim}, which is guaranteed
+to be recognized appropriately by the compiler and is often more convenient
+than \cd{proclaim} for establishing global declarations.
+\end{newer}
+
+\begin{defspec}
+declare {decl-spec}*
+
+A \cd{declare} form is known as a {\it declaration}.
+Declarations may occur only at the beginning of the bodies of
+certain special forms;
+that is, a declaration may occur only as a statement
+of such a special form, and all statements preceding it (if any) must
+also be \cd{declare} forms (or possibly documentation strings, in some cases).
+Declarations may occur in lambda-expressions and in the forms listed here.
+\begin{lisp}
+\hskip 12pc\=\kill
+\cd{define-setf-method}\>\cd{labels} \\*
+\cd{defmacro}\>\cd{let} \\*
+\cd{defsetf}\>\cd{let*} \\*
+\cd{deftype}\>\cd{locally} \\
+\cd{defun}\>\cd{macrolet} \\
+\cd{do}\>\cd{multiple-value-bind} \\
+\cd{do*}\>\cd{prog} \\
+\cd{do-all-symbols}\>\cd{prog*} \\
+\cd{do-external-symbols}\>\cd{with-input-from-string} \\
+\cd{do-symbols}\>\cd{with-open-file} \\
+\cd{dolist}\>\cd{with-open-stream} \\*
+\cd{dotimes}\>\cd{with-output-to-string} \\*
+\cd{flet} 
+\end{lisp}
+\begin{new}%CORR
+{\it Notice of correction.}
+In the first edition, the above list failed to mention the forms
+\cd{define-setf-method}, \cd{with-input-from-string}, \cd{with-open-file},
+\cd{with-open-stream}, and \cd{with-output-to-string}, even though
+their individual descriptions in the first edition specified that declarations
+may appear in those forms.
+\end{new}
+
+X3J13 voted in June 1989 \issue{CONDITION-RESTARTS} to add \cd{with-condition-restarts}
+and also \issue{DATA-IO} to add \cd{print-unreadable-object}
+and \cd{with-standard-io-syntax}.
+The X3J13 vote left it unclear whether these macros
+permit declarations to appear at the heads of their bodies.
+I believe that was the intent,
+but this is only my interpretation.
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CLOS}
+to adopt the Common Lisp Object System,
+which includes the following additional forms in which declarations
+may occur:
+\begin{lisp}
+\hskip 12pc\=\kill
+\cd{defgeneric}\>\cd{generic-function} \\*
+\cd{define-method-combination}\>\cd{generic-labels} \\*
+\cd{defmethod}\>\cd{with-added-methods} \\*
+\cd{generic-flet}
+\end{lisp}
+Furthermore X3J13 voted in January 1989
+\issue{SYMBOL-MACROLET-DECLARE}
+to allow declarations to
+occur before the bodies of these forms:
+\begin{lisp}
+\hskip 12pc\=\kill
+\cd{symbol-macrolet}\>\cd{with-slots} \\*
+\cd{with-accessors}
+\end{lisp}
+There are certain aspects peculiar to \cd{symbol-macrolet}
+(and therefore also to \cd{with-accessors} and \cd{with-slots},
+which expand into uses of \cd{symbol-macrolet}).
+An error is signaled if a name defined by \cd{symbol-macrolet}
+is declared \cd{special}, and a type declaration of a name
+defined by \cd{symbol-macrolet} is equivalent in effect
+to wrapping a \cd{the} form mentioning that type around
+the expansion of the defined symbol.
+\end{new}
+
+It is an error to attempt to evaluate a declaration.
+Those special forms that permit declarations to appear
+perform explicit checks for their presence.
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, \cd{declare} is a special form
+that does nothing but return the symbol \cd{declare} as its
+result.  The MacLisp interpreter knows nothing about declarations
+but just blindly evaluates them, effectively ignoring them.
+The MacLisp compiler recognizes declarations but processes
+them simply by evaluating the subforms of the declaration in
+the compilation context.  In Common Lisp it is
+important that both the interpreter and compiler recognize
+declarations (especially \cd{special} declarations) and treat them
+consistently,
+and so the rules about the structure and use of declarations
+have been made considerably more stringent.
+The odd tricks played in MacLisp by writing arbitrary forms
+to be evaluated within a \cd{declare} form
+are better done in both MacLisp and Common Lisp by using \cd{eval-when}.
+\end{incompatibility}
+\afternoterule
+
+It is permissible for a macro call to expand into a declaration
+and be recognized as such, provided that the macro call
+appears where a declaration may legitimately appear.
+(However, a macro call may not appear in place of a {\it decl-spec}.)
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{DECLARE-MACROS}
+to eliminate the recognition of
+a declaration resulting from the expansion of a macro call.
+This feature proved to be seldom used and
+awkward to implement in interpreters, compilers, and other code-analyzing programs.
+
+Under this change, a declaration is recognized only as such if
+it appears explicitly, as a list whose {\it car} is the symbol \cd{declare},
+in the body of a relevant special form.  (Note, however, that it
+is still possible for a macro to expand into a call to the \cd{proclaim}
+function.)
+\end{new}
+
+Each {\it decl-spec} is a list whose {\it car} is a symbol
+specifying the kind of declaration to be made.  Declarations may be
+divided into two classes: those that concern the bindings of variables,
+and those that do not.  (The \cd{special} declaration is the sole
+exception: it effectively falls into both classes, as explained below.)
+Those that concern variable bindings apply
+only to the bindings made by the form at the head of whose body they
+appear.  For example, in
+\begin{lisp}
+(defun foo (x) \\
+~~(declare (type float x)) ... \\
+~~(let ((x 'a)) ...) \\
+~~...)
+\end{lisp}
+the \cd{type} declaration applies only to the outer binding of \cd{x},
+and not to the binding made in the \cd{let}.
+
+\beforenoterule
+\begin{incompatibility}
+This represents a difference from MacLisp, in which type
+declarations are pervasive.
+\end{incompatibility}
+\afternoterule
+
+Declarations that do not concern themselves with variable bindings are
+pervasive, affecting all code in the body of the special form.
+As an example of a pervasive declaration,
+\begin{lisp}
+(defun foo (x y) (declare (notinline floor)) ...)
+\end{lisp}
+advises that everywhere within the body of \cd{foo} the function
+\cd{floor} should not be open-coded but called as an out-of-line subroutine.
+
+Some special forms contain pieces of code that, properly speaking,
+are not part of the body of the special form.  Examples of this
+are initialization forms that provide values for bound variables,
+and the result forms of iteration constructs.
+In all cases such additional code is within the scope of any pervasive
+declarations appearing before the body of the special form.
+Non-pervasive declarations have no effect on such code, except (of course)
+in those situations where the code is defined to be within the scope
+of the variables affected by such non-pervasive declarations.
+For example:
+\begin{lisp}
+(defun few (x \cd{\&optional} (y *print-circle*)) \\*
+~~(declare (special *print-circle*)) \\*
+~~...)
+\end{lisp}
+The reference to \cd{*print-circle*} in the first line of this example is special
+because of the declaration in the second line.
+\begin{lisp}
+(defun nonsense (k x z) \\*
+~~(foo z x)~~~~~~~~~~~~~~~;{\rm First call to \cd{foo}} \\*
+~~(let ((j (foo k x))~~~~~;{\rm Second call to \cd{foo}} \\*
+~~~~~~~~(x (* k k))) \\*
+~~~~(declare (inline foo) (special x z)) \\*
+~~~~(foo x j z)))~~~~~~~~~;{\rm Third call to \cd{foo}}
+\end{lisp}
+In this rather nonsensical example,
+the \cd{inline} declaration applies to the
+second and third calls to \cd{foo}, but not to the first one.
+The \cd{special} declaration of \cd{x} causes the \cd{let} form
+to make a special binding for \cd{x} and causes the reference to \cd{x}
+in the body of the \cd{let} to be a special reference.
+The reference to \cd{x} in the second call to \cd{foo} is also a special
+reference.
+The reference to \cd{x} in the first call to \cd{foo} is a local
+reference, not a special one.  The \cd{special} declaration of \cd{z}
+causes the reference to \cd{z} in the call
+to \cd{foo} to be a special reference; it will not
+refer to the parameter to \cd{nonsense} named \cd{z}, because that
+parameter binding has not been declared to be \cd{special}.
+(The \cd{special} declaration of \cd{z} does not appear in the body
+of the \cd{defun}, but in an inner construct, and therefore does not
+affect the binding of the parameter.)
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DECLARATION-SCOPE}
+to replace the rules concerning the scope of
+declarations occurring at the head of a special form or lambda-expression:
+\begin{itemize}
+\item The scope of a declaration always includes the body forms, as well as any
+``stepper'' or ``result'' forms (which are logically part of the body), of the
+special form or lambda-expression.
+
+\item If the declaration applies to a name binding, then the scope of the
+declaration also includes the scope of the name binding.
+\end{itemize}
+Note that
+the distinction between pervasive and non-pervasive
+declarations is eliminated.  An important change
+from the first edition is that ``initialization''
+forms are specifically {\it not} included as part of the body under the first
+rule; on the other hand, in many cases initialization forms may fall
+within the scope of certain declarations under the second rule.
+\end{new}
+
+\begin{new}
+X3J13 also voted in January 1989
+\issue{DECLARE-TYPE-FREE}
+to change the interpretation
+of \cd{type} declarations (see section \ref{DECLARATION-SPECIFIERS-SECTION}).
+\end{new}
+
+\begin{new}
+These changes affect the interpretation of some of the examples from the
+first edition.
+\begin{lisp}
+(defun foo (x) \\*
+~~(declare (type float x)) ... \\*
+~~(let ((x 'a)) ...) \\*
+~~...)
+\end{lisp}
+Under the interpretation approved by X3J13, the type
+declaration applies to {\it both} bindings of \cd{x}.
+More accurately, the type declaration is considered to apply to
+variable references rather than bindings, and the type declaration refers
+to every reference in the body of \cd{foo} to a variable named \cd{x},
+no matter to what binding it may refer.
+\begin{lisp}
+(defun foo (x y) (declare (notinline floor)) ...)
+\end{lisp}
+This example of the use of \cd{notinline} stands unchanged, but the following
+slight extension of it would change:
+\begin{lisp}
+(defun foo (x \&optional (y (floor x))) \\*
+~~(declare (notinline floor)) ...)
+\end{lisp}
+Under first edition rules, the \cd{notinline} declaration would be
+considered to apply to the call to \cd{floor} in the initialization
+form for \cd{y}.  Under the interpretation approved by X3J13, the
+\cd{notinline} would {\it not} apply to that particular call to \cd{floor}.
+Instead the user must write something like
+\begin{lisp}
+(defun foo (x \&optional (y (locally (declare (notinline floor)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(floor x)))) \\*
+~~(declare (notinline floor)) ...)
+\end{lisp}
+or perhaps
+\begin{lisp}
+(locally (declare (notinline floor)) \\*
+~~(defun foo (x \&optional (y (floor x))) ...))
+\end{lisp}
+Similarly, the \cd{special} declaration in
+\begin{lisp}
+(defun few (x \cd{\&optional} (y *print-circle*)) \\*
+~~(declare (special *print-circle*)) \\*
+~~...)
+\end{lisp}
+is not considered to apply to the reference in the initialization form
+for \cd{y} in \cd{few}.  As for the \cd{nonsense} example,
+\begin{lisp}
+(defun nonsense (k x z) \\*
+~~(foo z x)~~~~~~~~~~~~~~~;{\rm First call to \cd{foo}} \\*
+~~(let ((j (foo k x))~~~~~;{\rm Second call to \cd{foo}} \\*
+~~~~~~~~(x (* k k))) \\*
+~~~~(declare (inline foo) (special x z)) \\*
+~~~~(foo x j z)))~~~~~~~~~;{\rm Third call to \cd{foo}}
+\end{lisp}
+under the interpretation approved by X3J13, the \cd{inline}
+declaration is no longer considered to apply to the second
+call to \cd{foo}, because it is in an initialization form, which is
+no longer considered in the scope of the declaration.  Similarly,
+the reference to \cd{x} in that second call to \cd{foo} is no longer
+taken to be a special reference, but a local reference to the second
+parameter of \cd{nonsense}.
+\end{new}
+\end{defspec}
+
+\begin{obsolete}
+\begin{defmac}
+locally {declaration}* {\,form}*
+
+This macro may be used to make local pervasive declarations
+where desired.   It does not bind any variables and therefore cannot
+be used meaningfully for declarations of variable bindings.
+(Note that the \cd{special} declaration may be used with \cd{locally}
+to pervasively affect references to, rather than bindings of, variables.)
+For example:
+\begin{lisp}
+(locally (declare (inline floor) (notinline car cdr)) \\
+~~~~~~~~~(declare (optimize space)) \\
+~~(floor (car x) (cdr y)))
+\end{lisp}
+\end{defmac}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{RETURN-VALUES-UNSPECIFIED}
+to specify that \cd{locally} executes the {\it form\/}s as an implicit
+\cd{progn} and returns the value(s) of the last {\it form}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LOCALLY-TOP-LEVEL} to make \cd{locally}
+be a special form rather than a macro.  It still has the same syntax.
+
+\begin{defspec}
+locally {declaration}* {\,form}*
+
+This change was made to accommodate the new compilation model for top-level forms
+in a file (see section~\ref{COMPILER-SECTION}).
+When a \cd{locally} form appears at top level, the forms in its body are
+processed as top-level forms.  This means that one may, for example, meaningfully use
+\cd{locally} to wrap declarations around a \cd{defun} or \cd{defmacro} form:
+\begin{lisp}
+(locally \\*
+~~(declare (optimize (safety 3) (space 3) (debug 3) (speed 1))) \\*
+~~(defun foo (x \&optional (y (abs x)) (z (sqrt y))) \\*
+~~~~(bar x y z)))
+\end{lisp}
+Without assurance that this works
+one must write something cumbersome such as
+\begin{lisp}
+ \\*
+(defun foo (x \&optional (y (locally \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(declare (optimize (safety 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(space 3) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(debug 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(speed 1))) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(abs x))) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~(z (locally \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(declare (optimize (safety 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(space 3) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(debug 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(speed 1))) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(sqrt y)))) \\
+~~(locally \\*
+~~~~(declare (optimize (safety 3) (space 3) (debug 3) (speed 1))) \\*
+~~~~(bar x y z)))
+\end{lisp}
+\end{defspec}
+\end{newer}
+
+\newpage%manual
+
+\begin{defun}[Function]
+proclaim decl-spec
+
+The function \cd{proclaim} takes a {\it decl-spec} as its
+argument and puts it into effect globally.  (Such a global
+declaration is called a {\it proclamation}.)
+Because \cd{proclaim} is a function, its argument is always evaluated.
+This allows a program to compute a declaration and then put
+it into effect by calling \cd{proclaim}.
+
+Any variable names
+mentioned are assumed to refer to the dynamic values of the
+variable.  For example, the proclamation
+\begin{lisp}
+(proclaim '(type float tolerance))
+\end{lisp}
+once executed,
+specifies that the dynamic value of \cd{tolerance} should always
+be a floating-point number.
+Similarly, any function-names mentioned are assumed to refer to
+the global function definition.
+
+A proclamation constitutes a universal declaration, always in force
+unless locally shadowed.  For example,
+\begin{lisp}
+(proclaim '(inline floor))
+\end{lisp}
+advises that \cd{floor} should normally be open-coded in-line by the
+compiler (but in the situation
+\begin{lisp}
+(defun foo (x y) (declare (notinline floor)) ...)
+\end{lisp}
+it will be compiled out-of-line anyway in the body of \cd{foo},
+because of the shadowing local declaration to that effect).
+
+\begin{newer}
+X3J13 voted in January 1989 \issue{SPECIAL-TYPE-SHADOWING}
+to clarify that such shadowing does not occur in the case of type declarations.
+If there is a local type declaration for a special variable and there is also a global
+proclamation for that same variable, then the value of the variable within the scope
+of the local declaration must be a member of the intersection of the two
+declared types.
+This is consistent with the treatment of nested local type declarations
+on which X3J13 also voted in January 1989 \issue{DECLARE-TYPE-FREE}.
+\end{newer}
+
+As a special case (so to speak), \cd{proclaim} treats a \cd{special}
+{\it decl-spec} as applying to all bindings as well as to
+all references of the mentioned variables.
+\begin{new}%CORR
+{\it Notice of correction.}
+In the first edition, this sentence referred to a ``\cd{special}
+{\it declaration-form}.''  That was incorrect; \cd{proclaim} accepts
+only a {\it decl-spec}, not a {\it declaration-form}.
+\end{new}
+
+For example, after
+\begin{lisp}
+(proclaim '(special x))
+\end{lisp}
+in a function definition such as
+\begin{lisp}
+(defun example (x) ...)
+\end{lisp}
+the parameter \cd{x} will be bound as a special (dynamic) variable
+rather than as a lexical (static) variable.  This facility should
+be used with caution.  The usual way to define a globally special
+variable is with \cd{defvar} or \cd{defparameter}.
+\end{defun}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
+to clarify that the compiler is not required to treat
+calls to \cd{proclaim} any differently from the way it treats
+any other function call.  If a top-level call to \cd{proclaim}
+is to take effect at compile time, it should be surrounded
+by an appropriate \cd{eval-when} form.  Better yet,
+the new macro \cd{declaim} may be used instead.
+
+\begin{defmac}
+declaim {decl-spec}*
+
+This macro is syntactically like \cd{declare} and semantically
+like \cd{proclaim}.  It is an executable form and may be used
+anywhere \cd{proclaim} may be called.  However, each {\it decl-spec}
+is not evaluated.
+
+If a call to this macro appears at top level in a file
+  being processed by the file compiler, the proclamations are also
+  made at compile time.  As with other defining macros, it is 
+  unspecified whether or not the compile-time side effects of a 
+  \cd{declaim} persist after the file has been compiled
+  (see section~\ref{COMPILER-SECTION}).
+\end{defmac}
+\end{newer}
+
+\section{Declaration Specifiers}
+\label{DECLARATION-SPECIFIERS-SECTION}
+
+Here is a list of valid declaration specifiers for use in
+\cd{declare}.  A construct is said to be ``affected'' by a declaration
+if it occurs within the scope of a declaration.
+
+\begin{flushdesc}
+\item[\cd{special}]
+\cd{(special {\it var1} {\it var2} ...)} specifies that all of
+the variables named are to be considered {\it special}.
+This specifier affects variable bindings but also pervasively
+affects references.
+All variable bindings affected are made to be dynamic bindings,
+and affected variable references refer to the current dynamic binding
+rather than to the current local binding.
+For example:
+\begin{lisp}
+(defun hack (thing *mod*)~~~~~~~;{\rm The binding of the parameter} \\
+~~(declare (special *mod*))~~~~~; {\rm \cd{*mod*} is visible to \cd{hack1},} \\
+~~(hack1 (car thing)))~~~~~~~~~~; {\rm but not that of \cd{thing}} \\
+ \\
+(defun hack1 (arg) \\
+~~(declare (special *mod*))~~~~~;{\rm Declare references to \cd{*mod*}} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~; {\rm within \cd{hack1} to be special} \\
+~~(if (atom arg) *mod* \\
+~~~~~~(cons (hack1 (car arg)) (hack1 (cdr arg)))))
+\end{lisp}
+Note that it is conventional, though not required, to give special
+variables names that begin and end with an asterisk.	
+
+A \cd{special} declaration does {\it not} affect bindings pervasively.
+Inner bindings of a variable implicitly shadow
+a \cd{special} declaration and must be explicitly re-declared to
+be special.
+(However, a \cd{special} proclamation {\it does} pervasively affect bindings;
+this exception is made for reasons of
+convenience and compatibility with MacLisp.)
+For example:
+\begin{lisp}
+(proclaim '(special x))~~~~~;{\rm \cd{x} is always special} \\
+ \\
+(defun example (x y) \\
+~~(declare (special y)) \\
+~~(let ((y 3) (x (* x 2))) \\
+~~~~(print (+ y (locally (declare (special y)) y))) \\
+~~~~(let ((y 4)) (declare (special y)) (foo x))))
+\end{lisp}
+In the contorted code above, the outermost and innermost bindings of
+\cd{y} are special and therefore dynamically scoped, but the middle
+binding is lexically scoped.  The two arguments to \cd{+} are different,
+one being the value, which is \cd{3}, of the lexically bound variable
+\cd{y}, and the other being the value of the special variable named \cd{y}
+(a binding of which happens, coincidentally, to lexically surround it at
+an outer level).  All the bindings of \cd{x} and references to \cd{x}
+are special, however, because of the proclamation that \cd{x} is
+always \cd{special}.
+
+As a matter of style, use of \cd{special} proclamations should be
+avoided.  The \cd{defvar} and \cd{defparameter} macros
+are the conventional means for proclaiming special variables
+in a program.
+
+\item[\cd{type}]
+\cd{(type {\it type} {\it var1} {\it var2} ...)} affects
+only variable bindings and specifies that the
+variables mentioned will take on values only of the specified type.
+In particular, values assigned to the variables by \cd{setq},
+as well as the initial values of the variables, must be of
+the specified type.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DECLARE-TYPE-FREE}
+to alter the interpretation of type declarations.
+They are not to be construed to affect ``only variable bindings.''
+The new rule for a declaration of a variable to
+have a specified type is threefold:
+\begin{itemize}
+\item It is an error if, during the execution
+of any reference to that variable within the scope of the declaration,
+the value of the variable is not of the declared type.
+\item It is an error if, during the execution
+of a \cd{setq} of that variable within the scope of the declaration,
+the new value for the variable is not of the declared type.
+\item It is an error if, at any moment that execution enters the scope
+of the declaration, the value of the variable is not of the
+declared type.
+\end{itemize}
+One may think of a type declaration \cd{(declare (type face bodoni))}
+as implicitly changing every reference to \cd{bodoni} within the scope
+of the declaration to \cd{(the~face bodoni)}; changing every expression
+{\it exp} assigned to \cd{bodoni} within the scope of the declaration
+to \cd{(the~face {\it exp})}; and implicitly executing \cd{(the~face bodoni)}
+every time execution enters the scope of the declaration.
+
+These new rules make type declarations much more useful.  Under first
+edition rules, a type declaration was useless if not associated with
+a variable binding; declarations such as in
+\begin{lisp}
+(locally \\*
+~~(declare (type (byte 8) x y)) \\*
+~~(+ x y))
+\end{lisp}
+at best had no effect and at worst were erroneous, depending on one's
+interpretation of the first edition.  Under the interpretation approved
+by X3J13, such declarations have ``the obvious natural interpretation.''
+
+X3J13 noted that if nested type declarations refer to the same variable,
+then all of them have effect; the value of the variable must be a member of the
+intersection of the declared types.
+
+Nested type declarations could occur as a result of either macro expansion
+or carefully crafted code.  There are three cases.  First,
+the inner type might be a subtype of the outer one:
+\begin{lisp}
+(defun compare (apples oranges) \\*
+~~(declare (type number apples oranges)) \\
+~~(cond ((typep apples 'fixnum) \\*
+~~~~~~~~~;; The programmer happens to know that, thanks to \\*
+~~~~~~~~~;; constraints imposed by the caller, if APPLES \\*
+~~~~~~~~~;; is a fixnum, then ORANGES will be also, and \\*
+~~~~~~~~~;; therefore wishes to avoid the unnecessary cost \\*
+~~~~~~~~~;; of checking ORANGES.~~Nevertheless the compiler \\*
+~~~~~~~~~;; should be informed to allow it to optimize code. \\
+~~~~~~~~~(locally (declare (type fixnum apples oranges))) \\*
+~~~~~~~~~~~~~~~~~~;; Maybe the compiler could have figured \\*
+~~~~~~~~~~~~~~~~~~;; out by flow analysis that APPLES must \\*
+~~~~~~~~~~~~~~~~~~;; be a fixnum here, but it doesn't hurt \\*
+~~~~~~~~~~~~~~~~~~;; to say it explicitly. \\*
+~~~~~~~~~~~(< apples oranges))) \\
+~~~~~~~~((or (complex apples) \\*
+~~~~~~~~~~~~~(complex oranges)) \\*
+~~~~~~~~~(error "Not yet implemented.~~Sorry.")) \\*
+~~~~~~~~...))
+\end{lisp}
+This is the case most likely to arise in code written completely by hand.
+
+Second, the outer type might be a subtype of the inner one.  In this
+case the inner declaration has no additional practical effect, but
+it is harmless.  This is
+likely to occur if code declares a variable to be of a very specific type
+and then passes it to a macro that then declares it to be of a less
+specific type.
+
+Third, the inner and outer declarations might be for types that
+overlap, neither being a subtype of the other.  This is likely to occur
+only as a result of macro expansion.  For example, user code might
+declare a variable to be of type \cd{integer}, and a macro might
+later declare it to be of type \cd{(or fixnum package)}; in this case
+a compiler could intersect the two types to determine that in this
+instance the variable may hold only fixnums.
+
+The reader should note that the following code fragment is,
+perhaps astonishingly, {\it not in error} under the interpretation approved by
+X3J13:
+\begin{lisp}
+(let ((james .007) \\*
+~~~~~~(maxwell 86)) \\*
+~~(flet ((spy-swap () \\*
+~~~~~~~~~~~(rotatef james maxwell))) \\*
+~~~~(locally (declare (integer maxwell)) \\*
+~~~~~~(spy-swap) \\*
+~~~~~~(view-movie "The Sound of Music") \\*
+~~~~~~(spy-swap) \\*
+~~~~~~maxwell))) \\*
+~\EV\ 86~~{\rm (after a couple of hours of Julie Andrews)}
+\end{lisp}
+The variable \cd{maxwell} is declared to be an integer over the {\it scope}
+of the type declaration, not over its {\it extent}.  Indeed \cd{maxwell}
+takes on the non-integer value \cd{.007} while the Trapp family make their
+escape, but because no
+reference to \cd{maxwell} within the scope of the declaration
+ever produces a non-integer value, the code
+is correct.
+
+Now the assignment to \cd{maxwell} during the first call
+to \cd{spy-swap}, and the reference to \cd{maxwell} during the second call,
+{\it do} involve non-integer values, but they occur within the body of
+\cd{spy-swap}, which is {\it not} in the scope of the type declaration!
+One could put the declaration in a different place so as to include
+\cd{spy-swap} in the scope:
+\begin{lisp}
+(let ((james .007) \\*
+~~~~~~(maxwell 86)) \\*
+~~(locally (declare (integer maxwell)) \\*
+~~~~(flet ((spy-swap () \\*
+~~~~~~~~~~~~~(rotatef james maxwell))) \\*
+~~~~~~(spy-swap)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Bug!}\\*
+~~~~~~(view-movie "The Sound of Music") \\*
+~~~~~~(spy-swap) \\*
+~~~~~~maxwell)))
+\end{lisp}
+and then the code is indeed in error.
+\end{new}
+
+\begin{new}
+X3J13 also voted in January 1989
+\issue{FUNCTION-TYPE-ARGUMENT-TYPE-SEMANTICS}
+to alter the meaning of the
+\cd{function} type specifier when used in \cd{type} declarations
+(see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
+\end{new}
+
+
+\item[{\it type}]
+\cd{({\it type} {\it var1} {\it var2} ...)}
+is an abbreviation for
+\cd{(type {\it type} {\it var1} {\it var2} ...)},
+provided that {\it type} is one of the symbols appearing
+in table~\ref{TYPE-SYMBOLS-TABLE}.
+
+\begin{new}
+Observe that this covers the particularly common case of declaring
+numeric variables:
+\begin{lisp}
+(declare (single-float mass dx dy dz) \\*
+~~~~~~~~~(double-float acceleration sum))
+\end{lisp}
+In many implementations there is also some advantage to declaring variables
+to have certain specialized vector types such as \cd{base-string}.
+\end{new}
+
+\item[\cd{ftype}]
+\cd{(ftype {\it type} {\it function-name-1} {\it function-name-2} ...)}
+specifies that the named functions will be of the functional type
+{\it type}, an example of which follows.
+For example:
+\begin{lisp}
+(declare (ftype (function (integer list) t) nth) \\*
+~~~~~~~~~(ftype (function (number) float) sin cos))
+\end{lisp}
+Note that rules of lexical scoping are observed; if one of the functions
+mentioned has a lexically apparent local definition
+(as made by \cd{flet} or \cd{labels}), then the declaration
+applies to that local definition and not to the global function definition.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{ftype}
+declaration specifiers
+to accept any function-name (a symbol or a list
+whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write
+\begin{lisp}
+(declaim (ftype (function (list) t) (setf cadr)))
+\end{lisp}
+to indicate the type of the \cd{setf} expansion function for \cd{cadr}.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FUNCTION-TYPE-ARGUMENT-TYPE-SEMANTICS}
+to alter the meaning of the
+\cd{function} type specifier when used in \cd{ftype} declarations
+(see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
+\end{new}
+\end{flushdesc}
+
+\begin{obsolete}
+\begin{flushdesc}
+\item[\cd{function}]
+\cd{(function {\it name} {\it arglist} {\it result-type1} {\it result-type2} ...)}
+is entirely equivalent to
+\begin{lisp}
+\cd{(ftype (function {\it arglist} {\it result-type1} {\it result-type2} ...) {\it name})}
+\end{lisp}
+but may be more convenient for some purposes.
+For example:
+\begin{lisp}
+(declare (function nth (integer list) t) \\
+~~~~~~~~~(function sin (number) float) \\
+~~~~~~~~~(function cos (number) float))
+\end{lisp}
+The syntax mildly resembles that of \cd{defun}: a function-name,
+then an argument list, then a specification of results.
+
+Note that rules of lexical scoping are observed; if one of the functions
+mentioned has a lexically apparent local definition
+(as made by \cd{flet} or \cd{labels}), then the declaration
+applies to that local definition and not to the global function definition.
+\end{flushdesc}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DECLARE-FUNCTION-AMBIGUITY}
+to remove this interpretation
+of the \cd{function} declaration specifier from the language.
+Instead, a declaration specifier
+\begin{lisp}
+(function {\it var1} {\it var2} ...)
+\end{lisp}
+is to be treated simply as an abbreviation for
+\begin{lisp}
+(type function {\it var1} {\it var2} ...)
+\end{lisp}
+just as for all other symbols appearing in table~\ref{TYPE-SYMBOLS-TABLE}.
+
+X3J13 noted that although \cd{function} appears in
+table~\ref{TYPE-SYMBOLS-TABLE}, the first edition also discussed it
+explicitly, with a different meaning,
+without noting whether the differing
+interpretation was to replace or augment the
+interpretation regarding table~\ref{TYPE-SYMBOLS-TABLE}.  Unfortunately
+there is an ambiguous case: the declaration
+\begin{lisp}
+(declare (function foo nil string))
+\end{lisp}
+can be construed to abbreviate either
+\begin{lisp}
+(declare (ftype (function () string) foo))
+\end{lisp}
+or
+\begin{lisp}
+(declare (type function foo nil string))
+\end{lisp}
+The latter could perhaps be rejected on semantic grounds: it would be an
+error to declare \cd{nil}, a constant, to be of type \cd{function}.
+In any case, X3J13 determined that the ice was too thin here;
+the possibility of confusion is not worth the convenience of
+an abbreviation for \cd{ftype} declarations.
+The change also makes the language more consistent.
+\end{new}
+
+\begin{flushdesc}
+\item[\cd{inline}]
+\cd{(inline {\it function1} {\it function2} ...)} specifies that
+it is desirable for the compiler to open-code
+calls to the specified functions; that is, the code for a specified function
+should be integrated into the calling routine, appearing in-line
+in place of a procedure call.  This may achieve
+extra speed at the expense of debuggability (calls to functions
+compiled in-line cannot be traced, for example).
+This declaration is pervasive.
+Remember that
+a compiler is free to ignore this declaration.
+
+Note that rules of lexical scoping are observed; if one of the functions
+mentioned has a lexically apparent local definition
+(as established by \cd{flet} or \cd{labels}), then the declaration
+applies to that local definition and not to the global function definition.
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{PROCLAIM-INLINE-WHERE}
+to clarify that during compilation the \cd{inline} declaration specifier
+serves two distinct purposes: it indicates not only that affected calls
+to the specified functions should be expanded in-line, but also that
+affected definitions of the specified functions must be recorded for
+possible use in performing such expansions.
+
+Looking at it the other way,
+the compiler is not required to save function definitions against the
+possibility of future expansions unless the functions have already been
+proclaimed to be \cd{inline}.  If a function is proclaimed (or declaimed)
+\cd{inline}
+before some call to that function but the current definition of that
+function was established before the proclamation was processed,
+it is implementation-dependent whether that call will be expanded in-line.
+(Of course, it is implementation-dependent anyway, because a compiler
+is always free to ignore \cd{inline} declaration specifiers.
+However, the intent of the committee is clear: for best results,
+the user is advised to put any \cd{inline} proclamation of
+a function before any definition of or call to that function.)
+
+Consider these examples:
+\begin{lisp}
+(defun huey (x) (+ x 100))~~~~~~~~~;{\rm Compiler need not remember this} \\*
+(declaim (inline huey dewey)) \\*
+(defun dewey (y) (huey (sqrt y)))~~;{\rm Call to \cd{huey} unlikely to be expanded} \\*
+(defun louie (z) (dewey (/ z)))~~~~;{\rm Call to \cd{dewey} likely to be expanded}
+\end{lisp}
+\goodbreak
+
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{inline}
+declaration specifiers
+to accept any function-name (a symbol or a list
+whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(declare (inline (setf cadr)))} to indicate
+that the \cd{setf}
+expansion function for \cd{cadr} should be compiled in-line.
+\end{newer}
+
+\item[\cd{notinline}]
+\cd{(notinline {\it function1} {\it function2} ...)} specifies that it is
+{\it undesirable} to compile the specified functions in-line.
+This declaration is pervasive.
+A compiler is {\it not} free to ignore this declaration.
+
+Note that rules of lexical scoping are observed; if one of the functions
+mentioned has a lexically apparent local definition
+(as made by \cd{flet} or \cd{labels}), then the declaration
+applies to that local definition and not to the global function definition.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{notinline}
+declaration specifiers
+to accept any function-name (a symbol or a list
+whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(declare (notinline (setf cadr)))} to indicate
+that the \cd{setf}
+expansion function for \cd{cadr} should not be compiled in-line.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ALLOW-LOCAL-INLINE}
+to clarify that the proper way to define a function \cd{gnards}
+that is not \cd{inline} by default, but for which a local
+declaration \cd{(declare (inline~gnards))} has half a chance of
+actually compiling \cd{gnards} in-line, is as follows:
+\begin{lisp}
+(declaim (inline gnards)) \\*
+\\*
+(defun gnards ...) \\*
+\\*
+(declaim (notinline gnards))
+\end{lisp}
+The point is that the first declamation informs the compiler that
+the definition of \cd{gnards} may be needed later for in-line expansion,
+and the second declamation prevents any expansions unless and until it is
+overridden.
+
+While an implementation is never required to perform in-line expansion,
+many implementations that do support such expansion will not
+process \cd{inline} requests successfully unless definitions are
+written with these proclamations in the manner shown above.
+\end{new}
+
+\item[\cd{ignore}]
+\cd{(ignore {\it var1} {\it var2} ... {\it varn})} affects only variable bindings
+and specifies that the bindings
+of the specified variables are never used.  It is desirable for a compiler
+to issue a warning if a variable so declared is ever referred to
+or is also declared special, or if a variable is lexical, never referred to,
+and not declared to be ignored.
+
+\item[\cd{optimize}]
+\cd{(optimize ({\it quality1} {\it value1}) ({\it quality2} {\it value2})...)}
+advises the compiler that each {\it quality} should be given attention
+according to the specified corresponding {\it value}.
+A quality is a symbol; standard qualities
+include \cd{speed} (of the object code), \cd{space} (both code size and
+run-time space), \cd{safety} (run-time error checking),
+and \cd{compilation-speed} (speed of the compilation process).
+\begin{newer}
+X3J13 voted in October 1988 \issue{OPTIMIZE-DEBUG-INFO} to add
+the standard quality \cd{debug} (ease of debugging).
+\end{newer}
+Other qualities may be recognized by particular implementations.
+A {\it value} should be a non-negative integer, normally in the range
+\cd{0} to \cd{3}.  The value \cd{0} means that the quality is totally
+unimportant, and \cd{3} that the quality is extremely important;
+\cd{1} and \cd{2} are intermediate values, with \cd{1} the ``normal''
+or ``usual'' value.
+One may abbreviate \cd{({\it quality} 3)} to simply {\it quality}.
+This declaration is pervasive.
+For example:
+\begin{lisp}
+(defun often-used-subroutine (x y) \\*
+~~(declare (optimize (safety 2))) \\*
+~~(error-check x y) \\*
+~~(hairy-setup x) \\
+~~(do ((i 0 (+ i 1)) \\*
+~~~~~~~(z x (cdr z))) \\*
+~~~~~~((null z) i) \\
+~~~~;; This inner loop really needs to burn. \\*
+~~~~(declare (optimize speed)) \\*
+~~~~(declare (fixnum i)) \\*
+~~~~)))
+\end{lisp}
+
+\item[\cd{declaration}]
+\cd{(declaration {\it name1} {\it name2} ...)} advises the compiler
+that each {\it namej} is a valid but non-standard declaration name.
+The purpose of this is to tell one compiler not to issue warnings
+for declarations meant for another compiler or other program processor.
+
+\begin{obsolete}
+This kind of declaration may be used only as a proclamation.
+For example:
+\begin{lisp}
+(proclaim '(declaration author \\*
+~~~~~~~~~~~~~~~~~~~~~~~~target-language \\*
+~~~~~~~~~~~~~~~~~~~~~~~~target-machine)) \\
+ \\
+(proclaim '(target-language ada)) \\
+ \\
+(proclaim '(target-machine IBM-650))
+\end{lisp}
+\newpage%manual
+\begin{lisp}
+(defun strangep (x) \\*
+~~(declare (author "Harry Tweeker")) \\*
+~~(member x '(strange weird odd peculiar)))
+\end{lisp}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
+to introduce the new macro \cd{declaim}, which is guaranteed
+to be recognized appropriately by the compiler and is often more convenient
+than \cd{proclaim} for establishing global declarations.
+
+The \cd{declaration} declaration specifier may be used with \cd{declaim}
+as well as \cd{proclaim}.  The preceding examples would be better written
+using \cd{declaim}, to ensure that the compiler will process them properly.
+
+\begin{lisp}
+(declaim (declaration author \\*
+~~~~~~~~~~~~~~~~~~~~~~target-language \\*
+~~~~~~~~~~~~~~~~~~~~~~target-machine)) \\
+ \\
+(declaim (target-language ada) \\*
+~~~~~~~~~(target-machine IBM-650)) \\
+ \\
+(defun strangep (x) \\*
+~~(declare (author "Harry Tweeker")) \\*
+~~(member x '(strange weird odd peculiar)))
+\end{lisp}
+\end{newer}
+\end{flushdesc}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DYNAMIC-EXTENT} to introduce a new
+declaration specifier \cd{dynamic-extent} for variables,
+and voted in June 1989 \issue{DYNAMIC-EXTENT-FUNCTION}
+to extend it to handle function-names as well.
+\begin{flushdesc}
+\item[\cd{dynamic-extent}]
+
+\cd{(dynamic-extent {\it item1} {\it item2} ... {\it itemn})}
+declares that certain variables or function-names refer to data objects
+whose extents may be regarded as dynamic; that is, the declaration
+may be construed as a guarantee on the part of the programmer that
+the program will behave correctly even if the data objects have only
+dynamic extent rather than the usual indefinite extent.
+
+Each {\it item} may be either a variable name or \cd{(function {\it f\/})}
+where {\it f} is a function-name (see section~\ref{FUNCTION-NAME-SECTION}).
+(Of course, \cd{(function {\it f\/})} may be abbreviated in the usual way
+as \cd{\#'{\it f}}.)
+
+  It is permissible for an implementation simply to ignore this declaration.
+  In implementations that do not ignore it, the compiler (or interpreter)
+  is free to make whatever optimizations are appropriate given this
+  information; the most common optimization is to stack-allocate the
+  initial value of the object. The data types that can be optimized in this manner
+  may vary from implementation to implementation.
+
+The meaning of this declaration can be stated more precisely.
+We say that
+object {\it x} is an {\it otherwise inaccessible part}
+    of {\it y} if and only if making {\it y} inaccessible would make {\it x} inaccessible.
+    (Note that every object is an otherwise inaccessible part of itself.)
+  Now suppose that construct {\it c} contains a \cd{dynamic-extent} declaration for
+  variable (or function) {\it v} (which need not be bound by {\it c}).  Consider the values
+  ${\it w}_1, \ldots, {\it w}_{\hbox{\scriptsize\it n}}$ taken on by {\it v} during the course of some execution of
+  {\it c}.  The declaration asserts that if some object {\it x}
+  is an otherwise inaccessible part of ${\it w}_{\hbox{\scriptsize\it j}}$
+  whenever ${\it w}_{\hbox{\scriptsize\it j}}$ becomes the value of {\it v},
+  then just after execution of
+  $c$ terminates {\it x} will be either inaccessible or
+  still an otherwise inaccessible part of the value of {\it v}.
+  If this assertion is ever violated, the consequences are undefined.
+
+  In some implementations, it is
+  possible to allocate data structures in a way that will make them
+  easier to reclaim than by general-purpose garbage collection
+  (for example, on the stack or in some temporary area).  The \cd{dynamic-extent}
+  declaration is designed to give the implementation the information
+  necessary to exploit such techniques.
+
+For example, in the code fragment
+\begin{lisp}
+(let ((x (list 'a1 'b1 'c1)) \\*
+~~~~~~(y (cons 'a2 (cons 'b2 (cons 'c2 'd2))))) \\*
+~~(declare (dynamic-extent x y)) \\*
+~~...)
+\end{lisp}
+it is not difficult to prove that
+the otherwise inaccessible parts of \cd{x} include the three conses constructed by \cd{list},
+and that the otherwise inaccessible parts of \cd{y} include three other
+conses manufactured by the three calls to \cd{cons}.
+Given the presence of the \cd{dynamic-extent} declaration, a compiler would be
+justified in stack-allocating these six conses and reclaiming their storage
+on exit from the \cd{let} form.
+
+  Since stack allocation of the initial value entails knowing at the
+  object's creation time that the object can be stack-allocated, it is
+  not generally useful to declare \cd{dynamic-extent} for variables
+  that have no lexically apparent initial value. For example,
+\begin{lisp}
+(defun f () \\*
+~~(let ((x (list 1 2 3))) \\*
+~~~~(declare (dynamic-extent x)) \\*
+~~~~...))
+\end{lisp}
+  would permit a compiler to stack-allocate the
+  list in \cd{x}. However,
+\begin{lisp}
+(defun g (x) (declare (dynamic-extent x)) ...) \\*
+(defun f () (g (list 1 2 3)))
+\end{lisp}
+  could not typically permit a similar optimization in \cd{f} because of the
+  possibility of later redefinition of \cd{g}.
+  Only an implementation careful enough to recompile \cd{f}
+  if the definition of \cd{g} were to change incompatibly could stack-allocate
+  the list argument to \cd{g} in \cd{f}.
+
+  Other interesting cases are
+\begin{lisp}
+(declaim (inline g)) \\*
+(defun g (x) (declare (dynamic-extent x)) ...) \\*
+(defun f () (g (list 1 2 3)))
+\end{lisp}
+and
+\begin{lisp}
+(defun f () \\*
+~~(flet ((g (x) (declare (dynamic-extent x)) ...)) \\*
+~~~~(g (list 1 2 3))))
+\end{lisp}
+  In each case some compilers might realize the optimization is possible and others
+  might not.
+
+  An interesting variant of this is the so-called {\it stack-allocated rest list},
+  which can be achieved (in implementations supporting the optimization) by
+\begin{lisp}
+(defun f (\&rest x) \\*
+~~(declare (dynamic-extent x)) \\*
+~~...)
+\end{lisp}
+  Note here that although the initial value of \cd{x} is not explicitly present,
+  nevertheless in the usual implementation strategy the
+  function \cd{f} is responsible for assembling the list for \cd{x} from the passed arguments,
+  so the \cd{f} function can be optimized by a compiler to construct a 
+  stack-allocated list instead of a heap-allocated list.
+
+Some Common Lisp functions take other functions as arguments; frequently
+the argument function is a so-called {\it downward funarg}, that is, a functional
+argument that is passed only downward and whose extent may therefore be dynamic.
+\begin{lisp}
+(flet ((gd (x) (atan (sinh x)))) \\*
+~~(declare (dynamic-extent \#'gd))~~~~~;{\rm \cd{mapcar} won't hang on to \cd{gd}}\\*
+~~(mapcar \#'gd my-list-of-numbers))
+\end{lisp}
+
+
+The following three examples are in error, since in each case
+the value of \cd{x} is used outside of its
+extent.
+\begin{lisp}
+(length (let ((x (list 1 2 3))) \\*
+~~~~~~~~~~(declare (dynamic-extent x)) \\*
+~~~~~~~~~~x))~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Wrong}
+\end{lisp}
+The preceding code is obviously incorrect, because the cons cells making
+up the list in \cd{x} might be deallocated (thanks to the declaration)
+before \cd{length} is called.
+\begin{lisp}
+(length (list (let ((x (list 1 2 3))) \\*
+~~~~~~~~~~~~~~~~(declare (dynamic-extent x)) \\*
+~~~~~~~~~~~~~~~~x)))~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Wrong}
+\end{lisp}
+In this second case it is less obvious that
+the code is incorrect, because one might argue that
+the cons cells making
+up the list in \cd{x} have no effect on the result to be computed by \cd{length}.
+Nevertheless the code briefly violates the assertion implied by the declaration
+and is therefore incorrect.  (It is not difficult to imagine a perfectly
+sensible implementation of a garbage collector that might become confused
+by a cons cell containing a dangling pointer to a list that was once stack-allocated
+but then deallocated.)
+\begin{lisp}
+(progn (let ((x (list 1 2 3))) \\*
+~~~~~~~~~(declare (dynamic-extent x)) \\*
+~~~~~~~~~x)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Wrong} \\*
+~~~~~~~(print "Six dollars is your change have a nice day NEXT!"))
+\end{lisp}
+In this third case it is even less obvious that
+the code is incorrect, because the value of \cd{x}
+returned from the \cd{let} construct is discarded right away by the \cd{progn}.
+Indeed it is, but ``right away'' isn't fast enough.
+The code briefly violates the assertion implied by the declaration
+and is therefore incorrect.  (If the code is being interpreted,
+the interpreter might hang on to the value returned by the \cd{let}
+for some time before it is eventually discarded.)
+
+Here is one last example, one that has little practical import but
+is theoretically quite instructive.
+\begin{lisp}
+(dotimes (j 10) \\*
+~~(declare (dynamic-extent j)) \\*
+~~(setq foo 3)~~~~~~~~~~~~~~~~~~~~~;{\rm Correct} \\*
+~~(setq foo j))~~~~~~~~~~~~~~~~~~~~;{\rm Erroneous---but why? (see text)}
+\end{lisp}
+Since \cd{j} is an integer by the
+definition of \cd{dotimes}, but \cd{eq} and \cd{eql} are not necessarily equivalent for
+integers, what are the otherwise inaccessible parts of \cd{j}, which this declaration
+requires the body of the \cd{dotimes} not to ``save''?  If the value of \cd{j} is \cd{3},
+and the body does \cd{(setq foo~3)}, is that an error?  The answer is no, but
+the interesting thing is that it depends on the implementation-dependent
+behavior of \cd{eq} on numbers.  In an implementation where \cd{eq} and \cd{eql} are
+equivalent for \cd{3}, then \cd{3} is not an otherwise inaccessible part because
+\cd{(eq~j (+~2~1))} is true,
+and therefore there is another way to access the object besides
+going through \cd{j}.  On the other hand, in an implementation where \cd{eq} and
+\cd{eql} are not equivalent for \cd{3}, then the particular \cd{3} that is the value of
+\cd{j} is an otherwise inaccessible part, but any other \cd{3} is not.
+Thus \cd{(setq foo~3)} is valid
+but \cd{(setq foo~j)} is erroneous.  Since \cd{(setq foo~j)} is erroneous in some
+implementations, it is erroneous in all portable programs, but some other
+implementations may not be able to detect the error.  (If this conclusion seems
+strange, it may help to replace \cd{3} everywhere
+in the preceding argument with some obvious
+bignum such as \cd{375374638837424898243} and to replace
+\cd{10} with some even larger bignum.)
+
+  The \cd{dynamic-extent} declaration should be used with great care.
+  It makes possible great performance improvements in some situations, but
+  if the user misdeclares
+  something and consequently the implementation
+  returns a pointer into the stack (or stores it in the heap),
+  an undefined situation may result and the integrity of the Lisp storage
+  mechanism may be compromised. Debugging these situations may be tricky.
+  Users who have asked for this feature have indicated a willingness
+  to deal with such problems; nevertheless, I do not encourage
+  casual users to use this declaration.
+\end{flushdesc}
+\end{newer}
+
+An implementation is free to support other (implementation-dependent)
+declaration specifiers as well.
+On the other hand, a Common Lisp compiler is free to
+ignore entire classes of declaration specifiers (for example,
+implementation-dependent declaration specifiers
+not supported by that compiler's
+implementation), except for the \cd{declaration} declaration specifier.
+Compiler implementors are encouraged, however, to
+program the compiler to issue by default a warning if the compiler finds
+a declaration specifier of a kind it never uses.  Such a warning is required
+in any case
+if a declaration specifier is not one of those defined above and has not been
+declared in a \cd{declaration} declaration.
+
+\section{Type Declaration for Forms}
+
+Frequently it is useful to declare that the value produced
+by the evaluation of some form will be of a particular type.
+Using \cd{declare} one can declare the type of the value
+held by a bound variable, but there is no easy way to declare
+the type of the value of an unnamed form.  For this purpose the \cd{the}
+special form is defined; \cd{(the {\it type} {\it form})} means
+that the value of {\it form} is declared to be of type {\it type}.
+
+\begin{defspec}
+the value-type form
+
+The {\it form} is evaluated; whatever it produces is returned by
+the \cd{the} form.  In addition, it is an error if what is produced
+by the {\it form} does not conform to the data type specified by {\it value-type}
+(which is not evaluated).  (A given implementation may or may not
+actually check for this error.  Implementations are encouraged to make an
+explicit error check when running interpretively.)  In effect, this
+declares that the user undertakes to guarantee that the values of
+the form will always be of the specified type.
+For example:
+\begin{lisp}
+(the string (copy-seq x))~~~~~;{\rm The result will be a string} \\
+(the integer (+ x 3))~~~~~~~~~;{\rm The result of \cd{+} will be an integer} \\
+(+ (the integer x) 3)~~~~~~~~~;{\rm The value of \cd{x} will be an integer} \\
+(the (complex rational) (* z 3)) \\
+(the (unsigned-byte 8) (logand x mask))
+\end{lisp}
+The \cd{values} type specifier may be used to indicate the types
+of multiple values:
+\begin{lisp}
+(the (values integer integer) (floor x y)) \\
+(the (values string t) \\
+~~~~~(gethash the-key the-string-table))
+\end{lisp}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{THE-AMBIGUITY}
+to clarify that {\it value-type} may be any valid type specifier whatsoever.
+The point is that a type specifier need not be one suitable for
+discrimination but only for declaration.
+
+In the case that the {\it form} produces exactly one value and {\it value-type}
+is not a \cd{values} type specifier, one may describe a \cd{the} form
+as being entirely equivalent to
+\begin{lisp}
+(let ((\#1=\#:temp {\it form})) (declare (type {\it value-type} \#1\#)) \#1\#)
+\end{lisp}
+A more elaborate expression could be written to describe the case where
+{\it value-type} is a \cd{values} type specifier.
+\end{newer}
+
+\beforenoterule
+\begin{incompatibility}
+This construct is borrowed from the Interlisp DECL
+package; Interlisp, however, allows an implicit \cd{progn} after the type
+specifier rather than just a single form.  The MacLisp \cd{fixnum-identity}
+and \cd{flonum-identity} constructs can be expressed as \cd{(the fixnum {\it x})}
+and \cd{(the single-float {\it x})}.
+\end{incompatibility}
+\afternoterule
+\end{defspec}

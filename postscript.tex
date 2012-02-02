@@ -1,0 +1,86 @@
+% From: Guy Steele <gls@Think.COM>
+% Date: Mon, 29 Aug 94 10:22:27 EDT
+% To: psz@mit.edu
+% Cc: jmeehan@mv.us.adobe.com, info-mcl@cambridge.apple.com,
+%        gls@Think.COM
+% Subject: File /u/gls/postscript.tex
+
+% PostScript hackery for TeX
+
+\makeatletter
+
+\newcount\@PostScriptCount
+    \@PostScriptCount=0
+\newwrite\@PostScriptFile
+\newdimen\@PostScriptUnit
+\newdimen\@PostScriptUnitCent
+    \@PostScriptUnit=1in\relax
+    \divide\@PostScriptUnit by 72\relax
+
+% Define a PostScript drawing; takes two args but is curried.
+% #1    name for drawing
+% #2    PostScript commands
+
+\def\defPostScript#1{\global\advance\@PostScriptCount by 1\relax
+  \xdef#1{\special{psfile=\@PostScriptDir/\jobname
+                                PS\the\@PostScriptCount.ps}}\relax
+  \begingroup\catcode`\^^A=11\endlinechar=`\^^A\@defPostScript}
+
+\long\def\@defPostScript#1{\newlinechar=`\^^A\relax
+  \immediate\openout\@PostScriptFile=\@PostScriptDir/\jobname
+                                PS\the\@PostScriptCount.ps \relax
+  \immediate\write\@PostScriptFile{#1}\relax
+  \immediate\closeout\@PostScriptFile
+  \endgroup}
+
+\def\PostScriptDirectory#1{\global\def\@PostScriptDir{#1}}
+
+
+
+% #1   width dimen
+% #2   height dimen
+% #3   PostScript gray level
+
+{\catcode`p=12 \catcode`t=12
+ \global\def\@DEPOINTDEF#1#2pt{\def#1{#2 }}}
+
+\def\ShadedRectangle#1#2#3{{\dimen0=#1\relax
+        \dimen1=#2\relax
+        \dimen2=#3pt\relax
+        \divide\dimen0 by 803 \multiply\dimen0 by 800
+        \divide\dimen1 by 803 \multiply\dimen1 by 800
+%       \typeout{dimen0 = \the\dimen0, dimen1 = \the\dimen1,
+%                       dimen2 = \the\dimen2}\relax 
+        \expandafter\def\expandafter\@baz
+            \expandafter{\csname Rect\the\dimen0 \the\dimen1
+                         \the\dimen2\endcsname}\relax
+        \expandafter\@DEPOINTDEF\expandafter\@width\the\dimen0
+        \expandafter\@DEPOINTDEF\expandafter\@height\the\dimen1
+        \expandafter\@DEPOINTDEF\expandafter\@gray\the\dimen2
+        \def\@twiddlescreen{}\relax
+        \ifdim \@gray pt < 1.0 pt \relax
+          \ifdim \@gray pt > .97 pt \relax
+            \def\@twiddlescreen{currentscreen 3 -1 roll
+                                2 div 3 1 roll setscreen }\fi\fi
+        \expandafter\ifx\@baz\relax
+            \edef\@foo
+                { \@twiddlescreen
+                  \@gray setgray
+                  0 0 moveto
+                  0 \@height lineto
+                  \@width \@height lineto
+                  \@width 0 lineto
+                  closepath
+                  fill
+                }\relax
+            \expandafter\expandafter\expandafter\defPostScript\expandafter\@baz
+                \expandafter{\@foo}\relax
+        \fi
+        \@baz
+}}
+
+\def\shadebox(#1,#2)#3{\ShadedRectangle{#1\unitlength}{#2\unitlength}{#3}}
+
+
+\makeatother
+

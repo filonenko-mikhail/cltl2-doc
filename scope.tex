@@ -1,0 +1,381 @@
+%Part{Scope, Root = "CLM.MSS"}
+%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Scope and Extent}
+\label{SCOPE}
+
+In describing various features of the Common Lisp language, the notions of
+{\it scope} and {\it extent} are frequently useful.  These notions arise when
+some object or construct must be referred to from some distant part of a
+program.  {\it Scope} refers to the spatial or textual region of the
+program within which references may occur.  {\it Extent} refers to the
+interval of time during which references may occur.
+
+As a simple example, consider this program:
+\begin{lisp}
+(defun copy-cell (x) (cons (car x) (cdr x)))
+\end{lisp}
+The scope of the parameter named \cd{x} is the body of the \cd{defun} form.
+There is no way to refer to this parameter from any other place but within
+the body of the \cd{defun}.  Similarly, the extent of the parameter \cd{x}
+(for any particular call to \cd{copy-cell}) is the interval from the time
+the function is invoked to the time it is exited.  (In the general case,
+the extent of a parameter may last beyond the time of function exit,
+but that cannot occur in this simple case.)
+
+Within Common Lisp, a referenceable entity is {\it established} by the execution
+of some language construct, and the scope and extent of the entity are
+described relative to the construct and the time (during execution of the
+construct) at which the entity is established.
+For the purposes of this discussion, the term ``entity'' refers not only
+to Common Lisp data objects, such as symbols and conses, but also to
+variable bindings (both ordinary and special), catchers,
+and \cd{go} targets.  It is important to distinguish between
+an entity and a name for the entity.  In a function definition
+such as
+\begin{lisp}
+(defun foo (x y) (* x (+ y 1)))
+\end{lisp}
+there is a single name, \cd{x}, used to refer to the first parameter
+of the procedure whenever it is invoked; however, a new binding
+is established on every invocation.  A {\it binding} is a particular
+parameter instance.  The value of a reference to the name \cd{x}
+depends not only on the scope within which it occurs (the one in
+the body of \cd{foo} in the example occurs in the scope of the
+function definition's parameters) but also on the particular
+binding or instance involved.  (In this case, it depends on the
+invocation during which
+the reference is made).  More complicated examples
+appear at the end of this chapter.
+
+There are a few kinds of scope and extent that are particularly useful
+in describing Common Lisp:
+\begin{itemize}
+\item
+{\it Lexical scope}.  Here references to the established
+entity can occur only within certain program portions that are
+lexically (that is, textually) contained within the establishing construct.
+Typically the construct will have a part designated the {\it body},
+and the scope of all entities established will be (or include) the body.
+
+Example: the names of parameters to a function normally are lexically scoped.
+
+\item
+{\it Indefinite scope}.  References may occur anywhere, in any program.
+
+\item
+{\it Dynamic extent}.  References may occur at any time in the interval
+between establishment of the entity and the explicit disestablishment
+of the entity.  As a rule, the entity is disestablished when execution
+of the establishing construct completes or is otherwise terminated.
+Therefore entities with dynamic extent obey a stack-like discipline,
+paralleling the nested executions of their establishing constructs.
+
+Example: the \cd{with-open-file} construct opens a connection to a file
+and creates a stream object to represent the connection.  The stream object
+has indefinite extent, but the connection to the open file has dynamic extent:
+when control exits the \cd{with-open-file} construct, either normally
+or abnormally, the stream is automatically closed.
+
+Example: the binding of a ``special'' variable has dynamic extent.
+
+\item
+{\it Indefinite extent}.  The entity continues to exist as long as the
+possibility of reference remains.  (An implementation is free to
+destroy the entity if it can prove that reference to it is no longer possible.
+Garbage collection strategies implicitly employ such proofs.)
+
+Example: most Common Lisp data objects have indefinite extent.
+
+Example: the bindings of lexically scoped parameters of a function have
+indefinite extent.  (By contrast, in Algol the bindings of lexically scoped
+parameters of a procedure have dynamic extent.)
+The function definition
+\begin{lisp}
+(defun compose (f g) \\*
+~~\#'(lambda (x) \\*
+~~~~~~(funcall f (funcall g x))))
+\end{lisp}
+when given two arguments, immediately returns a function as its value.
+The parameter bindings for \cd{f} and \cd{g} do not disappear because the
+returned function, when called, could still refer to those bindings.
+Therefore
+\begin{lisp}
+(funcall (compose \#'sqrt \#'abs) -9.0)
+\end{lisp}
+produces the value \cd{3.0}.  (An analogous procedure would not necessarily work
+correctly in typical Algol implementations or, for that matter,
+in most Lisp dialects.)
+\end{itemize}
+
+In addition to the above terms, it is convenient to define {\it dynamic scope}
+to mean {\it indefinite scope and dynamic extent}.  Thus we speak of
+``special'' variables as having dynamic scope, or being dynamically scoped,
+because they have indefinite scope and dynamic extent: a special variable
+can be referred to anywhere as long as its binding is currently
+in effect.
+
+\begin{newer}
+The term ``dynamic scope'' is a misnomer.  Nevertheless
+it is both traditional and useful.
+\end{newer}
+
+The above definitions do not take into account the possibility of
+{\it shadowing}.  Remote reference of entities is accomplished by using
+{\it names} of one kind or another.  If two entities have the same name,
+then the second may shadow the first, in which case an occurrence
+of the name will refer to the second and cannot refer to the first.
+
+In the case of lexical scope,
+if two constructs that establish entities
+with the same name are textually nested, then references within the inner
+construct refer to the entity established by the inner one; the inner one
+shadows the outer one.  Outside the inner construct but inside the outer one,
+references refer to the entity established by the outer construct.
+For example:
+\begin{lisp}
+(defun test (x z) \\
+~~(let ((z (* x 2))) (print z)) \\
+~~z)
+\end{lisp}
+The binding of the variable \cd{z} by the \cd{let} construct shadows
+the parameter binding for the function \cd{test}.  The reference to the
+variable \cd{z} in the \cd{print} form refers to the \cd{let} binding.
+The reference to \cd{z} at the end of the function refers to the parameter
+named \cd{z}.
+
+In the case of dynamic extent, if the time intervals of two entities
+overlap, then one interval will necessarily be nested within the
+other one.  This is a property of the design of Common Lisp.
+
+\beforenoterule
+\begin{implementation}
+Behind the assertion that dynamic extents nest properly
+is the assumption that there is only a single program or process.
+Common Lisp does not address the problems of multiprogramming
+(timesharing) or
+multiprocessing (more than one active processor)
+within a single Lisp environment.  The documentation for
+implementations that extend Common Lisp for multiprogramming or
+multiprocessing should
+be very clear on what modifications are induced by such extensions
+to the rules of extent and scope.
+Implementors should note that Common Lisp has been carefully designed
+to allow special variables to be implemented using either
+the ``deep binding'' technique or the ``shallow binding'' technique,
+but the two techniques have different semantic
+and performance implications for multiprogramming and multiprocessing.
+\end{implementation}
+\afternoterule
+
+A reference by name to an entity with dynamic extent
+will always refer to the entity of that name
+that has been most recently established
+that has not yet been disestablished.
+For example:
+\begin{lisp}
+(defun fun1 (x) \\
+~~(catch 'trap (+ 3 (fun2 x)))) \\
+ \\
+(defun fun2 (y) \\
+~~(catch 'trap (* 5 (fun3 y)))) \\
+ \\
+(defun fun3 (z) \\
+~~(throw 'trap z))
+\end{lisp}
+Consider the call \cd{(fun1 7)}.  The result will be \cd{10}.  At the time
+the \cd{throw} is executed, there are two outstanding catchers with the
+name \cd{trap}: one established within procedure \cd{fun1}, and the other
+within procedure \cd{fun2}.  The latter is the more recent, and so the
+value \cd{7} is returned from the \cd{catch} form in \cd{fun2}.
+Viewed from within \cd{fun3}, the \cd{catch} in \cd{fun2} shadows the one in \cd{fun1}.
+Had \cd{fun2}
+been defined as
+\begin{lisp}
+(defun fun2 (y) \\
+~~(catch 'snare (* 5 (fun3 y))))
+\end{lisp}
+then the two catchers would have different names, and therefore the one
+in \cd{fun1} would not be shadowed.  The result would then have been \cd{7}.
+
+As a rule, this book simply speaks of the scope or extent of an entity;
+the possibility of shadowing is left implicit.
+
+The important scope and extent rules in Common Lisp follow:
+\begin{itemize}
+\item
+Variable bindings normally have lexical scope and indefinite extent.
+\end{itemize}
+
+\begin{newer}
+\begin{itemize}
+\item Variable bindings for which there is a \cd{dynamic-extent}
+declaration also have lexical scope and indefinite extent,
+but objects that are the values of such bindings may have
+dynamic extent.
+(The declaration is the programmer's guarantee that
+the program will behave correctly even if certain of the data objects have only
+dynamic extent rather than the usual indefinite extent.)
+
+\item Bindings of variable names to symbol macros by
+\cd{symbol-macrolet} have lexical scope and indefinite extent.
+\end{itemize}
+\end{newer}
+
+\begin{itemize}
+\item
+Variable bindings that are declared to be \cd{special} have dynamic scope
+(indefinite scope and dynamic extent).
+\end{itemize}
+
+\begin{newer}
+\begin{itemize}
+\item Bindings of function names established, for example, by \cd{flet} and
+\cd{labels} have lexical scope and indefinite extent.
+
+\item Bindings of function names for which there is a \cd{dynamic-extent}
+declaration also have lexical scope and indefinite extent,
+but function objects that are the values of such bindings may have
+dynamic extent.
+
+\item Bindings of function names to macros as established by
+\cd{macrolet} have lexical scope and indefinite extent.
+
+\item Condition handlers and restarts have dynamic scope
+(see chapter~\ref{CONDITION}).
+\end{itemize}
+\end{newer}
+
+\begin{itemize}
+\item
+A catcher established by a \cd{catch}
+or \cd{unwind-protect} special form has dynamic
+scope.
+
+\item
+An exit point established by a \cd{block} construct has lexical
+scope and dynamic extent.  (Such exit points are also established
+by \cd{do}, \cd{prog}, and other iteration constructs.)
+
+\item
+The \cd{go} targets
+established by a \cd{tagbody}, named by the tags in the \cd{tagbody},
+and referred to by \cd{go}
+have lexical scope and dynamic extent.  (Such \cd{go} targets
+may also appear as tags in the bodies of
+\cd{do}, \cd{prog}, and other iteration constructs.)
+
+\item
+Named constants such as \cd{nil} and \cd{pi} have indefinite
+scope and indefinite extent.
+\end{itemize}
+
+The rules of lexical scoping imply that lambda-expressions
+appearing in the \cd{function} construct will,
+in general, result in ``closures''
+over those non-special variables visible to the lambda-expression.
+That is, the function represented by a lambda-expression
+may refer to any lexically apparent non-special variable and get the
+correct value, even if the construct that established the binding
+has been exited in the course of execution.
+The \cd{compose} example shown earlier in this chapter
+provides one illustration of this.
+The rules also imply that special variable bindings are not
+``closed over'' as they may be in certain other dialects of Lisp.
+
+Constructs that use lexical scope effectively
+generate a new name for each established entity on each execution.
+Therefore dynamic shadowing cannot occur (though lexical shadowing may).
+This is of particular importance when dynamic extent is involved.
+For example:
+\begin{lisp}
+(defun contorted-example (f g x) \\
+~~(if (= x 0) \\
+~~~~~~(funcall f) \\
+~~~~~~(block here \\
+~~~~~~~~~(+ 5 (contorted-example g \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\#'(lambda () \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(return-from here 4)) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(- x 1))))))
+\end{lisp}
+Consider the call \cd{(contorted-example nil nil 2)}.  This produces
+the result \cd{4}.  During the course of execution, there are three
+calls on \cd{contorted-example}, interleaved with two establishments
+of blocks:
+\begin{lisp}
+(contorted-example nil nil 2) \\
+ \\
+~~(block here\({}_1\) ...) \\
+ \\
+~~~~(contorted-example nil \#'(lambda () (return-from here\({}_1\) 4)) 1) \\
+ \\
+~~~~~~(block here\({}_2\) ...) \\
+ \\
+~~~~~~~~(contorted-example \#'(lambda () (return-from here\({}_1\) 4)) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~\#'(lambda () (return-from here\({}_2\) 4)) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~0) \\
+~~~~~~~~~~(funcall f) \\
+~~~~~~~~~~~~~~~~{\rm where} f \EV\ \#'(lambda () (return-from here\({}_1\) 4)) \\
+ \\
+~~~~~~~~~~~~(return-from here\({}_1\) 4)
+\end{lisp}
+At the time the \cd{funcall} is executed
+there are two \cd{block} exit points outstanding, each apparently
+named \cd{here}.  In the trace above, these exit points are distinguished
+for expository purposes by subscripts.
+The \cd{return-from} form executed as a result of the \cd{funcall}
+operation
+refers to the {\it outer} outstanding exit point
+(\cd{here\({}_1\)}), not the
+inner one (\cd{here\({}_2\)}).
+This is a consequence of the rules of lexical scoping: it
+refers to that exit point textually visible at the point of
+execution of the \cd{function}
+construct (here abbreviated by the \cd{\#'} syntax) that resulted
+in creation of the function object actually invoked by the \cd{funcall}.
+
+If, in this example, one were to change the form \cd{(funcall f)} to
+\cd{(funcall g)}, then the value of the call \cd{(contorted-example nil nil 2)}
+would be \cd{9}.  The value would change because the \cd{funcall} would cause the
+execution of \cd{(return-from here\({}_2\) 4)}, thereby causing
+a return from the inner exit point (\cd{here\({}_2\)}).
+When that occurs, the value \cd{4} is returned from the
+middle invocation of \cd{contorted-example}, \cd{5} is added to that
+to get \cd{9}, and that value is returned from the outer block
+and the outermost call to \cd{contorted-example}.  The point
+is that the choice of exit point returned from has nothing to do with its
+being innermost or outermost; rather,
+it depends on the lexical scoping information
+that is effectively packaged up with a lambda-expression when the
+\cd{function} construct is executed.
+
+This function \cd{contorted-example} works only because the
+function named by \cd{f} is invoked during the extent of the exit point.
+Block exit points are like non-special variable bindings in having
+lexical scope, but they differ in having dynamic extent rather than indefinite
+extent.  Once the flow of execution has left the block construct,
+the exit point is disestablished.  For example:
+\begin{lisp}
+(defun illegal-example () \\
+~~(let ((y (block here \#'(lambda (z) (return-from here z))))) \\
+~~~~(if (numberp y) y (funcall y 5))))
+\end{lisp}
+One might expect the call \cd{(illegal-example)} to produce \cd{5}
+by the following incorrect reasoning:
+the \cd{let} statement binds the variable \cd{y} to the
+value of the \cd{block} construct; this value is a function resulting
+from the lambda-expression.  Because \cd{y} is not a number, it is
+invoked on the value \cd{5}.  The \cd{return-from} should then
+return this value from the exit point named \cd{here}, thereby
+exiting from the block {\it again} and giving \cd{y} the value \cd{5}
+which, being a number, is then returned as the value of the call
+to \cd{illegal-example}.
+
+The argument fails only because exit points are defined in Common Lisp
+to have dynamic extent.  The argument is correct up to the execution
+of the \cd{return-from}.  The execution of the \cd{return-from} is
+an error, however, {\it not} because it cannot refer to the exit point,
+but because it does correctly refer to an exit point {\it and}
+that exit point has been disestablished.

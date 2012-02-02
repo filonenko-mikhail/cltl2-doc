@@ -1,0 +1,2137 @@
+%%%Chapter of Common Lisp Manual.  Copyright 1989 Guy L. Steele Jr.
+%%% Based on ANSI X3J13 document X3J13/89-004 which in turn is
+%%% based on documentation by Lucid, Inc.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapterauthor{Jon L White}
+
+\chapter{Loop}
+\label{LOOP}
+
+\begin{new}
+\prefaceword
+X3J13 voted in January 1989
+\issue{LOOP-FACILITY}
+to adopt an extended definition of the \cd{loop} macro
+as a part of the forthcoming draft Common Lisp standard.
+\end{new}
+This chapter presents the bulk of the Common Lisp
+Loop Facility proposal, written by Jon L White.  I have
+edited it only very lightly
+to conform to the overall style of this book and have inserted a small
+number of bracketed remarks, identified by the initials GLS.
+(See the Acknowledgments to this second edition for
+acknowledgments to others who contributed to the Loop Facility proposal.)
+
+\noindent\hbox to \textwidth{\hss---Guy L. Steele Jr.}
+\vskip 8pt plus 3pt minus 2pt
+
+\section{Introduction}
+
+A {\it loop\/} is a series of expressions that are executed one or more times,
+a process known as {\it iteration}.
+The {\it Loop Facility\/} defines a
+variety of useful methods, indicated by
+{\it loop keywords}, to iterate and to
+accumulate values in a loop.
+
+
+Loop keywords are not true Common Lisp keywords; they are symbols that
+are recognized by the Loop Facility and that provide such capabilities
+as controlling the direction of iteration, accumulating values inside
+the body of a loop, and evaluating expressions that precede or follow
+the loop body.  If you do not use any loop keywords, the Loop Facility
+simply executes the loop body repeatedly.
+
+
+\section{How the Loop Facility Works}
+
+The driving element of the Loop Facility is the \cd{loop} macro.
+When Lisp encounters a \cd{loop} macro call
+form, it invokes the Loop Facility and passes to it the loop clauses
+as a list of unevaluated forms, as with any macro.
+The loop clauses contain Common Lisp forms and loop keywords.  The
+loop keywords are recognized by their symbol name, regardless of the
+packages that contain them.  The \cd{loop} macro translates the
+given form into Common Lisp code and returns the expanded form.
+
+The expanded loop form is
+one or more lambda-expressions for the local binding of loop variables
+and a block and a tagbody that express a looping control structure.   
+  The variables established in the loop construct are bound as
+  if by using \cd{let} or \cd{lambda}.  Implementations can interleave the
+  setting of initial values with the bindings.  However, the assignment
+  of the initial values is always calculated in the order specified by
+  the user.  A variable is thus sometimes bound to a harmless value of the
+  correct data type, and then later in the prologue it is set to the true
+  initial value by using \cd{setq}.
+
+The expanded form consists of three basic parts in the tagbody:
+
+\begin{itemize}
+\item
+The {\it loop prologue\/} contains forms that are executed before iteration begins, 
+such as initial settings of loop variables and possibly an initial
+termination test.
+
+\item
+The {\it loop body\/}  contains those forms that are executed during iteration, 
+including application-specific calculations, termination tests,
+and variable stepping.  {\it Stepping\/} is the process of assigning a
+variable the next item in a series of items.
+
+\item
+The {\it loop epilogue} contains forms that are executed after iteration 
+terminates,
+such as code to return values from the loop.
+\end{itemize}
+
+
+Expansion of the \cd{loop} macro produces an implicit block 
+(named \cd{nil}).
+Thus, the Common Lisp macro \cd{return} and the special form 
+\cd{return-from} can be 
+used to return values from a loop or to exit a loop.
+
+  Within the executable parts of loop clauses and around the entire
+  loop form, you can still bind variables by using the Common Lisp
+  special form \cd{let}.
+
+
+
+  \section{Parsing Loop Clauses}
+
+  The syntactic parts of a loop construct are called {\it clauses}; the scope
+  of each clause is determined by the top-level parsing of that clause's
+  keyword.  The following example shows a loop construct with six
+  clauses:
+
+\begin{lisp}
+(loop for i from 1 to (compute-top-value)~~~~~~~~~;{\rm First clause} \\*
+~~~~~~while (not (unacceptable i))~~~~~~~~~~~~~~~~;{\rm Second clause} \\*
+~~~~~~collect (square i)~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Third clause} \\*
+~~~~~~do (format t "Working on {\Xtilde}D now" i)~~~~~~~~~;{\rm Fourth clause} \\*
+~~~~~~when (evenp i)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Fifth clause} \\*
+~~~~~~~~do (format t "{\Xtilde}D is a non-odd number" i) \\*
+~~~~~~finally (format t "About to exit!"))~~~~~~~~;{\rm Sixth clause}
+\end{lisp}
+
+
+  Each loop keyword introduces either a compound loop clause or a simple
+  loop clause that can consist of a loop keyword followed by a 
+  single Lisp form.  The number of
+  forms in a clause is determined by the loop keyword that begins the
+  clause and by the auxiliary keywords in the clause.  The keywords
+  \cd{do}, \cd{initially}, and \cd{finally} are the only loop
+  keywords that can take any number of Lisp forms and group them as if
+  in a single \cd{progn} form.
+
+  Loop clauses can contain auxiliary keywords, which are sometimes
+  called {\it prepositions}.  For example, the first clause in the preceding code
+  includes the prepositions \cd{from} and \cd{to}, which mark
+  the value from which stepping begins and the value at which stepping
+  ends.
+
+  \subsection{Order of Execution}
+
+  With the exceptions listed below, clauses are executed in the loop body
+  in the order in which they appear in the source.  Execution is repeated 
+  until a clause
+  terminates the loop or until a Common Lisp \cd{return},
+  \cd{go}, or \cd{throw} form is encountered.  The following actions are
+  exceptions to the linear order of execution:
+
+  \begin{itemize}
+
+  \item
+  All variables are initialized first, regardless of where the establishing
+  clauses appear in the source.  The order of initialization follows the
+  order of these clauses.
+
+  \item
+  The code for any \cd{initially} clauses is collected
+  into one \cd{progn} in the order in which the clauses appear in
+  the source.  The collected code is executed once in the loop prologue
+  after any implicit variable initializations.
+
+  \item
+  The code for any \cd{finally} clauses is collected 
+  into one \cd{progn} in the order in which the clauses appear in
+  the source.  The collected code is executed once in the loop epilogue
+  before any implicit values from the accumulation clauses are returned.
+  Explicit returns anywhere in the source, however, will exit the loop
+  without executing the epilogue code.
+
+  \item 
+  A \cd{with} clause introduces a variable binding and an optional
+  initial value.  The initial values are calculated in the order in
+  which the \cd{with} clauses occur.
+
+  \item 
+  Iteration control clauses implicitly perform the following actions:
+  \begin{itemize}
+  \item
+  initializing variables
+
+  \item
+  stepping variables, generally between each execution of the loop body
+
+  \item
+  performing termination tests, generally just before the execution of the
+  loop body
+  \end{itemize}
+  \end{itemize}
+
+  \subsection{Kinds of Loop Clauses}
+\label{LOOP-KINDS-SECTION}
+
+  Loop clauses fall into one of the following categories:
+
+  \begin{itemize}
+
+  \item 
+  variable initialization and stepping
+
+  \begin{itemize}
+  \item
+  The \cd{for} and \cd{as} constructs provide iteration control clauses
+  that establish a variable to be initialized.
+  You can combine \cd{for} and \cd{as} clauses with the loop
+  keyword \cd{and} to get parallel initialization and stepping.
+
+  \item
+  The \cd{with} construct is similar to a single \cd{let} clause.
+  You can combine \cd{with} clauses using
+  \cd{and} to get parallel initialization.
+
+  \item
+  The \cd{repeat} construct causes iteration to terminate after a specified
+   number of times.  It uses an internal variable to keep track of the
+   number of iterations.
+  \end{itemize}
+
+  You can specify data types for loop variables (see
+  section~\ref{LOOP-TYPES-SECTION}).
+  It is an error to bind the same variable twice in any variable-binding
+  clause of a single loop expression.  Such variables include
+  local variables, iteration control variables, and variables found by
+  destructuring.
+
+
+  \item value accumulation
+
+  \begin{itemize}
+  \item The \cd{collect} construct takes one form in its clause
+  and adds the value of that form to the end of a list of values.  By
+  default, the list of values is returned when the loop finishes.
+
+  \item
+  The \cd{append} construct  takes one form in its clause
+  and appends the value of that form to the end of a list of values.  By
+  default, the list of values is returned when the loop finishes.
+
+  \item The \cd{nconc} construct is similar to \cd{append}, but
+  its list values are concatenated as if by the Common Lisp function
+  \cd{nconc}.  By
+  default, the list of values is returned when the loop finishes.
+
+  \item The \cd{sum} construct takes one form in its clause that
+  must evaluate to a number and adds that number into a running total.
+  By default, the cumulative sum is returned when the loop finishes.
+
+  \item 
+  The \cd{count} construct takes one form in its clause and counts the
+  number of times that the form evaluates to a non-\cd{nil} value.  By
+  default, the count is returned when the loop finishes.
+
+  \item
+  The \cd{minimize} construct takes one form in its clause and determines
+  the minimum value obtained by evaluating that form.  By default, the
+  minimum value is returned when the loop finishes.
+
+  \item
+  The \cd{maximize} construct takes one form in its clause and 
+  determines the maximum value obtained by evaluating that form.  By
+  default, the maximum value is returned when the loop finishes.
+  \end{itemize}
+
+  \item
+  termination conditions
+
+  \begin{itemize}
+  \item
+  The \cd{loop-finish} Lisp macro terminates iteration and returns any
+  accumulated result.  If specified, any \cd{finally} clauses are evaluated.
+
+  \item
+  The \cd{for} and \cd{as} constructs provide a termination test
+  that is determined by the iteration control clause.
+
+  \item
+   The \cd{repeat} construct causes termination after a specified
+  number of iterations.
+
+  \item 
+  The \cd{while} construct takes one form, a condition, and terminates
+  the iteration if
+  the condition evaluates to \cd{nil}.  A \cd{while} clause is
+  equivalent to the expression \cd{(if~(not~{\it condition}) (loop-finish))}.  
+
+  \item 
+   The \cd{until} construct is the inverse of \cd{while};
+   it terminates the iteration if the condition evaluates to any non-\cd{nil}
+   value.  An \cd{until} clause is equivalent to the expression
+  \cd{(if~{\it condition} (loop-finish))}.
+
+  \item
+  The \cd{always} construct takes one form and terminates the loop 
+  if the form ever evaluates to \cd{nil}; in this case, it returns
+  \cd{nil}.  Otherwise, it provides a default return value of \cd{t}.
+
+  \item
+  The \cd{never} construct takes one form and terminates the loop
+  if the form ever evaluates to non-\cd{nil}; in this case, it returns
+  \cd{nil}.  Otherwise, it provides a default return value of \cd{t}.
+
+  \item
+  The \cd{thereis} construct takes one form and terminates the loop
+  if the form ever evaluates to non-\cd{nil}; in this case, it returns
+  that value.
+  \end{itemize}
+
+  \item unconditional execution
+
+  \begin{itemize}
+  \item
+  The \cd{do} construct simply evaluates all forms in its clause.
+
+  \item
+  The \cd{return} construct takes one form and returns its value.  It is 
+  equivalent to the clause \cd{do (return {\it value})}.
+  \end{itemize}
+
+  \item conditional execution
+
+  \begin{itemize}
+  \item
+  The \cd{if} construct takes one form as a predicate and a clause that 
+  is executed when the predicate is true. The clause can be a value 
+  accumulation, unconditional, or another conditional clause; it can also
+  be any combination of such clauses connected by the loop keyword \cd{and}.
+
+  \item
+  The \cd{when} construct is a synonym for \cd{if}.
+
+  \item
+  The \cd{unless} construct is similar to \cd{when} except that it complements
+  the predicate; it executes the following clause if the predicate is false.
+
+  \item
+  The \cd{else} construct provides an optional component of \cd{if},
+  \cd{when}, and \cd{unless} clauses that is executed when the
+  predicate is false.  The component is one of the clauses described under
+  \cd{if}.
+
+  \item
+  The \cd{end} construct provides an optional component to mark the
+  end of a conditional clause.
+  \end{itemize}
+
+  \item miscellaneous operations
+
+  \begin{itemize}
+  \item The \cd{named} construct assigns a name to a loop construct.
+
+  \item The \cd{initially} construct causes its forms to be evaluated
+   in the loop prologue, which precedes all loop code except for initial 
+   settings specified by the constructs \cd{with}, \cd{for}, or \cd{as}.
+
+  \item  The \cd{finally} construct causes its forms to be evaluated
+   in the loop epilogue after normal iteration terminates.  An unconditional
+   clause can also follow the loop keyword \cd{finally}.
+  \end{itemize}
+  \end{itemize}
+
+
+
+  \subsection{Loop Syntax}
+
+  The following syntax description provides an overview of the syntax
+  for loop clauses.  Detailed syntax descriptions of individual clauses
+  appear in sections~\ref{LOOP-ITERATION-SECTION} through~\ref{LOOP-MISC-SECTION}.
+  A loop consists of the
+  following types of clauses:
+
+\begin{tabbing}
+{\it initial-final\/} ::= {\it initially\/} {\Mor} {\it finally\/} \\*
+{\it variables\/} ::= {\it with\/} {\Mor} {\it initial-final\/} {\Mor} {\it for-as\/} {\Mor} {\it repeat} \\*
+{\it main\/} ::= {\it unconditional\/} {\Mor} {\it accumulation\/} {\Mor} {\it conditional\/} 
+      {\Mor} {\it termination\/} {\Mor} {\it initial-final\/} \\*
+{\it loop\/} ::= \cd{(loop \Mopt{\cd{named {\it name\/}}} \Mstar{\it variables\/} \Mstar{\it main\/})}
+\end{tabbing}
+
+Note that a loop must have at least one clause; however, for
+backward compatibility, the following format is also supported:
+\begin{lisp}
+(loop \Mstar{{\it tag} {\Mor} {\it expr}})
+\end{lisp}
+where {\it expr} is any Common Lisp expression that can be evaluated, and 
+{\it tag} is any symbol not identifiable as a loop keyword.  Such a format
+is roughly equivalent to the following one:
+
+\begin{lisp}
+(loop do \Mstar{{\it tag} {\Mor} {\it expr}})
+\end{lisp}
+
+  A loop prologue consists of any automatic variable initializations prescribed 
+  by the {\it variable\/} clauses, along with any {\it initially\/} clauses
+  in the order they appear in the source.
+
+  A loop epilogue consists of {\it finally\/} clauses, if any, along
+  with any implicit return value from an {\it accumulation\/} clause or
+  an {\it end-test\/} clause.
+
+
+  \section{User Extensibility}
+
+  There is currently no specified portable method for users to add
+  extensions to the Loop Facility.  The names \cd{defloop} and
+  \cd{define-loop-method} have been suggested as candidates for such a method.
+
+
+
+\section{Loop Constructs}
+
+The remaining sections of this chapter describe the constructs that the Loop Facility
+provides.  The descriptions are organized according to the functionality
+of the constructs.  Each section begins with a general discussion of
+a particular operation; it then presents the constructs that perform the 
+operation.
+
+\begin{itemize}
+
+\item Section~\ref{LOOP-ITERATION-SECTION},
+``Iteration Control,'' describes iteration
+control clauses that allow directed loop iteration.  
+
+\item Section~\ref{LOOP-TEST-SECTION}, ``End-Test Control,'' 
+describes clauses that stop iteration by providing a conditional expression
+that can be tested after each execution of the loop body.  
+
+\item Section~\ref{LOOP-ACCUM-SECTION},
+``Value Accumulation,'' describes constructs
+that accumulate values during iteration and return them from a loop.  This section also
+discusses ways in which accumulation clauses can be combined within the
+Loop Facility.  
+
+\item Section~\ref{LOOP-VAR-SECTION},
+``Variable Initializations,'' describes the \cd{with} 
+construct, which provides local variables for use within the loop
+body, and other constructs that provide local variables.
+
+\item Section~\ref{LOOP-COND-SECTION},
+``Conditional Execution,'' describes how to execute loop
+clauses conditionally.
+
+\item Section~\ref{LOOP-UNCOND-SECTION},
+``Unconditional Execution,'' describes the \cd{do}
+and \cd{return} constructs.  It also describes constructs that are
+used in the loop prologue and loop epilogue.
+
+\item Section~\ref{LOOP-MISC-SECTION},
+``Miscellaneous Features,'' discusses loop data types
+and destructuring.  It also presents constructs for naming a loop and
+for specifying initial and final actions.
+\end{itemize}
+
+
+\section{Iteration Control}
+\label{LOOP-ITERATION-SECTION}
+
+Iteration control clauses allow you to direct loop iteration.  The
+loop keywords \cd{as}, \cd{for}, and \cd{repeat} designate iteration control clauses.
+
+Iteration control clauses differ with respect to the specification of
+termination conditions and the initialization and stepping
+of loop variables.  Iteration clauses by themselves
+do not cause the Loop Facility to return values, but they
+can be used in conjunction with value-accumulation clauses to
+return values (see section~\ref{LOOP-ACCUM-SECTION}).
+
+All variables are initialized in the loop prologue.  The scope of
+the variable binding is {\it lexical} unless it is proclaimed
+special; thus, the variable can be
+accessed only by expressions that lie textually within the loop.
+Stepping assignments are made in the loop body before any other expressions
+are evaluated in the body.
+
+The variable argument in iteration control clauses can be a 
+{\it destructuring list}.  A destructuring list
+is a tree whose non-null atoms are symbols that
+can be assigned a value (see section~\ref{LOOP-DESTRUCTURING-SECTION}).
+
+The iteration control clauses \cd{for}, \cd{as}, and \cd{repeat} 
+must precede any other loop clauses except
+\cd{initially}, \cd{with}, and \cd{named},
+since they establish variable bindings.  When iteration control clauses are
+used in a loop, termination tests in the loop body are evaluated
+before any other loop body code is executed.
+
+If you use multiple iteration clauses to control iteration, variable
+initialization and stepping occur sequentially by default.  
+You can use the \cd{and} construct to connect two or more
+iteration clauses when sequential binding and stepping are not necessary.
+The iteration behavior of clauses joined by \cd{and}
+is analogous to the behavior of the Common Lisp macro \cd{do}
+relative to \cd{do*}.
+
+[X3J13 voted in March 1989 \issue{LOOP-AND-DISCREPANCY} to correct a minor
+inconsistency in the original syntactic specification for \cd{loop}.  Only \cd{for}
+and \cd{as} clauses (not \cd{repeat} clauses) may be joined by the \cd{and} construct. The
+precise syntax is as follows.
+\begin{tabbing}
+{\it for-as\/} ::= \Mgroup{\cd{for} {\Mor} \cd{as}} {\it for-as-subclause\/} \Mstar{\cd{and} {\it for-as-subclause\/}} \\*
+\pushtabs{\it for-as-subclause\/} ::= \={\it for-as-arithmetic\/} {\Mor} {\it for-as-in-list\/} \\*
+\>\hbox to 0pt{\hss\Mor~}{\it for-as-on-list\/} {\Mor} {\it for-as-equals-then\/}  \\*
+\>\hbox to 0pt{\hss\Mor~}{\it for-as-across\/} {\Mor} {\it for-as-hash\/} {\Mor} {\it for-as-package\/} \poptabs \\
+\pushtabs{\it for-as-arithmetic\/} ::= \={\it var\/} \Mopt{type-spec} \Mopt{\Mgroup{\cd{from} {\Mor} \cd{downfrom} {\Mor} \cd{upfrom}} expr1} \\*
+\>\Mopt{\Mgroup{\cd{to} {\Mor} \cd{downto} {\Mor} \cd{upto} {\Mor} \cd{below} {\Mor} \cd{above}} expr2} \\*
+\>\Mopt{\cd{by} expr3} \poptabs \\
+{\it for-as-in-list\/} ::= {\it var\/} \Mopt{type-spec} \cd{in} {\it expr1\/} \Mopt{\cd{by} step-fun} \\
+{\it for-as-on-list\/} ::= {\it var\/} \Mopt{type-spec} \cd{on} {\it expr1\/} \Mopt{\cd{by} step-fun} \\
+{\it for-as-equals-then\/} ::= {\it var\/} \Mopt{type-spec} \cd{=} {\it expr1\/} \Mopt{\cd{then} step-fun} \\
+{\it for-as-across\/} ::= {\it var\/} \Mopt{type-spec} \cd{across} {\it vector\/} \\
+\pushtabs{\it for-as-hash\/} ::= \={\it var\/} \Mopt{type-spec} \cd{being} \Mgroup{\cd{each} {\Mor} \cd{the}} \\*
+\>\Mgroup{\cd{hash-key} {\Mor} \cd{hash-keys} {\Mor} \cd{hash-value} {\Mor} \cd{hash-values}} \\*
+\>\Mgroup{\cd{in} {\Mor} \cd{of}} {\it hash-table\/} \\*
+\>\Mopt{\cd{using} \cd{(}\Mgroup{\cd{hash-value} {\Mor} \cd{hash-key}} other-var\/\cd{)}} \poptabs \\
+\pushtabs{\it for-as-package\/} ::= \={\it var\/} \Mopt{type-spec} \cd{being} \Mgroup{\cd{each} {\Mor} \cd{the}} \\*
+\>{\it for-as-package-keyword\/} \\*
+\>\Mgroup{\cd{in} {\Mor} \cd{of}} {\it package\/} \poptabs \\
+\pushtabs{\it for-as-package-keyword\/} ::= \=\cd{symbol} {\Mor} \cd{present-symbol} {\Mor} \cd{external-symbol} \\*
+\>\hbox to 0pt{\hss\Mor~}\cd{symbols} {\Mor} \cd{present-symbols} {\Mor} \cd{external-symbols} \poptabs
+\end{tabbing}
+This correction made \cd{for} and \cd{as} clauses syntactically
+similar to \cd{with} clauses.  I have changed all examples in this
+chapter to reflect the corrected syntax.---GLS]
+
+In the following example, the variable \cd{x} is stepped
+before \cd{y} is stepped; thus, the value of \cd{y}
+reflects the updated value of \cd{x}:
+\begin{lisp}
+(loop for x from 1 to 9 \\*
+~~~~~~for y = nil then x  \\*
+~~~~~~collect (list x y)) \\*
+~~~\EV~((1 NIL) (2 2) (3 3) (4 4) (5 5) (6 6) (7 7) (8 8) (9 9))
+\end{lisp}
+
+In the following example, \cd{x} and \cd{y} are stepped in parallel:
+\begin{lisp}
+(loop for x from 1 to 9 \\*
+~~~~~~and y = nil then x \\*
+~~~~~~collect (list x y)) \\*
+~~~\EV~((1 NIL) (2 1) (3 2) (4 3) (5 4) (6 5) (7 6) (8 7) (9 8))
+\end{lisp}
+
+The \cd{for} and \cd{as} clauses iterate by using one or more local 
+loop  variables that are initialized to some value and that 
+can be modified or stepped after each iteration.  
+For these clauses, iteration terminates when a local
+variable reaches some specified value or when some other loop clause
+terminates iteration.  At each iteration, variables can be stepped by an
+increment or a decrement or can be assigned a new value by 
+the evaluation of 
+an expression.  Destructuring can be used to assign initial values to 
+variables during iteration.
+
+The \cd{for} and \cd{as} keywords are synonyms and may be used
+interchangeably.  There are
+seven syntactic representations for these constructs.
+In each syntactic description, the data type of
+{\it var\/} can be specified by the optional {\it type-spec\/}
+argument.  If {\it var\/} is a destructuring list, the data type
+specified by the {\it type-spec\/} argument must appropriately match
+the elements of the list (see sections~\ref{LOOP-TYPES-SECTION}
+and~\ref{LOOP-DESTRUCTURING-SECTION}).
+
+\begin{defloop}
+for var [type-spec] [{\!from! | \!downfrom! | \!upfrom!} expr1]
+                    [{\!to! | \!downto! | \!upto! | \!below! | \!above!} expr2]
+                    [\!by! expr3] \\
+as var [type-spec] [{\!from! | \!downfrom! | \!upfrom!} expr1]
+                   [{\!to! | \!downto! | \!upto! | \!below! | \!above!} expr2]
+                   [\!by! expr3]
+
+[This is the first of seven \cd{for}/\cd{as} syntaxes.---GLS]
+
+The \cd{for} or \cd{as} construct iterates from the value specified by
+{\it expr1\/} to the value specified by {\it expr2\/} in increments or
+decrements denoted by {\it expr3}. Each
+expression is evaluated only once and must evaluate to a number.  
+
+The variable {\it var\/} is bound to the value of 
+{\it expr1\/} in the first iteration and is stepped
+by the value of {\it expr3\/} in each succeeding iteration,
+or by 1 if {\it expr3\/} is not provided.  
+
+The following loop keywords serve as valid prepositions within this 
+syntax.
+
+\begin{flushdesc}
+\item[\cd{from}]
+The loop keyword \cd{from} marks the value from which
+stepping begins, as specified by {\it expr1}.  
+Stepping is incremental by default.  For
+decremental stepping, use \cd{above}
+or \cd{downto} with {\it expr2}.  For incremental
+stepping, the default \cd{from} value is \cd{0}.
+
+\item[\cd{downfrom}, \cd{upfrom}]
+The loop keyword \cd{downfrom} 
+indicates that the variable {\it var\/} is decreased in decrements
+specified by {\it expr3}; the loop keyword \cd{upfrom} indicates that 
+{\it var\/} is increased in increments specified by {\it expr3}.
+
+\item[\cd{to}]
+The loop keyword \cd{to} marks the end value for stepping specified in 
+{\it expr2}. Stepping is incremental by default.  For
+decremental stepping, use \cd{downto},
+\cd{downfrom}, or \cd{above} with {\it expr2}.
+
+\item[\cd{downto}, \cd{upto}]
+The loop keyword \cd{downto} allows iteration to proceed
+from a larger number to a smaller number by the decrement 
+{\it expr3}.  The loop keyword \cd{upto} allows iteration to proceed
+from a smaller number to a larger number by the increment {\it expr3}.
+Since there is no default for {\it expr1\/} in decremental stepping,
+you must supply a value with \cd{downto}.
+
+\item[\cd{below}, \cd{above}]
+The loop keywords \cd{below} and \cd{above} are analogous to
+\cd{upto} and \cd{downto}, respectively.  These keywords stop
+iteration just before the value of the variable {\it var} reaches the value 
+specified by {\it expr2\/}; the end value of {\it expr2\/} is not included.
+Since there is no default for {\it expr1\/} in decremental stepping,
+you must supply a value with \cd{above}.
+
+\item[\cd{by}]
+The loop keyword \cd{by} marks the increment or decrement specified by
+{\it expr3}.  The value of {\it expr3\/} can be any positive number.
+The default value is \cd{1}.
+\end{flushdesc}
+
+At least one of these prepositions must be used with this syntax.
+
+In an iteration control clause, the \cd{for} or \cd{as} construct
+causes termination when the specified limit is reached.  That is,
+iteration continues until the value {\it var\/} is stepped to the
+exclusive or inclusive limit specified by {\it expr2\/}.  The range is
+{\it exclusive\/} if {\it expr3\/} increases or decreases {\it var\/}
+to the value of {\it expr2\/} without reaching that value; the loop
+keywords \cd{below} and \cd{above} provide exclusive limits.  An
+{\it inclusive\/} limit allows {\it var\/} to attain the value of
+{\it expr2}; \cd{to}, \cd{downto}, and \cd{upto} provide inclusive
+limits.
+
+A common convention is to use \cd{for} to introduce new iterations and \cd{as}
+to introduce iterations that depend on a previous iteration specification.
+[However, \cd{loop} does not enforce this convention, and some of the examples
+below violate it.  {\it De gustibus non disputandum est.}---GLS]
+
+Examples:
+\begin{lisp}
+;;; Print some numbers. \\[3pt]
+(loop as i from 1 to 5 \\*
+~~~~~~do (print i)) \`;{\rm Prints 5 lines} \\
+1 \\*
+2 \\*
+3 \\*
+4 \\*
+5 \\*
+~~~\EV~NIL \\
+ \\
+;;; Print every third number. \\[3pt]
+(loop for i from 10 downto 1 by 3 \\*
+~~~~~~do (print i)) \`;{\rm Prints 4 lines}\\
+10  \\*
+7  \\*
+4  \\*
+1  \\*
+~~~\EV~NIL
+\end{lisp}
+
+\begin{lisp}
+;;; Step incrementally from the default starting value. \\[3pt]
+(loop as i below 5 \\*
+~~~~~~do (print i)) \`;{\rm Prints 5 lines} \\
+0 \\*
+1 \\*
+2 \\*
+3 \\*
+4 \\*
+~~~\EV~NIL
+\end{lisp}
+\end{defloop}
+
+\begin{defloop}
+for var [type-spec] \!in! expr1 [\!by! step-fun] \\
+as var [type-spec] \!in! expr1 [\!by! step-fun]
+
+[This is the second of seven \cd{for}/\cd{as} syntaxes.---GLS]
+
+This construct iterates over the contents of a list.  It checks for 
+the end of the list as if using the Common Lisp function \cd{endp}.  
+The variable {\it var\/} is bound to the successive elements  of 
+the list {\it expr1\/} before each
+iteration.  At the end of each iteration, the function {\it step-fun\/}
+is called on the list and is expected to produce a successor list;
+the default value for {\it step-fun\/} is the \cd{cdr} function.
+
+The \cd{for} or \cd{as} construct causes termination when the
+end of the list is reached.
+The loop keywords \cd{in} and \cd{by} serve as valid prepositions in
+this syntax.
+
+Examples:
+\begin{lisp}
+;;; Print every item in a list. \\[3pt]
+(loop for item in '(1 2 3 4 5) do (print item)) \`;{\rm Prints 5 lines} \\
+1 \\*
+2 \\*
+3 \\*
+4 \\*
+5 \\*
+~~~\EV~NIL \\
+ \\
+;;; Print every other item in a list. \\[3pt]
+(loop for item in '(1 2 3 4 5) by \#'cddr \\*
+~~~~~~do (print item))  \`;{\rm Prints 3 lines} \\
+1 \\*
+3 \\*
+5 \\*
+~~~\EV~NIL
+\end{lisp}
+\begin{lisp}
+;;; Destructure items of a list, and sum the x values \\*
+;;; using fixnum arithmetic. \\*
+(loop for (item . x) (t . fixnum) \\*
+~~~~~~~~~~in '((A . 1) (B . 2) (C . 3)) \\*
+~~~~~~unless (eq item 'B) sum x) \\*
+~~~\EV~4
+\end{lisp}
+\end{defloop}
+
+\begin{defloop}
+for var [type-spec] \!on! expr1 [\!by! step-fun] \\
+as var [type-spec] \!on! expr1 [\!by! step-fun]
+
+[This is the third of seven \cd{for}/\cd{as} syntaxes.---GLS]
+
+This construct iterates over the contents of a list. It checks for the
+end of the list as if using the Common Lisp function 
+\cd{endp}.  
+The variable {\it var\/} is bound to the successive tails of the list
+{\it expr1}.  At the end of each iteration, the function {\it step-fun\/}
+is called on the list and is expected to produce a successor list;
+the default value for {\it step-fun\/} is the \cd{cdr} function.
+
+The loop keywords \cd{on} and \cd{by} serve as valid
+prepositions in this syntax.
+The \cd{for} or \cd{as} construct causes termination when the
+end of the list is reached.
+
+Examples:
+\begin{lisp}
+;;; Collect successive tails of a list. \\*
+(loop for sublist on '(a b c d) \\*
+~~~~~~collect sublist) \\*
+~~~\EV~((A B C D) (B C D) (C D) (D)) \\
+ \\
+;;; Print a list by using destructuring with the loop keyword ON. \\*
+(loop for (item) on '(1 2 3) \\*
+~~~~~~do (print item))  \`;{\rm Prints 3 lines}\\
+1  \\*
+2  \\*
+3  \\*
+~~~\EV~NIL \\
+ \\
+;;; Print items in a list without using destructuring. \\*
+(loop for item in '(1 2 3) \\*
+~~~~~~do (print item))  \`;{\rm Prints 3 lines}\\
+1  \\*
+2  \\*
+3  \\*
+~~~\EV~NIL
+\end{lisp}
+\end{defloop}
+
+\begin{defloop}
+for var [type-spec] \!\Xequal! expr1 [\!then! expr2] \\
+as var [type-spec] \!\Xequal! expr1 [\!then! expr2]
+
+[This is the fourth of seven \cd{for}/\cd{as} syntaxes.---GLS]
+
+
+  This construct initializes the variable {\it var\/} by setting it to the
+  result of evaluating {\it expr1\/} on the first iteration, then setting
+  it to the result of evaluating {\it expr2\/} on the second and
+  subsequent iterations.  If {\it expr2\/} is omitted, the construct
+  uses {\it expr1\/} on the second and
+  subsequent iterations.  When {\it expr2\/} is omitted, the expanded
+  code shows the following optimization:
+
+\begin{lisp}
+;;; Sample original code: \\*
+(loop for x = {\it expr1\/} then {\it expr2\/} do (print x))
+\end{lisp}
+\begin{lisp}
+;;; The usual expansion: \\*
+(tagbody \\*
+~~~~~~(setq x {\it expr1\/}) \\*
+~~tag (print x) \\*
+~~~~~~(setq x {\it expr2\/}) \\*
+~~~~~~(go tag))
+\end{lisp}
+\begin{lisp}
+;;; The optimized expansion: \\*
+(tagbody \\*
+~~tag (setq x {\it expr1\/}) \\*
+~~~~~~(print x) \\*
+~~~~~~(go tag))
+\end{lisp}
+
+The loop keywords \cd{=} and  \cd{then} serve as valid prepositions
+in this syntax.
+This construct does not provide any termination conditions.
+
+Example:
+\begin{lisp}
+;;; Collect some numbers. \\*
+(loop for item = 1 then (+ item 10) \\*
+~~~~~~repeat 5 \\*
+~~~~~~collect item) \\*
+~~~\EV~(1 11 21 31 41)
+\end{lisp}
+\end{defloop}
+
+
+\begin{defloop}
+for var [type-spec] \!across! vector \\
+as var [type-spec] \!across! vector
+
+[This is the fifth of seven \cd{for}/\cd{as} syntaxes.---GLS]
+
+    This construct binds the variable {\it var\/} to
+    the value of each element in the array {\it vector}.
+
+  The loop keyword \cd{across} marks the array {\it vector}; \cd{across}
+  is used as a preposition in this syntax.
+  Iteration stops when there are no more elements in the specified
+  array that can be referenced.
+
+  Some implementations might use a [user-supplied---GLS] \cd{the} special form
+  in the {\it vector} form to produce more efficient code.
+
+  Example:
+\begin{lisp}
+(loop for char across (the simple-string (find-message port)) \\*
+~~~~~~do (write-char char stream))
+\end{lisp}
+\end{defloop}
+
+\begin{defloop}
+for var [type-spec] \!being! {\!each! | \!the!}
+                    {\!hash-key! | \!hash-keys! | \!hash-value! | \!hash-values!}
+                    {\!in! | \!of!} hash-table [\!using! ({\!hash-value! | \!hash-key!} other-var)] \\
+as var [type-spec] \!being! {\!each! | \!the!}
+                    {\!hash-key! | \!hash-keys! | \!hash-value! | \!hash-values!}
+                    {\!in! | \!of!} hash-table [\!using! ({\!hash-value! | \!hash-key!} other-var)]
+
+[This is the sixth of seven \cd{for}/\cd{as} syntaxes.---GLS]
+
+This construct iterates over the elements, keys, and values of a hash
+table.  The variable {\it var\/} takes on the value of each hash key
+or hash value in the specified hash table. 
+
+The following loop keywords serve as valid prepositions within this syntax.
+
+\begin{flushdesc}
+\item[\cd{being}]
+The keyword \cd{being} marks the loop method to be used, either 
+\cd{hash-key} or \cd{hash-value}.
+
+\item[\cd{each}, \cd{the}]
+For purposes of readability, the loop keyword \cd{each}
+should follow the loop keyword \cd{being} when \cd{hash-key} or
+\cd{hash-value} is used.  The loop keyword \cd{the} is used with
+\cd{hash-keys} and \cd{hash-values}.
+
+\item[\cd{hash-key}, \cd{hash-keys}]
+These loop keywords access each key entry of the hash table.  If
+the name \cd{hash-value} is specified in a \cd{using} construct with one
+of these loop methods, the iteration can optionally access the keyed
+value. The order in which the keys are accessed is undefined; empty
+slots in the hash table are ignored.
+
+\item[\cd{hash-value}, \cd{hash-values}]
+These loop keywords access each value entry of a hash table.  If
+the name \cd{hash-key} is specified in a \cd{using} construct with one of
+these loop methods, the iteration can optionally access the key that
+corresponds to the value.  The order in which the keys are accessed is
+undefined; empty slots in the hash table are ignored.
+
+\item[\cd{using}]
+The loop keyword \cd{using} marks the optional key or the keyed value to
+be accessed.  It allows you to access the hash key if
+iterating over the hash values, and the hash value if
+iterating over the hash keys.
+
+\item[\cd{in}, \cd{of}]
+These loop prepositions mark the hash table {\it hash-table}.
+\end{flushdesc}
+
+Iteration stops when there are no more hash keys or hash values to be
+referenced in the specified hash table.
+\end{defloop}
+
+
+\begin{defloop}
+for var [type-spec] \!being! {\!each! | \!the!}
+                    {\!symbol! | \!present-symbol! | \!external-symbol! |
+                     \!symbols! | \!present-symbols! | \!external-symbols!}
+                    {\!in! | \!of!} package \\
+as var [type-spec] \!being! {\!each! | \!the!}
+                    {\!symbol! | \!present-symbol! | \!external-symbol! |
+                     \!symbols! | \!present-symbols! | \!external-symbols!}
+                    {\!in! | \!of!} package
+
+[This is the last of seven \cd{for}/\cd{as} syntaxes.---GLS]
+
+
+This construct iterates over the symbols in a package.
+The variable {\it var\/} takes on the value of each symbol
+in the specified package.  
+
+The following loop keywords serve as valid prepositions within this syntax.
+
+\begin{flushdesc}
+
+\item[\cd{being}]
+The keyword \cd{being} marks the loop method to be used:
+\cd{symbol}, \cd{present-\discretionary{}{}{}symbol},  or \cd{external-symbol}.
+
+\item[\cd{each}, \cd{the}]
+For purposes of readability, the loop keyword \cd{each}
+should follow the loop keyword \cd{being} when \cd{symbol}, 
+\cd{present-symbol}, or \cd{external-symbol} is used.  The loop keyword
+\cd{the} is used with \cd{symbols}, \cd{present-symbols}, and 
+\cd{external-symbols}.
+
+\item[\cd{present-symbol}, \cd{present-symbols}]
+These loop methods iterate over the symbols that are present but not
+external in a package.
+The package to be iterated over is
+specified in the same way that package arguments to the Common Lisp function
+\cd{find-package} are specified.  If you do not specify the package 
+for the iteration, the current package is used.  If you specify a 
+package that does not exist, an error is signaled.
+
+\item[\cd{symbol}, \cd{symbols}]
+These loop methods iterate over symbols that are
+accessible from a given package.  The package to be iterated over is specified
+in the same way that package arguments to the Common Lisp function
+\cd{find-package} are specified.  If you do not specify the package 
+for the iteration, the current package is used.  If you specify a 
+package that does not exist, an error is signaled.
+
+\item[\cd{external-symbol}, \cd{external-symbols}]
+These loop methods iterate over the external symbols of a package.
+The package to be iterated over is specified in
+the same way that package arguments to the Common Lisp function
+\cd{find-package} are specified.  If you do not specify the package 
+for the iteration, the current package is used.  If you specify a 
+package that does not exist, an error is signaled.
+
+\item[\cd{in}, \cd{of}]
+These loop prepositions mark the package {\it package}.
+\end{flushdesc}
+
+Iteration stops when there are no more symbols to be referenced in the
+specified package.
+
+Example:
+\begin{lisp}
+(loop for x being each present-symbol of "COMMON-LISP-USER"  \\*
+~~~~~~do (print x)) \`;{\rm Prints 7 lines in this example}\\*
+COMMON-LISP-USER::IN  \\*
+COMMON-LISP-USER::X  \\
+COMMON-LISP-USER::ALWAYS  \\
+COMMON-LISP-USER::FOO  \\
+COMMON-LISP-USER::Y  \\
+COMMON-LISP-USER::FOR  \\*
+COMMON-LISP-USER::LUCID  \\*
+~~~\EV~NIL
+\end{lisp}
+\end{defloop}
+
+
+
+\begin{defloop}
+repeat expr
+
+The \cd{repeat} construct causes iteration to terminate after a
+specified number of times.
+The loop body is executed {\it n} times, where {\it n} is the value 
+of the expression {\it expr}.  The {\it expr} argument is evaluated one time
+in the loop prologue.  If the expression evaluates to zero or 
+to a negative number, the loop body is not evaluated.
+
+
+  The clause \cd{repeat} {\it n} is roughly equivalent to a clause
+  such as 
+\begin{lisp}
+for {\it internal-variable} downfrom (- {\it n} 1) to 0
+\end{lisp}
+but, in some implementations, the \cd{repeat} construct might 
+   be more efficient.
+
+
+Examples:
+\begin{lisp}
+(loop repeat 3 \`;{\rm Prints 3 lines}\\*
+~~~~~~do (format t "What I say three times is true{\Xtilde}\%")) \\*
+What I say three times is true \\*
+What I say three times is true \\*
+What I say three times is true \\*
+~~~\EV~NIL \\
+ \\
+(loop repeat -15 \`;{\rm Prints nothing}\\*
+~~~~~~do (format t "What you see is what you expect{\Xtilde}\%")) \\*
+~~~\EV~NIL
+\end{lisp}
+\end{defloop}
+
+
+
+\section{End-Test Control}
+\label{LOOP-TEST-SECTION}
+
+The loop keywords \cd{always}, \cd{never}, \cd{thereis},
+\cd{until}, and \cd{while} designate constructs that use a single test 
+condition to determine when loop iteration should terminate.
+
+The constructs \cd{always}, \cd{never}, and \cd{thereis} provide
+specific values to be returned when a loop terminates.  
+Using \cd{always}, \cd{never}, or \cd{thereis} with 
+value-returning accumulation clauses can produce unpredictable results.
+In all other respects these
+constructs behave like the \cd{while} and \cd{until} constructs.
+
+The macro \cd{loop-finish} can be used at any time to cause normal
+termination.  In normal termination, \cd{finally} clauses are 
+executed and default return values are returned.
+
+End-test control constructs can be used anywhere within the loop
+body.  The termination conditions are tested in the order in which
+they appear.
+
+\begin{defloop}
+while expr \\
+until expr
+
+The \cd{while} construct allows iteration to continue until the specified
+expression {\it expr} evaluates to \cd{nil}.  The expression
+is re-evaluated at the location of the \cd{while} clause.
+
+The \cd{until} construct is equivalent to 
+{\cd{while} (\cd{not} {\it expr})}.  If the value of the
+specified expression is non-\cd{nil}, iteration terminates.
+
+You can use \cd{while} and \cd{until} 
+at any point in a loop.  If a \cd{while} or \cd{until} clause causes
+termination, any clauses that precede it in the source
+are still evaluated.  
+
+Examples:
+\begin{lisp}
+;;; A classic "while-loop". \\
+(loop while (hungry-p) do (eat)) \\
+ \\
+;;; UNTIL NOT is equivalent to WHILE. \\*
+(loop until (not (hungry-p)) do (eat)) \\
+ \\
+;;; Collect the length and the items of STACK. \\*
+(let ((stack '(a b c d e f))) \\*
+~~(loop while stack \\*
+~~~~~~~~for item = (length stack) then (pop stack) \\*
+~~~~~~~~collect item)) \\*
+~~~\EV~(6 A B C D E F) \\
+ \\
+;;; Use WHILE to terminate a loop that otherwise wouldn't \\*
+;;; terminate.  Note that WHILE occurs after the WHEN. \\*
+(loop for i fixnum from 3 \\*
+~~~~~~when (oddp i) collect i \\*
+~~~~~~while (< i 5)) \\*
+~~~\EV~(3 5)
+\end{lisp}
+\end{defloop}
+
+
+\begin{defloop}
+always expr \\
+never expr \\
+thereis expr
+
+The \cd{always} construct takes one form and terminates the loop 
+  if the form ever evaluates to \cd{nil}; in this case, it returns
+  \cd{nil}.  Otherwise, it provides a default return value of \cd{t}.
+
+  The \cd{never} construct takes one form and terminates the loop
+  if the form ever evaluates to non-\cd{nil}; in this case, it returns
+  \cd{nil}.  Otherwise, it provides a default return value of \cd{t}.
+
+  The \cd{thereis} construct takes one form and terminates the loop
+  if the form ever evaluates to non-\cd{nil}; in this case, it returns
+  that value.
+
+If the \cd{while} or \cd{until} construct causes termination,
+control is passed to the loop epilogue, where any \cd{finally}
+clauses will be executed.  Since \cd{always}, \cd{never}, and 
+\cd{thereis} use the Common Lisp macro \cd{return} to terminate
+iteration, any \cd{finally} clause that is specified is not
+evaluated.
+
+Examples:
+\begin{lisp}
+;;; Make sure I is always less than 11 (two ways). \\*
+;;; The FOR construct terminates these loops.
+\end{lisp}
+\begin{lisp}
+(loop for i from 0 to 10 \\*
+~~~~~~always (< i 11)) \\*
+~~~\EV~T
+\end{lisp}
+\begin{lisp}
+(loop for i from 0 to 10 \\*
+~~~~~~never (> i 11)) \\*
+~~~\EV~T
+\end{lisp}
+\begin{lisp}
+;;; If I exceeds 10, return I; otherwise, return NIL. \\*
+;;; The THEREIS construct terminates this loop.
+\end{lisp}
+\begin{lisp}
+(loop for i from 0 \\*
+~~~~~~thereis (when (> i 10) i) ) \\*
+~~~\EV~11
+\end{lisp}
+\begin{lisp}
+;;; The FINALLY clause is not evaluated in these examples.
+\end{lisp}
+\begin{lisp}
+(loop for i from 0 to 10 \\*
+~~~~~~always (< i 9) \\*
+~~~~~~finally (print "you won't see this")) \\*
+~~~\EV~NIL
+\end{lisp}
+\begin{lisp}
+(loop never t \\*
+~~~~~~finally (print "you won't see this")) \\*
+~~~\EV~NIL
+\end{lisp}
+\begin{lisp}
+(loop thereis "Here is my value" \\*
+~~~~~~finally (print "you won't see this")) \\*
+~~~\EV~"Here is my value"
+\end{lisp}
+\begin{lisp}
+;;; The FOR construct terminates this loop, \\*
+;;; so the FINALLY clause is evaluated.
+\end{lisp}
+\begin{lisp}
+(loop for i from 1 to 10 \\*
+~~~~~~thereis (> i 11) \\*
+~~~~~~finally (print i)) \`;{\rm Prints 1 line}\\*
+11 \\*
+~~~\EV~NIL
+\end{lisp}
+\goodbreak
+\begin{lisp}
+(defstruct mountain height difficulty (why "because it is there")) \\*
+(setq everest (make-mountain :height '(2.86e-13 parsecs))) \\*
+(setq chocorua (make-mountain :height '(1059180001 microns))) \\*
+(defstruct desert area (humidity 0)) \\*
+(setq sahara (make-desert :area '(212480000 square furlongs))) \\
+\`;{\rm First there is a mountain, then there is no mountain, then there is $\ldots$} \\
+(loop for x in (list everest sahara chocorua) \`;~{\rm ---GLS} \\*
+~~~~~~thereis (and (mountain-p x) (mountain-height x))) \\*
+~~~\EV~(2.86E-13 PARSECS) \\
+ \\
+;;; If you could use this code to find a counterexample to \\*
+;;; Fermat's last theorem, it would still not return the value \\*
+;;; of the counterexample because all of the THEREIS clauses \\*
+;;; in this example return only T.~~ Of course, this code has \\*
+;;; never been observed to terminate. \\*
+ \\*
+(loop for z upfrom 2 \\*
+~~~~~~thereis \\*
+~~~~~~~~(loop for n upfrom 3 below (log z 2) \\*
+~~~~~~~~~~~~~~thereis \\*
+~~~~~~~~~~~~~~~~(loop for x below z \\*
+~~~~~~~~~~~~~~~~~~~~~~thereis \\*
+~~~~~~~~~~~~~~~~~~~~~~~~(loop for y below z \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~thereis (= (+ (expt x n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(expt y n)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(expt z n))))))
+\end{lisp}
+\end{defloop}
+
+\begin{defmac}
+loop-finish \!!
+
+The macro \cd{loop-finish} terminates iteration normally
+and returns any accumulated result.  If specified, a \cd{finally} clause
+is evaluated.
+
+In most cases it is not necessary to use \cd{loop-finish}
+because other loop control clauses terminate the loop.  
+Use \cd{loop-finish} to provide a normal exit
+from a nested condition inside a loop.
+
+You can use \cd{loop-finish}
+inside nested Lisp code to provide a normal exit from a loop.
+Since \cd{loop-finish} transfers control to the loop epilogue,
+using \cd{loop-finish} within a \cd{finally} expression can cause
+infinite looping.
+
+
+  Implementations are allowed to provide this construct as a local macro
+  by using \cd{macrolet}.
+
+Examples:
+\begin{lisp}
+;;; Print a date in February, but exclude leap day. \\*
+;;; LOOP-FINISH exits from the nested condition. \\*
+(loop for date in date-list \\*
+~~~~~~do (case date \\*
+~~~~~~~~~~~(29 (when (eq month 'february) \\*
+~~~~~~~~~~~~~~~~~~~~~(loop-finish)) \\*
+~~~~~~~~~~~~~(format t "{\Xtilde}:@({\Xtilde}A{\Xtilde}) {\Xtilde}A" month date)))) \\
+ \\
+;;; Terminate the loop, but return the accumulated count. \\*
+(loop for i in '(1 2 3 stop-here 4 5 6) \\*
+~~~~~~when (symbolp i) do (loop-finish) \\*
+~~~~~~count i) \\*
+~~~\EV~3 \\
+ \\
+;;; This loop works just as well as the previous example. \\*
+(loop for i in '(1 2 3 stop-here 4 5 6) \\*
+~~~~~~until (symbolp i) \\*
+~~~~~~count i) \\*
+~~~\EV~3
+\end{lisp}
+\end{defmac}
+
+\section{Value Accumulation}
+\label{LOOP-ACCUM-SECTION}
+
+Accumulating values during iteration and returning them from a loop
+is often useful.  Some of these accumulations occur so
+frequently that special loop clauses have been developed to handle them.
+
+The loop keywords \cd{append}, \cd{appending},
+\cd{collect}, \cd{collecting},
+\cd{nconc}, and \cd{nconcing}
+designate clauses that
+accumulate values in lists and return them.
+
+The loop keywords \cd{count}, \cd{counting},
+\cd{maximize}, \cd{maximizing},
+\cd{minimize}, \cd{minimizing},
+\cd{sum}, and \cd{summing}
+designate clauses that accumulate and
+return numerical values.
+[There is no semantic difference between the ``ing'' keywords and their non-``ing''
+counterparts.  They are provided purely for the sake of stylistic diversity among users.
+I happen to prefer the non-``ing'' forms---when I use \cd{loop} at all.---GLS]
+
+The loop preposition \cd{into} can be used to name the 
+variable used to hold partial accumulations.
+The variable is bound as if by the loop
+construct \cd{with} (see section~\ref{LOOP-VAR-SECTION}).  If 
+\cd{into} is used, the construct does not provide a default return value;
+however, the variable is available
+for use in any \cd{finally} clause.
+
+You can combine value-returning accumulation clauses in a loop if
+all the clauses accumulate the same type of data object.  
+By default, the Loop Facility returns only one value;
+thus, the data objects collected by multiple accumulation clauses 
+as return values must have compatible types. For example, since both
+the \cd{collect} and \cd{append} constructs accumulate objects into a
+list that is returned from a loop, you can combine them safely.
+
+
+\begin{lisp}
+;;; Collect every name and the kids in one list by using \\*
+;;; COLLECT and APPEND. \\*
+(loop for name in '(fred sue alice joe june) \\*
+~~~~~~for kids in '((bob ken) () () (kris sunshine) ()) \\*
+~~~~~~collect name \\*
+~~~~~~append kids) \\*
+~~~\EV~(FRED BOB KEN SUE ALICE JOE KRIS SUNSHINE JUNE)
+\end{lisp}
+[In the preceding example, note that the items accumulated by the
+\cd{collect} and \cd{append} clauses are interleaved in the result list, according to
+the order in which the clauses were executed.---GLS]
+
+Multiple clauses that do not accumulate the same type of data object 
+can coexist in a loop only if each clause accumulates its values into 
+a different user-specified variable.  Any number of values can
+be returned from a loop if you use the Common Lisp function \cd{values},
+as the next example shows:
+\begin{lisp}
+;;; Count and collect names and ages. \\*
+(loop for name in '(fred sue alice joe june) \\*
+~~~~~~as age in '(22 26 19 20 10) \\*
+~~~~~~append (list name age) into name-and-age-list \\*
+~~~~~~count name into name-count \\*
+~~~~~~sum age into total-age \\*
+~~~~~~finally \\*
+~~~~~~~~(return (values (round total-age name-count) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~name-and-age-list))) \\*
+~~~\EV~19 {\rm and} (FRED 22 SUE 26 ALICE 19 JOE 20 JUNE 10)
+\end{lisp}
+
+\begin{defloop}
+collect expr [\!into! var] \\
+collecting expr [\!into! var]
+
+During each iteration, these constructs collect the value of the specified 
+expression into a list. When iteration terminates, the list is returned.
+
+The argument {\it var\/} is 
+set to the list of collected values; if {\it var} is specified, the loop
+does not return the final list automatically.  If {\it var} is not
+specified, it is equivalent to specifying an internal name for
+{\it var} and returning its value in a \cd{finally} clause.
+The {\it var\/} argument
+is bound as if by the construct \cd{with}.
+You cannot specify a data type for {\it var\/}; it must be of type \cd{list}.
+
+
+Examples:
+\begin{lisp}
+;;; Collect all the symbols in a list. \\*
+(loop for i in '(bird 3 4 turtle (1 . 4) horse cat) \\*
+~~~~~~when (symbolp i) collect i) \\*
+~~~\EV~(BIRD TURTLE HORSE CAT) \\
+ \\
+;;; Collect and return odd numbers. \\*
+(loop for i from 1 to 10 \\*
+~~~~~~if (oddp i) collect i) \\*
+~~~\EV~(1 3 5 7 9) \\
+ \\
+;;; Collect items into local variable, but don't return them. \\*
+(loop for i in '(a b c d) by \#'cddr \\*
+~~~~~~collect i into my-list \\*
+~~~~~~finally (print my-list)) \`;{\rm Prints 1 line}\\*
+(A C)  \\*
+~~~\EV~NIL
+\end{lisp}
+\end{defloop}
+
+\begin{defloop}
+append expr [\!into! var] \\
+appending expr [\!into! var] \\
+nconc expr [\!into! var] \\
+nconcing expr [\!into! var]
+
+These constructs are similar to \cd{collect} except that the
+values of the specified expression must be lists.  
+
+The \cd{append} keyword causes its list values to be concatenated 
+into a single list, as if 
+they were arguments to the Common Lisp function \cd{append}.
+
+The \cd{nconc} keyword causes its list values to be concatenated
+into a single list,
+as if they were arguments to the Common Lisp function \cd{nconc}.  
+Note that the \cd{nconc} keyword destructively modifies its argument lists.
+
+The argument {\it var\/} is 
+set to the list of concatenated values; if you specify {\it var}, the loop
+does not return the final list automatically.  The {\it var\/} argument
+is bound as if by the construct \cd{with}.
+You cannot specify a data type for {\it var\/}; it must be of type \cd{list}.
+
+
+Examples:
+\begin{lisp}
+;;; Use APPEND to concatenate some sublists. \\*
+(loop for x in '((a) (b) ((c))) \\*
+~~~~~~append x) \\*
+~~~\EV~(A B (C))
+\end{lisp}
+\begin{lisp}
+;;; NCONC some sublists together.  Note that only lists \\*
+;;; made by the call to LIST are modified. \\*
+(loop for i upfrom 0  \\*
+~~~~~~as x in '(a b (c)) \\*
+~~~~~~nconc (if (evenp i) (list x) '())) \\*
+~~~\EV~(A (C))
+\end{lisp}
+\end{defloop}
+
+
+\begin{defloop}
+count expr [\!into! var] [type-spec] \\
+counting expr [\!into! var] [type-spec]
+
+The \cd{count} construct counts the number of times that the specified 
+expression has a non-\cd{nil} value.
+
+The argument {\it var\/} accumulates the number of occurrences; if 
+{\it var} is specified, the loop
+does not return the final count automatically.  The {\it var\/} argument
+is bound as if by the construct \cd{with}.
+
+If \cd{into} {\it var\/} is used, the optional
+{\it type-spec\/} argument specifies a data type for {\it var\/}.
+If there is no \cd{into} variable, the optional {\it type-spec\/}
+argument applies to the internal variable that is keeping the count.
+In either case it is an error to specify a non-numeric 
+data type.
+The default type is implementation-dependent, but it must be a subtype
+of \cd{(or~integer float)}.
+
+Example:
+\begin{lisp}
+(loop for i in '(a b nil c nil d e) \\*
+~~~~~~count i) \\*
+~~~\EV~5
+\end{lisp}
+\end{defloop}
+
+
+\begin{defloop}
+sum expr [\!into! var] [type-spec] \\
+summing expr [\!into! var] [type-spec]
+
+The \cd{sum} construct forms a cumulative sum of the values of the
+specified expression at each iteration.
+
+The argument {\it var\/} is used to accumulate
+the sum; if {\it var} is specified, the loop
+does not return the final sum automatically.  The {\it var\/} argument
+is bound as if by the construct \cd{with}.
+
+If \cd{into} {\it var\/} is used, the optional
+{\it type-spec\/} argument specifies a data type for {\it var\/}.
+If there is no \cd{into} variable, the optional {\it type-spec\/}
+argument applies to the internal variable that is keeping the sum.
+In either case it is an error to specify a non-numeric 
+data type.
+The default type is implementation-dependent, but it must be a subtype
+of \cd{number}.
+
+Examples:
+\begin{lisp}
+;;; Sum the elements of a list. \\*
+\\*
+(loop for i fixnum in '(1 2 3 4 5) \\*
+~~~~~~sum i) \\*
+~~~\EV~15 \\
+\\
+;;; Sum a function of elements of a list. \\*
+\\*
+(setq series \\
+~~~~~~'(1.2 4.3 5.7)) \\*
+~~~\EV~(1.2 4.3 5.7) \\
+\\
+(loop for v in series  \\*
+~~~~~~sum (* 2.0 v)) \\*
+~~~\EV~22.4
+\end{lisp}
+\end{defloop}
+
+\begin{defloop}
+maximize expr [\!into! var] [type-spec] \\
+maximizing expr [\!into! var] [type-spec] \\
+minimize expr [\!into! var] [type-spec] \\
+minimizing expr [\!into! var] [type-spec]
+
+The \cd{maximize} construct compares the value of the specified expression
+obtained during the first iteration with values obtained in successive
+iterations. The maximum value encountered is determined and returned.  If the
+loop never executes the body, the returned value is not meaningful.
+
+The \cd{minimize} construct is similar to \cd{maximize}; it
+determines and returns the minimum value.
+
+The argument {\it var\/} accumulates the maximum or
+minimum value; if {\it var} is specified, the loop
+does not return the maximum or minimum automatically.  The {\it var\/} argument
+is bound as if by the construct \cd{with}.
+
+If \cd{into} {\it var\/} is used, the optional
+{\it type-spec\/} argument specifies a data type for {\it var\/}.
+If there is no \cd{into} variable, the optional {\it type-spec\/}
+argument applies to the internal variable that is keeping the intermediate result.
+In either case it is an error to specify a non-numeric 
+data type.
+The default type is implementation-dependent, but it must be a subtype
+of \cd{(or integer float)}.
+
+Examples:
+\begin{lisp}
+(loop for i in '(2 1 5 3 4) \\*
+~~~~~~maximize i) \\*
+~~~\EV~5
+\end{lisp}
+\penalty-10000 % required
+\begin{lisp}
+(loop for i in '(2 1 5 3 4) \\*
+~~~~~~minimize i) \\*
+~~~\EV~1 \\
+ \\
+;;; In this example, FIXNUM applies to the internal \\*
+;;; variable that holds the maximum value. \\*
+\\
+(setq series '(1.2 4.3 5.7)) \\*
+~~~\EV~(1.2 4.3 5.7) \\
+\\
+(loop for v in series  \\*
+~~~~~~maximize (round v) fixnum) \\*
+~~~\EV~6 \\
+ \\
+;;; In this example, FIXNUM applies to the variable RESULT. \\
+\\
+(loop for v float in series \\*
+~~~~~~minimize (round v) into result fixnum \\*
+~~~~~~finally (return result)) \\*
+~~~\EV~1
+\end{lisp}
+\end{defloop}
+
+
+
+\section{Variable Initializations}
+\label{LOOP-VAR-SECTION}
+
+A local loop variable is one that exists only when the Loop Facility
+is invoked.  At that time, the variables are declared and are
+initialized to some value.  These local variables exist until loop
+iteration terminates, at which point they cease to exist.  Implicitly
+variables are also established by iteration control clauses and the
+\cd{into} preposition of accumulation clauses.
+
+
+The loop keyword \cd{with} designates a loop clause that allows you to 
+declare and initialize variables
+that are local to a loop.  The variables are initialized one time
+only; they can be initialized sequentially or in parallel.
+
+By default, the \cd{with} construct initializes variables
+sequentially; that is, one variable is assigned a value before the
+next expression is evaluated.  However, by using the loop keyword 
+\cd{and} to join several \cd{with} clauses, you can force
+initializations to occur in parallel; that is, all of the specified
+expressions are evaluated, and the results are bound to the respective
+variables simultaneously.
+
+Use sequential binding for making the initialization of
+some variables depend on the values of previously bound variables.
+For example, suppose you want to bind the variables \cd{a}, \cd{b},
+and \cd{c} in sequence:
+\begin{lisp}
+(loop with a = 1  \\*
+~~~~~~with b = (+ a 2)  \\*
+~~~~~~with c = (+ b 3) \\*
+~~~~~~with d = (+ c 4) \\*
+~~~~~~return (list a b c d)) \\*
+~~~\EV~(1 3 6 10)
+\end{lisp}
+
+The execution of the preceding loop is equivalent to the execution of
+the following code:
+\begin{lisp}
+(let* ((a 1) \\*
+~~~~~~~(b (+ a 2)) \\*
+~~~~~~~(c (+ b 3)) \\*
+~~~~~~~(d (+ c 4))) \\
+~~(block nil \\*
+~~~~(tagbody \\*
+~~~~~~next-loop (return (list a b c d)) \\*
+~~~~~~~~~~~~~~~~(go next-loop) \\*
+~~~~~~end-loop)))
+\end{lisp}
+
+
+If you are not depending on the value of previously bound variables
+for the initialization of other local variables, you can use
+parallel bindings as follows:
+\begin{lisp}
+(loop with a = 1  \\*
+~~~~~~~and b = 2  \\*
+~~~~~~~and c = 3 \\*
+~~~~~~~and d = 4 \\*
+~~~~~~return (list a b c d)) \\*
+~~~\EV~(1 2 3 4)
+\end{lisp}
+
+The execution of the preceding loop is equivalent to the execution of
+the following code:
+
+\begin{lisp}
+(let ((a 1) \\*
+~~~~~~(b 2) \\*
+~~~~~~(c 3) \\*
+~~~~~~(d 4)) \\
+~~(block nil \\*
+~~~~(tagbody \\*
+~~~~~~next-loop (return (list a b c)) \\*
+~~~~~~~~~~~~~~~~(go next-loop) \\*
+~~~~~~end-loop)))
+\end{lisp}
+
+\begin{defloop}
+with var [type-spec] [\!\Xequal! expr] {\!and! var [type-spec] [\!\Xequal! expr]}*
+
+The \cd{with} construct initializes variables that are local to 
+a loop.  The variables are initialized one time only.
+
+If the optional {\it type-spec\/} argument is specified for any variable 
+{\it var\/}, but there is no related expression {\it expr} to be evaluated, {\it var\/}
+is initialized to an appropriate default value for its data type.
+For example, for the data types \cd{t}, \cd{number}, and \cd{float},
+the default values are \cd{nil}, \cd{0}, and \cd{0.0}, respectively.
+It is an error to specify a {\it type-spec\/} argument for {\it var\/} if
+the related expression returns a value that is not of the specified type.
+The optional \cd{and} clause forces parallel rather than sequential 
+initializations.
+
+
+Examples:
+\begin{lisp}
+;;; These bindings occur in sequence. \\*
+(loop with a = 1  \\*
+~~~~~~with b = (+ a 2)  \\*
+~~~~~~with c = (+ b 3) \\*
+~~~~~~with d = (+ c 4) \\*
+~~~~~~return (list a b c d)) \\*
+~~~\EV~(1 3 6 10) \\
+ \\
+;;; These bindings occur in parallel. \\*
+(setq a 5 b 10 c 1729) \\*
+(loop with a = 1 \\*
+~~~~~~~and b = (+ a 2) \\*
+~~~~~~~and c = (+ b 3) \\*
+~~~~~~~and d = (+ c 4) \\*
+~~~~~~return (list a b c d)) \\*
+~~~\EV~(1 7 13 1733) \\
+ \\
+;;; This example shows a shorthand way to declare \\*
+;;; local variables that are of different types. \\*
+(loop with (a b c) (float integer float) \\*
+~~~~~~return (format nil "{\Xtilde}A {\Xtilde}A {\Xtilde}A" a b c)) \\*
+~~~\EV~"0.0 0 0.0" \\
+ \\
+;;; This example shows a shorthand way to declare \\*
+;;; local variables that are of the same type. \\*
+(loop with (a b c) float  \\*
+~~~~~~return (format nil "{\Xtilde}A {\Xtilde}A {\Xtilde}A" a b c)) \\*
+~~~\EV~"0.0 0.0 0.0"
+\end{lisp}
+\end{defloop}
+
+
+\section{Conditional Execution}
+\label{LOOP-COND-SECTION}
+
+The loop keywords \cd{if}, \cd{when}, and \cd{unless} designate constructs that 
+are useful when you want some loop clauses to operate under a specified
+condition.
+
+If the specified condition is true, the succeeding loop clause
+is executed.  If the specified condition is not true, the succeeding clause is
+skipped, and program control moves to the clause that follows the loop
+keyword \cd{else}.  If the specified condition is not true and no
+\cd{else} clause is specified, the entire conditional construct
+is skipped.  Several clauses can be connected into
+one compound clause with the loop keyword \cd{and}.
+The end of the conditional clause can be marked with the keyword \cd{end}.
+
+\begin{defloop}
+if expr clause {\!and! clause}*
+   [\!else! clause {\!and! clause}*] [\!end!] \\
+when expr clause {\!and! clause}*
+     [\!else! clause {\!and! clause}*] [\!end!] \\
+unless expr clause {\!and! clause}*
+       [\!else! clause {\!and! clause}*] [\!end!]
+
+The constructs \cd{when} and \cd{if} allow conditional execution of
+loop clauses.  These constructs are synonyms and
+can be used interchangeably.  [Compare this to the {\it macro} \cd{when},
+which does not allow an ``else'' part.---GLS]
+
+If the value of the test expression {\it expr\/} is non-\cd{nil}, the expression
+{\it clause1\/} is evaluated. If the test expression evaluates to \cd{nil}
+and an \cd{else} construct is specified, the statements that follow the
+\cd{else} are evaluated; otherwise, control passes to the next clause.
+
+The \cd{unless} construct is equivalent to \cd{when} (\cd{not} 
+{\it expr\/}) and \cd{if} (\cd{not} {\it expr\/}).
+If the value of the test expression {\it expr\/} is \cd{nil}, the expression
+{\it clause1\/} is evaluated. If the test expression evaluates to 
+non-\cd{nil}
+and an \cd{else} construct is specified, the statements that follow the
+\cd{else} are evaluated; otherwise, control passes to the next clause.
+[Compare this to the {\it macro} \cd{unless},
+which does not allow an ``else'' part---or do I mean a ``then'' part?!  Ugh.
+To prevent confusion, I strongly recommend as a matter of style
+that \cd{else} not be used with \cd{unless} loop clauses.---GLS]
+
+The {\it clause\/} arguments must be either accumulation, unconditional,
+or conditional clauses (see section~\ref{LOOP-KINDS-SECTION}).
+Clauses that follow the test expression can be grouped by using the 
+loop keyword \cd{and} to produce a compound 
+clause.
+
+The loop keyword \cd{it} can be used to refer to the result of
+the test expression in a clause.  If multiple clauses are connected with \cd{and},
+the \cd{it} construct must be used in the first
+clause in the block.  Since \cd{it} is a loop keyword, \cd{it} may not be used
+as a local variable within a loop.
+
+If \cd{when} or \cd{if} clauses are nested, each \cd{else} is
+paired with the closest preceding \cd{when} or \cd{if} construct that has
+no associated \cd{else}.
+
+The optional loop keyword \cd{end} marks the end of the clause.  If this
+keyword is not specified, the next loop keyword marks the end.  You can use
+\cd{end} to distinguish the scoping of compound clauses.
+\begin{lisp}
+;;; Group conditional clauses into a block. \\*
+(loop for i in numbers-list \\*
+~~~~~~when (oddp i) \\*
+~~~~~~~~do (print i) \\*
+~~~~~~~~and collect i into odd-numbers \\*
+~~~~~~~~and do (terpri) \\
+~~~~~~else~~~~~;{\rm \cd{I} is even} \\*
+~~~~~~~~collect i into even-numbers \\*
+~~~~~~finally \\*
+~~~~~~~~(return (values odd-numbers even-numbers)))
+\end{lisp}
+\begin{lisp}
+;;; Collect numbers larger than 3. \\*
+(loop for i in '(1 2 3 4 5 6) \\*
+~~~~~~when (and (> i 3) i) \\*
+~~~~~~collect it)~~~~~;{\rm \cd{it} refers to \cd{(and (> i 3) i)}} \\*
+~~~\EV~(4 5 6)
+\end{lisp}
+\begin{lisp}
+;;; Find a number in a list. \\*
+(loop for i in '(1 2 3 4 5 6) \\*
+~~~~~~when (and (> i 3) i) \\*
+~~~~~~return it) \\*
+~~~\EV~4
+\end{lisp}
+\begin{lisp}
+;;; The preceding example is similar to the following one. \\*
+(loop for i in '(1 2 3 4 5 6) \\*
+~~~~~~thereis (and (> i 3) i)) \\*
+~~~\EV~4
+\end{lisp}
+\begin{lisp}
+;;; An example of using UNLESS with ELSE (yuk).\`{\rm ---GLS} \\*
+(loop for turtle in teenage-mutant-ninja-turtles do\\*
+~~(loop for x in '(joker brainiac shredder krazy-kat) \\*
+~~~~~~~~unless (evil x) \\*
+~~~~~~~~~~do (eat (make-pizza :anchovies t)) \\*
+~~~~~~~~else unless (and (eq x 'shredder) (attacking-p x))\\*
+~~~~~~~~~~~~~~~do (cut turtle slack)\,;{\rm When the evil Shredder attacks,} \\*
+~~~~~~~~~~~~~else (fight turtle x)))\,;\,{\rm those turtle boys don't cut no slack}
+\end{lisp}
+\goodbreak
+\begin{lisp}
+;;; Nest conditional clauses. \\*
+(loop for i in list \\*
+~~~~~~when (numberp i) \\*
+~~~~~~~~when (bignump i) \\*
+~~~~~~~~~~collect i into big-numbers \\*
+~~~~~~~~else~~~~~;{\rm Not \cd{(bignump i)}} \\*
+~~~~~~~~~~collect i into other-numbers \\
+~~~~~~else~~~~~;{\rm Not \cd{(numberp i)}} \\*
+~~~~~~~~when (symbolp i)  \\*
+~~~~~~~~~~collect i into symbol-list \\*
+~~~~~~~~else~~~~~;{\rm Not \cd{(symbolp i)}} \\*
+~~~~~~~~~~(error "found a funny value in list {\Xtilde}S, value {\Xtilde}S{\Xtilde}\%" \\*
+~~~~~~~~~~~~~~~~"list i)) \\
+ \\
+;;; Without the END marker, the last AND would apply to the \\*
+;;; inner IF rather than the outer one. \\*
+(loop for x from 0 to 3  \\*
+~~~~~~do (print x) \\*
+~~~~~~if (zerop (mod x 2)) \\*
+~~~~~~~~do (princ " a") \\*
+~~~~~~~~~~and if (zerop (floor x 2)) \\*
+~~~~~~~~~~~~~~~~do (princ " b") \\*
+~~~~~~~~~~~~~~end \\*
+~~~~~~~~~~and do (princ " c"))
+\end{lisp}
+\end{defloop}
+
+
+\section{Unconditional Execution}
+\label{LOOP-UNCOND-SECTION}
+
+
+The loop construct \cd{do} (or \cd{doing}) takes one or more expressions
+and simply evaluates them in order.
+
+The loop construct \cd{return} takes one expression and returns its value.  It 
+is equivalent to the clause \cd{do~(return {\it value\/})}.
+
+\begin{defloop}
+do {expr}* \\
+doing {expr}*
+
+The \cd{do} construct simply evaluates the specified expressions
+wherever they occur in the expanded form of \cd{loop}.
+
+The {\it expr\/} argument can be any non-atomic Common Lisp form.
+Each {\it expr\/} is evaluated in every iteration.
+
+The constructs \cd{do}, \cd{initially}, and \cd{finally} are the
+only loop keywords that take an arbitrary number of forms and group
+them as if using an implicit \cd{progn}.  
+Because every loop clause must begin with a loop keyword, you would use
+the keyword \cd{do} when no control action other than execution is 
+required.
+
+Examples:
+\begin{lisp}
+;;; Print some numbers. \\*
+(loop for i from 1 to 5 \\*
+~~~~~~do (print i)) \`;{\rm Prints 5 lines} \\*
+1 \\*
+2 \\*
+3 \\*
+4 \\*
+5 \\*
+~~~\EV~NIL \\
+ \\
+;;; Print numbers and their squares. \\*
+;;; The DO construct applies to multiple forms. \\*
+(loop for i from 1 to 4 \\*
+~~~~~~do (print i) \\*
+~~~~~~~~~(print (* i i))) \`;{\rm Prints 8 lines} \\
+1  \\*
+1  \\*
+2  \\*
+4  \\*
+3  \\*
+9  \\*
+4  \\*
+16  \\*
+~~~\EV~NIL
+\end{lisp}
+\end{defloop}
+
+
+\begin{defloop}
+return expr
+
+The \cd{return} construct terminates a 
+loop and returns the value of 
+the specified expression as the value of the loop.   This construct
+is similar to the Common Lisp special form \cd{return-from} and the
+Common Lisp macro \cd{return}.
+
+The Loop Facility supports the \cd{return} construct for backward
+compatibility with older \cd{loop} implementations.  
+The \cd{return} construct returns immediately and does not execute
+any \cd{finally} clause that is given.
+
+Examples:
+\begin{lisp}
+;;; Signal an exceptional condition. \\*
+(loop for item in '(1 2 3 a 4 5) \\*
+~~~~~~when (not (numberp item)) \\*
+~~~~~~return (cerror "enter new value" \\*
+~~~~~~~~~~~~~~~~~~~~~"non-numeric value: {\Xtilde}s" \\*
+~~~~~~~~~~~~~~~~~~~~~item)) \`;{\rm Signals an error} \\*
+>>Error: non-numeric value: A \\
+ \\
+;;; The previous example is equivalent to the following one. \\*
+(loop for item in '(1 2 3 a 4 5) \\*
+~~~~~when (not (numberp item)) \\*
+~~~~~~do (return  \\*
+~~~~~~~~~~~(cerror "enter new value" \\*
+~~~~~~~~~~~~~~~~~~~"non-numeric value: {\Xtilde}s" \\*
+~~~~~~~~~~~~~~~~~~~item)))  \`;{\rm Signals an error} \\*
+>>Error: non-numeric value: A
+\end{lisp}
+\end{defloop}
+
+
+\section{Miscellaneous Features}
+\label{LOOP-MISC-SECTION}
+
+The Loop Facility provides the \cd{named} construct to name a loop so that
+the Common Lisp special form \cd{return-from} can be used.
+
+The loop keywords \cd{initially} and \cd{finally} designate loop constructs that cause
+expressions to be evaluated before and after the loop body, respectively.
+
+
+  The code for any \cd{initially} clauses is collected
+  into one \cd{progn} in the order in which the clauses appeared in
+  the loop.  The collected code is executed once in the loop prologue
+  after any implicit variable initializations.
+
+  The code for any \cd{finally} clauses is collected 
+  into one \cd{progn} in the order in which the clauses appeared in
+  the loop.  The collected code is executed once in the loop epilogue
+  before any implicit values are returned from the accumulation clauses.
+  Explicit returns in the loop body, however, will exit the loop
+  without executing the epilogue code.
+
+\subsection{Data Types}
+\label{LOOP-TYPES-SECTION}
+
+Many loop constructs take a {\it type-spec\/} argument that
+allows you to specify  certain data types for loop variables.
+While it is not necessary to specify a data type for any variable,
+by doing so you ensure that the variable has a correctly typed initial
+value.  The type declaration is made available to the compiler for
+more efficient \cd{loop} 
+expansion. 
+In some implementations,
+fixnum and float declarations are especially
+useful; the compiler notices them and emits more efficient code.  
+
+
+
+The {\it type-spec\/} argument has the following syntax:
+\begin{tabbing}
+{\it type-spec\/} ::= \cd{of-type} {\it d-type-spec} \\
+{\it d-type-spec\/} ::= {\it type-specifier\/} {\Mor} \cd{({\it d-type-spec} . {\it d-type-spec})}
+\end{tabbing}
+A {\it type-specifier} in this syntax can be any Common Lisp type
+specifier.  The {\it d-type-spec} argument is used for destructuring,
+as described in section~\ref{LOOP-DESTRUCTURING-SECTION}.  If the
+{\it d-type-spec} argument consists solely of the types \cd{fixnum},
+\cd{float}, \cd{t}, or \nil, the \cd{of-type} keyword is optional.  The
+\cd{of-type} construct is optional in these cases to provide backward
+compatibility; thus the following two expressions are the same:
+
+\begin{lisp}
+;;; This expression uses the old syntax for type specifiers. \\*
+(loop for i fixnum upfrom 3 ...) \\
+ \\
+;;; This expression uses the new syntax for type specifiers. \\*
+(loop for i of-type fixnum upfrom 3 ...)
+\end{lisp}
+
+\subsection{Destructuring}
+\label{LOOP-DESTRUCTURING-SECTION}
+
+Destructuring allows you to bind a set of variables to a corresponding
+set of values anywhere that you can normally bind a value to a single
+variable.  During \cd{loop} expansion, each variable in the variable list
+is matched with the values in the values list.  If there are more variables
+in the variable list than there are values in the values list, the 
+remaining variables are given a value of \cd{nil}.  If there are more
+values than variables listed, the extra values are discarded.
+
+
+Suppose you want to assign values from a list to the variables \cd{a},
+\cd{b}, and \cd{c}.  You could use one \cd{for} clause to
+bind the variable \cd{numlist} to the {\it car} of the specified expression,
+and then you could use another \cd{for} clause to bind the variables
+\cd{a}, \cd{b}, and \cd{c} sequentially.  
+\begin{lisp}
+;;; Collect values by using FOR constructs. \\*
+(loop for numlist in '((1 2 4.0) (5 6 8.3) (8 9 10.4)) \\*
+~~~~~~for a integer = (first numlist) \\*
+~~~~~~and for b integer = (second numlist) \\*
+~~~~~~and for c float = (third numlist) \\*
+~~~~~~collect (list c b a)) \\*
+~~~\EV~((4.0 2 1) (8.3 6 5) (10.4 9 8))
+\end{lisp}
+Destructuring makes this process easier by allowing the variables to
+be bound in parallel in each loop iteration.  You can declare data
+types by using a list of {\it type-spec\/} arguments.  If all the types
+are the same, you can use a shorthand destructuring syntax, as the second
+example following illustrates.
+\begin{lisp}
+;;; Destructuring simplifies the process. \\*
+(loop for (a b c) (integer integer float) in \\*
+~~~~~~'((1 2 4.0) (5 6 8.3) (8 9 10.4)) \\*
+~~~~~~collect (list c b a))) \\*
+~~~\EV~((4.0 2 1) (8.3 6 5) (10.4 9 8)) \\
+ \\
+;;; If all the types are the same, this way is even simpler. \\*
+(loop for (a b c) float in \\*
+~~~~~~'((1.0 2.0 4.0) (5.0 6.0 8.3) (8.0 9.0 10.4)) \\*
+~~~~~~collect (list c b a)) \\*
+~~~\EV~((4.0 2.0 1.0) (8.3 6.0 5.0) (10.4 9.0 8.0))
+\end{lisp}
+
+
+If you use destructuring to declare or initialize a number of groups
+of variables into types, you can use the loop keyword \cd{and}
+to simplify the process further.
+\begin{lisp}
+;;; Initialize and declare variables in parallel \\*
+;;; by using the AND construct. \\*
+(loop with (a b) float = '(1.0 2.0) \\*
+~~~~~~and (c d) integer = '(3 4) \\*
+~~~~~~and (e f) \\*
+~~~~~~return (list a b c d e f)) \\*
+~~~\EV~(1.0 2.0 3 4 NIL NIL)
+\end{lisp}
+
+  A data type specifier for a destructuring pattern is a tree of type
+  specifiers with the same shape as the tree of variables, with the
+  following exceptions:
+
+  \begin{itemize}
+
+  \item  When aligning the trees, an atom in the type specifier tree that
+  matches a cons in the variable tree declares the same type for each
+  variable.
+
+  \item  A cons in the type specifier tree that matches an atom in the
+  variable tree is a non-atomic type specifer.
+
+  \end{itemize}
+   
+\begin{lisp}
+;;; Declare X and Y to be of type VECTOR and FIXNUM, respectively. \\*
+(loop for (x y) of-type (vector fixnum) in my-list do ...)
+\end{lisp}
+
+
+
+If \cd{nil} is used in a destructuring list, no variable is provided for
+its place.
+\begin{lisp}
+(loop for (a nil b) = '(1 2 3) \\*
+~~~~~~do (return (list a b))) \\*
+~~~\EV~(1 3)
+\end{lisp}
+
+Note that nonstandard lists can specify destructuring.
+\begin{lisp}
+(loop for (x . y) = '(1 . 2) \\*
+~~~~~~do (return y)) \\*
+~~~\EV~2 \\
+ \\
+(loop for ((a . b) (c . d)) \\*
+~~~~~~~~~~of-type ((float . float) (integer . integer)) \\*
+~~~~~~~~~~in '(((1.2 . 2.4) (3 . 4)) ((3.4 . 4.6) (5 . 6))) \\*
+~~~~~~collect (list a b c d)) \\*
+~~~\EV~((1.2 2.4 3 4) (3.4 4.6 5 6))
+\end{lisp}
+
+[It is worth noting that the destructuring facility of \cd{loop} predates,
+and differs in some details from, that
+of \cd{destructuring-bind}, an extension that has been provided by many implementors
+of Common Lisp.---GLS]
+
+\begin{defloop}
+initially {expr}* \\
+finally [\!do! | \!doing!] {expr}* \\
+finally \!return! expr
+
+The \cd{initially} construct causes the specified expression to be evaluated
+in the loop prologue, which precedes all loop code except for 
+initial settings specified by constructs \cd{with}, \cd{for}, or
+\cd{as}.
+The \cd{finally} construct causes the specified expression to be evaluated
+in the loop epilogue after normal iteration terminates.
+
+The {\it expr\/} argument can be any non-atomic Common Lisp form.
+
+Clauses such as \cd{return}, \cd{always}, \cd{never}, and \cd{thereis}
+can bypass the \cd{finally} clause.
+
+The Common Lisp macro \cd{return} (or the \cd{return} loop construct) can be used
+after \cd{finally} to return
+values from a loop.  The evaluation of the \cd{return} form inside the
+\cd{finally} clause takes precedence over returning the accumulation
+from clauses specified by such keywords as \cd{collect}, \cd{nconc}, 
+\cd{append}, \cd{sum}, \cd{count}, \cd{maximize}, and \cd{minimize}; 
+the accumulation values for these pre-empted clauses are not returned by 
+the loop if \cd{return} is used.
+
+The constructs \cd{do}, \cd{initially}, and \cd{finally} are the
+only loop keywords that take an arbitrary number of (non-atomic) forms and group
+them as if by using an implicit \cd{progn}.  
+
+\goodbreak
+
+Examples:
+\begin{lisp}
+;;; This example parses a simple printed string representation  \\*
+;;; from BUFFER (which is itself a string) and returns the \\*
+;;; index of the closing double-quote character. \\*
+\\*
+(loop initially (unless (char= (char buffer 0) \#{\Xbackslash}") \\*
+~~~~~~~~~~~~~~~~~~(loop-finish)) \\*
+~~~~~~for i fixnum from 1 below (string-length buffer) \\*
+~~~~~~when (char= (char buffer i) \#{\Xbackslash}") \\*
+~~~~~~~~return i) \\
+ \\
+;;; The FINALLY clause prints the last value of I. \\*
+;;; The collected value is returned. \\*
+\\*
+(loop for i from 1 to 10 \\*
+~~~~~~when (> i 5) \\*
+~~~~~~~~collect i \\*
+~~~~~~finally (print i)) \`;{\rm Prints 1 line}\\*
+11 \\*
+~~~\EV~(6 7 8 9 10) \\
+ \\
+;;; Return both the count of collected numbers \\*
+;;; as well as the numbers themselves. \\*
+\\*
+(loop for i from 1 to 10 \\*
+~~~~~~when (> i 5) \\*
+~~~~~~~~collect i into number-list \\*
+~~~~~~~~and count i into number-count \\*
+~~~~~~finally (return (values number-count number-list))) \\*
+~~~\EV~5 {\rm and} (6 7 8 9 10)
+\end{lisp}
+\end{defloop}
+
+\begin{defloop}
+named name
+
+The \cd{named} construct allows you to assign a name to a \cd{loop}
+construct so that you can use the Common Lisp special form 
+\cd{return-from} to exit the named loop.
+
+Only one name may be assigned per loop; the specified name becomes the
+name of the implicit block for the loop.
+
+If used, the \cd{named}
+construct must be the first clause in the loop expression, coming right after the
+word \cd{loop}.
+
+Example:
+\begin{lisp}
+;;; Just name and return. \\*
+(loop named max \\*
+~~~~~~for i from 1 to 10 \\*
+~~~~~~do (print i) \\*
+~~~~~~do (return-from max 'done)) \`;{\rm Prints 1 line}\\*
+1  \\*
+~~~\EV~DONE
+\end{lisp}
+\end{defloop}
+

@@ -1,0 +1,589 @@
+%Part{Symbol, Root = "CLM.MSS"}
+%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{ULTIMATE}
+
+
+\chapter{Symbols}
+\label{symbol}
+
+A Lisp symbol is a data object that has three user-visible
+components:
+\begin{itemize}
+\item
+The {\it property list} is a list that effectively provides each symbol
+with many modifiable named components.
+
+\item
+The {\it print name} must be a string, which is the sequence of
+characters used to identify the symbol.  Symbols are of great use
+because a symbol can be located once its name is given
+(typed, say, on a keyboard).
+One may ordinarily not alter a symbol's print name.
+\end{itemize}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to specify it is an error to alter a print name.
+\end{newer}
+\begin{itemize}
+\item
+The {\it package cell} must refer to a package object.
+A package is a data structure
+used to locate a symbol once given the symbol's name.
+A symbol is uniquely identified
+by its name only when considered relative to a package.  A symbol may
+appear in many packages, but it can be {\it owned} by at most one package.
+The package cell points to the owner, if any.
+Package cells are discussed along with packages in chapter~\ref{XPACK}.
+\end{itemize}
+
+A symbol may actually have other components for use by the
+implementation.  One of the more important uses of symbols is as
+names for program variables; it is frequently desirable for the
+implementor to use certain components of a symbol to implement
+the semantics of variables.  See \cd{symbol-value}
+and \cd{symbol-function}.
+However, there are several possible
+implementation strategies, and so such possible components are not
+described here.
+
+\section{The Property List}
+
+Since its inception, Lisp has associated with each symbol
+a kind of tabular data structure
+called a {\it property list} ({\it plist} for short).  A property list contains
+zero or more entries; each entry associates with a key
+(called the {\it indicator}), which is typically
+a symbol, an arbitrary Lisp object (called the {\it value} or,
+sometimes, the {\it property}).
+There are no duplications among the indicators; a property list may only
+have one property at a time with a given name.  In this way, given
+a symbol and an indicator (another symbol), an associated value can be
+retrieved.
+
+A property
+list is very similar in purpose to an association list.  The difference
+is that a property list is an object with a unique identity; the
+operations for adding and removing property-list entries are destructive
+operations that alter the property list rather than making a new one.
+Association lists, on the other hand, are normally augmented
+non-destructively (without side effects) by adding new entries to the
+front (see \cd{acons} and \cd{pairlis}).
+
+A property list is implemented as a memory cell
+containing a list with an even number (possibly zero) of elements.
+(Usually this memory cell is the property-list cell of a symbol,
+but any memory cell acceptable to \cd{setf} can be used
+if \cd{getf} and \cd{remf} are used.)
+Each pair of elements in the list constitutes an entry;
+the first item is the indicator, and the second is the
+value.  Because property-list functions are given the symbol
+and not the list itself, modifications to the property list
+can be recorded by storing back into the property-list cell of the symbol.
+
+When a symbol is created, its property list is initially empty.
+Properties are created by using \cd{get} within a \cd{setf} form.
+
+Common Lisp does not use a symbol's property list as extensively as earlier
+Lisp implementations did.  Less-used data, such as compiler,
+debugging, and documentation information, is kept on property lists
+in Common Lisp.
+
+\beforenoterule
+\begin{incompatibility}
+In older Lisp implementations, the
+print name, value, and function definition of a symbol were kept on its
+property list.  The value cell was introduced into MacLisp and Interlisp
+to speed up access to variables; similarly for the
+print-name cell and function cell (MacLisp does not use a function cell).
+Recent Lisp implementations such as Spice Lisp,
+Lisp Machine Lisp, and NIL have
+introduced all of these cells plus the
+package cell.
+None of the MacLisp system property names
+(\cd{expr}, \cd{fexpr}, \cd{macro}, \cd{array},
+\cd{subr}, \cd{lsubr}, \cd{fsubr}, and in former times \cd{value} and
+\cd{pname}) exist in Common Lisp.
+
+In Common Lisp, the notion of ``disembodied property list''
+introduced in MacLisp is eliminated.  It tended to be used for
+rather kludgy things, and in Lisp Machine Lisp is often associated with
+the use of locatives (to make it ``off by one'' for searching
+alternating keyword lists).  In Common Lisp special \cd{setf}-like
+property-list functions are introduced: \cd{getf}
+and \cd{remf}.
+\end{incompatibility}
+\afternoterule
+
+\begin{defun}[Function]
+get symbol indicator &optional default
+
+\cd{get} searches the property list of
+{\it symbol} for an indicator \cd{eq} to {\it indicator}.
+The first argument must be a symbol.
+If one is found, then the corresponding value is returned;
+otherwise {\it default} is returned.
+
+If {\it default} is not specified,
+then {\false} is used for {\it default}.
+
+Note that there is no way to distinguish an absent property from
+one whose value is {\it default}.
+\begin{lisp}
+(get x y) \EQ\ (getf (symbol-plist x) y)
+\end{lisp}
+Suppose that the property list of \cd{foo} is \cd{(bar t baz 3 hunoz "Huh?")}.
+Then, for example:
+\begin{lisp}
+(get 'foo 'baz) \EV\ 3 \\
+(get 'foo 'hunoz) \EV\ "Huh?" \\
+(get 'foo 'zoo) \EV\ {\false}
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, the first argument to \cd{get} could
+be a list, in which case the {\it cdr} of the list was treated
+as a so-called ``disembodied property list.''
+The first argument to \cd{get}
+could also be any other object, in which case \cd{get} would 
+always return {\nil}.  In Common Lisp, it is an error to give anything
+but a symbol as the first argument to \cd{get}.
+
+What Common Lisp calls \cd{get}, Interlisp calls \cd{getprop}.
+
+What MacLisp and Interlisp call \cd{putprop} is accomplished
+in Common Lisp by using \cd{get} with \cd{setf}.
+\end{incompatibility}
+\afternoterule
+
+
+\cd{setf} may be used with \cd{get} to create a new property-value
+pair, possibly replacing an old pair with the same property name.
+For example:
+\begin{lisp}
+(get 'clyde 'species) \EV\ {\false} \\
+(setf (get 'clyde 'species) 'elephant) \EV\ elephant \\
+{\rm and now} (get 'clyde 'species) \EV\ elephant
+\end{lisp}
+The {\it default} argument may be
+specified to \cd{get} in this context; it is ignored by \cd{setf} but
+may be useful in such macros as \cd{push} that are related to \cd{setf}:
+\begin{lisp}
+(push item (get sym 'token-stack '(initial-item)))
+\end{lisp}
+means approximately the same as
+\begin{lisp}
+(setf (get sym 'token-stack '(initial-item)) \\
+~~~~~~(cons item (get sym 'token-stack '(initial-item))))
+\end{lisp}
+which in turn would be treated as simply
+\begin{lisp}
+(setf (get sym 'token-stack) \\
+~~~~~~(cons item (get sym 'token-stack '(initial-item))))
+\end{lisp}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{(setf (get {\it symbol} {\it indicator}) {\it newvalue})}
+is required to behave exactly the same as
+\cd{(setf (getf (symbol-plist {\it symbol}) {\it indicator}) {\it newvalue})}.
+\end{newer}
+
+\end{defun}
+
+\begin{defun}[Function]
+remprop symbol indicator
+
+This removes from {\it symbol} the property with an indicator \cd{eq}
+to {\it indicator}.  The property indicator and the corresponding
+value are removed by destructively splicing the property
+list.  It returns {\false} if no such property was found,
+or non-{\false} if a property was found.
+\begin{lisp}
+(remprop x y) \EQ\ (remf (symbol-plist x) y)
+\end{lisp}
+For example, if the property list of \cd{foo} is initially
+\begin{lisp}
+(color blue height 6.3 near-to bar)
+\end{lisp}
+then the call
+\begin{lisp}
+(remprop 'foo 'height)
+\end{lisp}
+returns a non-{\nil} value after altering \cd{foo}'s property list to be
+\begin{lisp}
+(color blue near-to bar)
+\end{lisp}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{(remprop {\it symbol} {\it indicator})}
+is required to behave exactly the same as
+\cd{(remf (symbol-plist {\it symbol}) {\it indicator})}.
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+symbol-plist symbol
+
+This returns the list that contains the property pairs of {\it symbol};
+the contents of the property-list cell are extracted and returned.
+
+Note that using \cd{get} on the result of \cd{symbol-plist} does {\it not} work.
+One must give the symbol itself to \cd{get} or else
+use the function \cd{getf}.
+
+\cd{setf} may be used with \cd{symbol-plist} to destructively replace
+the entire property list of a symbol.  This is a relatively dangerous
+operation, as it may destroy important information that
+the implementation may happen to store in property lists.
+Also, care must be taken that the new
+property list is in fact a list of even length.
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, this function is called \cd{plist};
+in Interlisp, it is called \cd{getproplist}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+getf place indicator &optional default
+
+\cd{getf} searches the property list stored in {\it place}
+for an indicator \cd{eq} to {\it indicator}.
+If one is found, then the corresponding value is returned;
+otherwise {\it default} is returned.  If {\it default} is not specified,
+then {\false} is used for {\it default}.
+Note that there is no way to distinguish an absent property from
+one whose value is {\it default}.
+Often {\it place} is computed from
+a generalized variable acceptable to \cd{setf}.
+
+\cd{setf} may be used with \cd{getf}, in which case the {\it place} must
+indeed be acceptable as a {\it place} to \cd{setf}.  The effect is to
+add a new property-value pair, or update an existing pair,
+in the property list kept in the {\it place}.
+The {\it default} argument may be
+specified to \cd{getf} in this context; it is ignored by \cd{setf} but
+may be useful in such macros as \cd{push} that are related to \cd{setf}.
+See the description of \cd{get} for an example of this.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{setf} used with \cd{getf} is permitted to perform a \cd{setf}
+on the {\it place} or on any part, {\it car} or {\it cdr}, of the
+top-level list structure held by that {\it place}.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+
+\beforenoterule
+\begin{incompatibility}
+The Interlisp function \cd{listget} is similar to \cd{getf}.
+The Interlisp function \cd{listput} is similar to using \cd{getf}
+with \cd{setf}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defmac}
+remf place indicator
+
+This removes from the property list stored in {\it place}
+the property with an indicator \cd{eq}
+to {\it indicator}.  The property indicator and the corresponding
+value are removed by destructively splicing the property
+list.  \cd{remf} returns {\false} if no such property was found,
+or some non-{\nil} value if a property was found.
+The form {\it place} may be any generalized variable acceptable to \cd{setf}.
+See \cd{remprop}.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{remf} is permitted to perform a \cd{setf}
+on the {\it place} or on any part, {\it car} or {\it cdr}, of the
+top-level list structure held by that {\it place}.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+\end{defmac}
+
+\begin{defun}[Function]
+get-properties place indicator-list
+
+\cd{get-properties} is like \cd{getf}, except that the second
+argument is a list of indicators.  \cd{get-properties} searches the
+property list stored in {\it place} for any of the indicators in
+{\it indicator-list} until it finds the first property
+in the property list whose indicator is one of
+the elements of {\it indicator-list}.  Normally {\it place} is computed from
+a generalized variable acceptable to \cd{setf}.
+
+\cd{get-properties} returns three values.
+If any property was found, then
+the first two values are the indicator
+and value for the first property whose indicator was in {\it indicator-list},
+and the third is that tail of the property list whose {\it car}
+was the indicator (and whose {\it cadr} is therefore the value).
+If no property was found, all three values are {\nil}.
+Thus the third value serves as a flag indicating success or failure
+and also allows the search to be restarted, if desired, after the property
+was found.
+\end{defun}
+
+\section{The Print Name}
+Every symbol has an associated string called the {\it print name}.
+This string is used as the external representation of the symbol:
+if the characters in the string are typed in to \cd{read}
+(with suitable escape conventions for certain characters),
+it is interpreted as a reference to that symbol
+(if it is interned); and if the symbol is printed, \cd{print} types out the
+print name.
+For more information, see the sections on the {\it reader}
+(section~\ref{READER})
+and {\it printer} (section~\ref{PRINTER}).
+
+\begin{defun}[Function]
+symbol-name sym
+
+This returns the print name of the symbol {\it sym}.
+For example:
+\begin{lisp}
+(symbol-name 'xyz) \EV\ "XYZ"
+\end{lisp}
+It is an extremely bad idea to modify a string being used as the print name of
+a symbol.  Such a modification may tremendously confuse
+the function \cd{read} and the package system.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to specify that it is an error to modify a string being used
+as the print name of a symbol.
+\end{newer}
+
+\end{defun}
+
+\section{Creating Symbols}
+
+Symbols can be used in two rather different ways.
+An {\it interned} symbol is one that is indexed by its print name
+in a catalogue called a {\it package}.
+A request to locate a symbol with that print name results
+in the same (\cd{eq}) symbol.  Every time input is read with the
+function \cd{read},
+and that print name appears, it is read as the same symbol.
+This property of symbols makes them appropriate to use as names for
+things and as hooks on which to hang permanent data objects
+(using the property list, for example).
+
+Interned symbols are normally created automatically; the first time
+something (such as the function \cd{read})
+asks the package system for a symbol with a given print name,
+that symbol is automatically created.  The function used to ask for
+an interned symbol is \cd{intern}, or one of the functions
+related to \cd{intern}.
+
+Although interned symbols are the most commonly
+used, they will not be discussed further here.  For more information,
+see chapter~\ref{XPACK}.
+
+An {\it uninterned} symbol is a symbol used simply as a data object,
+with no special cataloguing (it belongs to no particular package).
+An uninterned symbol is printed as \cd{\#:} followed by its
+print name.
+The following are some functions for creating uninterned symbols.
+
+\begin{defun}[Function]
+make-symbol print-name
+
+\cd{(make-symbol {\it print-name})} creates a new uninterned symbol, whose
+print name is the string {\it print-name}.  The value and function bindings will
+be unbound and the property list will be empty.
+
+The string actually installed in the symbol's print-name component
+may be the given string {\it print-name} or may be a copy of it,
+at the implementation's discretion.  The user should not assume
+that \cd{(symbol-name (make-symbol x))} is \cd{eq} to \cd{x}, but also
+should not alter a string once it has been given as an argument
+to \cd{make-symbol}.
+
+\beforenoterule
+\begin{implementation}
+An implementation might choose, for example,
+to copy the string to some read-only area, in the expectation that
+it will never be altered.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+copy-symbol sym &optional copy-props
+
+This returns a new uninterned symbol with the same print name
+as {\it sym}.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{COPY-SYMBOL-PRINT-NAME}
+that the print name of the new symbol is required to be
+the same only in the sense of \cd{string=}; in other words,
+an implementation is permitted (but not required)
+to make a copy of the print name.
+User programs should not assume that the print names of the old and new symbols
+will be \cd{eq}, although they may happen to be \cd{eq} in some implementations.
+\end{newer}
+
+
+If {\it copy-props} is non-{\nil}, then the initial
+value and function definition of the new symbol will
+be the same as those of {\it sym}, and the property list of
+the new symbol will be a copy of {\it sym}'s.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{COPY-SYMBOL-COPY-PLIST}
+to clarify that only the top-level conses of the
+property list are copied; it is as if \cd{(copy-list (symbol-plist {\it sym}))}
+were used as the property list of the new symbol.
+\end{newer}
+
+If {\it copy-props}
+is {\nil} (the default), then the new symbol will be unbound and undefined, and
+its property list will be empty.
+\end{defun}
+
+\begin{defun}[Function]
+gensym &optional x
+
+\cd{gensym} invents a print name and creates a new symbol with that print name.
+It returns the new, uninterned symbol.
+
+The invented print name consists of a prefix
+(which defaults to \cd{G}), followed by the decimal representation of a number.
+\begin{obsolete}
+The number is increased by 1 every time \cd{gensym} is called.
+
+If the argument {\it x} is present and is an integer, then {\it x} must be
+non-negative, and the internal counter is set to {\it x} for future use;
+otherwise the internal counter is incremented.
+If {\it x} is a string, then that string is made the default prefix
+for this and future calls to \cd{gensym}.
+After handling the argument, \cd{gensym} creates a
+symbol as it would with no argument.
+For example:
+\begin{lisp}
+(gensym) \EV\ G7 \\
+(gensym "FOO-") \EV\ FOO-8 \\
+(gensym 32) \EV\ FOO-32 \\
+(gensym) \EV\ FOO-33 \\
+(gensym "GARBAGE-") \EV\ GARBAGE-34
+\end{lisp}
+\end{obsolete}
+
+\cd{gensym} is usually used to create a symbol that should not normally
+be seen by the user and whose print name is unimportant except to
+allow easy distinction by eye between two such symbols.
+The optional argument is rarely supplied.
+The name comes from ``generate symbol,'' and the symbols produced by it
+are often called ``gensyms.''
+
+\beforenoterule
+\begin{incompatibility}
+In earlier versions of Lisp, such as MacLisp and
+Interlisp, the print name of a gensym was of fixed length, consisting
+of a single letter and a fixed-length
+decimal representation with leading zeros
+if necessary, for example, \cd{G0007}.  This convention was
+motivated by an implementation consideration, namely that the name
+should fit into a single machine word, allowing a quick and clever
+implementation.  Such considerations are less relevant in Common Lisp.
+The consistent use of mnemonic prefixes can make it easier
+for the programmer, when debugging, to determine what code generated
+a particular symbol.  The elimination of the fixed-length decimal
+representation prevents the same name from being used twice
+unless the counter is explicitly reset.
+\end{incompatibility}
+\afternoterule
+
+If it is desirable
+for the generated symbols to be interned, and yet guaranteed to be
+symbols distinct from all others,
+then the function \cd{gentemp}
+may be more appropriate to use.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{GENSYM-NAME-STICKINESS}
+to alter the specification of \cd{gensym} so that supplying an
+optional argument (whether a string or a number) does {\it not} alter
+the internal state maintained by \cd{gensym}.
+Instead, the internal
+counter is made explicitly available as a variable named \cd{*gensym-counter*}.
+
+If a string argument is given to \cd{gensym}, that string is used as the prefix;
+otherwise ``\cd{G}'' is used.  If a number is provided, its decimal
+representation is used, but the internal counter is unaffected.
+X3J13 deprecates the use of a number as an argument.
+\end{newer}
+\end{defun}
+
+\begin{newer}
+\begin{defun}[Variable]
+*gensym-counter*
+
+X3J13 voted in March 1989 \issue{GENSYM-NAME-STICKINESS}
+to add \cd{*gensym-counter*}, which
+holds the state of the \cd{gensym} counter; that is, \cd{gensym}
+uses the decimal representation of its value as part of the generated name
+and then increments its value.
+
+The initial value of this variable is implementation-dependent
+but will be a non-negative integer.
+
+The user may assign to or bind this variable at any time, but its value
+must always be a non-negative integer.
+\end{defun}
+\end{newer}
+
+\begin{defun}[Function]
+gentemp &optional prefix package
+
+\cd{gentemp}, like \cd{gensym}, creates and returns a new symbol.
+\cd{gentemp} differs from \cd{gensym} in that it interns the symbol
+(see \cd{intern}) in the {\it package} (which defaults to the current
+package; see \cd{*package*}).  \cd{gentemp} guarantees the symbol
+will be a new one not already existing in the package.  It does this
+by using a counter as \cd{gensym} does, but if the generated symbol
+is not really new, then the process is repeated until a new one is created.
+There is no provision for resetting the \cd{gentemp} counter.
+Also, the prefix for \cd{gentemp} is not remembered from one call
+to the next; if {\it prefix} is omitted, the default prefix \cd{T} is used.
+\end{defun}
+
+\begin{defun}[Function]
+symbol-package sym
+
+Given a symbol {\it sym}, \cd{symbol-package} returns the contents of the
+package cell of that symbol.  This will be a package object or {\nil}.
+\end{defun}
+
+\begin{defun}[Function]
+keywordp object
+
+The argument may be any Lisp object.  The predicate \cd{keywordp} is true
+if the argument is a symbol and that
+symbol is a keyword (that is, belongs to the keyword
+package).  Keywords are those symbols that are written with
+a leading colon.  Every keyword is a constant, in the sense
+that it always evaluates to itself.  See \cd{constantp}.
+\end{defun}

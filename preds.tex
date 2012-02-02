@@ -1,0 +1,1074 @@
+%Part{Preds, Root = "CLM.MSS"}
+%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Predicates}
+\label{PREDS}
+
+A {\it predicate} is a function that tests for some condition involving
+its arguments and returns {\false} if the condition is false, or some
+non-{\false} value if the condition is true.  One may think of a predicate as
+producing a Boolean value, where {\false} stands for {\it false} and anything
+else stands for {\it true}.  Conditional control structures such as
+\cd{cond},
+\cd{if}, \cd{when}, and \cd{unless} test such Boolean values.
+We say that a predicate {\it is true} when it returns a non-{\false} value,
+and {\it is false} when it returns {\false}; that is, it is true or false
+according to whether the condition being tested is true or false.
+
+By convention, the names of predicates usually end in the letter
+\cd{p} (which stands for ``predicate'').
+Common Lisp uses a uniform convention in hyphenating names of predicates.
+If the name of the predicate is formed by adding a \cd{p} to
+an existing name, such as the name of a data type,
+a hyphen is placed before the final \cd{p} if and only if there is
+a hyphen in the existing name.  For example, \cd{number} begets \cd{numberp}
+but \cd{standard-char} begets \cd{standard-char-p}.
+On the other hand, if the name of a predicate is formed by adding
+a prefixing qualifier to the front of an existing predicate name,
+the two names are joined with a hyphen and the presence or absence
+of a hyphen before the final \cd{p} is not changed.  For example,
+the predicate \cd{string-lessp} has no hyphen before the \cd{p}
+because it is the string version of \cd{lessp} (a MacLisp function
+that has been renamed \cd{<} in Common Lisp).  The name \cd{string-less-p}
+would incorrectly imply that it is a predicate that tests for a kind
+of object called a \cd{string-less}, and the name \cd{stringlessp}
+would connote a predicate that tests whether something has no strings
+(is ``stringless'')!
+
+The control structures that test Boolean values only test for
+whether or not the value is {\false}, which is considered to be false.  Any
+other value is considered to be true.  Often a predicate will return {\false} if
+it ``fails'' and some {\it useful} value if it ``succeeds'';
+such a function can be used not only as a test but
+also for the useful value provided in case of success.  An example
+is \cd{member}.
+
+If no better non-{\nil} value is available for the purpose of indicating
+success, by convention the symbol \cd{t} is used as the ``standard''
+true value.
+
+\section{Logical Values}
+
+The names \cd{nil} and \cd{t} are constants in Common Lisp.  Although they
+are symbols like any other symbols, and appear to be treated
+as variables when evaluated, it is not permitted to modify their
+values.  See \cd{defconstant}.
+
+\begin{defun}[Constant]
+nil
+
+The value of {\nil} is always {\nil}.  This object represents the logical
+{\it false} value and also the empty list.  It can also be written \cd{()}.
+\end{defun}
+
+\begin{defun}[Constant]
+t
+
+The value of \cd{t} is always \cd{t}.
+\end{defun}
+
+\section{Data Type Predicates}
+
+Perhaps the most important predicates in Lisp are those that deal
+with data types;  that is, given a data object one can determine whether
+or not it belongs to a given type, or one can compare two type specifiers.
+
+\subsection{General Type Predicates}
+
+If a data type is viewed as the set of all objects belonging to the type,
+then the \cd{typep} function is a set membership test, while \cd{subtypep}
+is a subset test.
+
+\begin{defun}[Function]
+typep object type
+
+\cd{typep} is a predicate that
+is true if {\it object} is of type {\it type}, and is false otherwise.
+Note that an object can be ``of'' more than one type, since one type can
+include another.  The {\it type} may be any of the type specifiers
+mentioned in chapter~\ref{DTSPEC} {\it except} that it may not
+be or contain a type specifier list whose first element is \cd{function}
+or \cd{values}.
+A specifier of the form \cd{(satisfies {\it fn})} is handled simply
+by applying the function {\it fn} to {\it object}
+(see \cd{funcall}); the {\it object} is considered
+to be of the specified type if the result is not {\false}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
+to change \cd{typep} to give specialized
+\cd{array} and \cd{complex} type specifiers the same meaning for
+purposes of type discrimination as they have for declaration purposes.
+Of course, this also applies to such type specifiers as \cd{vector}
+and \cd{simple-array}
+(see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
+Thus
+\begin{lisp}
+(typep foo '(array bignum))
+\end{lisp}
+in the first edition asked the question, Is \cd{foo} an array
+specialized to hold bignums? but under the new interpretation
+asks the question, Could the array \cd{foo} have resulted from
+giving \cd{bignum} as the \cd{:element-type} argument
+to \cd{make-array}?
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+subtypep type1 type2
+
+The arguments must be type specifiers that are acceptable to \cd{typep}.
+The two type specifiers are compared; this predicate is true
+if {\it type1} is definitely a (not necessarily proper) subtype of {\it type2}.
+If the result is {\false}, however, then {\it type1} may or may not be a subtype of
+{\it type2} (sometimes it is impossible to tell, especially when
+\cd{satisfies} type specifiers are involved).
+A second returned value indicates the certainty of the result;
+if it is true, then the first value is an accurate indication
+of the subtype relationship.  Thus there are three possible
+result combinations:
+\begin{tabbing}
+~~~~~~~~\=~~~~~~~~\=\kill
+{\true}\>{\true}\>{\it type1} is definitely a subtype of {\it type2} \\
+{\false}\>{\true}\>{\it type1} is definitely not a subtype of {\it type2} \\
+{\false}\>{\false}\>\cd{subtypep} could not determine the relationship
+\end{tabbing}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{SUBTYPEP-TOO-VAGUE}
+to place certain requirements upon the implementation of \cd{subtypep},
+for it noted that implementations in many cases simply ``give up''
+and return the two values \cd{nil} and \cd{nil} when in fact it would have been
+possible to determine the relationship between the given types.
+The requirements are as follows, where it is understood that a type specifier {\it s}
+{\it involves} a type specifier {\it u} if either {\it s} contains an occurrence of {\it u}
+directly or {\it s} contains a type specifier {\it w} defined by \cd{deftype} whose
+expansion involves {\it u}.
+\begin{itemize}
+\item \cd{subtypep} is not permitted to return a second value of \cd{nil}
+unless one or both of its arguments involves \cd{satisfies},
+\cd{and}, \cd{or}, \cd{not}, or \cd{member}.
+\item \cd{subtypep} should signal an error when one or both of its arguments
+involves \cd{values} or the list form of the \cd{function} type specifier.
+\item \cd{subtypep} must always return the two values \cd{t} and \cd{t}
+in the case where its arguments, after expansion of specifiers
+defined by \cd{deftype}, are \cd{equal}.
+\end{itemize}
+In addition, X3J13 voted to clarify that in some cases
+the relationships between types
+as reflected by \cd{subtypep} may be implementation-specific.
+For example, in an implementation supporting only one type of
+floating-point number, \cd{(subtypep 'float 'long-float)} would return
+\cd{t} and \cd{t}, since the two types would be identical.
+
+Note that \cd{satisfies} is an exception because relationships between
+types involving \cd{satisfies} are undecidable in general, but (as X3J13 noted)
+\cd{and}, \cd{or}, \cd{not}, and \cd{member} are merely very messy to deal
+with.  In all likelihood these will not be addressed unless and
+until someone is willing to write a careful specification that covers
+all the cases for the processing of these type
+specifiers by \cd{subtypep}.  The requirements stated above were easy
+to state and probably suffice for most cases of interest.
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
+to change \cd{subtypep} to give specialized
+\cd{array} and \cd{complex} type specifiers the same meaning for
+purposes of type discrimination as they have for declaration purposes.
+Of course, this also applies to such type specifiers as \cd{vector}
+and \cd{simple-array}
+(see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
+
+If {\it A} and {\it B} are type specifiers (other than \cd{*}, which technically
+is not a type specifier anyway), then \cd{(array~{\it A})}
+and \cd{(array~{\it B})} represent the same type in a given implementation
+if and only if they denote arrays
+of the same specialized representation in that implementation;
+otherwise they are disjoint.
+To put it another way, they represent the same type
+%(and otherwise are disjoint)
+if and only if
+\cd{(upgraded-array-element-type~'{\it A})} and
+\cd{(upgraded-array-element-type~'{\it B})} are the same type.
+Therefore
+\begin{lisp}
+(subtypep '(array {\it A}) '(array {\it B}))
+\end{lisp}
+is true if and only if
+\cd{(upgraded-array-element-type~'{\it A})}
+is the same type as
+\cd{(upgraded-array-element-type~'{\it B})}.
+
+The \cd{complex} type specifier is treated in a similar but subtly different
+manner.
+If {\it A} and {\it B} are two type specifiers (but not \cd{*}, which technically
+is not a type specifier anyway), then \cd{(complex~{\it A})}
+and \cd{(complex~{\it B})} represent the same type in a given implementation
+if and only if they refer to complex numbers
+of the same specialized representation in that implementation;
+otherwise they are disjoint.
+Note, however, that there is no function called \cd{make-complex} that
+allows one to specify a particular element type (then to be upgraded);
+instead, one must describe specialized complex numbers in terms of
+the actual types of the parts from which they were constructed.
+There is no number of type (or rather, {\it representation\/})
+\cd{float} as such; there are only numbers of type \cd{single-float},
+numbers of type \cd{double-float},
+and so on.  Therefore we want \cd{(complex single-float)} to
+be a subtype of \cd{(complex float)}.
+
+The rule, then, is that \cd{(complex~{\it A})}
+and \cd{(complex~{\it B})} represent the same type (and otherwise are disjoint)
+in a given implementation
+if and only if {\it either} the type {\it A} is a subtype of {\it B}, {\it or}
+\cd{(upgraded-complex-part-type~'{\it A})} and
+\cd{(upgraded-complex-part-type~'{\it B})} are the same type.
+In the latter case \cd{(complex~{\it A})}
+and \cd{(complex~{\it B})} in fact refer to the same specialized representation.
+Therefore
+\begin{lisp}
+(subtypep '(complex {\it A}) '(complex {\it B}))
+\end{lisp}
+is true if and only if the results of
+\cd{(upgraded-complex-part-type~'{\it A})} and
+\cd{(upgraded-complex-part-type~'{\it B})} are the same type.
+
+Under this interpretation
+\begin{lisp}
+(subtypep '(complex single-float) '(complex float))
+\end{lisp}
+must be true in all implementations; but
+\begin{lisp}
+(subtypep '(array single-float) '(array float))
+\end{lisp}
+is true only in implementations that do not have a specialized array representation
+for \cd{single-float} elements distinct from that for \cd{float} elements in
+general.
+\end{new}
+\end{defun}
+
+\subsection{Specific Data Type Predicates}
+
+The following predicates test for individual data types.
+
+\begin{defun}[Function]
+null object
+
+\cd{null} is true if its argument is {\empty},
+and otherwise is false.
+This is the same operation performed by the function \cd{not};
+however, \cd{not} is normally used to invert a Boolean value,
+whereas \cd{null} is normally used to test for an empty list.  The programmer
+can therefore express {\it intent} by the choice of function name.
+\begin{lisp}
+(null x) \EQ\ (typep x 'null) \EQ\ (eq x '{\empty})
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+symbolp object
+
+\cd{symbolp} is true if its argument is a symbol,
+and otherwise is false.
+\begin{lisp}
+(symbolp x) \EQ\ (typep x 'symbol)
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+The Interlisp equivalent of \cd{symbolp} is
+called \cd{litatom}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+atom object
+
+The predicate \cd{atom} is true if its argument is not a cons,
+and otherwise is false.
+Note that \cd{(atom '{\empty})} is true, because {\empty}$\;\equiv\;${\nil}.
+\begin{lisp}
+(atom x) \EQ\ (typep x 'atom) \EQ\ (not (typep x 'cons))
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+In some Lisp dialects, notably Interlisp,
+only symbols and numbers are considered to be atoms; arrays
+and strings are considered to be neither atoms nor lists (conses).
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+consp object
+
+The predicate \cd{consp} is true if its argument is a cons,
+and otherwise is false.
+Note that the empty list is not a cons, so
+\cd{(consp '{\empty})} \EQ\ \cd{(consp '{\nil})} \EV\ {\nil}.
+\begin{lisp}
+(consp x) \EQ\ (typep x 'cons) \EQ\ (not (typep x 'atom))
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+Some Lisp implementations call this function
+\cd{pairp} or \cd{listp}.  The name \cd{pairp} was rejected for Common Lisp
+because it emphasizes too strongly the dotted-pair notion rather than the
+usual usage of conses in lists.  On the other hand, \cd{listp} too strongly
+implies that the cons is in fact part of a list, which after all it might
+not be; moreover, {\empty} is a list, though not a cons.
+The name \cd{consp} seems to be the appropriate compromise.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+listp object
+
+\cd{listp} is true if its argument is a cons or the empty list {\empty},
+and otherwise is false.  It does not check for whether the list
+is a ``true list'' (one terminated by {\nil}) or a ``dotted list''
+(one terminated by a non-null atom).
+\begin{lisp}
+(listp x) \EQ\ (typep x 'list) \EQ\ (typep x '(or cons null))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+numberp object
+
+\cd{numberp} is true if its argument is any kind of number,
+and otherwise is false.
+\begin{lisp}
+(numberp x) \EQ\ (typep x 'number)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+integerp object
+
+\cd{integerp} is true if its argument is an integer, and otherwise
+is false.
+\begin{lisp}
+(integerp x) \EQ\ (typep x 'integer)
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp this is called \cd{fixp}.
+Users have been confused as to whether this meant \cd{integerp}
+or \cd{fixnump}, and so the name \cd{integerp} has been adopted here.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+rationalp object
+
+\cd{rationalp} is true if its argument is a rational number (a ratio or
+an integer), and otherwise is false.
+\begin{lisp}
+(rationalp x) \EQ\ (typep x 'rational)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+floatp object
+
+\cd{floatp} is true if its argument is a floating-point number,
+and otherwise is false.
+\begin{lisp}
+(floatp x) \EQ\ (typep x 'float)
+\end{lisp}
+\end{defun}
+
+
+\begin{newer}
+\begin{defun}[Function]
+realp object
+
+X3J13 voted in March 1989 \issue{REAL-NUMBER-TYPE} to add the function \cd{realp}.
+\cd{realp} is true if its argument is a real number,
+and otherwise is false.
+\begin{lisp}
+(realp x) \EQ\ (typep x 'real)
+\end{lisp}
+\end{defun}
+\end{newer}
+
+\begin{defun}[Function]
+complexp object
+
+\cd{complexp} is true if its argument is a complex number,
+and otherwise is false.
+\begin{lisp}
+(complexp x) \EQ\ (typep x 'complex)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+characterp object
+
+\cd{characterp} is true if its argument is a character,
+and otherwise is false.
+\begin{lisp}
+(characterp x) \EQ\ (typep x 'character)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+stringp object
+
+\cd{stringp} is true if its argument is a string,
+and otherwise is false.
+\begin{lisp}
+(stringp x) \EQ\ (typep x 'string)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+bit-vector-p object
+
+\cd{bit-vector-p} is true if its argument is a bit-vector,
+and otherwise is false.
+\begin{lisp}
+(bit-vector-p x) \EQ\ (typep x 'bit-vector)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+vectorp object
+
+\cd{vectorp} is true if its argument is a vector,
+and otherwise is false.
+\begin{lisp}
+(vectorp x) \EQ\ (typep x 'vector)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+simple-vector-p object
+
+\cd{vectorp} is true if its argument is a simple general vector,
+and otherwise is false.
+\begin{lisp}
+(simple-vector-p x) \EQ\ (typep x 'simple-vector)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+simple-string-p object
+
+\cd{simple-string-p} is true if its argument is a simple string,
+and otherwise is false.
+\begin{lisp}
+(simple-string-p x) \EQ\ (typep x 'simple-string)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+simple-bit-vector-p object
+
+\cd{simple-bit-vector-p} is true if its argument is a simple bit-vector,
+and otherwise is false.
+\begin{lisp}
+(simple-bit-vector-p x) \EQ\ (typep x 'simple-bit-vector)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+arrayp object
+
+\cd{arrayp} is true if its argument is an array,
+and otherwise is false.
+\begin{lisp}
+(arrayp x) \EQ\ (typep x 'array)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+packagep object
+
+\cd{packagep} is true if its argument is a package,
+and otherwise is false.
+\begin{lisp}
+(packagep x) \EQ\ (typep x 'package)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+functionp object
+
+\begin{obsolete}
+\cd{functionp} is true if its argument is suitable for applying
+to arguments, using for example the \cd{funcall} or \cd{apply} function.
+Otherwise \cd{functionp} is false.
+
+\cd{functionp} is always true of symbols, lists whose {\it car}
+is the symbol \cd{lambda}, any value returned by the \cd{function}
+special form, and any values returned by the function \cd{compile}
+when the first argument is {\nil}.
+\end{obsolete}
+\begin{newer}
+X3J13 voted in June 1988 \issue{FUNCTION-TYPE}
+to define
+\begin{lisp}
+(functionp x) \EQ\ (typep x 'function)
+\end{lisp}
+Because the vote also specifies that types \cd{cons} and \cd{symbol} are disjoint
+from the type \cd{function}, this is an incompatible change;
+now \cd{functionp} is in fact always false of symbols and lists.
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+compiled-function-p object
+
+\cd{compiled-function-p} is true if its argument is any compiled code object,
+and otherwise is false.
+\begin{lisp}
+(compiled-function-p x) \EQ\ (typep x 'compiled-function)
+\end{lisp}
+\end{defun}
+
+\begin{obsolete}
+\begin{defun}[Function]
+commonp object
+
+\cd{commonp} is true if its argument is any standard Common Lisp data type,
+and otherwise is false.
+\begin{lisp}
+(commonp x) \EQ\ (typep x 'common)
+\end{lisp}
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989
+\issue{COMMON-TYPE}
+to remove the predicate \cd{commonp} (and the type \cd{common}) from the language.
+\end{newer}
+
+\medskip
+
+See also \cd{standard-char-p}, \cd{string-char-p},
+\cd{streamp}, \cd{random-state-p},
+\cd{readtablep},
+\cd{hash-table-p}, and \cd{pathnamep}.
+
+\section{Equality Predicates}
+
+Common Lisp provides a spectrum of predicates for testing for equality of
+two objects: \cd{eq} (the most specific), \cd{eql}, \cd{equal}, and \cd{equalp}
+(the most general).  \cd{eq} and \cd{equal} have the meanings traditional
+in Lisp.  \cd{eql} was added because it is frequently needed, and
+\cd{equalp} was added primarily in order to have a version of \cd{equal}
+that would ignore type differences when comparing numbers
+and case differences when comparing characters.
+If two objects satisfy any one of these equality predicates,
+then they also satisfy all those that are more general.
+
+\begin{defun}[Function]
+eq x y
+
+\cd{(eq {\it x} {\it y})} is true
+if and only if {\it x} and {\it y} are the same identical object.
+(Implementationally, {\it x} and {\it y} are usually
+\cd{eq} if and only if they address the same identical memory location.)
+
+It should be noted that things that print the same are not necessarily \cd{eq}
+to each other.  Symbols with the same print name usually are \cd{eq} to
+each other because of the use of the \cd{intern} function.
+However, numbers with the same value
+need not be \cd{eq}, and two similar lists are usually not \cd{eq}.
+For example:
+\begin{lisp}
+(eq 'a 'b) {\rm is false.} \\
+(eq 'a 'a) {\rm is true.} \\
+(eq 3 3) {\rm might be true or false, depending on the implementation.} \\
+(eq 3 3.0) {\rm is false.} \\
+(eq 3.0 3.0) {\rm might be true or false, depending on the implementation.} \\
+(eq \#c(3 -4) \#c(3 -4)) \\
+~~{\rm might be true or false, depending on the implementation.} \\
+(eq \#c(3 -4.0) \#c(3 -4)) {\rm is false.} \\
+(eq (cons 'a 'b) (cons 'a 'c)) {\rm is false.} \\
+(eq (cons 'a 'b) (cons 'a 'b)) {\rm is false.} \\
+(eq '(a . b) '(a . b)) {\rm might be true or false.} \\
+(progn (setq x (cons 'a 'b)) (eq x x)) {\rm is true.} \\
+(progn (setq x '(a . b)) (eq x x)) {\rm is true.} \\
+(eq \#{\Xbackslash}A \#{\Xbackslash}A) {\rm might be true or false, depending on the implementation.} \\
+(eq "Foo" "Foo") {\rm might be true or false.} \\
+(eq "Foo" (copy-seq "Foo")) {\rm is false.} \\
+(eq "FOO" "foo") {\rm is false.}
+\end{lisp}
+In Common Lisp, unlike some other Lisp dialects, the implementation
+is permitted to make ``copies'' of
+characters and numbers at any time.  (This permission is granted
+because it allows tremendous performance improvements in many
+common situations.)  The net effect is that
+Common Lisp makes no guarantee that \cd{eq} will be true even when both
+its arguments are ``the same thing'' if that thing is a character or number.
+For example:
+\begin{lisp}
+(let ((x 5)) (eq x x)) {\rm might be true or false.}
+\end{lisp}
+The predicate \cd{eql} is the same as \cd{eq}, except that if the
+arguments are characters or numbers of the same type then their
+values are compared.  Thus \cd{eql} tells whether two objects
+are {\it conceptually} the same, whereas \cd{eq} tells whether two
+objects are {\it implementationally} identical.  It is for this reason
+that \cd{eql}, not \cd{eq}, is the default comparison predicate
+for the sequence functions defined in chapter~\ref{KSEQUE}.
+
+\beforenoterule
+\begin{implementation}
+\cd{eq} simply compares the two given pointers,
+so any kind of object that is represented in an ``immediate'' fashion
+will indeed have like-valued instances satisfy \cd{eq}.
+In some implementations, for example,
+fixnums and characters happen to ``work.''
+However, no program should depend on this, as other implementations
+of Common Lisp might not use an immediate representation for these data types.
+\end{implementation}
+\afternoterule
+
+\begin{obsolete}
+An additional problem with \cd{eq} is that the implementation is permitted
+to ``collapse'' constants (or portions thereof)
+appearing in code to be compiled if they are
+\cd{equal}.  An object is considered to be a constant in code to be compiled
+if it is a self-evaluating form or is contained in a \cd{quote} form.
+This is why \cd{(eq "Foo" "Foo")} might be true or false; in interpreted
+code it would normally be false, because reading in the
+form \cd{(eq "Foo" "Foo")} would construct distinct strings for the two
+arguments to \cd{eq}, but the compiler might choose to use the same
+identical string or two distinct copies as the two arguments in the
+call to \cd{eq}.  Similarly, \cd{(eq '(a . b) '(a . b))} might be true
+or false, depending on whether the constant conses appearing in the
+\cd{quote} forms were collapsed by the compiler.  However,
+\cd{(eq (cons 'a 'b) (cons 'a 'b))} is always false, because every distinct
+call to the \cd{cons} function necessarily produces a new and distinct cons.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{QUOTE-SEMANTICS} to clarify that
+\cd{eval} and \cd{compile} are not permitted either to copy or
+to coalesce (``collapse'') constants (see \cd{eq})
+appearing in the code they process; the resulting
+program behavior must refer to objects that are \cd{eql} to the
+corresponding objects in the source code.
+Only the \cd{compile-file}/\cd{load} process is permitted
+to copy or coalesce constants (see section~\ref{COMPILER-SECTION}).
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+eql x y
+
+The \cd{eql} predicate is true if its arguments are \cd{eq},
+or if they are numbers of the same type with the same value,
+or if they are character objects
+that represent the same character.
+For example:
+\begin{lisp}
+(eql 'a 'b) {\rm is false.} \\
+(eql 'a 'a) {\rm is true.} \\
+(eql 3 3) {\rm is true.} \\
+(eql 3 3.0) {\rm is false.} \\
+(eql 3.0 3.0) {\rm is true.} \\
+(eql \#c(3 -4) \#c(3 -4)) {\rm is true.} \\
+(eql \#c(3 -4.0) \#c(3 -4)) {\rm is false.} \\
+(eql (cons 'a 'b) (cons 'a 'c)) {\rm is false.} \\
+(eql (cons 'a 'b) (cons 'a 'b)) {\rm is false.} \\
+(eql '(a . b) '(a . b)) {\rm might be true or false.} \\
+(progn (setq x (cons 'a 'b)) (eql x x)) {\rm is true.} \\
+(progn (setq x '(a . b)) (eql x x)) {\rm is true.} \\
+(eql \#{\Xbackslash}A \#{\Xbackslash}A) {\rm is true.} \\
+(eql "Foo" "Foo") {\rm might be true or false.} \\
+(eql "Foo" (copy-seq "Foo")) {\rm is false.} \\
+(eql "FOO" "foo") {\rm is false.}
+\end{lisp}
+Normally \cd{(eql 1.0s0 1.0d0)} would be false, under the assumption
+that \cd{1.0s0} and \cd{1.0d0} are of distinct data types.
+However, implementations that do not provide four distinct floating-point
+formats are permitted to ``collapse'' the four formats into some
+smaller number of them; in such an implementation \cd{(eql 1.0s0 1.0d0)}
+might be true.  The predicate \cd{=} will compare
+the values of two numbers even if the numbers are of different types.
+
+If an implementation supports positive and negative zeros as distinct
+values (as in the IEEE proposed standard floating-point format),
+then \cd{(eql 0.0 -0.0)} will be false.  Otherwise, when the syntax
+\cd{-0.0} is read it will be interpreted as the value \cd{0.0},
+and so \cd{(eql 0.0 -0.0)} will be true.  The predicate \cd{=}
+differs from \cd{eql} in that \cd{(= 0.0 -0.0)} will always be true,
+because \cd{=} compares the mathematical values of its operands,
+whereas \cd{eql} compares the representational values, so to speak.
+
+Two complex numbers are considered to be \cd{eql}
+if their real parts are \cd{eql} and their imaginary parts are \cd{eql}.
+For example, \cd{(eql \#C(4 5) \#C(4 5))} is true and
+\cd{(eql \#C(4 5) \#C(4.0 5.0))} is false.
+Note that while \cd{(eql \#C(5.0 0.0) 5.0)} is false,
+\cd{(eql \#C(5 0) 5)} is true.
+In the case of \cd{(eql \#C(5.0 0.0) 5.0)} the
+two arguments are of different types
+and so cannot satisfy \cd{eql}; that's all there is to it.
+In the case of \cd{(eql \#C(5 0) 5)}, however,
+\cd{\#C(5 0)} is not a complex number but
+is always automatically reduced by the rule of complex
+canonicalization to the integer \cd{5},
+just as the apparent ratio \cd{20/4} is always simplified to \cd{5}.
+
+The case of \cd{(eql "Foo" "Foo")} is discussed above in the description
+of \cd{eq}.  While \cd{eql} compares the values of numbers and
+characters, it does not compare the contents of strings.  To compare
+the characters of two strings, one should use \cd{equal}, \cd{equalp},
+\cd{string=}, or \cd{string-equal}.
+
+\beforenoterule
+\begin{incompatibility}
+The Common Lisp function \cd{eql} is similar to the
+Interlisp function \cd{eqp}.  However, \cd{eql} considers \cd{3} and
+\cd{3.0} to be different, whereas \cd{eqp} considers them to be the same;
+\cd{eqp} behaves like the Common Lisp \cd{=} function, not like \cd{eql},
+when both arguments are numbers.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+equal x y
+
+The \cd{equal} predicate is true if its arguments are structurally similar
+(isomorphic) objects.  A rough rule of thumb is that two objects
+are \cd{equal} if and only if their printed representations are the same.
+
+Numbers and characters are compared as for \cd{eql}.
+Symbols are compared as for \cd{eq}.  This method
+of comparing symbols can violate the rule
+of thumb for \cd{equal} and printed representations,
+but only in the infrequently occurring case of two distinct
+symbols with the same print name.
+
+Certain objects that have components are \cd{equal} if they are of the same
+type and corresponding components are \cd{equal}.
+This test is implemented in a recursive manner and may fail to
+terminate for circular structures.
+
+For conses, \cd{equal} is defined recursively as
+the two {\it car}'s being \cd{equal} and the two {\it cdr}'s being \cd{equal}.
+
+Two arrays are \cd{equal} only if they are \cd{eq},
+with one exception:
+strings and bit-vectors are compared element-by-element.
+If either argument has a fill pointer, the fill pointer limits
+the number of elements examined by \cd{equal}.
+Uppercase and lowercase letters in strings are considered by
+\cd{equal} to be distinct.  (In contrast, \cd{equalp} ignores
+case distinctions in strings.)
+
+\beforenoterule
+\begin{incompatibility}
+In Lisp Machine Lisp, \cd{equal} ignores the difference between
+uppercase and lowercase letters in strings.
+This violates the rule of thumb about
+printed representations, however, which is very useful, especially
+to novices.  It is also inconsistent with the treatment of single characters,
+which in Lisp Machine Lisp are represented as fixnums.
+\end{incompatibility}
+\afternoterule
+
+Two pathname objects are \cd{equal} if and only if
+all the corresponding components
+(host, device, and so on) are equivalent.  (Whether or not
+uppercase and lowercase letters are considered equivalent
+in strings appearing in components depends on the file
+name conventions of the file system.)  Pathnames
+that are \cd{equal} should be functionally equivalent.
+
+\begin{new}
+X3J13 voted in June 1989
+\issue{EQUAL-STRUCTURE}
+to clarify that \cd{equal} never recursively
+descends any structure or data type other than the ones explicitly
+described above: conses, bit-vectors, strings, and pathnames.
+Numbers and characters are compared as if by \cd{eql}, and all other
+data objects are compared as if by \cd{eq}.
+\end{new}
+
+\begin{lisp}
+(equal 'a 'b) {\rm is false.} \\
+(equal 'a 'a) {\rm is true.} \\
+(equal 3 3) {\rm is true.} \\
+(equal 3 3.0) {\rm is false.} \\
+(equal 3.0 3.0) {\rm is true.} \\
+(equal \#c(3 -4) \#c(3 -4)) {\rm is true.} \\
+(equal \#c(3 -4.0) \#c(3 -4)) {\rm is false.} \\
+(equal (cons 'a 'b) (cons 'a 'c)) {\rm is false.} \\
+(equal (cons 'a 'b) (cons 'a 'b)) {\rm is true.} \\
+(equal '(a . b) '(a . b)) {\rm is true.} \\
+(progn (setq x (cons 'a 'b)) (equal x x)) {\rm is true.} \\
+(progn (setq x '(a . b)) (equal x x)) {\rm is true.} \\
+(equal \#{\Xbackslash}A \#{\Xbackslash}A) {\rm is true.} \\
+(equal "Foo" "Foo") {\rm is true.} \\
+(equal "Foo" (copy-seq "Foo")) {\rm is true.} \\
+(equal "FOO" "foo") {\rm is false.}
+\end{lisp}
+To compare a tree of conses using \cd{eql}
+(or any other desired predicate) on the leaves, use \cd{tree-equal}.
+\end{defun}
+
+\begin{defun}[Function]
+equalp x y
+
+Two objects are \cd{equalp} if they are \cd{equal};
+if they are characters and satisfy \cd{char-equal},
+which ignores alphabetic case and certain other attributes of characters;
+if they are numbers and have the same numerical value,
+even if they are of different types;
+or if they have components that are all \cd{equalp}.
+
+Objects that have components are \cd{equalp} if they are of the same
+type and corresponding components are \cd{equalp}.
+This test is implemented in a recursive manner and may fail to
+terminate for circular structures.
+For conses, \cd{equalp} is defined recursively as
+the two {\it car}'s being \cd{equalp} and the two {\it cdr}'s being \cd{equalp}.
+
+Two arrays are \cd{equalp} if and only if they have the same
+number of dimensions, the dimensions match,
+and the corresponding components are \cd{equalp}.
+The specializations need not match; for example,
+a string and a general array that happens to contain the same characters
+will be \cd{equalp} (though definitely not \cd{equal}).
+If either argument has a fill pointer, the fill pointer limits
+the number of elements examined by \cd{equalp}.
+Because \cd{equalp} performs element-by-element comparisons
+of strings and ignores the alphabetic case of characters,
+case distinctions are therefore also ignored when \cd{equalp} compares
+strings.
+
+Two symbols can be \cd{equalp} only if they are \cd{eq}, that is, the same
+identical object.
+
+\begin{new}
+X3J13 voted in June 1989
+\issue{EQUAL-STRUCTURE}
+to specify that \cd{equalp} compares components
+of hash tables (see below), and to
+clarify that otherwise \cd{equalp} never recursively
+descends any structure or data type other than the ones explicitly
+described above: conses, arrays (including bit-vectors and strings), and pathnames.
+Numbers are compared for numerical equality (see \cd{=}),
+characters are compared as if by \cd{char-equal}, and all other
+data objects are compared as if by \cd{eq}.
+
+Two hash tables are considered the same by \cd{equalp} if and only if
+they satisfy a four-part test:
+\begin{itemize}
+\item They must be
+of the same kind; that is, equivalent \cd{:test} arguments were given to
+\cd{make-hash-table} when the two hash tables were created.
+
+\item They must have the same number of entries (see \cd{hash-table-count}).
+
+\item For every entry ({\it key1}, {\it value1\/}) in one hash table
+there must be a corresponding entry ({\it key2}, {\it value2\/}) in the
+other, such that {\it key1} and {\it key2} are considered to be the same
+by the \cd{:test} function associated with the hash tables.
+
+\item For every entry ({\it key1}, {\it value1\/}) in one hash table
+and its corresponding entry ({\it key2}, {\it value2\/}) in the
+other, such that {\it key1} and {\it key2} are the same,
+\cd{equalp} must be true of {\it value1} and {\it value2}.
+\end{itemize}
+The four parts of this test are carried out in the order shown, and
+if some part of the test fails, \cd{equalp} returns \cd{nil} and
+the other parts of the test are not attempted.
+
+If \cd{equalp} must compare two structures and the \cd{defstruct}
+definition for one used the \cd{:type} option and the other did not,
+then \cd{equalp} returns \cd{nil}.
+
+If \cd{equalp} must compare two structures and neither \cd{defstruct}
+definition used the \cd{:type} option,
+then \cd{equalp} returns \cd{t} if and only if the structures have the
+same type (that is, the same \cd{defstruct} name) and the values
+of all corresponding slots (slots having the same name) are \cd{equalp}.
+
+As part of the X3J13 discussion of this issue
+the following observations were made.
+    Object equality is not a concept for which there is a uniquely
+    determined correct algorithm. The appropriateness of an equality
+    predicate can be judged only in the context of the needs of some
+    particular program. Although these functions take any type of
+    argument and their names sound very generic, \cd{equal} and \cd{equalp} are
+    not appropriate for every application. Any decision to use or not
+    use them should be determined by what they are documented to do
+    rather than by any abstract characterization of their function. If
+    neither \cd{equal} nor \cd{equalp} is found to be appropriate in a particular
+    situation, programmers are encouraged to create another operator
+    that is appropriate rather than blame \cd{equal} or \cd{equalp} for ``doing
+    the wrong thing.''
+\end{new}
+
+\begin{new}
+Note that one consequence
+of the vote to change the rules of
+floating-point contagion
+\issue{CONTAGION-ON-NUMERICAL-COMPARISONS}
+(described in section~\ref{PRECISION-CONTAGION-COERCION-SECTION})
+is to make \cd{equalp}
+a true equivalence relation on numbers.
+\end{new}
+
+\begin{lisp}
+(equalp 'a 'b) {\rm is false.} \\
+(equalp 'a 'a) {\rm is true.} \\
+(equalp 3 3) {\rm is true.} \\
+(equalp 3 3.0) {\rm is true.} \\
+(equalp 3.0 3.0) {\rm is true.} \\
+(equalp \#c(3 -4) \#c(3 -4)) {\rm is true.} \\
+(equalp \#c(3 -4.0) \#c(3 -4)) {\rm is true.} \\
+(equalp (cons 'a 'b) (cons 'a 'c)) {\rm is false.} \\
+(equalp (cons 'a 'b) (cons 'a 'b)) {\rm is true.} \\
+(equalp '(a . b) '(a . b)) {\rm is true.} \\
+(progn (setq x (cons 'a 'b)) (equalp x x)) {\rm is true.} \\
+(progn (setq x '(a . b)) (equalp x x)) {\rm is true.} \\
+(equalp \#{\Xbackslash}A \#{\Xbackslash}A) {\rm is true.} \\
+(equalp "Foo" "Foo") {\rm is true.} \\
+(equalp "Foo" (copy-seq "Foo")) {\rm is true.} \\
+(equalp "FOO" "foo") {\rm is true.}
+\end{lisp}
+\end{defun}
+
+\section{Logical Operators}
+
+Common Lisp provides three operators on Boolean values: \cd{and}, \cd{or},
+and \cd{not}.  Of these, \cd{and} and \cd{or}
+are also control structures because their arguments are evaluated
+conditionally.
+The function \cd{not} necessarily examines its single argument, and so
+is a simple function.
+
+\begin{defun}[Function]
+not x
+
+\cd{not} returns {\true} if {\it x} is {\false}, and otherwise returns {\false}.
+It therefore inverts its argument considered as a Boolean value.
+
+\cd{null} is the same as \cd{not}; both functions are included for the sake
+of clarity.  As a matter of style,
+it is customary to use \cd{null} to check whether something is the empty list
+and to use \cd{not} to invert the sense of a logical value.
+\end{defun}
+
+\begin{defmac}
+and {\,form}*
+
+\cd{(and {\it form1} {\it form2} ... )} evaluates each {\it form}, one at a time,
+from left to right.  If any {\it form} evaluates to {\false}, the value {\nil}
+is immediately returned without evaluating the remaining
+{\it form\/}s.  If every {\it form} but the last evaluates to a non-{\false} value,
+\cd{and} returns whatever the last {\it form} returns.
+Therefore in general \cd{and} can be used both for logical operations,
+where {\false} stands for {\it false} and non-{\false} values stand for {\it true},
+and as a conditional expression.
+An example follows.
+\begin{lisp}
+(if (and (>= n 0) \\
+~~~~~~~~~(< n (length a-simple-vector)) \\
+~~~~~~~~~(eq (elt a-simple-vector n) 'foo)) \\
+~~~~(princ "Foo!"))
+\end{lisp}
+The above expression prints \cd{Foo!} if element \cd{n} of \cd{a-simple-vector}
+is the symbol \cd{foo}, provided also that \cd{n} is indeed a valid index
+for \cd{a-simple-vector}.  Because \cd{and} guarantees left-to-right testing
+of its parts, \cd{elt} is not called if \cd{n} is out of range.
+
+To put it another way,
+the \cd{and} special form does {\it short-circuit} Boolean evaluation,
+like the {\bf and then} operator in Ada
+and what in some Pascal-like languages is called {\bf cand} (for ``conditional
+and''); the Lisp \cd{and} special form is
+unlike the Pascal or Ada {\bf and} operator,
+which always evaluates both arguments.
+
+In the previous example writing
+\begin{lisp}
+(and (>= n 0) \\
+~~~~~(< n (length a-simple-vector)) \\
+~~~~~(eq (elt a-simple-vector n) 'foo) \\
+~~~~~(princ "Foo!"))
+\end{lisp}
+would accomplish the same thing.  The difference is purely stylistic.
+Some programmers never use expressions containing side effects
+within \cd{and}, preferring to use \cd{if} or \cd{when} for that purpose.
+
+From the general definition, one can deduce that
+\cd{(and {\it x})} \EQ\ {\it x}.  Also,
+\cd{(and)} evaluates to {\true}, which is an identity for this operation.
+
+One can define \cd{and} in terms of \cd{cond} in this way:
+\begin{lisp}
+(and {\it x} {\it y} {\it z} ... {\it w}) \EQ\ (cond \=((not {\it x}) {\false}) \\
+\>((not {\it y}) {\false}) \\
+\>((not {\it z}) {\false}) \\
+\>\(\ldots\) \\
+\>({\true} {\it w}))
+\end{lisp}
+
+See \cd{if} and \cd{when}, which are sometimes stylistically
+more appropriate than \cd{and} for conditional purposes.
+If it is necessary to test whether a predicate is true
+of all elements of a list or vector (element 0 {\it and} element 1 {\it and}
+element 2 {\it and} $\ldots$), then the function \cd{every} may be useful.
+\end{defmac}
+
+\begin{defmac}
+or {\,form}*
+
+\cd{(or {\it form1} {\it form2} ... )} evaluates each {\it form}, one at a time,
+from left to right.  If any {\it form} other than the last
+evaluates to something other than {\false},
+\cd{or}
+immediately returns that non-{\false} value without evaluating the remaining
+{\it form\/}s.  If every {\it form} but the last evaluates to {\false},
+\cd{or} returns whatever evaluation of the last of the {\it form\/}s returns.
+Therefore in general \cd{or} can be used both for logical operations,
+where {\false} stands for {\it false} and non-{\false} values stand for {\it true},
+and as a conditional expression.
+
+To put it another way,
+the \cd{or} special form does {\it short-circuit} Boolean evaluation,
+like the {\bf or else} operator in Ada
+and what in some Pascal-like languages is called {\bf cor} (for ``conditional
+or''); the Lisp \cd{or} special form is
+unlike the Pascal or Ada {\bf or} operator,
+which always evaluates both arguments.
+
+From the general definition, one can deduce that
+\cd{(or {\it x})} \EQ\ {\it x}.  Also,
+\cd{(or)} evaluates to {\nil}, which is the identity for this operation.
+
+One can define \cd{or} in terms of \cd{cond} in this way:
+\begin{lisp}
+(or {\it x} {\it y} {\it z} ... {\it w}) \EQ\ (cond ({\it x}) ({\it y}) ({\it z}) ... ({\true} {\it w}))
+\end{lisp}
+
+See \cd{if} and \cd{unless}, which are sometimes
+stylistically more appropriate than \cd{or} for conditional purposes.
+If it is necessary to test whether a predicate is true of
+one or more elements of a list or vector (element 0 {\it or} element 1 {\it or}
+element 2 {\it or} $\ldots$), then the function \cd{some} may be useful.
+\end{defmac}

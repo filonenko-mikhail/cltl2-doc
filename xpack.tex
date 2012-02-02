@@ -1,0 +1,2432 @@
+%Part{XPACK, Root = "CLM.MSS"}
+%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{ULTIMATE}
+
+\chapter{Packages}
+\label{XPACK}
+
+
+One problem with earlier Lisp systems is the use of a single name space
+for all symbols.  In large Lisp systems, with modules written by many
+different programmers, accidental name collisions become a serious
+problem.  Common Lisp addresses this problem through the {\it package system},
+derived from an earlier package system developed for
+Lisp Machine Lisp \cite{BLUE-LISPM}.
+In addition to preventing name-space conflicts, the
+package system makes the modular structure of large Lisp systems more
+explicit.
+
+A {\it package} is a data structure that establishes a mapping from print
+names (strings) to symbols.  The package thus replaces the ``oblist'' or
+``obarray'' machinery of earlier Lisp systems.  At any given time one
+package is current, and this package is used by the Lisp reader in
+translating strings into symbols.  The current package is, by definition,
+the one that is the
+value of the global variable \cd{*package*}.  It is possible to refer to
+symbols in packages other than the current one through the use of
+{\it package qualifiers} in the printed representation of the symbol.
+For example, \cd{foo:bar}, when seen by the reader,
+refers to the symbol whose name is
+\cd{bar} in the package whose name is \cd{foo}.
+(Actually, this is true only if \cd{bar} is an external symbol of \cd{foo},
+that is, a symbol that is supposed to be visible outside of \cd{foo}.
+A reference to an internal symbol requires the intentionally
+clumsier syntax \cd{foo::bar}.)
+
+The string-to-symbol mappings available in a given package are divided
+into two classes, {\it external} and {\it internal}.  We refer to the
+symbols accessible via these mappings as being {\it external} and
+{\it internal} symbols of the package in question, though really it is the
+mappings that are different and not the symbols themselves.  Within a
+given package, a name refers to one symbol or to none; if it does refer
+to a symbol, then it is either external or internal in that
+package, but not both.
+
+External symbols are part of the package's public interface to other
+packages.  External symbols are supposed to be chosen with some care and are
+advertised to users of the package.  Internal symbols are for internal
+use only, and these symbols are normally hidden from other packages.
+Most symbols are created as internal symbols; they become external only
+if they appear explicitly in an \cd{export} command for the package.
+
+A symbol may appear in many packages.  It will always have the same
+name wherever it appears, but it may be external in some packages
+and internal in others.  On the other hand,
+the same name (string) may refer to different symbols in
+different packages.
+
+Normally, a symbol that appears in one or more packages
+will be {\it owned} by one particular package, called the {\it home package}
+of the symbol; that package is said to {\it own} the symbol.
+Every symbol has a component called the {\it package cell}
+that contains a pointer to its home package.
+A symbol that is owned by some package is said to be {\it interned}.
+Some symbols are not owned by any package; such a symbol
+is said to be {\it uninterned}, and its package cell contains {\false}.
+
+Packages may be built up in layers.  From the point of view of a
+package's user, the package is a single collection of mappings from
+strings into internal and external symbols.  However, some of these
+mappings may be established within the package itself, while other
+mappings are inherited from other packages via the \cd{use-package}
+construct.  (The mechanisms responsible for this inheritance are
+described below.)  In what follows, we will refer to a symbol as being
+{\it accessible} in a package if it can be referred to
+without a package qualifier when that package is current,
+regardless of whether the mapping occurs within
+that package or via inheritance.   We will refer to a symbol as being
+{\it present} in a package if the mapping is in the package itself and is
+not inherited from somewhere else.  Thus a symbol present in a package is accessible,
+but an accessible symbol is not necessarily present.
+
+A symbol is said to be {\it interned in a package} if it is
+accessible in that package and also is owned (by either that package
+or some other package).  Normally all the symbols accessible in
+a package will in fact be owned by some package,
+but the terminology is useful when
+discussing the pathological case of an accessible but unowned (uninterned)
+symbol.
+
+As a verb, to {\it intern} a symbol in a package means to cause the
+symbol to be interned in the package if it was not already;
+this process is performed by the function \cd{intern}.
+If the symbol was previously unowned, then the package it is being
+interned in becomes its owner (home package); but
+if the symbol was previously owned by another package, that other package
+continues to own the symbol.
+
+To {\it unintern} a symbol from the package means to cause it to be not
+present in the package
+and, additionally, to cause the symbol to be uninterned if the
+package was the home package (owner) of the symbol.
+This process is performed by the function \cd{unintern}.
+
+\section{Consistency Rules}
+
+Package-related bugs can be very subtle and confusing: things are not
+what they appear to be.  The Common Lisp package system is designed with
+a number of safety features to prevent most of the common bugs that
+would otherwise occur in normal use.  This may seem over-protective, but
+experience with earlier package systems has shown that such safety
+features are needed.
+
+In dealing with the package system, it is useful to keep in mind the
+following consistency rules, which remain in force as long as the value
+of \cd{*package*} is not changed by the user:
+
+\begin{itemize}
+\item
+{\it Read-read consistency:} Reading the same print name always results in
+the same (\cd{eq}) symbol.
+
+\item
+{\it Print-read consistency:} An interned symbol always prints as a
+sequence of characters that, when read back in, yields the same (\cd{eq})
+symbol.
+
+\item
+{\it Print-print consistency:} If two interned symbols are not \cd{eq}, then
+their printed representations will be different sequences of
+characters.
+\end{itemize}
+
+These consistency rules remain true in spite of any amount of implicit
+interning caused by typing in Lisp forms, loading files, etc.  This has
+the important implication that, as long as the current package
+is not changed, results are reproducible regardless of
+the order of loading files or the exact history of what symbols were
+typed in when.  The rules can only be violated by explicit action:
+changing the value of \cd{*package*}, forcing some action by continuing
+from an error, or calling one of the ``dangerous'' functions
+\cd{unintern}, \cd{unexport}, \cd{shadow},
+\cd{shadowing-import}, or \cd{unuse-package}.
+
+\section{Package Names}
+\label{PACKAGE-NAMES-SECTION}
+
+Each package has a name (a string) and perhaps some nicknames.  These
+are assigned when the package is created, though they can be changed
+later.  A package's name should be something long and self-explanatory,
+like \cd{editor}; there might be a nickname that is shorter and easier to
+type, such as \cd{ed}.
+
+There is a single name space for packages.  The function
+\cd{find-package} translates a package name or nickname into the
+associated package.  The function \cd{package-name} returns the name of a
+package.  The function \cd{package-nicknames} returns a list of all
+nicknames for a package.  The function \cd{rename-package} removes a
+package's current name and nicknames and replaces them with new ones
+specified by the user.  Package renaming is occasionally useful when, for
+development purposes, it is desirable to load two versions of a package
+into the same Lisp.  One can load the first version, rename it,
+and then load the other version, without getting a lot of name conflicts.
+
+When the Lisp reader sees a qualified symbol, it handles the package-name
+part in the same way as the symbol part with respect to capitalization.
+Lowercase characters in the package name are converted to corresponding
+uppercase characters
+unless preceded by the escape character \cd{{\Xbackslash}} or
+surrounded by \cd{|} characters.  The lookup done by the
+\cd{find-package} function is case-sensitive, like that done for
+symbols.  Note that \cd{|Foo|:|Bar|} refers to a symbol whose name is
+\cd{Bar} in a package whose name is \cd{Foo}.  By contrast,
+\cd{|Foo:Bar|} refers to a seven-character symbol that has a colon in its name
+(as well as two uppercase letters and four lowercase letters)
+and is interned in the current package.  Following the convention used
+in this book for symbols, we show ordinary package names using
+lowercase letters, even though the name string is internally represented
+with uppercase letters.
+
+Most of the functions that require a package-name argument from the
+user accept either a symbol or a string.  If a symbol is supplied,
+its print name will be used; the print name will already have undergone
+case-conversion by the usual rules.  If a string is supplied, it
+must be so capitalized as to match exactly the
+string that names the package.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that one may use either a package object or
+a package name (symbol or string) in any of the following
+situations:
+\begin{itemize}
+\item the \cd{:use} argument to \cd{make-package}
+\item the first argument to \cd{package-use-list}, \cd{package-used-by-list},
+\cd{package-\discretionary{}{}{}name}, \cd{package-nicknames},
+\cd{in-package}, \cd{find-package},
+\cd{rename-package}, or \cd{delete-package},
+
+
+\item the second argument to \cd{intern}, \cd{find-symbol},
+\cd{unintern}, \cd{export}, \cd{unexport}, \cd{import}, \cd{shadowing-import},
+or \cd{shadow}
+\item the first argument, or a member of the list that is the first argument,
+to \cd{use-package} or \cd{unuse-package}
+\item the value of the {\it package} given to \cd{do-symbols},
+\cd{do-external-symbols}, or \cd{do-all-symbols}
+\item a member of the {\it package-list} given to \cd{with-package-iterator}
+\end{itemize}
+Note that the first argument to \cd{make-package} must still be a package
+name and not an actual package; it makes no sense to create an already
+existing package.  Similarly, package nicknames must always be expressed
+as package names and not as package objects.  If \cd{find-package} is
+given a package object instead of a name, it simply returns that package.
+\end{new}
+
+\section{Translating Strings to Symbols}
+\label{STRING-TO-SYMBOL-SECTION}
+
+The value of the special variable \cd{*package*} must always be a package
+object (not a name).  Whatever package object is currently the
+value of \cd{*package*} is referred to as the {\it current package}.
+
+When the Lisp reader has, by parsing, obtained a string of characters
+thought to name a symbol, that name is looked up in the current package.
+This lookup may involve looking in other packages whose external symbols
+are inherited by the current package.  If the name is found,
+the corresponding symbol is returned.  If the name is not found
+(that is, there is no symbol of that name accessible in the current package),
+a new symbol is created for it and is placed in the current package as an
+internal symbol.  Moreover, the current package becomes the owner
+(home package) of the symbol, and so the symbol becomes interned
+in the current package.
+If the name is later read again while this same package is
+current, the same symbol will then be found and returned.
+
+Often it is desirable to refer to an external symbol in some package
+other than the current one.  This is done through the use of a
+{\it qualified name}, consisting of a package name, then a colon, then the
+name of the symbol.  This causes the symbol's name to be looked up
+in the specified package, rather than in the current one.  For example,
+\cd{editor:buffer} refers to the external symbol named \cd{buffer}
+accessible in the package named \cd{editor}, regardless of whether
+there is a symbol named \cd{buffer} in the current package.  If there
+is no package named \cd{editor}, or if no symbol named \cd{buffer}
+is accessible in \cd{editor}, or if \cd{buffer} is an internal
+symbol in \cd{editor}, the Lisp reader will signal
+a correctable error to ask the user for instructions.
+
+On rare occasions, a user may need to refer to an {\it internal} symbol of
+some package other than the current one.  It is illegal to do this with
+the colon qualifier, since accessing an internal symbol of some other
+package is usually a mistake.  However, this operation is legal if
+a doubled colon
+\cd{::} is used as the separator in place of the usual single colon.  If
+\cd{editor::buffer} is seen, the effect is exactly the same as
+reading \cd{buffer} with \cd{*package*} temporarily rebound to the
+package whose name is \cd{editor}.  This special-purpose qualifier
+should be used with caution.
+
+The package named \cd{keyword} contains all keyword symbols used by the
+Lisp system itself and by user-written code.  Such symbols must be
+easily accessible from any package, and name conflicts are not an issue
+because these symbols are used only as labels and never to carry
+package-specific values or properties.  Because keyword symbols are used
+so frequently, Common Lisp provides a special reader syntax for them.
+Any symbol preceded by a colon but no package name (for example
+\cd{:foo}) is added to (or looked up in) the \cd{keyword} package as
+an {\it external} symbol.  The \cd{keyword} package is also treated
+specially in that whenever a symbol is added to the \cd{keyword} package
+the symbol is always made external; the symbol
+is also automatically declared to be a constant
+(see \cd{defconstant}) and made to
+have itself as its value.  This is why every keyword evaluates to
+itself.  As a matter of style, keywords should always be accessed using
+the leading-colon convention; the user should never import or inherit
+keywords into any other package.  It is an error to try to apply
+\cd{use-package} to the \cd{keyword} package.
+
+Each symbol contains a package cell that is used to record the home
+package of the symbol, or {\false} if the symbol is uninterned.  This cell
+may be accessed by using the function \cd{symbol-package}.
+When an interned
+symbol is printed, if it is a symbol in the keyword package,
+then it is printed with a preceding colon; otherwise, if it is accessible
+(directly or by inheritance) in the current package, it is printed
+without any qualification; otherwise, it is printed with the name of the
+home package as the qualifier, using \cd{:} as the separator if the
+symbol is external and \cd{::} if not.
+
+A symbol whose package slot contains {\false} (that is, has no home
+package)
+is printed preceded by \cd{\#:}.  It is possible, by the
+use of \cd{import} and \cd{unintern}, to create a symbol that has no
+recorded home package but that in fact is accessible in some package.
+The system does not check for this pathological case, and such symbols
+will always be printed preceded by \cd{\#:}.
+
+In summary, the following four uses of symbol qualifier syntax are defined.
+
+\begin{flushdesc}
+\item[\cd{foo:bar}]
+When read, looks up \cd{BAR} among the external symbols of
+the package named \cd{FOO}.  Printed when symbol \cd{bar} is external in its
+home package \cd{foo} and is not accessible in the current package.
+
+\item[\cd{foo::bar}]
+When read, interns \cd{BAR} as if \cd{FOO} were the
+current package.  Printed when symbol \cd{bar} is internal in its home package
+\cd{foo} and is not accessible in the current package.
+
+\item[\cd{:bar}]
+When read, interns \cd{BAR} as an external symbol in the
+\cd{keyword} package and makes it evaluate to itself.  Printed when
+the home package of symbol \cd{bar} is \cd{keyword}.
+    
+\item[\cd{\#:bar}]
+When read, creates a new uninterned symbol named \cd{BAR}.
+Printed when the symbol \cd{bar} is uninterned (has no home package),
+even in the pathological case that \cd{bar} is uninterned but
+nevertheless somehow accessible in the current package.
+\end{flushdesc}
+
+All other uses of colons within names of symbols are not defined by
+Common Lisp but are reserved for implementation-dependent use; this
+includes names that end in a colon, contain two or more colons, or
+consist of just a colon.
+
+\section{Exporting and Importing Symbols}
+\label{EXPORT-IMPORT-SECTION}
+
+Symbols from one package may be made accessible in another package in
+two ways.
+
+First, any individual symbol may be added to a package by use
+of the function \cd{import}.  The form \cd{(import 'editor:buffer)} takes
+the external symbol named \cd{buffer} in the \cd{editor} package (this
+symbol was located when the form was read by the Lisp reader) and adds
+it to the current package as an internal symbol.  The symbol is then
+present in the current package.  The imported symbol is
+not automatically exported from the current package, but if it is
+already present and external, then the fact that it
+is external is not changed.  After the call to
+\cd{import} it is possible to refer to \cd{buffer} in the importing package
+without any qualifier.  The status of \cd{buffer} in the package named
+\cd{editor} is unchanged, and \cd{editor} remains the home package for
+this symbol.  Once imported, a symbol is {\it present} in the
+importing package and can be removed only by calling \cd{unintern}.
+
+If the symbol is already present in the importing package, \cd{import}
+has no effect.  If a distinct symbol with the name \cd{buffer} is
+accessible in the importing package (directly or by inheritance), then a
+correctable error is signaled, as described in
+section~\ref{NAME-CONFLICTS-SECTION}, because \cd{import} avoids letting
+one symbol shadow another.
+
+A symbol is said to be {\it shadowed} by another symbol in
+some package if the first symbol would be accessible by inheritance
+if not for the presence of the second symbol.
+To import a symbol without the possibility
+of getting an
+error because of shadowing,
+use the function \cd{shadowing-import}.  This inserts
+the symbol into the specified package as an internal symbol, regardless
+of whether another symbol of the same name will be shadowed by this
+action.
+If a different symbol of the same name is already present
+in the package, that symbol will first be uninterned from the package
+(see \cd{unintern}).  The new symbol is
+added to the package's shadowing-symbols list.  \cd{shadowing-import}
+should be used with caution.  It changes the state of the package system
+in such a way that the consistency rules do not hold across the change.
+
+The second mechanism is provided by the function \cd{use-package}.  This
+causes a package to inherit all of the external symbols of some other
+package.  These symbols become accessible as {\it internal} symbols of the
+using package.  That is, they can be referred to without a qualifier
+while this package is current, but they are not passed along to any
+other package that uses this package.  Note that \cd{use-package},
+unlike \cd{import}, does not cause any new symbols to be {\it present}
+in the current package but only makes them {\it accessible} by inheritance.
+\cd{use-package} checks carefully for
+name conflicts between the newly imported symbols and those already
+accessible in the importing package.  This is described in detail in
+section~\ref{NAME-CONFLICTS-SECTION}.
+
+Typically a user, working by default in the \cd{user} package, will
+load a number of packages into Lisp to provide an augmented working
+environment, and then call \cd{use-package} on each of these packages
+to allow easy access to their external symbols.
+\cd{unuse-package} undoes the effects of a previous \cd{use-package}.  The
+external symbols of the used package are no longer inherited.  However,
+any symbols that have been imported into the using package continue to
+be present in that package.
+
+There is no way to inherit the {\it internal} symbols of another package;
+to refer to an internal symbol, the user must either make that symbol's home
+package current, use a qualifier, or import that symbol into the current
+package.
+
+\begin{newer}
+The distinction between
+external and internal symbols is a primary means of hiding names
+so that one program does not tread on the namespace of another.
+\end{newer}
+
+When \cd{intern} or some other function wants to look up a symbol in a
+given package, it first looks for the symbol among the external and
+internal symbols of the package itself; then it looks through the
+external symbols of the used packages in some unspecified order.  The
+order does not matter; according to the rules for handling name
+conflicts (see below), if conflicting symbols appear in two or more
+packages inherited by package {\it X}, a symbol of this name must also appear
+in {\it X} itself as a shadowing symbol.  Of course, implementations are free
+to choose other, more efficient ways of implementing this search, as
+long as the user-visible behavior is equivalent to what is described
+here.
+
+The function \cd{export} takes a symbol that is accessible in some
+specified package (directly or by inheritance) and makes it an external
+symbol of that package.  If the symbol is already accessible as an
+external symbol in the package, \cd{export} has no effect.  If the symbol
+is directly present in the package as an internal symbol, it is simply
+changed to external status.  If it is accessible as an internal symbol
+via \cd{use-package}, the symbol is first imported into the package, then
+exported.  (The symbol is then present in the specified package
+whether or not the package
+continues to use the package through which the symbol was originally
+inherited.)  If the symbol is not
+accessible at all in the specified package, a correctable error is
+signaled that, upon continuing, asks the user whether the symbol
+should be imported.
+
+The function \cd{unexport} is provided mainly as a way to undo erroneous
+calls to \cd{export}.  It works only on symbols directly present
+in the current package, switching them back to internal status.  If
+\cd{unexport} is given a symbol already accessible as an internal
+symbol in the current package, it does nothing; if it is given a symbol
+not accessible in the package at all, it signals an error.
+
+\section{Name Conflicts}
+\label{NAME-CONFLICTS-SECTION}
+
+A fundamental invariant of the package system is that within one package
+any particular name can refer to at most one symbol.  A {\it name conflict}
+is said to occur when there is more than one candidate symbol and it is
+not obvious which one to choose.  If the system does not always choose
+the same way, the read-read consistency rule would be violated.  For
+example, some programs or data might have been read in under a certain
+mapping of the name to a symbol.  If the mapping changes to a different
+symbol, and subsequently additional programs or data are read,
+then the two programs will
+not access the same symbol even though they use the same name.  Even if
+the system did always choose the same way, a name conflict is likely to
+result in a mapping from names to symbols different from what was expected by
+the user, causing programs to execute incorrectly.  Therefore, any time
+a name conflict is about to occur,
+an error is signaled.  The user may continue
+from the error and tell the package system how to resolve the conflict.
+
+It may be that the same symbol is accessible to a package through more than
+one path.  For example, the symbol might be
+an external symbol of more than one used package, or the symbol
+might be directly present in a package and also inherited from
+another package.
+In such cases there is no name conflict.
+The same identical symbol cannot conflict with itself.
+Name conflicts occur only between distinct symbols with
+the same name.
+
+The creator of a package can tell the system in advance how to resolve a
+name conflict through the use of {\it shadowing}.  Every package has a
+list of shadowing symbols.  A shadowing symbol takes precedence over any
+other symbol of the same name that would otherwise be accessible to the
+package.  A name conflict involving a shadowing symbol is always
+resolved in favor of the shadowing symbol, without signaling an error
+(except for one instance involving \cd{import} described below).  The
+functions \cd{shadow} and \cd{shadowing-import} may be used to declare
+shadowing symbols.
+
+Name conflicts are detected when they become possible, that is, when the
+package structure is altered.  There is no need to check for name
+conflicts during every name lookup.
+
+The functions \cd{use-package}, \cd{import}, and \cd{export} check for name
+conflicts.  \cd{use-package} makes the external symbols of the package
+being used accessible to the using package; each of these symbols is
+checked for name conflicts with the symbols already accessible.
+\cd{import} adds a single symbol to the internals of a package, checking
+for a name conflict with an existing symbol either present in the
+package or accessible to it.  \cd{import} signals a name conflict error
+even if the conflict is with a shadowing symbol, the rationale being
+that the user has given two explicit and inconsistent directives.
+\cd{export} makes a single
+symbol accessible to all the packages that use the package from which
+the symbol is exported.  All of these packages are checked for
+name conflicts:  \cd{(export {\it s} {\it p})} does
+\cd{(find-symbol (symbol-name {\it s}) {\it q})} for each package {\it q}
+in \cd{(package-used-by-list {\it p})}.  Note that in the usual case of
+an \cd{export} during the initial definition of a package, the
+result of \cd{package-used-by-list}
+will be {\false} and the name-conflict checking
+will take negligible time.
+
+The function \cd{intern}, which is the one used most
+frequently by the Lisp reader for looking up names of symbols,
+does not need to do any name-conflict checking, because it
+never creates a new symbol if there is already an accessible symbol with
+the name given.
+
+\cd{shadow} and \cd{shadowing-import} never signal a name-conflict error
+because the user, by calling these functions, has specified how any
+possible conflict is to be resolved.  \cd{shadow} does name-conflict
+checking to the extent that it checks whether a distinct existing symbol with
+the specified name is accessible and, if so, whether it is directly
+present in the package or inherited.  In the latter case, a new symbol
+is created to shadow it.  \cd{shadowing-import} does name-conflict
+checking to the extent that it checks whether a distinct existing
+symbol with the same name is accessible; if so, it is shadowed by
+the new symbol, which implies that it must be uninterned
+if it was directly present in the package.
+
+\cd{unuse-package}, \cd{unexport}, and \cd{unintern} (when the symbol being
+uninterned is not a shadowing symbol) do not need to do any
+name-conflict checking because they only remove symbols from a package;
+they do not make any new symbols accessible.
+
+Giving a shadowing symbol to \cd{unintern} can uncover a name conflict that had
+previously been resolved by the shadowing.  If package A uses packages
+B and C, A contains a shadowing symbol \cd{x}, and B and C each contain external
+symbols named \cd{x}, then removing the shadowing symbol \cd{x}
+from A will reveal a name
+conflict between \cd{b:x} and \cd{c:x} if those two symbols are distinct.
+In this case \cd{unintern} will signal an error.
+
+Aborting from a name-conflict error leaves the original symbol accessible.
+Package functions always signal name-conflict errors before making any
+change to the package structure.  When multiple changes are to be made,
+however, for example when \cd{export} is given a list of symbols, it is
+permissible for the implementation to process each change separately,
+so that aborting from a name
+conflict caused by the second symbol in the list will not unexport the
+first symbol in the list.  However, aborting from a name-conflict error
+caused by \cd{export} of a single symbol will not leave that symbol accessible
+to some packages and inaccessible to others; with respect to
+each symbol processed, \cd{export}
+behaves as if it were an atomic operation.
+
+Continuing from a name-conflict error should offer the user a chance to
+resolve the name conflict in favor of either of the candidates.  The
+package structure should be altered to reflect the resolution of the
+name conflict, via \cd{shadowing-import}, \cd{unintern}, or \cd{unexport}.
+
+A name conflict in \cd{use-package} between a symbol directly present in the
+using package and an external symbol of the used package may be resolved
+in favor of the first symbol by making it a shadowing symbol, or in favor
+of the second symbol by uninterning the first symbol from the using
+package.  The latter resolution is dangerous if the symbol to be
+uninterned is an external symbol of the using package, since it
+will cease to be an external symbol.
+
+A name conflict in \cd{use-package} between two external symbols inherited
+by the using package from other packages may be resolved in favor of
+either symbol by importing it into the using package and making it a
+shadowing symbol.
+
+A name conflict in \cd{export} between the symbol being exported and a
+symbol already present in a package that would inherit the
+newly exported symbol may be resolved in favor of the exported symbol
+by uninterning the other one, or in favor of the already-present
+symbol by making it a shadowing symbol.
+
+A name conflict in \cd{export} or \cd{unintern} due to a package
+inheriting two distinct symbols with the same name from two other
+packages may be resolved in favor of either symbol by importing it into
+the using package and making it a shadowing symbol, just as with
+\cd{use-package}.
+
+A name conflict in \cd{import} between the symbol being imported and a
+symbol inherited from some other package may be resolved in favor of the
+symbol being imported by making it a shadowing symbol, or in favor
+of the symbol already accessible by not doing the \cd{import}.  A
+name conflict in \cd{import} with a symbol already present in the
+package may be resolved by uninterning that symbol, or by not
+doing the \cd{import}.
+
+Good user-interface style dictates that \cd{use-package} and \cd{export},
+which can cause many name conflicts simultaneously, first check for
+all of the name conflicts before presenting any of them to the user.
+The user may then choose to resolve all of them wholesale or to resolve
+each of them individually, the latter requiring a lot of
+interaction but permitting
+different conflicts to be resolved different ways.
+
+Implementations may offer other ways of resolving name conflicts.
+For instance, if the symbols that conflict are not being used as
+objects but only as names for functions, it may be possible to ``merge''
+the two symbols by putting the function definition onto both symbols.
+References to either symbol for purposes of calling a function would be
+equivalent.  A similar merging operation can be done for variable values
+and for things stored on the property list.  In Lisp Machine Lisp, for example, one can
+also {\it forward} the value, function, and property cells so that future
+changes to either symbol will propagate to the other one.  Some other
+implementations are able to do this with value cells but not with
+property lists.  Only the user can know whether this way of resolving
+a name conflict is adequate, because it will work only if
+the use of two non-\cd{eq}
+symbols with the same name will not prevent the correct operation of
+the program.  The value of offering symbol merging as a way of resolving
+name conflicts is that it can avoid the need to throw away the whole
+Lisp world, correct the package-definition forms
+that caused the error, and start over from scratch.
+
+\section{Built-in Packages}
+
+\begin{obsolete}
+\noindent
+The following packages, at least, are built into every Common Lisp system.
+
+\begin{flushdesc}
+\item[\cd{lisp}]
+The package named \cd{lisp} contains the primitives of the
+Common Lisp system.  Its external symbols include all of the
+user-visible functions and global variables that are present in the
+Common Lisp system, such as \cd{car}, \cd{cdr}, and \cd{*package*}.
+Almost all other packages will want to use \cd{lisp} so that these
+symbols will be accessible without qualification.
+
+\item[\cd{user}]
+The \cd{user} package is, by default, the current package at the time
+a Common Lisp system starts up.  This package uses the \cd{lisp} package.
+\end{flushdesc}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
+the forthcoming ANSI Common Lisp will use the package name \cd{common-lisp}
+instead of \cd{lisp} and the package name \cd{common-lisp-user}
+instead of \cd{user}.  The purpose is to allow a single Lisp system
+to support both ``old'' Common Lisp and ``new'' ANSI Common Lisp
+simultaneously despite the fact that in some cases
+the two languages use the same
+names for incompatible purposes.  (That's what packages are for!)
+
+\begin{flushdesc}
+\item[\cd{common-lisp}]
+The package named \cd{common-lisp} contains the primitives of the
+ANSI Common Lisp system (as opposed to a Common Lisp system based
+on the 1984 specification).  Its external symbols include all of the
+user-visible functions and global variables that are present in the
+ANSI Common Lisp system, such as \cd{car}, \cd{cdr}, and \cd{*package*}.
+Note, however, that the home package of such symbols is not
+necessarily the \cd{common-lisp} package (this makes it easier for
+symbols such as \cd{t} and \cd{lambda} to be shared between
+the \cd{common-lisp} package and another package, possibly one named \cd{lisp}).
+Almost all other packages ought to use \cd{common-lisp} so that these
+symbols will be accessible without qualification.
+This package has the nickname \cd{cl}.
+
+\item[\cd{common-lisp-user}]
+The \cd{common-lisp-user} package is, by default,
+the current package at the time an ANSI Common Lisp system starts up.
+This package uses the \cd{common-lisp} package
+and has the nickname \cd{cl-user}.
+It may contain other implementation-dependent symbols
+and may use other implementation-specific packages.
+\end{flushdesc}
+\end{newer}
+
+\begin{flushdesc}
+\item[\cd{keyword}]
+This package contains all of the keywords used by built-in
+or user-defined Lisp functions.  Printed symbol representations
+that start with a colon are interpreted as referring to symbols
+in this package, which are always external symbols.  All symbols in this
+package are treated as constants that evaluate to themselves, so that the
+user can type \cd{:foo} instead of \cd{':foo}.
+\end{flushdesc}
+
+\begin{obsolete}
+\begin{flushdesc}
+\item[\cd{system}]
+This package name is reserved to the implementation.
+Normally this is used to contain names of implementation-dependent
+system-interface functions.  This package uses \cd{lisp} and has the
+nickname \cd{sys}. 
+\end{flushdesc}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-CLUTTER}
+to modify the requirements on the built-in packages
+so as to limit what may appear in the \cd{common-lisp} package
+and to lift the requirement that every implementation have a package
+named \cd{system}.  The details are as follows.
+
+Not only must the \cd{common-lisp} package in any given implementation
+contain all the external symbols prescribed by the standard;
+the \cd{common-lisp} package moreover may not contain any external symbol
+that is not prescribed by the standard.  However, the \cd{common-lisp}
+package may contain additional internal symbols, depending on the
+implementation.
+
+An external symbol of the \cd{common-lisp} package may not have a function,
+macro, or special form definition, or a top-level value,
+or a \cd{special} proclamation, or a type definition, unless specifically
+permitted by the standard.  Programmers may validly rely on this fact;
+for example, \cd{fboundp} is guaranteed to be false for all
+external symbols of the \cd{common-lisp} package except those explicitly
+specified in the standard to name functions, macros, and special forms.
+Similarly, \cd{boundp} will be false of all such external symbols
+except those documented to be variables or constants.
+
+Portable programs
+may use external symbols in the \cd{common-lisp} package that are not documented
+to be constants or variables as names of local lexical
+variables with the presumption that the implementation has not
+proclaimed such variables to be special; this legitimizes the common
+practice of using such names as \cd{list} and \cd{string} as names
+for local variables.
+
+A valid implementation may initially have properties on any symbol,
+or dynamically put new properties on symbols (even user-created symbols),
+as long as no property indicator used for this purpose is
+an external symbol of any package defined by the standard
+or a symbol that is accessible from the \cd{common-lisp-user} package or any
+package defined by the user.
+
+This vote eliminates the requirement that every implementation have
+a predefined package named \cd{system}.  An implementation may
+provide any number of predefined packages; these should be described
+in the documentation for that implementation.
+
+The \cd{common-lisp-user} package may contain symbols not described by the standard
+and may use other implementation-specific packages.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LISP-SYMBOL-REDEFINITION}
+to restrict user programs from performing certain actions that
+might interfere with built-in facilities or interact badly
+with them.
+Except where explicitly allowed, the consequences are undefined if any
+of the following actions are performed on a symbol in the \cd{common-lisp}
+package.
+\begin{itemize}
+\item binding or altering its value (lexically or dynamically)
+\item defining or binding it as a function
+\item defining or binding it as a macro
+\item defining it as a type specifier (\cd{defstruct}, \cd{defclass}, \cd{deftype})
+\item defining it as a structure (\cd{defstruct})
+\item defining it as a declaration
+\item dsing it as a symbol macro
+\item altering its print name
+\item altering its package
+\item tracing it
+\item declaring or proclaiming it special or lexical
+\item declaring or proclaiming its \cd{type} or \cd{ftype}
+\item removing it from the package \cd{common-lisp}
+\end{itemize}
+X3J13 also voted in June 1989 \issue{DEFINE-COMPILER-MACRO}
+to add to this list the item
+\begin{itemize}
+\item defining it as a compiler macro
+\end{itemize}
+
+If such a symbol is not globally defined as a variable or a constant,
+a user program is allowed to lexically bind it and declare the \cd{type} of that binding.
+
+If such a symbol is not defined as a function, macro, or special form,
+a user program is allowed to (lexically) bind it as a function and to declare the
+\cd{ftype} of that binding and to trace that binding.
+
+If such a symbol is not defined as a function, macro, or special form,
+a user program is allowed to (lexically) bind it as a macro.
+
+As an example, the behavior of the code fragment
+\begin{lisp}
+(flet ((open (filename \&key direction) \\*
+~~~~~~~~~(format t "{\Xtilde}\%OPEN was called.")  \\*
+~~~~~~~~~(open filename :direction direction))) \\*
+~~(with-open-file (x "frob" :direction ':output)  \\*
+~~~~(format t "{\Xtilde}\%Was OPEN called?")))
+\end{lisp}
+is undefined.  Even in a ``reasonable'' implementation,
+for example, the macro expansion of \cd{with-open-file} might refer
+to the \cd{open} function and might not.  However, the preceding rules eliminate
+the burden of deciding whether an implementation is reasonable. The code
+fragment violates the rules; officially its behavior is therefore
+completely undefined, and that's that.
+
+Note that ``altering the property list'' is not in the list of
+proscribed actions, so a user program {\it is} permitted to
+add properties to or remove properties from
+symbols in the \cd{common-lisp} package.
+\end{newer}
+
+\section{Package System Functions and Variables}
+\label{PACKAGE-FUNCTIONS-SECTION}
+
+Some of the functions and variables in this section
+are described in previous sections but are included here
+for completeness.
+
+\begin{obsolete}
+It is up to each implementation's compiler to ensure that when a
+compiled file is loaded, all of the symbols in the file end up in the
+same packages that they would occupy if the Lisp source file were
+loaded.  In most compilers, this will be accomplished by treating
+certain package operations as though they are surrounded by
+\cd{(eval-when (compile load eval) ...)}; see \cd{eval-when}.
+These operations are
+\cd{make-package}, \cd{in-package}, \cd{shadow}, \cd{shadowing-import},
+\cd{export}, \cd{unexport}, \cd{use-package}, \cd{unuse-package}, and \cd{import}.
+To guarantee proper compilation in all Common Lisp
+implementations, these functions should appear only at top level within
+a file.  As a matter of style, it is suggested that each file contain
+only one package, and that all of the package setup forms appear near
+the start of the file.  This is discussed in more detail, with examples,
+in section~\ref{PACKAGE-EXAMPLE-SECTION}.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{IN-PACKAGE-FUNCTIONALITY}
+to cancel the specifications of the preceding paragraph
+in order to support a model of file compilation in which the
+compiler need never take special note of ordinary function calls;
+only special forms and macros are recognized as affecting the state
+of the compilation process.
+As part of this change \cd{in-package} was changed to be a macro
+rather than a function and its functionality was restricted.
+The actions of
+\cd{shadow}, \cd{shadowing-import}, \cd{use-package},
+\cd{import}, \cd{intern}, and \cd{export} for compilation
+purposes may be accomplished with the new macro \cd{defpackage}.
+\end{newer}
+
+\beforenoterule
+\begin{implementation}
+In the past, some Lisp compilers have read
+the entire file into Lisp before processing any of the forms.  
+Other compilers have arranged for
+the loader to do all of its intern operations before evaluating any of the
+top-level forms.  Neither of these techniques will work in a
+straightforward way in Common Lisp because of the presence of multiple
+packages.
+\end{implementation}
+\afternoterule
+
+For the functions described here, all optional arguments named
+{\it package} default to the current value of \cd{*package*}.  Where a
+function takes an argument that is either a symbol or a list of symbols,
+an argument of {\false} is treated as an empty list of symbols.  Any
+argument described as a package name may be either a string or a symbol.
+If a symbol is supplied, its print name will be used as the package
+name; if a string is supplied, the user must take care to specify the
+same capitalization used in the package name, normally all uppercase.
+
+\begin{defun}[Variable]
+*package*
+
+The value of this variable must be a package; this package is said to be
+the current package.  The initial value of \cd{*package*} is the \cd{user}
+package.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
+the forthcoming ANSI Common Lisp will use the package name \cd{common-lisp-user}
+instead of \cd{user}.
+\end{newer}
+
+The function \cd{load} rebinds \cd{*package*} to its current value.  If
+some form in the file changes the value of \cd{*package*} during loading,
+the old value will be restored when the loading is completed.
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{COMPILE-FILE-PACKAGE}
+to require \cd{compile-file} to rebind \cd{*package*} to its current value.
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+make-package package-name &key :nicknames :use
+
+This creates and returns a new package with the specified package name.  As
+described above, this argument may be either a string or a symbol.  The
+\cd{:nicknames} argument must be a list of strings to be used as
+alternative names for the package.  Once again, the user may supply
+symbols in place of the strings, in which case the print names of the
+symbols are used.  These names and nicknames must not conflict with
+any existing package names; if they do, a correctable error is
+signaled.
+
+The \cd{:use} argument is a list of packages or the names (strings or
+symbols) of packages whose external symbols are to be inherited by the
+new package.  These packages must already exist.  If not supplied,
+\cd{:use} defaults to a list of one package, the \cd{lisp} package.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
+the forthcoming ANSI Common Lisp will use the package name \cd{common-lisp}
+instead of \cd{lisp}.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAKE-PACKAGE-USE-DEFAULT}
+to change the specification of \cd{make-package} so that the default value
+for the \cd{:use} argument is unspecified.  Portable code should
+specify \cd{:use~'("COMMON-LISP")} explicitly.
+
+\beforenoterule
+\begin{rationale}
+Many existing implementations of Common Lisp happen to have violated
+the first edition specification, providing as the default not only
+the \cd{lisp} package but also (or instead) a package containing
+implementation-dependent language extensions.
+This is for good reason: usually it is much
+more convenient to the user for the default \cd{:use} list to be
+the entire, implementation-dependent, extended language rather
+than only the facilities specified in this book.  The X3J13 vote
+simply legitimizes existing practice.
+\end{rationale}
+\afternoterule
+\end{new}
+\end{defun}
+
+
+\begin{obsolete}
+\begin{defun}[Function]
+in-package package-name &key :nicknames :use
+
+The \cd{in-package} function is intended to be placed at the start of a
+file containing a subsystem that is to be loaded into some package other
+than \cd{user}.
+
+If there is not already a package named {\it package-name}, this
+function is similar to \cd{make-package}, except that after the
+new package is created, \cd{*package*} is set to it.  This binding will
+remain in force until changed by the user (perhaps with another
+\cd{in-package} call) or until the \cd{*package*} variable reverts to its
+old value at the completion of a \cd{load} operation.
+
+If there is an existing package whose name is {\it package-name}, the
+assumption is that the user is re-loading a file after making some
+changes.  The existing package is augmented to reflect any new nicknames
+or new packages in the \cd{:use} list (with the usual error checking), and
+\cd{*package*} is then set to this package.
+\end{defun}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{RETURN-VALUES-UNSPECIFIED}
+to specify that \cd{in-package} returns the new package, that is, the
+value of \cd{*package*} after the operation has been executed.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
+the forthcoming ANSI Common Lisp will use the package name \cd{common-lisp-user}
+instead of \cd{user}.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{IN-PACKAGE-FUNCTIONALITY}
+to restrict the functionality of \cd{in-package} and to make it a macro.
+This is an incompatible change.
+
+    Making \cd{in-package} a macro rather than a function means that there
+    is no need to require \cd{compile-file} to handle it specially.  Since
+    \cd{defpackage} is also defined to have side
+    effects on the compilation environment,
+    there is no need to require any of the package functions to be treated
+    specially by the compiler.
+
+\begin{defmac}
+in-package name
+
+This macro causes \cd{*package*} to be set to the package named {\it name},
+    which must be a symbol or string.  The {\it name} is not evaluated.
+    An error is signaled if the
+    package does not already exist.  Everything this macro does is also
+    performed at compile time if the call appears at top level.
+\end{defmac}
+\end{newer}
+
+
+\begin{defun}[Function]
+find-package name
+
+The {\it name} must be a string that is the name or nickname for a
+package.  This argument may also be a symbol, in which case the symbol's
+print name is used.  The package with that name or nickname
+is returned; if no such package exists, \cd{find-package} returns {\false}.
+The matching of names observes case (as in \cd{string=}).
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to allow \cd{find-package} to accept a package object, in which case
+the package is simply returned (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+package-name package
+
+The argument must be a package.  This function returns the string that
+names that package.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to allow \cd{package-name} to accept a package name or nickname, in which case
+the primary name of the package so specified is returned
+(see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-DELETION}
+to add a function to delete packages.
+One consequence of this vote is that \cd{package-name}
+will return \cd{nil} instead of a package name if applied
+to a deleted package object.  See \cd{delete-package}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+package-nicknames package
+
+The argument must be a package.  This function returns the list of
+nickname strings for that package, not including the primary name.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to allow \cd{package-nicknames} to accept a package name or nickname,
+in which case the nicknames of the package so specified are returned
+(see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+rename-package package new-name &optional new-nicknames
+
+The old name and all of the old nicknames of {\it package} are eliminated
+and are replaced by {\it new-name} and {\it new-nicknames}.  The
+{\it new-name} argument is a string or symbol; the {\it new-nicknames}
+argument, which defaults to {\false}, is a list of strings or symbols.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{RETURN-VALUES-UNSPECIFIED}
+to specify that \cd{rename-package} returns {\it package}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+package-use-list package
+
+A list of other packages used by the argument package is returned.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+package-used-by-list package
+
+A list of other packages that use the argument package is returned.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+package-shadowing-symbols package
+
+A list is returned of symbols that have been declared as shadowing
+symbols in this package by \cd{shadow} or \cd{shadowing-import}.  All
+symbols on this list are present in the specified package.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+list-all-packages 
+
+This function returns a list of all packages that currently exist in the
+Lisp system.
+\end{defun}
+
+
+\begin{new}
+\begin{defun}[Function]
+delete-package package
+
+X3J13 voted in January 1989
+\issue{PACKAGE-DELETION}
+to add the \cd{delete-package} function, which
+deletes the specified {\it package} from all package system data structures.
+The {\it package} argument may be either a package or the name of a package.
+
+If {\it package} is a name but there is currently no package of that name,
+a correctable error is signaled.  Continuing from the error makes
+no deletion attempt but merely returns \cd{nil} from the call to
+\cd{delete-package}.
+
+If {\it package} is a package object that has already been deleted,
+no error is signaled and no deletion is attempted; instead,
+\cd{delete-package} immediately returns \cd{nil}.
+
+If the package specified for deletion is currently used by other packages,
+a correctable error is signaled.  Continuing from this error,
+the effect of the function \cd{unuse-package} is performed on all
+such other packages so as to remove their dependency on the
+specified package, after which \cd{delete-package} proceeds to
+delete the specified package as if no other package had been using it.
+
+If any symbol had the specified package as its home package before
+the call to \cd{delete-package}, then its home package is unspecified
+(that is, the contents of its package cell are unspecified)
+after the \cd{delete-package} operation has been completed.
+Symbols in the deleted package are not modified in any other way.
+
+The name and nicknames of the {\it package} cease to be recognized package
+names.  The package object is still a package, but anonymous; \cd{packagep} will
+be true of it, but \cd{package-name} applied to it will return \cd{nil}.
+
+The effect of any other package operation on a deleted package object
+is undefined.  In particular, an attempt to locate a symbol within a
+deleted package (using \cd{intern} or \cd{find-symbol}, for example)
+will have unspecified results.
+
+\cd{delete-package} returns \cd{t} if the deletion succeeds,
+and \cd{nil} otherwise.
+\end{defun}
+\end{new}
+
+\begin{defun}[Function]
+intern string &optional package
+
+The {\it package}, which defaults to the current package, is
+searched for a symbol with the name specified by the {\it string}
+argument.  This search will include inherited symbols, as described
+in section~\ref{EXPORT-IMPORT-SECTION}.
+If a symbol with the specified name is found, it is returned.
+If no such symbol is found, one is created and is installed in the
+specified package as an internal symbol (as an external symbol
+if the package is the \cd{keyword} package); the specified package becomes the
+home package of the created symbol.
+
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to specify that \cd{intern} may in effect perform the
+search using a copy of the argument string in which
+some or all of the implementation-defined
+attributes have been removed from the characters of the string.
+It is implementation-dependent which attributes are removed.
+\end{newer}
+
+Two values are returned.  The first is the symbol that was found or
+created.  The second value is {\false} if no pre-existing symbol was found,
+and takes on one of three values if a symbol was found:
+\begin{indentdesc}{6pc}
+\item[\cd{:internal}]
+The symbol was directly present in the package as an internal symbol.
+
+\item[\cd{:external}]
+The symbol was directly present as an external symbol.
+
+\item[\cd{:inherited}]
+The symbol was inherited via \cd{use-package} (which
+implies that the symbol is internal).
+\end{indentdesc}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+
+\beforenoterule
+\begin{incompatibility}
+Conceptually, \cd{intern} translates a
+string to a symbol.  In MacLisp and several other dialects of Lisp,
+\cd{intern} can take either a string or a symbol as its argument; in the 
+latter case, the symbol's print name is extracted and used as the string.  
+However, this leads to some confusing issues about what to do if
+\cd{intern} finds a symbol that is not \cd{eq} to the argument symbol.  To
+avoid such confusion, Common Lisp requires the argument to be a string.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+find-symbol string &optional package
+
+This is identical to \cd{intern}, but it never creates a new symbol.  If
+a symbol with the specified name is found in the specified package,
+directly or by inheritance, the symbol found is returned as the first
+value and the second value is as specified for \cd{intern}.  If the
+symbol is not accessible in the specified package, both values are
+{\false}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+unintern symbol &optional package
+
+If the specified symbol is present in the specified {\it package}, it is
+removed from that package and also from the package's shadowing-symbols
+list if it is present there.  Moreover, if the {\it package} is the home
+package for the symbol, the symbol is made to have no home package.
+Note that in some circumstances the symbol may continue to be accessible
+in the specified package by inheritance.
+\cd{unintern} returns {\true} if it actually removed a symbol,
+and {\false} otherwise.
+
+\cd{unintern} should be used with caution.  It changes the state of the
+package system in such a way that the consistency rules do not hold
+across the change.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+
+\beforenoterule
+\begin{incompatibility}
+The equivalent of this in MacLisp is \cd{remob}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+export symbols &optional package
+
+The {\it symbols} argument should be a list of symbols, or possibly a single
+symbol.  These symbols become accessible as external symbols in
+{\it package} (see section~\ref{EXPORT-IMPORT-SECTION}).
+\cd{export} returns {\true}.
+
+By convention, a call to \cd{export} listing all exported symbols is
+placed near the start of a file to advertise which of the symbols
+mentioned in the file are intended to be used by other programs.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+unexport symbols &optional package
+
+The argument should be a list of symbols, or possibly a single symbol.
+These symbols become internal symbols in {\it package}.
+It is an error to unexport a symbol from the \cd{keyword} package
+(see section~\ref{EXPORT-IMPORT-SECTION}).
+\cd{unexport} returns {\true}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+import symbols &optional package
+
+The argument should be a list of symbols, or possibly a single symbol.
+These symbols become internal symbols in {\it package} and can therefore
+be referred to without having to use qualified-name (colon) syntax.
+\cd{import} signals a
+correctable error if any of the imported symbols has the same name as
+some distinct symbol already accessible in the package
+(see section~\ref{EXPORT-IMPORT-SECTION}).
+\cd{import} returns {\true}.
+
+\begin{newer}
+X3J13 voted in June 1987 \issue{IMPORT-SETF-SYMBOL-PACKAGE}
+to clarify that if any symbol to be imported has no home package
+then \cd{import} sets the home package of the symbol to the
+{\it package} to which the symbol is being imported.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+shadowing-import symbols &optional package
+
+This is like \cd{import}, but it does not signal an error even if the
+importation of a symbol would shadow some symbol already accessible in
+the package.  In addition to being imported, the symbol is placed on the
+shadowing-symbols list of {\it package}
+(see section~\ref{NAME-CONFLICTS-SECTION}).
+\cd{shadowing-import} returns {\true}.
+
+\cd{shadowing-import} should be used with
+caution.  It changes the state of the package system in such a way that
+the consistency rules do not hold across the change.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+shadow symbols &optional package
+
+The argument should be a list of symbols, or possibly a single symbol.
+The print name of each symbol is extracted, and the specified {\it package} is
+searched for a symbol of that name.  If such a symbol is present in this
+package (directly, not by inheritance), then nothing is done.  Otherwise,
+a new symbol is created with this print name, and it is inserted in the
+{\it package} as an internal symbol.  The symbol is also placed on the
+shadowing-symbols list of the {\it package}
+(see section~\ref{NAME-CONFLICTS-SECTION}).
+\cd{shadow} returns {\true}.
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{SHADOW-ALREADY-PRESENT}
+to change \cd{shadow} to accept strings as well as well as symbols
+(a string in the {\it symbols} list being treated as a print name),
+and to clarify that if a symbol of specified name is already in
+the {\it package} but is not yet on the shadowing-symbols list
+for that {\it package}, then \cd{shadow} does add it to the shadowing-symbols
+list rather than simply doing nothing.
+\end{newer}
+
+\cd{shadow} should be used with
+caution.  It changes the state of the package system in such a way that
+the consistency rules do not hold across the change.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+use-package packages-to-use &optional package
+
+The {\it packages-to-use} argument should be a list of packages or package
+names, or possibly a single package or package name.  These packages are
+added to the use-list of {\it package} if they are not there already.  All
+external symbols in the packages to use become accessible in {\it package}
+as internal symbols
+(see section~\ref{EXPORT-IMPORT-SECTION}).
+It is an error to try to use the \cd{keyword} package.
+\cd{use-package} returns {\true}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+unuse-package packages-to-unuse &optional package
+
+The {\it packages-to-unuse} argument should be a list of packages or
+package names, or possibly a single package or package name.  These
+packages are removed from the use-list of {\it package}.
+\cd{unuse-package} returns {\true}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+\end{defun}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFPACKAGE}
+to add a macro \cd{defpackage} to the
+language to make it easier to create new packages, alleviating the burden
+on the programmer to perform the various setup operations in exactly the
+correct sequence.
+
+\begin{defmac}
+defpackage defined-package-name {option}*
+
+This creates a new package, or modifies an existing one, whose name
+is {\it defined-package-name}.  The {\it defined-package-name}
+may be a string or a symbol;
+if it is a symbol, only its print name matters, and not what package, if any,
+the symbol happens to be in.
+The newly created or modified package is returned as the value of
+the \cd{defpackage} form.
+
+Each standard {\it option} is a list of a keyword (the name of the option)
+and associated arguments.  No part of a \cd{defpackage} form is evaluated.
+Except for the \cd{:size} option, more than one option of the same
+kind may occur within the same \cd{defpackage} form.
+
+The standard options for \cd{defpackage} are as follows.
+In every case, any option argument called {\it package-name}
+or {\it symbol-name}
+may be a string or a symbol;
+if it is a symbol, only its print name matters, and not what package, if any,
+the symbol happens to be in.
+
+\begin{flushdesc}
+\item[\cd{(:size {\it integer})}]
+This specifies approximately the number of symbols expected to be in the
+package.  This is purely an efficiency hint to the storage allocator,
+so that implementations using hash tables as part
+of the package data structure (the usual technique) will not
+have to incrementally expand the package as new symbols are added to it
+(for example, as a large file is read while ``in'' that package).
+
+\item[\cd{(:nicknames \Mstar{\it package-name})}]
+The specified names become nicknames of the package being defined.
+If any of the specified nicknames already refers to an existing
+package, a continuable error is signaled exactly as for the
+function \cd{make-package}.
+
+\item[\cd{(:shadow \Mstar{\it symbol-name})}]
+Symbols with the specified names are created as shadows
+in the package being defined, just as with the function \cd{shadow}.
+
+\item[\cd{(:shadowing-import-from {\it package-name} \Mstar{\it symbol-name})}]
+Symbols with the specified names are located in the specified package.
+These symbols are imported into the package being defined, shadowing
+other symbols if necessary, just as with the function \cd{shadowing-import}.
+In no case will symbols be created in a package other than
+the one being defined;
+a continuable error is signaled if for any {\it symbol-name} there
+is no symbol of that name accessible in the package named {\it package-name}.
+
+\item[\cd{(:use \Mstar{\it package-name})}]
+The package being defined is made to ``use'' (inherit from)
+the packages specified by this option, just as with
+the function \cd{use-package}.
+If no \cd{:use} option is supplied, then a default list is assumed
+as for \cd{make-package}.
+
+X3J13 voted in January 1989
+\issue{MAKE-PACKAGE-USE-DEFAULT}
+to change the specification of \cd{make-package} so that the default value
+for the \cd{:use} argument is unspecified.  This change affects \cd{defpackage}
+as well.  Portable code should specify \cd{(:use~'("COMMON-LISP"))} explicitly.
+
+\item[\cd{(:import-from {\it package-name} \Mstar{\it symbol-name})}]
+Symbols with the specified names are located in the specified package.
+These symbols are imported into the package being defined,
+just as with the function \cd{import}.
+In no case will symbols be created in a package other than
+the one being defined;
+a continuable error is signaled if for any {\it symbol-name} there
+is no symbol of that name accessible in the package named {\it package-name}.
+
+\item[\cd{(:intern \Mstar{\it symbol-name})}]
+Symbols with the specified names are located or created
+in the package being defined, just as with the function
+\cd{intern}.  Note that the action of this option may be
+affected by a \cd{:use}
+option, because an inherited symbol will be used in preference
+to creating a new one.
+
+\item[\cd{(:export \Mstar{\it symbol-name})}]
+Symbols with the specified names are located or created
+in the package being defined and then exported, just as with the function
+\cd{export}.  Note that the action of this option may be
+affected by a \cd{:use}, \cd{:import-from}, or \cd{:shadowing-import-from}
+option, because an inherited or imported symbol will be used in preference
+to creating a new one.
+\end{flushdesc}
+
+The order in which options appear in a \cd{defpackage} form does not matter;
+part of the convenience of \cd{defpackage} is that it sorts out the options
+into the correct order for processing.
+Options are processed in the following order:
+\begin{tabbing}
+1.~~\cd{:shadow} and \cd{:shadowing-import-from} \\
+2.~~\cd{:use} \\
+3.~~\cd{:import-from} and \cd{:intern} \\
+4.~~\cd{:export}
+\end{tabbing}
+Shadows are established first in order to avoid spurious name conflicts
+when use links are established.  Use links must occur before importing
+and interning so that those operations may refer to normally inherited
+symbols rather than creating new ones.  Exports are performed last so that
+symbols created by any of the other options, in particular,
+shadows and imported symbols, may be exported.  Note that exporting an
+inherited symbol implicitly imports it first
+(see section~\ref{EXPORT-IMPORT-SECTION}).
+
+If no package named {\it defined-package-name} already exists,
+\cd{defpackage} creates it.  If such a package does already exist,
+then no new package is created.  The existing package is
+modified, if possible, to reflect the new definition.  The results are
+undefined if the new definition is not consistent with the current
+state of the package.
+
+An error is signaled if more than one \cd{:size} option appears.
+
+An error is signaled if the same \cd{symbol-name} argument (in the sense
+of comparing names with \cd{string=}) appears more than once among
+the arguments to all the \cd{:shadow}, \cd{:shadowing-import-from},
+\cd{:import-from}, and \cd{:intern} options.
+
+An error is signaled if the same \cd{symbol-name} argument (in the sense
+of comparing names with \cd{string=}) appears more than once among
+the arguments to all the \cd{:intern} and \cd{:export} options.
+
+Other kinds of name conflicts are handled in the same manner that
+the underlying operations \cd{use-package}, \cd{import}, and \cd{export}
+would handle them.
+
+Implementations may support other \cd{defpackage} options.
+Every implementation should signal an error on encountering
+a \cd{defpackage} option it does not support.
+
+The function \cd{compile-file} should treat top-level \cd{defpackage}
+forms in the same way it would treat top-level calls to package-affecting
+functions (as described at the beginning of
+section~\ref{PACKAGE-FUNCTIONS-SECTION}).
+
+Here is an example of a call to \cd{defpackage} that ``plays it safe''
+by using only strings as names.
+\begin{lisp}
+(cl:defpackage "MY-VERY-OWN-PACKAGE" \\*
+~~(:size 496) \\*
+~~(:nicknames "MY-PKG" "MYPKG" "MVOP") \\*
+~~(:use "COMMON-LISP") \\
+~~(:shadow "CAR" "CDR") \\*
+~~(:shadowing-import-from "BRAND-X-LISP" "CONS") \\*
+~~(:import-from "BRAND-X-LISP" "GC" "BLINK-FRONT-PANEL-LIGHTS") \\*
+~~(:export "EQ" "CONS" "MY-VERY-OWN-FUNCTION"))
+\end{lisp}
+The preceding \cd{defpackage} example is designed to operate correctly
+even if the package current when the form is read happens not to
+``use'' the \cd{common-lisp} package.  (Note the use in this example
+of the nickname \cd{cl} for the \cd{common-lisp} package.)
+Moreover, neither reading in nor evaluating
+this \cd{defpackage} form will ever create any symbols in the
+current package.  Note too the use of uppercase letters in the strings.
+
+Here, for the sake of contrast, is a rather similar use of
+\cd{defpackage} that ``plays the whale'' by using all sorts of
+permissible syntax.
+\begin{lisp}
+(defpackage my-very-own-package \\*
+~~(:export :EQ common-lisp:cons my-very-own-function) \\*
+~~(:nicknames "MY-PKG" \#:MyPkg) \\*
+~~(:use "COMMON-LISP") \\
+~~(:shadow "CAR") \\*
+~~(:size 496) \\*
+~~(:nicknames mvop) \\
+~~(:import-from "BRAND-X-LISP" "GC" Blink-Front-Panel-Lights) \\
+~~(:shadow common-lisp::cdr) \\*
+~~(:shadowing-import-from "BRAND-X-LISP" CONS))
+\end{lisp}
+This example has exactly the same effect on the newly created package
+but may create useless symbols in other packages.
+The use of explicit package tags is particularly confusing;
+for example, this \cd{defpackage} form will cause the symbol
+\cd{cdr} to be shadowed {\it in the new package}; it will not be
+shadowed in the package \cd{common-lisp}.  The fact that the name ``\cd{CDR}''
+was specified by a package-qualified reference to a symbol in the
+\cd{common-lisp} package is a red herring.
+The moral is that the syntactic flexibility of \cd{defpackage},
+as in other parts of Common Lisp,
+yields considerable convenience when used with commonsense competence,
+but unutterable confusion when used with Malthusian profusion.
+
+\beforenoterule
+\begin{implementation}
+An implementation of \cd{defpackage} might choose to transform
+all the {\it package-name} and {\it symbol-name} arguments
+into strings at macro expansion time, rather than at the time
+the resulting expansion is executed, so that even if source code
+is expressed in terms of strange symbols in the \cd{defpackage} form,
+the binary file resulting from compiling the source code would
+contain only strings.  The purpose of this is simply to minimize
+the creation of useless symbols in production code.  This technique
+is permitted as an implementation strategy but is not a
+behavior required by the specification of \cd{defpackage}.
+\end{implementation}
+\afternoterule
+
+Note that \cd{defpackage} is not capable by itself of defining
+mutually recursive packages, for example two packages each of
+which uses the other.  However, nothing prevents one from using
+\cd{defpackage} to perform much of the initial setup and then
+using functions such as \cd{use-package}, \cd{import}, and \cd{export}
+to complete the links.
+
+The purpose of \cd{defpackage} is to encourage the user to
+put the entire definition of a package and its relationships to
+other packages in a single place.  It may also encourage the designer
+of a large system to place the definitions of all relevant packages
+into a single file (say) that can be loaded before loading or compiling
+any code that depends on those packages.  Such a file, if carefully
+constructed, can simply be loaded into the \cd{common-lisp-user} package.
+
+Implementations and programming environments may also be better able
+to support the programming process (if only by providing better
+error checking) through global knowledge of the intended package setup.
+\end{defmac}
+\end{new}
+
+\begin{defun}[Function]
+find-all-symbols string-or-symbol
+
+\cd{find-all-symbols}
+searches every package in the Lisp system to find
+every symbol whose print name is the
+specified string.  A list of all such symbols found is returned.
+This search is case-sensitive.
+If the argument is a symbol, its print name supplies
+the string to be searched for.
+\end{defun}
+
+\begin{defmac}
+do-symbols (var [package [result-form]])
+           {declaration}* {tag | statement}*
+
+\cd{do-symbols} provides straightforward iteration over the symbols of a
+package.  The body is performed once for each symbol accessible in the
+{\it package}, in no particular order, with the variable {\it var} bound to
+the symbol.  Then {\it result-form} (a single form, {\it not} an implicit
+\cd{progn}) is evaluated, and the result is the value of the
+\cd{do-symbols} form.  (When the {\it result-form} is evaluated, the control
+variable {\it var} is still bound and has the value {\false}.)  If the
+{\it result-form} is omitted, the result is {\false}.  \cd{return} may be used
+to terminate the iteration prematurely.  If execution of the body affects
+which symbols are contained in the {\it package}, other than possibly to
+remove the symbol currently the value of {\it var} by using \cd{unintern},
+the effects are unpredictable.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{DO-SYMBOLS-DUPLICATES}
+to specify that the body of a \cd{do-symbols}
+form may be executed more than once for the same accessible symbol, and users
+should take care to allow for this possibility.
+
+The point is that the same symbol might be accessible via more than one
+chain of inheritance, and it is implementationally costly to eliminate
+such duplicates.  Here is an example:
+\begin{lisp}
+(setq *a* (make-package 'a))~~~~~~;{\rm Implicitly uses package \cd{common-lisp}} \\*
+(setq *b* (make-package 'b))~~~~~~;{\rm Implicitly uses package \cd{common-lisp}} \\*
+(setq *c* (make-package 'c :use '(a b))) \\
+\\
+(do-symbols (x *c*) (print x))~~~~;{\rm Symbols in package \cd{common-lisp}} \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~{\rm might be printed once or twice here}
+\end{lisp}
+
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\begin{new}
+Note that the \cd{loop} construct provides a kind of \cd{for} clause that
+can iterate over the symbols of a package (see chapter~\ref{LOOP}).
+\end{new}
+\end{defmac}
+
+\begin{defmac}
+do-external-symbols (var [package [result]])
+                    {declaration}* {tag | statement}*
+
+\cd{do-external-symbols} is just like \cd{do-symbols}, except that only
+the external symbols of the specified package are scanned.
+\begin{new}
+The clarification voted by X3J13
+in March 1988 for \cd{do-symbols}
+\issue{DO-SYMBOLS-DUPLICATES},
+regarding redundant executions of the body for the same symbol,
+applies also to \cd{do-external-symbols}.
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defmac}
+
+\begin{defmac}
+do-all-symbols (var [result-form])
+               {declaration}* {tag | statement}*
+
+This is similar to \cd{do-symbols} but executes the body once for every
+symbol contained in every package.  (This will not process every symbol
+whatsoever, because a symbol not accessible in any package will not
+be processed.  Normally, uninterned symbols are not accessible in any package.)
+It is {\it not} in general
+the case that each symbol is processed only once, because a symbol may
+appear in many packages.
+
+\begin{new}
+The clarification voted by X3J13
+in March 1988 for \cd{do-symbols}
+\issue{DO-SYMBOLS-DUPLICATES},
+regarding redundant executions of the body for the same symbol,
+applies also to \cd{do-all-symbols}.
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that the {\it package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defmac}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{HASH-TABLE-PACKAGE-GENERATORS}
+to add a new macro \cd{with-package-iterator} to the language.
+
+\begin{defmac}
+with-package-iterator (mname package-list {symbol-type}+)
+                      {\,form}*
+
+The name {\it mname} is bound and defined as if by \cd{macrolet},
+with the body {\it form\/}s as its lexical scope, to be a ``generator macro''
+such that each invocation of \cd{({\it mname})} will
+return a symbol and that successive invocations
+will eventually deliver, one by one, all the symbols
+from the packages that are elements of the list that is the value of the
+expression {\it package-list} (which is evaluated exactly once).
+
+Each element of the {\it package-list} value
+may be either a package or the name of a package.
+As a further convenience, if the {\it package-list} value
+is itself a package or the name of a package, it is treated
+as if a singleton list containing that value had been provided.
+If the {\it package-list} value is \cd{nil}, it is considered
+to be an empty list of packages.
+
+At each invocation of the generator macro, there are two possibilities.
+If there is yet another unprocessed symbol, then
+four values are returned: \cd{t}, the symbol,
+a keyword
+indicating the accessibility of the symbol within the package (see below), and
+the package from which the symbol was accessed.
+If there are no more unprocessed symbols in the
+list of packages, then one value is returned: \cd{nil}.
+
+When the generator macro returns a symbol as its second value, the
+fourth value is always one of the packages present or named in the
+{\it package-list} value, and the third value is a keyword indicating
+accessibility:
+\cd{:internal} means present in the package and not exported;
+\cd{:external} means present and exported;
+and \cd{:inherited} means not present (thus not shadowed) but inherited
+from some package used by the package that is the fourth value.
+
+Each {\it symbol-type} in an invocation of \cd{with-package-iterator}
+is not evaluated.  More than one may be present; their order does not
+matter.  They indicate the accessibility types of interest.
+A symbol is not returned by the generator macro unless its actual
+accessibility matches one of the {\it symbol-type} indicators.
+The standard {\it symbol-type} indicators are \cd{:internal},
+\cd{:external}, and \cd{:inherited}, but implementations are permitted
+to extend the syntax of \cd{with-package-iterator} by recognizing
+additional symbol accessibility types.  An error is signaled
+if no {\it symbol-type} is supplied, or if any supplied {\it symbol-type}
+is not recognized by the implementation.
+
+The order in which symbols are produced by successive invocations
+of the generator macro is not necessarily correlated in any way
+with the order of the packages in the {\it package-list}.
+When more than one package is in the {\it package-list},
+symbols accessible from more than one package may be produced
+once or more than once.  Even when only one package is specified,
+symbols inherited in multiple ways via used packages may be
+produced once or more than once.
+
+The implicit interior state of the iteration over the list of packages
+and the symbols within them has dynamic extent.
+It is an error to invoke the generator macro
+once the \cd{with-package-iterator} form has been exited.
+
+Any number of invocations of \cd{with-package-iterator}
+and related macros may be nested, and the generator macro of an
+outer invocation may be called from within an inner invocation
+(provided, of course, that its name is visible or otherwise made available).
+
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+
+\beforenoterule
+\begin{rationale}
+This facility is a bit more flexible in some ways than \cd{do-symbols}
+and friends.
+In particular, it makes it possible to implement \cd{loop}
+clauses for iterating over packages in a way that is both portable
+and efficient (see chapter~\ref{LOOP}).
+\end{rationale}
+\afternoterule
+\end{defmac}
+\end{new}
+
+\section{Modules}
+
+A {\it module} is a Common Lisp subsystem that is loaded from one or more
+files.  A module is normally loaded as a single unit, regardless of how
+many files are involved.  A module may consist of one package or several
+packages.  The file-loading process is necessarily
+implementation-dependent, but Common Lisp provides some very simple
+portable machinery for naming modules, for keeping track of which modules
+have been loaded, and for loading modules as a unit.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{REQUIRE-PATHNAME-DEFAULTS}
+to eliminate the entire module facility from
+the language; that is, the variable \cd{*modules*} and the functions
+\cd{provide} and \cd{require} are deleted.
+X3J13 commented that the file-loading feature of \cd{require} is not
+portable, and that the remaining functionality is easily implemented
+by user code.  (I will add that in any case the specification of
+\cd{require} is so vague that different implementations are likely to
+have differing behavior.)
+\end{new}
+
+\begin{defun}[Variable]
+*modules*
+
+The variable \cd{*modules*} is a list of names of the modules
+that have been loaded into the Lisp system so far.
+This list is used by the functions \cd{provide} and \cd{require}.
+\end{defun}
+
+\begin{defun}[Function]
+provide module-name \\
+require module-name &optional pathname
+
+Each module has a unique name (a string).  The \cd{provide} and \cd{require}
+functions accept either a string or a symbol as the {\it module-name}
+argument.  If a symbol is provided, its print name is used as the module
+name.  If the module consists of a single package, it is customary for
+the package and module names to be the same.
+
+The \cd{provide}
+function adds a new module name to the list of modules
+maintained in the variable \cd{*modules*}, thereby indicating that
+the module in question has been loaded.
+
+The \cd{require} function tests whether a module is already present
+(using a case-sensitive comparison); if the module is not present,
+\cd{require} proceeds to load the appropriate
+file or set of files.  The {\it pathname} argument, if present, is a single
+pathname or a list of pathnames whose files are to be loaded in order,
+left to right.  If the {\it pathname} argument is {\false} or is not provided,
+the system will attempt to determine, in some
+system-dependent manner, which files to load.
+This will typically involve some central
+registry of module names and the associated file lists.
+
+\begin{new}
+X3J13 voted in March 1988
+not to permit symbols as pathnames
+\issue{PATHNAME-SYMBOL} and
+to specify exactly which streams may be used as pathnames
+\issue{PATHNAME-STREAM} (see section~\ref{PATHNAME-FUNCTIONS}).
+Of course, this is moot if \cd{require} is not in the language.
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{RETURN-VALUES-UNSPECIFIED}
+to specify that the values returned by \cd{provide} and \cd{require}
+are implementation-dependent.  Of course, this is moot
+if \cd{provide} and \cd{require} are not in the language.
+\end{new}
+
+
+\beforenoterule
+\begin{implementation}
+One way to implement such a registry on
+many operating systems is simply to use a distinguished ``library''
+directory within the file system, where the name of each file
+is the same as the module it contains.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\section{An Example}
+\label{PACKAGE-EXAMPLE-SECTION}
+
+\begin{obsolete}\noindent
+Most users will want to load and use packages but will never need to
+build one.  Often a user will load a number of packages into the
+\cd{user} package whenever using Common Lisp.  Typically an implementation
+might provide some sort of initialization file  mechanism to make such setup
+automatic when the Lisp starts up.  Table~\ref{INIT-FILE-TABLE}
+shows such an initialization file, one that simply
+causes other facilities to be loaded.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
+the forthcoming ANSI Common Lisp will use the package name \cd{common-lisp-user}
+instead of \cd{user}.
+\end{newer}
+
+\begin{table}[t]
+\caption{An Initialization File}
+\label{INIT-FILE-TABLE}
+\begin{lisp}
+;;;; Lisp init file for I. Newton. \\
+ \\
+;;; Set up the USER package the way I like it. \\
+ \\
+(require 'calculus)~~~~~~~~~~~~~;I use CALCULUS a lot; load it. \\
+(use-package 'calculus)~~~~~~~~~;Get easy access to its \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~; exported symbols. \\
+ \\
+(require 'newtonian-mechanics)~~;Same thing for NEWTONIAN-MECHANICS \\
+(use-package 'newtonian-mechanics) \\
+ \\
+;;; I just want a few things from RELATIVITY, \\
+;;; and other things conflict. \\
+;;; Import only what I need into the USER package. \\
+ \\
+(require 'relativity) \\
+(import '(relativity:speed-of-light \\
+~~~~~~~~~~relativity:ignore-small-errors)) \\
+ \\
+;;; These are worth loading, but I will use qualified names, \\
+;;; such as PHLOGISTON:MAKE-FIRE-BOTTLE, to get at any symbols \\
+;;; I might need from these packages. \\
+ \\
+(require 'phlogiston) \\
+(require 'alchemy) \\
+ \\
+;;; End of Lisp init file for I. Newton.
+\end{lisp}
+\end{table}
+
+When each of two files uses some symbols from the other, the author
+of those files must be
+careful to arrange the contents of the file in the proper order.
+Typically each file contains a single package that is a complete module.
+The contents of such a file should include the following items, in
+order:
+
+\begin{enumerate}
+\item
+A call to \cd{provide} that announces the module name.
+
+\item
+A call to \cd{in-package} that establishes the package.
+
+\item
+A call to \cd{shadow} that establishes any local symbols that will shadow
+symbols that would otherwise be inherited from packages that this
+package will use.
+
+\item
+A call to \cd{export} that establishes all of this package's external
+symbols.
+
+\item
+Any number of calls to \cd{require} to load other modules that the
+contents of this file might want to use or refer to.  (Because the
+calls to \cd{require} follow the calls to \cd{in-package},
+\cd{shadow}, and \cd{export}, it is possible for the packages that may
+be loaded to refer to external symbols in this package.)
+
+\item
+Any number of calls to \cd{use-package}, to make external
+symbols from other packages accessible in this package.
+
+\item
+Any number of calls to \cd{import}, to make
+symbols from other packages present in this package.
+
+\item
+Finally, the definitions making up the contents of this package/module.
+\end{enumerate}
+
+The following mnemonic sentence may be helpful in remembering
+the proper order of these calls:
+\begin{center}
+{\bf Put in seven extremely random user interface commands.}
+\end{center}
+Each word of the sentence corresponds to one item in the above ordering:
+\begin{tabbing}
+\hskip 6pc\=\hskip 8pc\=\kill
+\>Put\>\cd{Provide} \\*
+\>IN\>\cd{IN-package} \\*
+\>Seven\>\cd{Shadow} \\*
+\>EXtremely\>\cd{EXport} \\*
+\>Random\>\cd{Require} \\*
+\>USEr\>\cd{USE-package} \\*
+\>Interface\>\cd{Import} \\*
+\>COmmands\>COntents of package/module
+\end{tabbing}
+
+
+\begin{table}
+\caption{File \protect\cd{alchemy}}
+\label{ALCHEMY-FILE-TABLE}
+\begin{lisp}
+;;;; Alchemy functions, written and maintained by Merlin, Inc. \\
+ \\[4pt]
+(provide 'alchemy)~~~~~~~~~~~~~~~~~~;The module is named ALCHEMY. \\
+(in-package 'alchemy)~~~~~~~~~~~~~~~;So is the package. \\
+ \\[4pt]
+;;; There is nothing to shadow. \\
+ \\[4pt]
+;;; Here is the external interface. \\
+ \\[4pt]
+(export '(lead-to-gold gold-to-lead  \\
+~~~~~~~~~~antimony-to-zinc elixir-of-life)) \\
+ \\[4pt]
+;;; This package/module needs a function from \\
+;;; the PHLOGISTON package/module. \\
+ \\[4pt]
+(require 'phlogiston) \\
+ \\[4pt]
+;;; We don't frequently need most of the external symbols from \\
+;;; PHLOGISTON, so it's not worth doing a USE-PACKAGE on it. \\
+;;; We'll just use qualified names as needed.~~But we use \\
+;;; one function, MAKE-FIRE-BOTTLE, a lot, so import it. \\
+;;; It's external in PHLOGISTON and so can be referred to \\
+;;; here using ":" qualified-name syntax. \\
+ \\[4pt]
+(import '(phlogiston:make-fire-bottle)) \\
+ \\[4pt]
+;;; Now for the real contents of this file. \\
+ \\[4pt]
+(defun lead-to-gold (x) \\
+~~"Takes a quantity of lead and returns gold." \\
+~~(when (> (phlogiston:heat-flow 5 x x)~~;Using a qualified symbol \\
+~~~~~~~~~~~3) \\
+~~~~(make-fire-bottle x))~~~~~~~~~~~~~~~~;Using an imported symbol \\
+~~(gild x)) \\
+ \\[4pt]
+;;; And so on ...
+\end{lisp}
+\vfill
+\end{table}
+
+\begin{table}
+\caption{File \protect\cd{phlogiston}}
+\label{PHLOGISTON-FILE-TABLE}
+\begin{lisp}
+;;;; Phlogiston functions, by Thermofluidics, Ltd. \\
+ \\[4pt]
+(provide 'phlogiston)~~~~~~~~~~~~~;The module is named PHLOGISTON. \\
+(in-package 'phlogiston)~~~~~~~~~~;So is the package. \\
+ \\[4pt]
+;;; There is nothing to shadow. \\
+ \\[4pt]
+;;; Here is the external interface. \\
+ \\[4pt]
+(export '(heat-flow cold-flow mix-fluids separate-fluids \\
+~~~~~~~~~~burn make-fire-bottle)) \\
+ \\[4pt]
+;;; This file uses functions from the ALCHEMY package/module. \\
+ \\[4pt]
+(require 'alchemy) \\
+ \\[4pt]
+;;; We use alchemy functions a lot, so use the package. \\
+;;; This will allow symbols exported from the ALCHEMY package \\
+;;; to be referred to here without the need for qualified names. \\
+ \\[4pt]
+(use-package 'alchemy) \\
+ \\[4pt]
+;;; No calls to IMPORT are needed here. \\
+ \\[4pt]
+;;; The real contents of this package/module. \\
+\\[4pt]
+(defvar *feeling-weak* nil) \\
+ \\[4pt]
+(defun heat-flow (amount x y) \\
+~~"Make some amount of heat flow from x to y." \\
+~~(when *feeling-weak* \\
+~~~~(quaff (elixir-of-life)))~~~~~;No qualifier is needed. \\
+~~(push-heat amount x y)) \\
+ \\[4pt]
+;;; And so on ...
+\end{lisp}
+\vfill
+\end{table}
+
+The sentence says what it helps you to do.
+
+\begin{new}
+The most distressing aspect of the X3J13 vote to eliminate
+\cd{provide} and \cd{require}
+\issue{REQUIRE-PATHNAME-DEFAULTS}
+is of course that it completely ruins the mnemonic sentence.
+\end{new}
+
+
+Now, suppose for the sake of example
+that the \cd{phlogiston} and \cd{alchemy} packages are
+single-file, single-package modules as described above.  The \cd{phlogiston}
+package needs to use the \cd{alchemy} package, and the \cd{alchemy} package
+needs to use several
+external symbols from the \cd{phlogiston} package.
+The definitions in the \cd{alchemy} and \cd{phlogiston} files
+(see tables~\ref{ALCHEMY-FILE-TABLE} and~\ref{PHLOGISTON-FILE-TABLE})
+allow a
+user to specify \cd{require} statements for either of these modules, or for
+both of them in either order, and all relevant information will be
+loaded automatically and in the correct order.
+
+\begin{obsolete}
+For very large modules whose contents are spread over several files
+(the \cd{lisp} package is an example), it is recommended that the user
+create the package and declare all of the shadows and external symbols
+in a separate file, so that this can be loaded before anything that
+might use symbols from this package.
+\end{obsolete}
+
+\begin{new}
+Indeed, the \cd{defpackage} macro
+approved by X3J13 in January 1989
+\issue{DEFPACKAGE}
+encourages the use of such a separate file.
+(By the way,
+X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
+the forthcoming ANSI Common Lisp will use the package name \cd{common-lisp}
+instead of \cd{lisp}.)
+Let's take a look at a revision
+of I.~Newton's files using \cd{defpackage}.
+\end{new}
+
+\begin{table}[t]
+\caption{An Initialization File When \protect\cd{defpackage} Is Used}
+\label{DEFPACKAGE-INIT-FILE-TABLE}
+\begin{lisp}
+;;;; Lisp init file for I. Newton. \\
+ \\
+;;; Set up the USER package the way I like it. \\
+ \\
+(load "calculus")~~~~~~~~~~~~~~~;I use CALCULUS a lot; load it. \\
+(use-package 'calculus)~~~~~~~~~;Get easy access to its \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~; exported symbols. \\
+ \\
+(load "newtonian-mechanics")~~~~;Ditto for NEWTONIAN-MECHANICS \\
+(use-package 'newtonian-mechanics) \\
+ \\
+;;; I just want a few things from RELATIVITY, \\
+;;; and other things conflict. \\
+;;; Import only what I need into the USER package. \\
+ \\
+(load "relativity") \\
+(import '(relativity:speed-of-light \\
+~~~~~~~~~~relativity:ignore-small-errors)) \\
+ \\
+;;; These are worth loading, but I will use qualified names, \\
+;;; such as PHLOGISTON:MAKE-FIRE-BOTTLE, to get at any symbols \\
+;;; I might need from these packages. \\
+ \\
+(load "phlogiston") \\
+(load "alchemy") \\
+ \\
+;;; End of Lisp init file for I. Newton.
+\end{lisp}
+\end{table}
+\begin{new}
+The new version of the initialization file avoids using \cd{require};
+instead, we assume that \cd{load} will do the job
+(see table~\ref{DEFPACKAGE-INIT-FILE-TABLE}).
+
+The other files have each been split into two parts, one that
+establishes the package and one that defines the contents.
+This example uses a simple convention that for any file
+named, say, ``\cd{foo}'' the file named ``\cd{foo-package}''
+contains the necessary \cd{defpackage} and/or other package-establishing
+code.  The idiom
+\begin{lisp}
+(unless (find-package "FOO") \\
+~~(load "foo-package"))
+\end{lisp}
+is conventionally used to load a package definition but only if the package
+has not already been defined.  (This is a bit clumsy, and there are other
+ways to arrange things so that a package is defined no more than once.)
+
+The file \cd{alchemy-package} is shown in
+table~\ref{DEFPACKAGE-ALCHEMY-PACKAGE-TABLE}.
+The tricky point here is that the \cd{alchemy} and \cd{phlogiston}
+packages contain mutual references (each imports from the other),
+and so \cd{defpackage} alone cannot do the job.  Therefore
+the \cd{phlogiston} package is not mentioned in a \cd{:use} option
+in the \cd{defpackage} for the \cd{alchemy} package.  Instead,
+the function \cd{use-package} is called explicitly, after the package definition
+for \cd{phlogiston} has been loaded.  Note that this file has
+been coded with excruciating care so as to operate correctly even if
+the package current when the file is loaded does not inherit from
+the \cd{common-lisp} package. In particular, the standard load-package-definition
+idiom has been peppered with package qualifiers:
+\begin{lisp}
+(cl:unless (cl:find-package "PHLOGISTON") \\
+~~(cl:load "phlogiston-package"))
+\end{lisp}
+Note the use of the nickname \cd{cl} for the \cd{common-lisp} package.
+
+The \cd{alchemy} file, shown in table~\ref{DEFPACKAGE-ALCHEMY-FILE-TABLE},
+simply loads the \cd{alchemy} package definition,
+makes that package current, and then defines the ``real contents''
+of the package.
+\end{new}
+\begin{table}[t]
+\caption{File \protect\cd{alchemy-package} Using \protect\cd{defpackage}}
+\label{DEFPACKAGE-ALCHEMY-PACKAGE-TABLE}
+\begin{lisp}
+;;;; Alchemy package, written and maintained by Merlin, Inc. \\
+ \\
+(cl:defpackage "ALCHEMY" \\
+~~(:export "LEAD-TO-GOLD" "GOLD-TO-LEAD" \\
+~~~~~~~~~~~"ANTIMONY-TO-ZINC" "ELIXIR-OF-LIFE") \\
+~~) \\
+ \\
+;;; This package needs a function from the PHLOGISTON package. \\
+;;; Load the definition of the PHLOGISTON package if necessary. \\
+ \\
+(cl:unless (cl:find-package "PHLOGISTON") \\
+~~(cl:load "phlogiston-package")) \\
+ \\
+;;; We don't frequently need most of the external symbols from \\
+;;; PHLOGISTON, so it's not worth doing a USE-PACKAGE on it. \\
+;;; We'll just use qualified names as needed.  But we use \\
+;;; one function, MAKE-FIRE-BOTTLE, a lot, so import it. \\
+;;; It's external in PHLOGISTON and so can be referred to \\
+;;; here using ":" qualified-name syntax. \\
+ \\
+(cl:import '(phlogiston:make-fire-bottle))
+\end{lisp}
+\vskip\ruletonoteskip
+\hrule
+\vskip\ruletonoteskip\null
+\caption{File \protect\cd{alchemy} Using \protect\cd{defpackage}}
+\label{DEFPACKAGE-ALCHEMY-FILE-TABLE}
+\begin{lisp}
+;;;; Alchemy functions, written and maintained by Merlin, Inc. \\
+ \\
+(unless (find-package "ALCHEMY") \\
+~~(load "alchemy-package")) \\
+ \\
+(in-package 'alchemy) \\
+ \\
+(defun lead-to-gold (x) \\
+~~"Takes a quantity of lead and returns gold." \\
+~~(when (> (phlogiston:heat-flow 5 x x)~~;Using a qualified symbol \\
+~~~~~~~~~~~3) \\
+~~~~(make-fire-bottle x))~~~~~~~~~~~~~~~~;Using an imported symbol \\
+~~(gild x)) \\
+ \\
+;;; And so on ...
+\end{lisp}
+\end{table}
+
+
+
+\begin{table}[t]
+\caption{File \protect\cd{phlogiston-package} Using \protect\cd{defpackage}}
+\label{DEFPACKAGE-PHLOGISTON-PACKAGE-TABLE}
+\begin{lisp}
+;;;; Phlogiston package definition, by Thermofluidics, Ltd. \\
+ \\
+;;; This package uses functions from the ALCHEMY package. \\
+ \\
+(cl:unless (cl:find-package "ALCHEMY") \\
+~~(cl:load "alchemy-package")) \\
+ \\
+(cl:defpackage "PHLOGISTON" \\
+~~(:use "COMMON-LISP" "ALCHEMY") \\
+~~(:export "HEAT-FLOW" \\
+~~~~~~~~~~~"COLD-FLOW" \\
+~~~~~~~~~~~"MIX-FLUIDS" \\
+~~~~~~~~~~~"SEPARATE-FLUIDS" \\
+~~~~~~~~~~~"BURN" \\
+~~~~~~~~~~~"MAKE-FIRE-BOTTLE") \\
+~~)
+\end{lisp}
+\end{table}
+
+\begin{table}[b]
+\caption{File \protect\cd{phlogiston} Using \protect\cd{defpackage}}
+\label{DEFPACKAGE-PHLOGISTON-FILE-TABLE}
+\begin{lisp}
+;;;; Phlogiston functions, by Thermofluidics, Ltd. \\
+ \\
+(unless (find-package "PHLOGISTON") \\
+~~(load "phlogiston-package")) \\
+ \\
+(in-package 'phlogiston) \\
+\\
+(defvar *feeling-weak* nil) \\
+\\
+(defun heat-flow (amount x y) \\
+~~"Make some amount of heat flow from x to y." \\
+~~(when *feeling-weak* \\
+~~~~(quaff (elixir-of-life)))~~~~~;No qualifier is needed. \\
+~~(push-heat amount x y)) \\
+ \\
+;;; And so on ...
+\end{lisp}
+\end{table}
+\begin{new}
+
+The file \cd{phlogiston-package} is shown in
+table~\ref{DEFPACKAGE-PHLOGISTON-PACKAGE-TABLE}.
+This one is a little more straightforward than the file \cd{alchemy-package},
+because the latter bears the responsibility for breaking the
+circular package references.
+This file simply makes sure that the \cd{alchemy} package is defined
+and then performs a \cd{defpackage} for the \cd{phlogiston} package.
+
+The \cd{phlogiston} file, shown in table~\ref{DEFPACKAGE-PHLOGISTON-FILE-TABLE},
+simply loads the \cd{phlogiston} package definition,
+makes that package current, and then defines the ``real contents''
+of the package.
+
+
+
+Let's look at the question of package circularity in
+this example a little more closely.
+Suppose that the file \cd{alchemy-package} is loaded first.
+It defines the \cd{alchemy} package and then loads
+file \cd{phlogiston-package}.  That file in turn finds that the
+package \cd{alchemy} has already been defined and therefore does
+not attempt to load file \cd{alchemy-package} again; it merely
+defines package \cd{phlogiston}.  The file \cd{alchemy-package}
+then has a chance to import \cd{phlogiston:make-fire-bottle} and everything
+is fine.
+
+On the other hand, suppose that the file \cd{phlogiston-package} is
+loaded first.  It finds that the
+package \cd{alchemy} has {\it not} already been defined, and therefore
+it immediately loads file \cd{alchemy-package}.
+That file in turn defines the \cd{alchemy} package; then it
+finds that package \cd{phlogiston} is not yet defined and so
+loads file \cd{phlogiston-package} {\it again} (indeed, in nested fashion).
+This time file \cd{phlogiston-package} {\it does} find that the
+package \cd{alchemy} has already been defined, so it simply defines
+package \cd{phlogiston} and terminates.
+The file \cd{alchemy-package} then imports \cd{phlogiston:make-fire-bottle}
+and terminates.
+Finally, the outer loading of file \cd{phlogiston-package}
+{\it re-defines} package \cd{phlogiston}.  Oh, dear.  Fortunately the
+two definitions of package \cd{phlogiston} agree in every detail, so
+everything ought to be all right.  Still, it looks a bit dicey; {\it I}
+certainly don't have the same warm, fuzzy feeling that I would if
+no package were defined more than once.
+
+\clearpage%manual
+
+Conclusion: \cd{defpackage} goes a long way, but it certainly doesn't
+solve all the possible problems of package and file management.
+Neither did \cd{require} and \cd{provide}.  Perhaps further experimentation
+will yield facilities appropriate for future standardization.
+\end{new}

@@ -1,0 +1,1015 @@
+%Part{Array, Root = "CLM.MSS"}
+%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Arrays}
+
+An array is an object with components arranged according
+to a rectilinear coordinate system.
+In principle, an
+array in Common Lisp may have any number of dimensions, including zero.
+(A zero-dimensional array has exactly one element.)
+In practice, an implementation may limit the number of dimensions
+supported, but
+every Common Lisp implementation must support arrays of up to
+seven dimensions.
+Each dimension is a non-negative integer; if any dimension of an array is zero,
+the array has no elements.
+
+An array may be a {\it general array}, meaning each element may be any Lisp
+object, or it may be a {\it specialized array}, meaning that each element
+must be of a given restricted type.
+
+\begin{obsolete}
+One-dimensional arrays are called vectors.  General vectors may contain
+any Lisp object.  Vectors whose elements are restricted to type
+\cd{string-char} are called {\it strings}.  Vectors whose elements are
+restricted to type \cd{bit} are called {\it bit-vectors}.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the type \cd{string-char} and to redefine the type
+\cd{string} to be the union of one or more specialized vector
+types, the types of whose elements are subtypes of the type \cd{character}.
+\end{newer}
+
+\section{Array Creation}
+
+Do not be daunted by the many options of the function \cd{make-array}.
+All that is required to construct an array is a list of
+the dimensions; most of the options are for relatively esoteric
+applications.
+
+\begin{defun}[Function]
+make-array dimensions &key :element-type :initial-element :initial-contents :adjustable :fill-pointer :displaced-to :displaced-index-offset
+
+This is the primitive function for making arrays.  The {\it dimensions} argument
+should be a list of non-negative integers
+that are to be the dimensions of the array; the
+length of the list will be the dimensionality of the array.  
+Each dimension must be smaller than \cd{array-dimension-limit},
+and the product of all the dimensions must be smaller than
+\cd{array-total-size-limit}.
+Note that if {\it dimensions} is {\nil}, then a zero-dimensional array is created.
+For convenience when making a one-dimensional array, the single dimension
+may be provided as an integer rather than as a list of one integer.
+
+An implementation of Common Lisp may impose a limit on the rank of an array,
+but this limit may not be smaller than 7.  Therefore, any Common Lisp
+program may assume the use of arrays of rank 7 or less.
+The implementation-dependent limit on array rank is reflected in
+\cd{array-rank-limit}.
+
+The keyword arguments for \cd{make-array} are as follows:
+
+\begin{flushdesc}
+\item[\cd{:element-type}]
+This argument
+should be the name of the type of the elements of the array;
+an array is constructed
+of the most specialized type that can nevertheless accommodate
+elements of the given type.
+The type {\true} specifies a general array, one whose elements may
+be any Lisp object; this is the default type.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
+to change \cd{typep} and \cd{subtypep}
+so that the specialized \cd{array} type specifier
+means the same thing for discrimination purposes
+as for declaration purposes: it encompasses those arrays
+that can result by specifying {\it element-type} as the element type
+to the function \cd{make-array}.  Therefore we may say
+that if {\it type} is the \cd{:element-type} argument, then
+the result will be an array of type \cd{(array {\it type})};
+put another way, for any type {\it A},
+\begin{lisp}
+(typep (make-array ... :element-type '{\it A} ...) \\*
+~~~~~~~'(array {\it A\/})))
+\end{lisp}
+is always true.
+See \cd{upgraded-array-element-type}.
+\end{new}
+
+\item[\cd{:initial-element}]
+This argument
+may be used to initialize each element of the array.  The value
+must be of the type specified by the \cd{:element-type} argument.  If the
+\cd{:initial-element} option is omitted, the initial values of the array
+elements are undefined (unless the \cd{:initial-contents} or
+\cd{:displaced-to} option is used).
+The \cd{:initial-element} option may not be used with the
+\cd{:initial-contents} or \cd{:displaced-to} option.
+
+\item[\cd{:initial-contents}]
+This argument may be used to initialize the
+contents of the array.  The value is a nested structure of sequences.  If
+the array is zero-dimensional, then the value specifies the single
+element.  Otherwise, the value must be a sequence whose length is equal
+to the first dimension; each element must be a nested structure for an
+array whose dimensions are the remaining dimensions, and so on.
+For example:
+\begin{lisp}
+(make-array '(4 2 3) \\*
+~~~~~~~~~~~~:initial-contents \\
+~~~~~~~~~~~~'(((a b c) (1 2 3)) \\
+~~~~~~~~~~~~~~((d e f) (3 1 2)) \\
+~~~~~~~~~~~~~~((g h i) (2 3 1)) \\
+~~~~~~~~~~~~~~((j k l) (0 0 0))))
+\end{lisp}
+The numbers of levels in the structure must equal the rank of the array.
+Each leaf of the nested structure
+must be of the type specified by the \cd{:type} option.  If the
+\cd{:initial-contents} option is omitted, the initial values of the array
+elements are undefined (unless the \cd{:initial-element} or
+\cd{:displaced-to} option is used).
+The \cd{:initial-contents} option may not be used with the
+\cd{:initial-element} or \cd{:displaced-to} option.
+
+\item[\cd{:adjustable}]
+This argument, if specified and not {\false}, indicates that it
+must be possible to alter the array's size dynamically after it is
+created.  This argument defaults to {\nil}.
+
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that if this argument is non-{\false}
+then the predicate \cd{adjustable-array-p} will necessarily be true when applied
+to the resulting array; but if this argument is \cd{nil} (or omitted) then the
+resulting array may or may not be adjustable, depending on the implementation,
+and therefore \cd{adjustable-array-p} may be correspondingly true or false of
+the resulting array.  Common Lisp provides no portable way to create a
+non-adjustable array, that is, an array for which \cd{adjustable-array-p} is
+guaranteed to be false.
+\end{newer}
+
+\item[\cd{:fill-pointer}]
+This argument
+specifies that the array should have a fill pointer.
+If this option is specified and not {\false}, the array must be one-dimensional.
+The value is used to initialize the fill pointer for the array.
+If the value {\true} is specified, the length of the array is used;
+otherwise the value must be an integer between 0 (inclusive)
+and the length of the array (inclusive).
+This argument defaults to {\nil}.
+
+\item[\cd{:displaced-to}]
+This argument, if specified and
+not {\false}, specifies that the array will be a {\it displaced} array.
+The argument must then be an array;
+\cd{make-array} will create
+an {\it indirect} or {\it shared} array that shares its contents with
+the specified array.  In this case the \cd{:displaced-index-offset}
+option may be useful.
+It is an error if the array given as the \cd{:displaced-to} argument
+does not have the same \cd{:element-type} as the array being created.
+The \cd{:displaced-to} option may not be used with the
+\cd{:initial-\discretionary{}{}{}element}
+or \cd{:initial-contents} option.
+This argument defaults to {\nil}.
+
+\item[\cd{:displaced-index-offset}]
+This argument may be used only in conjunction
+with the \cd{displaced-to} option.
+It must be a non-negative integer (it defaults to zero); it is made to be the
+index-offset of the created shared array.
+
+When an array A is given as
+the \cd{:displaced-to} argument to \cd{make-array} when creating array B,
+then array B is said to be {\it displaced} to array A.  Now the
+total number of elements in an array, called the {\it total size} of the array,
+is calculated as the product of all the dimensions
+(see \cd{array-total-size}).
+It is required that the total size of A be no smaller than the sum
+of the total size of B plus the offset {\it n} specified by
+the \cd{:displaced-index-offset}
+argument.  The effect of displacing is that array B does not have any
+elements of its own but instead maps accesses to itself into
+accesses to array A.  The mapping treats both arrays as if they
+were one-dimensional by taking the elements in row-major order,
+and then maps an access to element {\it k} of array B to an access to element
+{\it k}+{\it n} of array A.
+\end{flushdesc}
+
+If \cd{make-array} is called with each of the \cd{:adjustable}, \cd{:fill-pointer},
+and \cd{:displaced-to}
+arguments either unspecified or {\nil}, then the
+resulting array is guaranteed to be a {\it simple} array
+(see section~\ref{ARRAY-TYPE-SECTION}).
+
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that if one or more of the \cd{:adjustable}, \cd{:fill-pointer},
+and \cd{:displaced-to} arguments is true, then whether the resulting
+array is simple is unspecified.
+\end{newer}
+
+Here are some examples of the use of \cd{make-array}:
+\begin{lisp}
+;;; Create a one-dimensional array of five elements. \\*
+(make-array 5) \\
+ \\
+;;; Create a two-dimensional array, 3 by 4, with four-bit elements. \\*
+(make-array '(3 4) \cd{:element-type} '(mod 16)) \\
+ \\
+;;; Create an array of single-floats.\\*
+(make-array 5 \cd{:element-type} 'single-float)) \\
+\\
+;;; Making a shared array. \\*
+(setq a (make-array '(4 3))) \\
+(setq b (make-array 8 :displaced-to a \\*
+~~~~~~~~~~~~~~~~~~~~~~:displaced-index-offset 2)) \\
+;;; Now it is the case that: \\*
+~~~~~~~~(aref b 0) \EQ\ (aref a 0 2) \\*
+~~~~~~~~(aref b 1) \EQ\ (aref a 1 0) \\*
+~~~~~~~~(aref b 2) \EQ\ (aref a 1 1) \\*
+~~~~~~~~(aref b 3) \EQ\ (aref a 1 2) \\*
+~~~~~~~~(aref b 4) \EQ\ (aref a 2 0) \\*
+~~~~~~~~(aref b 5) \EQ\ (aref a 2 1) \\*
+~~~~~~~~(aref b 6) \EQ\ (aref a 2 2) \\*
+~~~~~~~~(aref b 7) \EQ\ (aref a 3 0)
+\end{lisp}
+The last example depends on the fact that arrays are, in effect,
+stored in row-major order for purposes of sharing.  Put another way,
+the indices for the elements of an array are ordered
+lexicographically.
+
+\beforenoterule
+\begin{incompatibility}
+Both Lisp Machine Lisp, as described in reference \cite{BLUE-LISPM},
+and Fortran \cite{DRAFT-FORTRAN-77,ANSI-FORTRAN-77} store arrays in
+column-major order.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Constant]
+array-rank-limit
+
+The value of \cd{array-rank-limit} is a positive integer that is
+the upper exclusive bound on the rank of an array.
+This bound depends on the implementation
+but will not be smaller than 8; therefore every Common Lisp implementation
+supports arrays whose rank is between 0 and 7 (inclusive).
+(Implementors are encouraged to make this limit as large as practicable
+without sacrificing performance.)
+\end{defun}
+
+\begin{defun}[Constant]
+array-dimension-limit
+
+The value of \cd{array-dimension-limit} is a positive integer that is
+the upper exclusive bound on each individual dimension of an array.
+This bound depends on the implementation
+but will not be smaller than 1024.
+(Implementors are encouraged to make this limit as large as practicable
+without sacrificing performance.)
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FIXNUM-NON-PORTABLE}
+to specify that the value
+of \cd{array-\discretionary{}{}{}dimension-limit} must be of type \cd{fixnum}.
+This in turn implies that all valid array indices will be fixnums.
+\end{new}
+
+\end{defun}
+
+\begin{defun}[Constant]
+array-total-size-limit
+
+The value of \cd{array-total-size-limit} is a positive integer that is
+the upper exclusive bound on the total number of elements in an array.
+This bound depends on the implementation
+but will not be smaller than 1024.
+(Implementors are encouraged to make this limit as large as practicable
+without sacrificing performance.)
+
+The actual limit on array size imposed by the implementation may vary
+according to the \cd{:element-type} of the array; in this case the value of
+\cd{array-total-size-limit} will be the smallest of these individual
+limits.
+\end{defun}
+
+\begin{defun}[Function]
+vector &rest objects
+
+The function \cd{vector} is a convenient means for creating
+a simple general vector with specified initial contents.
+It is analogous to the function \cd{list}.
+\begin{lisp}
+(vector ${\it a}_1$ ${\it a}_2$ ... ${\it a}_{\hbox{\scriptsize\it n}}$) \\
+~~~\EQ\ (make-array (list ${\it n}$) :element-type t \\
+~~~~~~~~~~~~~:initial-contents (list ${\it a}_1$ ${\it a}_2$ ... ${\it a}_{\hbox{\scriptsize\it n}}$))
+\end{lisp}
+\end{defun}
+
+\section{Array Access}
+
+The function \cd{aref} is normally
+used for accessing an element of an array.
+Other access functions, such as \cd{svref}, \cd{char}, and \cd{bit},
+may be more efficient in specialized circumstances.
+
+\begin{defun}[Function]
+aref array &rest subscripts
+
+This accesses and returns the element of {\it array} specified
+by the {\it subscripts}.  The number of subscripts must
+equal the rank of the array, and each subscript must be
+a non-negative integer less than the corresponding array dimension.
+
+\cd{aref} is unusual among the functions that operate on arrays
+in that it completely ignores fill pointers.  \cd{aref} can access
+without error any array element, whether active or not.  The generic
+sequence function \cd{elt}, however, observes the fill pointer;
+accessing an element beyond the fill pointer with \cd{elt} is an error.
+
+\begin{new}
+Note that this remark, predating the design of the Common Lisp Object System,
+uses the term ``generic'' in a generic sense and not necessarily
+in the technical sense used by CLOS
+(see chapter~\ref{DTYPES}).
+\end{new}
+
+\cd{setf} may be used with \cd{aref} to destructively replace
+an array element with a new value.
+
+Under some circumstances it is desirable to write code that
+will extract an element from an array \cd{a} given a list \cd{z} of the indices,
+in such a way that the code works regardless of the rank of the
+array.  This is easy using \cd{apply}:
+\begin{lisp}
+(apply \#'aref a z)
+\end{lisp}
+(The length of the list must of course equal the rank of
+the array.)  This construction may be used with \cd{setf} to alter
+the element so selected to some new value \cd{w}:
+\begin{lisp}
+(setf (apply \#'aref a z) w)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+svref simple-vector index
+
+The first argument must be a simple general vector,
+that is, an object of type \cd{simple-vector}.
+The element of the {\it simple-vector} specified by the integer {\it index}
+is returned.
+
+The {\it index} must be non-negative and less than
+the length of the vector.
+
+\cd{setf} may be used with \cd{svref} to destructively replace
+a simple-vector element with a new value.
+
+\cd{svref} is identical to \cd{aref} except that it requires its first
+argument to be a simple vector.  In some implementations of Common Lisp,
+\cd{svref} may be faster than \cd{aref} in situations where it is applicable.
+See also \cd{schar} and \cd{sbit}.
+\end{defun}
+
+\section{Array Information}
+
+The following functions extract from an array
+interesting information other than the elements.
+
+\begin{defun}[Function]
+array-element-type array
+
+\cd{array-element-type} returns a type specifier for the set of objects
+that can be stored in the {\it array}.  This set may be larger than the
+set requested when the array was created; for example,
+the result of
+\begin{lisp}
+(array-element-type (make-array 5 :element-type '(mod 5)))
+\end{lisp}
+could be \cd{(mod 5)}, \cd{(mod 8)}, \cd{fixnum}, \cd{t}, or any other
+type of which \cd{(mod 5)} is a subtype.  See \cd{subtypep}.
+\end{defun}
+
+\begin{defun}[Function]
+array-rank array
+
+This returns the number of dimensions (axes) of {\it array}.
+This will be a non-negative integer.
+See \cd{array-rank-limit}.
+
+\beforenoterule
+\begin{incompatibility}
+In Lisp Machine Lisp, this is called \cd{array-\#-dims}.
+This name causes problems in other Lisp dialects
+because of the \cd{\#} character.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+array-dimension array axis-number
+
+The length of dimension number {\it axis-number} of the {\it array} is returned.
+{\it array} may be any kind of array, and {\it axis-number} should
+be a non-negative integer less than the rank of {\it array}.
+If the {\it array} is a vector with a fill pointer,
+\cd{array-dimension} returns the total size of the vector,
+including inactive elements,
+not the size indicated by the fill pointer.
+(The function \cd{length} will return the size indicated
+by the fill pointer.)
+
+\beforenoterule
+\begin{incompatibility}
+This is similar to the Lisp Machine Lisp function
+\cd{array-dimension-n}, but takes its arguments in the other
+order, and is zero-origin for consistency
+instead of one-origin.  In Lisp Machine Lisp \cd{(array-dimension-n 0)}
+returns the length of the array leader.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+array-dimensions array
+
+\cd{array-dimensions} returns a list whose elements are the dimensions
+of {\it array}.
+\end{defun}
+
+\begin{defun}[Function]
+array-total-size array
+
+\cd{array-total-size} returns the total number of elements in the {\it array},
+calculated as the product of all the dimensions.
+\begin{lisp}
+(array-total-size {\it x}) \\
+~~~\EQ\ (apply \#'* (array-dimensions {\it x})) \\
+~~~\EQ\ (reduce \#'* (array-dimensions {\it x}))
+\end{lisp}
+Note that the total size of a zero-dimensional array is \cd{1}.
+The total size of a one-dimensional array is calculated without regard
+for any fill pointer.
+\end{defun}
+
+\begin{defun}[Function]
+array-in-bounds-p array &rest subscripts
+
+This predicate checks whether the {\it subscripts} are all
+legal subscripts for {\it array}.  The predicate is true if they
+are all legal; otherwise it is false.  The {\it subscripts} must be integers.
+The number of {\it subscripts} supplied must equal the rank of the array.
+Like \cd{aref}, \cd{array-in-bounds-p} ignores fill pointers.
+\end{defun}
+
+\begin{defun}[Function]
+array-row-major-index array &rest subscripts
+
+This function takes an array and valid subscripts for the array
+and returns a single non-negative integer less than the total size
+of the array that identifies the
+accessed element in the row-major ordering of the elements.
+The number of {\it subscripts} supplied must equal the rank of the array.
+Each subscript must be a non-negative integer less than the
+corresponding array dimension.
+Like \cd{aref}, \cd{array-row-major-index} ignores fill pointers.
+
+A possible definition of \cd{array-row-major-index}, with no error checking,
+would be
+\begin{lisp}
+(defun array-row-major-index (a \cd{\&rest} subscripts) \\
+~~(apply \#'+ (maplist \#'(lambda (x y) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~(* (car x) (apply \#'* (cdr y)))) \\
+~~~~~~~~~~~~~~~~~~~~~~subscripts \\
+~~~~~~~~~~~~~~~~~~~~~~(array-dimensions a))))
+\end{lisp}
+For a one-dimensional array, the result of \cd{array-row-major-index}
+always equals the supplied subscript.
+\end{defun}
+
+\begin{new}
+\begin{defun}[Function]
+row-major-aref array index
+
+X3J13 voted in March 1988
+\issue{AREF-1D}
+to add the function \cd{row-major-aref}.
+This allows any array element to be accessed as if the containing array
+were one-dimensional.  The {\it index} must be a non-negative integer
+less than the total size of the {\it array}.  It indexes into the array as
+if its elements were arranged one-dimensionally in row-major order.
+It may be understood in terms of \cd{aref} as follows:
+\begin{lisp}
+(row-major-aref {\it array} {\it index}) \EQ \\*
+~~(aref (make-array (array-total-size array)) \\*
+~~~~~~~~~~~~~~~~~~~~:displaced-to array \\*
+~~~~~~~~~~~~~~~~~~~~:element-type (array-element-type array)) \\*
+~~~~~~~~index)
+\end{lisp}
+In other words, one may treat an array as one-dimensional by creating
+a new one-dimensional array that is displaced to the old one and then
+accessing the new array.
+Alternatively, \cd{aref} may be understood in terms of \cd{row-major-aref}:
+\begin{lisp}
+(aref {\it array} ${\it i}_0$ ${\it i}_1$ ... ${\it i}_{\hbox{\scriptsize\it n}-1}$) \EQ \\*
+~~(row-major-aref array \\*
+~~~~~~~~~~~~~~~~~~(array-row-major-index array ${\it i}_0$ ${\it i}_1$ ... ${\it i}_{\hbox{\scriptsize\it n}-1}$)
+\end{lisp}
+That is, a multidimensional array access is equivalent to a row-major access
+using an equivalent row-major index.
+
+Like \cd{aref}, \cd{row-major-aref} completely ignores fill pointers.
+A call to \cd{row-major-setf} is suitable for use as a {\it place} for \cd{setf}.
+
+This operation makes it easier to write code that efficiently processes
+arrays of any rank.  Suppose, for example, that one wishes to set every
+element of an array \cd{tennis-scores} to zero.  One might write
+\begin{lisp}
+(fill (make-array (array-total-size tennis-scores) \\*
+~~~~~~~~~~~~~~~~~~:element-type (array-element-type tennis-scores) \\*
+~~~~~~~~~~~~~~~~~~:displaced-to tennis-scores) \\*
+~~~~~~0)
+\end{lisp}
+Unfortunately, this incurs the overhead of creating a displaced array,
+and \cd{fill} cannot be applied to multidimensional arrays.
+Another approach would be to handle each possible rank separately:
+\begin{lisp}
+(ecase (array-rank tennis-scores) \\*
+~~(0 (setf (aref tennis-scores) 0)) \\
+~~(1 (dotimes (i0 (array-dimension tennis-scores 0)) \\*
+~~~~~~~(setf (aref tennis-scores i0) 0))) \\
+~~(2 (dotimes (i0 (array-dimension tennis-scores 0)) \\*
+~~~~~~~(dotimes (i1 (array-dimension tennis-scores 1)) \\*
+~~~~~~~~~(setf (aref tennis-scores i0 i1) 0)))) \\*
+~~... \\
+~~(7 (dotimes (i0 (array-dimension tennis-scores 0)) \\*
+~~~~~~~(dotimes (i1 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~(dotimes (i2 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~(dotimes (i3 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~~~(dotimes (i4 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~~~~~(dotimes (i5 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~~~~~~~(dotimes (i6 (array-dimension tennis-scores 1)) \\*
+~~~~~~~~~~~~~~~~~~~(setf (aref tennis-scores i0 i1 i2 i3 i4 i5 i6) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~0))))))))) \\*
+~~)
+\end{lisp}
+It is easy to get tired of writing such code.  Furthermore, this approach
+is undesirable because some implementations of Common Lisp
+will in fact correctly support arrays of rank greater than 7 (though no
+implementation is required to do so).  A recursively nested loop does the job,
+but it is still pretty hairy:
+\begin{lisp}
+(labels \\*
+~~((grok-any-rank (\&rest indices) \\*
+~~~~~(let ((d (- (array-rank tennis-scores) (length indices))) \\*
+~~~~~~~(if (= d 0) \\*
+~~~~~~~~~~~(setf (apply \#'row-major-aref indices) 0) \\*
+~~~~~~~~~~~(dotimes (i (array-dimension tennis-scores (- d 1))) \\*
+~~~~~~~~~~~~~(apply \#'grok-any-rank i indices)))))) \\*
+~~(grok-any-rank))
+\end{lisp}
+Whether this code is particularly efficient depends on many implementation
+parameters, such as how \cd{\&rest} arguments are handled and how
+cleverly calls to \cd{apply} are compiled.
+How much easier it is to use \cd{row-major-aref}!
+\begin{lisp}
+(dotimes (i (array-total-size tennis-scores)) \\*
+~~(setf (row-major-aref tennis-scores i) 0))
+\end{lisp}
+Surely this code is sweeter than the honeycomb.
+\end{defun}
+\end{new}
+
+\begin{defun}[Function]
+adjustable-array-p array
+
+This predicate is true if the argument (which must be an array)
+is adjustable, and otherwise is false.
+
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that \cd{adjustable-array-p} is true of an array
+if and only if \cd{adjust-array}, when applied to that array,
+will return the same array, that is, an array \cd{eq} to the original array.
+If the \cd{:adjustable} argument
+to \cd{make-array} is non-\cd{nil} when an array is created,
+then \cd{adjustable-array-p} must be true of that array.
+If an array is created with the \cd{:adjustable} argument \cd{nil}
+(or omitted), then \cd{adjustable-array-p} may be true or false of that
+array, depending on the implementation.
+X3J13 further voted to {\it define}
+the terminology ``adjustable array'' to mean precisely ``an array of
+which \cd{adjustable-array-p} is true.''
+See \cd{make-array} and \cd{adjust-array}.
+\end{newer}
+\end{defun}
+
+\section{Functions on Arrays of Bits}
+
+The functions described in this section operate only
+on arrays of bits, that is, specialized arrays whose elements
+are all \cd{0} or \cd{1}.
+
+\begin{defun}[Function]
+bit bit-array &rest subscripts \\
+sbit simple-bit-array &rest subscripts
+
+\cd{bit} is exactly like \cd{aref} but requires an array of bits,
+that is, one of type \cd{(array bit)}.
+The result will always be \cd{0} or \cd{1}.
+\cd{sbit} is like \cd{bit} but additionally requires that the first
+argument be a {\it simple} array (see section~\ref{ARRAY-TYPE-SECTION}).
+Note that \cd{bit} and \cd{sbit}, unlike \cd{char} and \cd{schar},
+allow the first argument to be an array of any rank.
+
+\cd{setf} may be used with \cd{bit} or \cd{sbit} to destructively replace
+a bit-array element with a new value.
+
+\cd{bit} and \cd{sbit} are identical to \cd{aref} except for the
+more specific type requirements on the first argument.
+In some implementations of Common Lisp,
+\cd{bit} may be faster than \cd{aref} in situations where it is applicable,
+and \cd{sbit} may similarly be faster than \cd{bit}.
+\end{defun}
+
+\begin{defun}[Function]
+bit-and bit-array1 bit-array2 &optional result-bit-array \\
+bit-ior bit-array1 bit-array2 &optional result-bit-array \\
+bit-xor bit-array1 bit-array2 &optional result-bit-array \\
+bit-eqv bit-array1 bit-array2 &optional result-bit-array \\
+bit-nand bit-array1 bit-array2 &optional result-bit-array \\
+bit-nor bit-array1 bit-array2 &optional result-bit-array \\
+bit-andc1 bit-array1 bit-array2 &optional result-bit-array \\
+bit-andc2 bit-array1 bit-array2 &optional result-bit-array \\
+bit-orc1 bit-array1 bit-array2 &optional result-bit-array \\
+bit-orc2 bit-array1 bit-array2 &optional result-bit-array
+
+These functions perform bit-wise logical operations on bit-arrays.
+All of the arguments to any of these functions must be bit-arrays
+of the same rank and dimensions.
+The result is a bit-array of matching rank and dimensions,
+such that any given bit of the result
+is produced by operating on corresponding bits from each of the arguments.
+
+If the third argument is {\false} or omitted, a new array is created
+to contain the result.  If the third argument is a bit-array,
+the result is destructively placed into that array.  If the third
+argument is {\true}, then the first argument is also used as the third
+argument; that is, the result is placed back in the first array.
+
+The following table indicates what the result bit is for each operation
+as a function of the two corresponding argument bits.
+\begin{flushleft}
+\cf
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}lllll@{}}
+~~~{\it argument1}~~&0&0&1&1 \\
+~~~{\it argument2}~~&0&1&0&1&{\it Operation name} \\
+\hlinesp
+bit-and&0&0&0&1&{\rm and} \\
+bit-ior&0&1&1&1&{\rm inclusive or} \\
+bit-xor&0&1&1&0&{\rm exclusive or} \\
+bit-eqv&1&0&0&1&{\rm equivalence (exclusive nor)} \\
+bit-nand&1&1&1&0&{\rm not-and} \\
+bit-nor&1&0&0&0&{\rm not-or} \\
+bit-andc1&0&1&0&0&{\rm and complement of {\it argument1} with {\it argument2}} \\
+bit-andc2&0&0&1&0&{\rm and {\it argument1} with complement of {\it argument2}} \\
+bit-orc1&1&1&0&1&{\rm or complement of {\it argument1} with {\it argument2}} \\
+bit-orc2&1&0&1&1&{\rm or {\it argument1} with complement of {\it argument2}} \\
+\hline
+\end{tabular*}
+\end{flushleft}
+For example:
+\begin{lisp}
+(bit-and \#*1100 \#*1010) \EV\ \#*1000 \\
+(bit-xor \#*1100 \#*1010) \EV\ \#*0110 \\
+(bit-andc1 \#*1100 \#*1010) \EV\ \#*0100
+\end{lisp}
+See \cd{logand} and related functions.
+\end{defun}
+
+\begin{defun}[Function]
+bit-not bit-array &optional result-bit-array
+
+The first argument must be an array of bits.  A bit-array
+of matching rank and dimensions is returned that contains
+a copy of the argument
+with all the bits inverted.
+See \cd{lognot}.
+
+If the second argument is {\false} or omitted, a new array is created
+to contain the result.  If the second argument is a bit-array,
+the result is destructively placed into that array.  If the second
+argument is {\true}, then the first argument is also used as the second
+argument; that is, the result is placed back in the first array.
+\end{defun}
+
+\section{Fill Pointers}
+\label{FILL-POINTER}
+
+Several functions for manipulating a {\it fill pointer} are provided
+in Common Lisp
+to make it easy to incrementally fill in the contents of a vector
+and, more generally, to allow efficient varying of the length of a vector.
+For example, a string with a fill pointer has most of the characteristics
+of a PL/I varying string.
+
+The fill pointer is a non-negative integer no larger than the total
+number of elements in the vector (as returned by \cd{array-dimension});
+it is the number of ``active'' or ``filled-in'' elements in the vector.
+The fill pointer constitutes the ``active length'' of the vector;
+all vector elements whose index is less than the fill pointer are
+active, and the others are inactive.
+Nearly all functions that operate on the contents of a vector
+will operate only on the active elements.  An important exception
+is \cd{aref}, which can be used to access any vector element
+whether in the active region of the vector or not.  It is important
+to note that vector elements not in the active region are still considered
+part of the vector.
+
+\beforenoterule
+\begin{implementation}
+An implication of this rule is that
+vector elements outside the active region may not be garbage-collected.
+\end{implementation}
+\afternoterule
+
+Only vectors (one-dimensional arrays) may have fill pointers;
+multidimensional arrays may not.  (Note, however, that one can create
+a multidimensional array that is {\it displaced} to a vector that has
+a fill pointer.)
+
+\begin{defun}[Function]
+array-has-fill-pointer-p array
+
+The argument must be an array.  \cd{array-has-fill-pointer-p} returns
+{\true} if the array has a fill pointer, and otherwise returns {\false}.
+Note that
+\cd{array-\discretionary{}{}{}has-\discretionary{}{}{}fill-\discretionary{}{}{}pointer-p}
+always returns {\false} if
+the {\it array} is not one-dimensional.
+\end{defun}
+
+\begin{defun}[Function]
+fill-pointer vector
+
+The fill pointer of {\it vector} is returned.  It is an error if
+the {\it vector} does not have a fill pointer.
+
+\cd{setf} may be used with \cd{fill-pointer} to change the fill pointer
+of a vector.  The fill pointer of a vector must always be an integer
+between zero and the size of the vector (inclusive).
+\end{defun}
+
+\begin{defun}[Function]
+vector-push new-element vector
+
+{\it vector} must be a one-dimensional array that has a fill pointer,
+and {\it new-element} may be any object.  \cd{vector-push} attempts to store
+{\it new-element} in the element of the vector designated by the fill
+pointer, and to increase the fill pointer by 1.  If the fill pointer does
+not designate an element of the vector (specifically, when it gets too
+big), it is unaffected and
+\cd{vector-push} returns {\false}.  Otherwise, the store and increment take
+place and \cd{vector-push} returns the {\it former} value of the fill pointer
+(1 less than the one it leaves in the vector); thus the value of
+\cd{vector-push} is the index of the new element pushed.
+\begin{new}
+It is instructive to compare \cd{vector-push}, which is a function,
+with \cd{push}, which is a macro that requires a {\it place} suitable
+for \cd{setf}.  A vector with a fill pointer effectively contains
+the place to be modified in its \cd{fill-pointer} slot.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+vector-push-extend new-element vector &optional extension
+
+\cd{vector-push-extend} is just like \cd{vector-push} except
+that if the fill pointer gets too large, the vector is extended (using
+\cd{adjust-array}) so that it can contain more elements.
+If, however, the vector is not adjustable, then \cd{vector-push-extend}
+signals an error.
+
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that \cd{vector-push-extend} regards an array as
+not adjustable if and only if \cd{adjustable-array-p} is false
+of that array.
+\end{newer}
+
+The optional argument {\it extension}, which must be a positive
+integer, is the minimum number of elements to be added to the vector if it
+must be extended; it defaults to a ``reasonable'' implementation-dependent
+value.
+\end{defun}
+
+\begin{defun}[Function]
+vector-pop vector
+
+{\it vector} must be a one-dimensional array that has a fill pointer.
+If the fill pointer is zero, \cd{vector-pop} signals an error.
+Otherwise the fill pointer is decreased by 1, and the vector element
+designated by the new value of the fill pointer is returned.
+\end{defun}
+
+\section{Changing the Dimensions of an Array}
+
+This function may be used to resize or reshape an array.
+Its options are similar to those of \cd{make-array}.
+
+\begin{defun}[Function]
+adjust-array array new-dimensions &key :element-type :initial-element :initial-contents :fill-pointer :displaced-to :displaced-index-offset
+
+\cd{adjust-array} takes an array and a number of other arguments
+as for \cd{make-array}.  The number of dimensions
+specified by {\it new-dimensions} must equal the rank of {\it array}.
+
+\cd{adjust-array} returns an array of the same type and rank as {\it array},
+with the specified {\it new-dimensions}.  In effect, the {\it array} argument
+itself is modified to conform to the new specifications, but this may
+be achieved either by modifying the {\it array} or by creating a new
+array and modifying the {\it array} argument to be {\it displaced} to the
+new array.
+
+In the simplest case, one specifies only the {\it new-dimensions}
+and possibly an \cd{:initial-element} argument.
+Those elements of {\it array} that
+are still in bounds appear in the new array.  The elements of
+the new array that are not in the bounds of {\it array} are initialized
+to the \cd{:initial-element}; if this argument is not provided,
+then the initial contents of any new elements are undefined.
+
+If \cd{:element-type} is specified, then {\it array} must be such that it could have
+been originally created with that type; otherwise an error is signaled.
+Specifying \cd{:element-type} to \cd{adjust-array} serves only to require such an
+error check.
+
+If \cd{:initial-contents} or \cd{:displaced-to}
+is specified, then it is treated as for
+\cd{make-array}.  In this case none of the original contents of
+{\it array} appears in the new array.
+
+If \cd{:fill-pointer} is specified, the fill pointer of the {\it array}
+is reset as specified.  An error is signaled if {\it array} had no
+fill pointer already.
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{ADJUST-ARRAY-FILL-POINTER}
+to clarify the treatment of the \cd{:fill-pointer}
+argument as follows.
+
+If the \cd{:fill-pointer} argument is not supplied, then the fill pointer
+of the {\it array} is left alone.  It is an error
+to try to adjust the {\it array} to a total size that is smaller
+than its fill pointer.
+
+If the \cd{:fill-pointer} argument is supplied, then its value
+must be either an integer, \true, or \false.  If it is an integer,
+then it is the new value for the fill pointer;
+it must be non-negative and no greater than the new size to which the
+{\it array} is being adjusted.
+If it is \true, then the fill pointer is set equal to the new size
+for the {\it array}.  If it is \false, then the fill pointer is
+left alone; it is as if the argument had not been supplied.
+Again, it is an error
+to try to adjust the {\it array} to a total size that is smaller
+than its fill pointer.
+
+An error is signaled if a non-{\false} \cd{:fill-pointer} value
+is supplied and the {\it array} to be adjusted does not already
+have a fill pointer.
+
+This extended treatment of the \cd{:fill-pointer}
+argument to \cd{adjust-array} is consistent with the previously
+existing treatment of the \cd{:fill-pointer} argument to \cd{make-array}.
+\end{new}
+
+\cd{adjust-array} may, depending on the implementation and the arguments,
+simply alter the given array or create and return a new one.
+In the latter case the given array will be altered so as to be displaced
+to the new array and have the given new dimensions.
+
+\begin{obsolete}
+It is not permitted to call \cd{adjust-array} on an array that was not
+created with the \cd{:adjustable} option.  The predicate
+\cd{adjustable-array-p} may be used to determine whether or not
+an array is adjustable.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in January 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to allow \cd{adjust-array} to be applied to any array.
+If \cd{adjust-array} is applied to an array that was
+originally created with \cd{:adjustable} true,
+the array returned is \cd{eq} to its first argument.  It is not specified
+whether \cd{adjust-array} returns an array \cd{eq} to its first argument for any
+other arrays.  If the array returned by \cd{adjust-array} is not \cd{eq} to its
+first argument, the original array is unchanged and does not share
+storage with the new array.
+
+Under this new definition, it is wise to treat \cd{adjust-array}
+in the same manner as \cd{delete} and \cd{nconc}: one should carefully
+retain the returned value, for example by writing
+\begin{lisp}
+(setq my-array (adjust-array my-array ...))
+\end{lisp}
+rather than relying solely on a side effect.
+\end{newer}
+
+If \cd{adjust-array} is applied to an {\it array} that is displaced
+to another array {\it x}, then afterwards neither {\it array} nor the returned
+result is displaced to {\it x} unless such displacement is explicitly
+re-specified in the call to \cd{adjust-array}.
+
+For example, suppose that the 4-by-4 array \cd{m} looks like this:
+\begin{lisp}
+\#2A(~(~alpha~~~~~beta~~~~~~gamma~~~~~delta~) \\
+~~~~~(~epsilon~~~zeta~~~~~~eta~~~~~~~theta~) \\
+~~~~~(~iota~~~~~~kappa~~~~~lambda~~~~mu~~~~) \\
+~~~~~(~nu~~~~~~~~xi~~~~~~~~omicron~~~pi~~~~)~)
+\end{lisp}
+Then the result of
+\begin{lisp}
+(adjust-array m '(3 5) :initial-element 'baz)
+\end{lisp}
+is a 3-by-5 array with contents
+\begin{lisp}
+\#2A(~(~alpha~~~~~beta~~~~~~gamma~~~~~delta~~~~~baz~) \\
+~~~~~(~epsilon~~~zeta~~~~~~eta~~~~~~~theta~~~~~baz~) \\
+~~~~~(~iota~~~~~~kappa~~~~~lambda~~~~mu~~~~~~~~baz~)~)
+\end{lisp}
+Note that if array \cd{a} is created displaced to array \cd{b} and subsequently
+array \cd{b} is given to \cd{adjust-array}, array \cd{a} will still be
+displaced to array \cd{b}; the effects of this displacement and
+the rule of row-major storage order must be taken into account.
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{ADJUST-ARRAY-DISPLACEMENT}
+to clarify the interaction of \cd{adjust-array} with array displacement.
+
+Suppose that an array {\it A} is to be adjusted.  There are four cases
+according to whether or not {\it A} was displaced before adjustment
+and whether or not the result is displaced after adjustment.
+\begin{itemize}
+\item
+Suppose {\it A} is not displaced either before or after.
+The dimensions of {\it A} are altered, and
+the contents are rearranged as appropriate.  Additional elements of {\it A}
+are taken from the \cd{:initial-element} argument.
+However, the use of the \cd{:initial-contents} argument causes all old
+contents to be discarded.
+
+\item
+Suppose {\it A} is not displaced before, but is displaced to array {\it C} after.
+None of the original contents of {\it A} appears in {\it A} afterwards; {\it A}
+now contains (some of) the contents of {\it C}, without any rearrangement of
+{\it C}.
+
+\item
+Suppose {\it A} is displaced to {array \it B} before the call,
+and is displaced to array {\it C} after the call.
+(Note that {\it B} and {\it C} may be the same array.)
+The contents of {\it B} do not appear in
+{\it A} afterwards (unless such contents also happen to be in {\it C},
+as when {\it B} and {\it C} are the same, for example).  If
+\cd{:displaced-index-offset} is not specified in the call to
+\cd{adjust-array}, it defaults
+to zero; the old offset (into {\it B}) is not retained.
+
+\item
+Suppose {\it A} is displaced to array {\it B} before the call,
+but is not displaced afterwards.  In this case {\it A} gets
+a new ``data region'' and (some of) the
+contents of {\it B} are copied into it as appropriate to
+maintain the existing old contents.  Additional elements of {\it A}
+are taken from the \cd{:initial-element} argument.
+However, the use of the \cd{:initial-contents} argument causes all old
+contents to be discarded.
+\end{itemize}
+
+If array {\it X} is displaced to array {\it Y}, and array {\it Y} is displaced
+to array {\it Z}, and array {\it Y} is altered by \cd{adjust-array}, array
+{\it X} must now refer to the adjusted contents of {\it Y}.  This means that an
+implementation may not collapse the chain to make {\it X} refer to {\it Z}
+directly and forget that the chain of reference passes through array {\it Y}. 
+(Caching techniques are of course permitted, as long as they preserve the
+semantics specified here.)
+
+If {\it X} is displaced to {\it Y}, it is an error to adjust {\it Y} in such a
+way that it no longer has enough elements to satisfy {\it X}.  This error may be
+signaled at the time of the adjustment, but this is not required.
+
+Note that omitting the \cd{:displaced-to} argument to \cd{adjust-array} is
+equivalent to specifying \cd{:displaced-to~nil}; in either case, the array is
+not displaced after the call regardless of whether it was displaced before
+the call.
+\end{newer}
+\end{defun}

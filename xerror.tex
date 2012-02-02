@@ -1,0 +1,755 @@
+%Part{XERROR, Root = "CLM.MSS"}
+%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Errors}
+\label{XERROR}
+
+Errors may be signaled for a variety of reasons.
+Many built-in Common Lisp functions may signal an error when given incorrect
+arguments.  Other functions, described in this chapter,
+may be called by user programs for the purpose of signaling
+an error.
+
+When an error is signaled, it is
+handled in an implementation-dependent way.  It is expected
+that each implementation of Common Lisp will provide an interactive debugger that
+prints the error message along with suitable contextual information
+such as which function detected the error.  The user may interact with
+the debugger to examine or modify the state of the program in various
+ways, including abandoning the current computation (``aborting to top
+level'') and continuing from the error.  What ``continuing'' means
+depends on how the error is signaled; the details of this are specified below
+for each error-signaling function.
+
+\begin{obsolete}
+An implementation may also choose to provide means (such as the
+\cd{errset} special form in MacLisp) for a program to trap
+all errors and prevent the debugger from stepping in for
+certain errors.
+
+\beforenoterule
+\begin{rationale}
+Error handling of adequate
+flexibility and power for all systems written in Common Lisp appears to
+require a complex error classification system.
+Experience with several error-handling systems
+in such dialects as MacLisp and Lisp Machine Lisp indicates that
+further experimentation is needed in this area;
+it is too early to define a standard error-handling mechanism.
+Therefore Common Lisp provides standard ways to {\it signal} errors,
+but no standard ways to {\it handle} errors.
+Of course a
+complete Lisp system requires error-handling mechanisms, but many useful
+portable programs do not require them.  It is expected that a future
+revision of Common Lisp will address the problem of portable error-handling
+mechanisms.
+\end{rationale}
+\afternoterule
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System.
+This was the result of the research and experimentation
+alluded to in the preceding paragraph.
+Conditions subsume and generalize the notion of errors.
+The condition system also provides means for handling
+conditions (of which errors are a special case) and
+for restarting a computation after a condition has been signaled.
+See chapter~\ref{CONDITION}.
+\end{newer}
+
+\beforenoterule
+\begin{incompatibility}
+What is here called ``continuing,''
+Lisp Machine Lisp calls ``proceeding'' from an error.
+\begin{new}
+In the new terminology introduced in chapter~\ref{CONDITION},
+what Lisp Machine Lisp called ``proceeding'' would be called
+``restarting,'' and ``continuing'' refers to the particular
+restart named \cd{continue}.
+\end{new}
+\end{incompatibility}
+\afternoterule
+
+\section{General Error-Signaling Functions}
+\label{ERROR-SIGNALLING-FUNCTIONS}
+
+The functions in this section provide various mechanisms
+for signaling warnings, breaks, continuable errors, and fatal errors.
+
+In each case, the caller specifies an error message (a string) that may be
+processed (and perhaps displayed to the user) by the error-handling
+mechanism.  All messages are
+constructed by applying the function
+\cd{format} to the quantities {\nil}, {\it format-string},
+and all the {\it args} to produce a string.
+
+An error message string should not contain a newline character
+at either the beginning or end, and should not contain any sort of
+herald indicating that it is an error.  The system will take care of
+these according to whatever its preferred style may be.  
+
+Conventionally,
+error messages are complete English sentences ending with a period.
+Newlines in the middle of long messages are acceptable.  There
+should be no indentation after a newline in the middle of an
+error message.  The error message need not mention the name of the function
+that signals the error; it is assumed that the debugger will make this
+information available.
+
+\beforenoterule
+\begin{implementation}
+If the debugger in a particular implementation
+displays error messages indented from the prevailing left margin
+(for example, indented by seven spaces because
+they are prefixed by the seven-character herald ``\cd{Error: }''),
+then the debugger should take care of inserting
+the appropriate indentation into a multi-line error message.
+Similarly, a debugger that prefixes error messages with semicolons
+so that they appear to be comments
+should take care of inserting a semicolon at the beginning of each
+line in a multi-line error message.  These rules are suggested
+because, even within a single
+implementation, there may be more than one program that presents error
+messages to the user, and they may use different styles of
+presentation.  The caller
+of \cd{error} cannot anticipate all such possible styles,
+and so it is incumbent upon the presenter of the message
+to make any necessary adjustments.
+\end{implementation}
+\afternoterule
+
+Common Lisp does not specify the manner in which error messages and
+other messages are displayed.  For the purposes of exposition,
+a fairly simple style of textual presentation will be used in the
+examples in this chapter.  The character \cd{>} is used
+to represent the command prompt symbol for a debugger.
+
+\begin{defun}[Function]
+error format-string &rest args
+
+\begin{obsolete}\noindent
+This function signals a fatal error.  It is impossible to continue
+from this kind of 
+error; thus \cd{error} will never return to its caller.
+
+The debugger printout in the following example is typical of what
+an implementation might print when \cd{error} is called.
+Suppose that the (misspelled) symbol \cd{emergnecy-shutdown} has no property
+named \cd{command} (all too likely, as it is probably a typographical
+error for \cd{emergency-shutdown}).
+\begin{lisp}
+(defun command-dispatch (cmd) \\
+~~(let ((fn (get cmd 'command))) \\
+~~~~(if (not (null fn)) \\
+~~~~~~~~(funcall fn)) \\
+~~~~~~~~(error "The command {\Xtilde}S is unrecognized." cmd)))) \\
+ \\
+(command-dispatch 'emergnecy-shutdown) \\
+Error: The command EMERGNECY-SHUTDOWN is unrecognized. \\
+Error signaled by function COMMAND-DISPATCH. \\
+> 
+\end{lisp}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{error} to specify its interaction
+with the condition system.  See section~\ref{SIGNALLING-CONDITIONS}.
+\end{new}
+
+\beforenoterule
+\begin{incompatibility}
+Lisp Machine Lisp calls this function \cd{ferror}.
+MacLisp has a function named \cd{error} that takes
+different arguments and can signal either a fatal or a continuable error.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+cerror continue-format-string error-format-string &rest args
+
+\begin{obsolete}\noindent
+\cd{cerror} is used to signal continuable errors.  Like \cd{error}, it
+signals an error and enters the debugger.  However, \cd{cerror} allows
+the program to be continued from the debugger after resolving the
+error.  
+
+If the program is continued after encountering the error, \cd{cerror}
+returns {\false}.  The code that follows the call to \cd{cerror} will
+then be executed.   This code should correct the problem, perhaps by
+accepting a new value from the user if a variable was invalid.
+
+If the code that corrects the problem interacts with the program's 
+use and might possibly be misled,
+it should make sure the error has really been corrected before
+continuing.  One way to do this is to put the call to \cd{cerror} and
+the correction code in a loop, checking each time to see if the error
+has been corrected before terminating the loop.
+
+The {\it continue-format-string} argument, like the {\it error-format-string}
+argument, is given as a control string to \cd{format} along with
+the {\it args} to construct a message string.
+The error message string is used in the same way that \cd{error} uses it.
+The continue message string should
+describe the effect of continuing.  The intent is that this
+message can be displayed as an aid to the user in deciding whether and
+how to continue.  For example, it might
+be used by an interactive debugger as part of the documentation of its
+``continue'' command.  
+
+The content of the continue message should adhere to the rules
+of style for error messages.  It should not include
+any statement of how the ``continue'' command is given, since this may be
+different for each debugger.  (It is up to the debugger to supply this
+information according to its own particular style of presentation and user
+interaction.)
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{cerror} to specify its interaction
+with the condition system.  See section~\ref{SIGNALLING-CONDITIONS}.
+\end{new}
+
+Here is an example where the caller of \cd{cerror}, if continued,
+fixes the problem without any further user interaction:
+\begin{lisp}
+(let ((nvals (list-length vals))) \\
+~~(unless (= nvals 3) \\
+~~~~(cond ((< nvals 3) \\
+~~~~~~~~~~~(cerror "Assume missing values are zero." \\
+~~~~~~~~~~~~~~~~~~~"Too few values in {\Xtilde}S;{\Xtilde}\%{\Xtilde} \\
+~~~~~~~~~~~~~~~~~~~~three are required, {\Xtilde} \\
+~~~~~~~~~~~~~~~~~~~~but {\Xtilde}R {\Xtilde}:{\Xlbracket}were{\Xtilde};was{\Xtilde}{\Xrbracket} supplied." \\
+~~~~~~~~~~~~~~~~~~~nvals (= nvals 1)) \\
+~~~~~~~~~~~(setq vals (append vals (subseq '(0 0 0) nvals)))) \\
+~~~~~~~~~~(t (cerror "Ignore all values after the first three." \\
+~~~~~~~~~~~~~~~~~~~~~"Too many values in {\Xtilde}S;{\Xtilde}\%{\Xtilde} \\
+~~~~~~~~~~~~~~~~~~~~~~three are required, {\Xtilde} \\
+~~~~~~~~~~~~~~~~~~~~~~but {\Xtilde}R were supplied." \\
+~~~~~~~~~~~~~~~~~~~~~~nvals) \\
+~~~~~~~~~~~~~(setq vals (subseq vals 0 3))))))
+\end{lisp}
+If \cd{vals} were the list \cd{(-47)}, the interaction might look
+like this:
+\begin{lisp}
+Error: Too few values in (-47); \\
+~~~~~~~three are required, but one was supplied. \\
+Error signaled by function EXAMPLE. \\
+If continued: Assume missing values are zero. \\
+>
+\end{lisp}
+In this example, a loop is used to ensure that a test is satisfied.
+(This example could be written more succinctly using \cd{assert}
+or \cd{check-type}, which indeed supply such loops.)
+\begin{lisp}
+(do () \\
+~~~~((known-wordp word) word) \\
+~~(cerror "You will be prompted for a replacement word." \\
+~~~~~~~~~~"{\Xtilde}S is an unknown word (possibly misspelled)." \\
+~~~~~~~~~~word) \\
+~~(format *query-io* "{\Xtilde}\&New word: ") \\
+~~(setq word (read *query-io*)))
+\end{lisp}
+
+In complex cases where the {\it error-format-string}
+uses some of the {\it args} and the
+{\it continue-format-string} uses others, it may be necessary to use the
+\cd{format} directives \cd{{\Xtilde}*} and \cd{{\Xtilde}{\Xatsign}*}
+to skip over unwanted arguments in one or both of the
+format control strings.
+
+\beforenoterule
+\begin{incompatibility}
+The Lisp Machine Lisp function \cd{fsignal} is similar to this, but
+returns \cd{:no-action}
+rather than {\false}, and fails to distinguish between the error message
+and the continue message.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+warn format-string &rest args
+
+\begin{obsolete}
+\noindent
+\cd{warn} prints an error message but normally
+doesn't go into the debugger.  (However, this may be controlled
+by the variable \cd{*break-on-warnings*}.)
+\end{obsolete}
+\begin{newer}
+X3J13 voted in March 1989
+\issue{BREAK-ON-WARNINGS-OBSOLETE}
+to remove \cd{*break-on-warnings*} from the language.
+See \cd{*break-on-signals*}.
+\end{newer}
+\begin{obsolete}
+\cd{warn} returns {\false}.
+
+This function would be just the same as
+\cd{format} with the output directed 
+to the stream in \cd{error-output}, except that \cd{warn}
+may perform various implementation-dependent formatting and
+other actions.  For example, an implementation of \cd{warn} should take
+care of advancing to a fresh line before and after the error message
+and perhaps supplying the name of the function that called \cd{warn}.
+\end{obsolete}
+
+\beforenoterule
+\begin{incompatibility}
+The Lisp Machine Lisp function \cd{compiler:warn} is an
+approximate equivalent to this.
+\end{incompatibility}
+\afternoterule
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{warn} to specify its interaction
+with the condition system.  See section~\ref{WARNING-CONDITIONS}.
+\end{new}
+\end{defun}
+
+\begin{obsolete}
+\begin{defun}[Variable]
+*break-on-warnings*
+
+If \cd{*break-on-warnings*} is not {\false}, then the function
+\cd{warn} behaves like
+\cd{break}.  It prints its message and then goes to the debugger or break
+loop.  Continuing causes \cd{warn} to return {\false}.  This flag is intended
+primarily for use when the user is debugging programs that issue warnings;
+in ``production'' use, the value of \cd{*break-on-warnings*} should be {\false}.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989
+\issue{BREAK-ON-WARNINGS-OBSOLETE}
+to remove \cd{*break-on-warnings*} from the language.
+See \cd{*break-on-signals*}.
+\end{newer}
+
+\begin{defun}[Function]
+break &optional format-string &rest args
+
+\begin{obsolete}\noindent
+\cd{break} prints the message and goes directly into the debugger,
+without allowing 
+any possibility of interception by programmed error-handling facilities.
+(Right now, there aren't any error-handling facilities defined in Common Lisp,
+but there might be in particular implementations, and there will be some
+defined by Common Lisp in the future.)
+When continued, \cd{break} returns {\false}.  It is permissible to
+call \cd{break} with no arguments; a suitable default message will be provided.
+
+\cd{break} is presumed to be used as a way of inserting temporary debugging
+``breakpoints'' in a program, not as a way of signaling errors;
+it is expected that
+continuing from a \cd{break} will not trigger any unusual recovery action.
+For this reason, \cd{break} does not
+take the additional \cd{format} control string argument that \cd{cerror}
+takes.  This and the lack of any possibility of interception by programmed
+error handling are the only program-visible differences between \cd{break}
+and \cd{cerror}.
+The interactive debugger may choose to display them
+differently; for instance, a \cd{cerror} message might be prefixed with
+the herald
+``\cd{Error:~}'' and a \cd{break} message with
+``\cd{Break:~}''.  This depends on
+the user-interface style of the particular implementation.  A particular
+implementation may choose, according to its own style and needs,
+when \cd{break} is called to go
+into a debugger different from the one used for handling errors.
+For example, it might go into an ordinary read-eval-print loop identical to
+the top-level one except for the provision of a ``continue'' command that
+causes \cd{break} to return {\false}.
+\end{obsolete}
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, \cd{break} is a special form (FEXPR)
+that takes two optional arguments.  The first is a symbol (it would be a
+string if MacLisp had strings), which is not evaluated.  The second is
+evaluated to produce a truth value specifying whether \cd{break} should
+break (true) or return immediately (false).  In Common Lisp one makes a call
+to \cd{break} conditional by putting it inside a conditional form such as
+\cd{when} or \cd{unless}.
+\end{incompatibility}
+\afternoterule
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{break} to specify its interaction
+with the condition system.  See section~\ref{DEBUGGING-UTILITIES}.
+\end{new}
+\end{defun}
+
+\section{Specialized Error-Signaling Forms and Macros}
+\label{SPECIALIZED-ERROR-SIGNALLING}
+
+These facilities are designed to make it convenient for the user
+to insert error checks into code.
+
+\begin{defmac}
+check-type place typespec [string]
+
+\begin{obsolete}\noindent
+\cd{check-type} signals an error if the contents of {\it place} are not
+of the desired type.
+Upon continuing from this error, the user will be asked for a new value;
+\cd{check-type} will store the new value in {\it place} and start over, 
+checking the type of the new value and signaling
+another error if it is still not of the desired type.  Subforms of
+{\it place} may be evaluated multiple times because of the implicit
+loop generated.  \cd{check-type} returns {\false}.
+
+The {\it place} must be a generalized variable reference acceptable to
+\cd{setf}.
+The {\it typespec} must be a type specifier; it is not evaluated.
+The {\it string} should be an English description of the type, starting with
+an indefinite article (``a'' or ``an''); it is evaluated.
+If {\it string} is
+not supplied, it is computed automatically from {\it typespec}.
+(The optional {\it string} argument is allowed because some applications
+of \cd{check-type} may require a more specific description of what is
+wanted than can be generated automatically from the type specifier.)
+
+The error message will mention \cd{place}, its contents, and the desired type.
+\end{obsolete}
+
+\begin{newer}
+The precise format and content of the error message
+is implementation-dependent.  The example shown below
+is representative of current practice.
+\end{newer}
+
+\beforenoterule
+\begin{implementation}
+An implementation may choose to
+generate a somewhat differently worded
+error message if it recognizes that {\it place} is of a particular
+form, such as one of the arguments to
+the function that called \cd{check-type}.
+\end{implementation}
+\afternoterule
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{check-type} to specify its
+interaction with the condition system.  See section~\ref{CONDITION-ASSERTIONS}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+
+Examples:
+\begin{lisp}
+(setq aardvarks '(sam harry fred)) \\
+(check-type aardvarks (vector integer)) \\
+Error: The value of AARDVARKS, (SAM HARRY FRED), \\
+~~~~~~~is not a vector of integers. \\
+ \\
+(setq naards 'foo) \\
+(check-type naards (integer 0 *) "a positive integer") \\
+Error: The value of NAARDS, FOO, is not a positive integer.
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+In Lisp Machine Lisp the equivalent facility
+is called \cd{check-arg-type}.
+\end{incompatibility}
+\afternoterule
+\end{defmac}
+
+
+\begin{defmac}
+assert test-form [({place}*) [string {arg}*]]
+
+\begin{obsolete}\noindent
+\cd{assert} signals an error if the value of {\it test-form} is {\false}.
+Continuing 
+from this error will allow the user to alter the values of some
+variables, and \cd{assert} will then start over, evaluating 
+{\it test-form} again.  \cd{assert} returns {\false}.
+
+{\it test-form} is any form.  Each {\it place} (there may be any number of
+them, or none) must be a generalized-variable reference acceptable to
+\cd{setf}.  These should be variables on which {\it test-form} depends,
+whose values may sensibly be changed by the user in attempting to correct
+the error.  Subforms of each {\it place} are only evaluated if an error is
+signaled, and may be re-evaluated if the error is re-signaled (after
+continuing without actually fixing the problem).
+
+The {\it string} is an
+error message string, and the {\it args} are additional arguments; they are
+evaluated only if an error is signaled, and re-evaluated if the error is
+signaled again.
+The function \cd{format} is applied in the usual way to
+{\it string} and {\it args} to produce
+the actual error message.  If {\it string} is omitted (and therefore also
+the {\it args}), a default error message is used.
+\end{obsolete}
+
+\beforenoterule
+\begin{implementation}
+The debugger need not include
+the {\it test-form} in the error message,
+and the {\it places} should not be included in the message, but they
+should be made available for the user's perusal.
+If the user gives the ``continue'' command, he should be
+presented with the opportunity to alter the values of any or all of the
+references.  The details of this depend on the
+implementation's style of user interface, of course.
+\end{implementation}
+\afternoterule
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{assert} to specify its
+interaction with the condition system.  See section~\ref{CONDITION-ASSERTIONS}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{SETF-MULTIPLE-STORE-VARIABLES}
+to extend the specification of \cd{assert} to allow a {\it place}
+whose \cd{setf} method has more than one store variable (see \cd{define-setf-method}).
+\end{newer}
+
+Examples:
+\begin{lisp}
+(assert (valve-closed-p v1)) \\
+ \\
+(assert (valve-closed-p v1) () \\
+~~~~~~~~"Live steam is escaping!") \\
+ \\
+(assert (valve-closed-p v1) \\
+~~~~~~~~((valve-manual-control v1)) \\
+~~~~~~~~"Live steam is escaping!") \\
+ \\
+;; Note here that the user is invited to change BASE,  \\
+;; but not the bounds MINBASE and MAXBASE. \\[3pt]
+\\
+(assert (<= minbase base maxbase) \\
+~~~~~~~~(base) \\
+~~~~~~~~"Base {\Xtilde}D is not in the range {{\Xtilde}D, {\Xtilde}D}" \\
+~~~~~~~~base minbase maxbase) \\
+ \\
+;; Note here that it is probably not desirable to include the \\
+;; entire contents of the two matrices in the error message. \\
+;; It is reasonable to assume that the debugger will give \\
+;; the user access to the values of the places A and B. \\
+\\
+(assert (= (array-dimension a 1)  \\
+~~~~~~~~~~~(array-dimension b 0)) \\
+~~~~~~~~(a b) \\
+~~~~~~~~"Cannot multiply a {\Xtilde}D-by-{\Xtilde}D matrix {\Xtilde} \\
+~~~~~~~~~and a {\Xtilde}D-by-{\Xtilde}D matrix." \\
+~~~~~~~~(array-dimension a 0) \\
+~~~~~~~~(array-dimension a 1) \\
+~~~~~~~~(array-dimension b 0) \\
+~~~~~~~~(array-dimension b 1))
+\end{lisp}
+\end{defmac}
+
+\section{Special Forms for Exhaustive Case Analysis}
+\label{EXHAUSTIVE-CASE-ANALYSIS}
+
+The syntax for \cd{etypecase} and \cd{ctypecase} is the same as for
+\cd{typecase}, except that no \cd{otherwise} clause is permitted.
+Similarly, the syntax for \cd{ecase} and \cd{ccase} is the same as for
+\cd{case} except for the \cd{otherwise} clause.
+
+\cd{etypecase} and \cd{ecase} are similar to \cd{typecase} and \cd{case},
+respectively, but signal a non-continuable error rather than returning
+{\false} if no clause is selected.
+
+\cd{ctypecase} and \cd{ccase} are also similar to \cd{typecase} and \cd{case},
+but signal a continuable error if no clause is selected.
+
+\begin{defmac}
+etypecase keyform {(type {\,form}*)}*
+
+\begin{obsolete}\noindent
+This control construct is similar to \cd{typecase},
+but no explicit \cd{otherwise} or \cd{t} clause is permitted.
+If no clause is satisfied, \cd{etypecase} signals an error with
+a message constructed from the clauses.  It is not permissible to
+continue from this error.  To supply an application-specific error message, the
+user should use \cd{typecase} with an \cd{otherwise} clause containing a call
+to \cd{error}.  The name of this function stands for ``exhaustive
+type case'' or ``error-checking type case.''
+For example:
+\begin{lisp}
+(setq x 1/3) \\
+(etypecase x \\
+~~(integer x) \\
+~~(symbol (symbol-value x))) \\
+Error: The value of X, 1/3, is neither \\
+~~~~~~~an integer nor a symbol. \\
+>
+\end{lisp}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{etypecase} to specify its
+interaction with the condition system.
+See section~\ref{EXHAUSTIVE-CASE-ANALYSIS-CONDITIONS}.
+\end{new}
+\end{defmac}
+
+\begin{defmac}
+ctypecase keyplace {(type {\,form}*)}*
+
+\begin{obsolete}\noindent
+This control construct is similar to \cd{typecase},
+but no explicit \cd{otherwise} or \cd{t} clause is permitted.
+The {\it keyplace} must be a generalized variable reference
+acceptable to \cd{setf}.  If no clause is satisfied, \cd{ctypecase} signals an
+error with a message constructed from the clauses.  Continuing from this
+error causes \cd{ctypecase} to accept a new value from the user, store
+it into {\it keyplace}, and start over, making the type tests again.
+Subforms of {\it keyplace} may be evaluated multiple times.  The name
+of this function stands for ``continuable exhaustive type case.''
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{ctypecase} to specify its
+interaction with the condition system.
+See section~\ref{EXHAUSTIVE-CASE-ANALYSIS-CONDITIONS}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+\end{defmac}
+
+\begin{defmac}
+ecase keyform {({({key}*) | key} {\,form}*)}*
+
+\begin{obsolete}\noindent
+This control construct is similar to \cd{case},
+but no explicit \cd{otherwise} or \cd{t} clause is permitted.
+If no clause is satisfied, \cd{ecase} signals an error with a
+message constructed from the clauses.  It is not permissible to continue
+from this error.  To supply an error message, the user should use
+\cd{case} with an \cd{otherwise} clause containing a call to \cd{error}.
+The name of this function stands for ``exhaustive case'' or
+``error-checking case.'' 
+For example:
+\begin{lisp}
+(setq x 1/3)	 \\
+(ecase x \\
+~~(alpha (foo)) \\
+~~(omega (bar)) \\
+~~((zeta phi) (baz))) \\
+Error: The value of X, 1/3, is not \\
+~~~~~~~ALPHA, OMEGA, ZETA, or PHI.
+\end{lisp}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{ecase} to specify its
+interaction with the condition system.
+See section~\ref{EXHAUSTIVE-CASE-ANALYSIS-CONDITIONS}.
+\end{new}
+\end{defmac}
+
+\begin{defmac}
+ccase keyplace {({({key}*) | key} {\,form}*)}*
+
+\begin{obsolete}\noindent
+This control construct is similar to \cd{case},
+but no explicit \cd{otherwise} or \cd{t} clause is permitted.
+The {\it keyplace} must be a generalized variable reference
+acceptable to \cd{setf}.  If no clause is satisfied, \cd{ccase} signals an error
+with a message constructed from the clauses.  Continuing from this error
+causes \cd{ccase} to accept a new value from the user, store it into
+{\it keyplace}, and start over, making the clause tests again.  Subforms of
+{\it keyplace} may be evaluated multiple times.  The name of this function
+stands for ``continuable exhaustive case.''
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt a proposal for a Common Lisp Condition System. 
+This proposal modifies the definition of \cd{ccase} to specify its
+interaction with the condition system.
+See section~\ref{EXHAUSTIVE-CASE-ANALYSIS-CONDITIONS}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+\end{defmac}
+
+\beforenoterule
+\begin{rationale}
+The special forms
+\cd{etypecase}, \cd{ctypecase}, \cd{ecase}, and \cd{ccase}
+are included in Common Lisp, even though a user
+could write them himself using the other standard facilities provided,
+because it is likely that many users will want these.
+Common Lisp therefore provides
+a standard consistent set rather than allowing
+a variety of incompatible dialects to develop.
+
+In addition, experience has shown that
+some Lisp programmers are too lazy to put an appropriate
+\cd{otherwise} clause into every \cd{case} statement to
+check for cases they
+didn't anticipate, even if they would agree that it will probably 
+hurt them later.  If an \cd{otherwise} clause can be included
+very easily by adding one character to the name of the construct,
+it is perhaps more likely that programmers will take the trouble to do it. 
+
+The \cd{e} versions do nothing more than supply
+automatically generated \cd{otherwise} clauses, but correct
+implementation of the \cd{c} versions
+requires some care.  It is therefore especially
+important that the \cd{c} versions be provided
+by the system so users don't have to puzzle them out on
+their own.  Individual implementations may be able to do a better job
+of supporting these special forms,
+using their own idiosyncratic facilities, than can be done
+using the error-signaling facilities defined by Common Lisp.
+\end{rationale}
+\afternoterule

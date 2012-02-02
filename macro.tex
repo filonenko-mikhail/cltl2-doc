@@ -1,0 +1,1241 @@
+%Part{Macro, Root = "CLM.MSS"}
+%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{ULTIMATE}
+
+\chapter{Macros}
+\label{MACROS}
+
+
+The Common Lisp macro facility allows the user to define arbitrary
+functions that convert certain Lisp forms into different forms before
+evaluating or compiling them.  This is done at the expression level,
+not at the character-string level as in most other languages.  Macros
+are important in the writing of good code: they make it possible to
+write code that is clear and elegant at the user level but that is
+converted to a more complex or more efficient internal form for
+execution.
+
+When \cd{eval} is given a list whose {\it car} is a symbol, it looks
+for local definitions of that symbol (by \cd{flet}, \cd{labels},
+and \cd{macrolet}); if that fails, it looks for a global definition.
+If the definition is a macro definition, then the original
+list is said to be a {\it macro call}.  Associated with the definition
+will be a function of two arguments, called the {\it expansion function}.
+This function is called with the entire macro call as its first argument
+(the second argument is a lexical environment);
+it must return some new Lisp form, called the {\it expansion} of the
+macro call.  (Actually, a more general mechanism is involved;
+see \cd{macroexpand}.)
+This expansion is then evaluated in place of the original
+form.
+
+When a function is being compiled, any macros it contains are expanded
+at compilation time.  This means that a macro definition must be seen by the
+compiler before the first use of the macro.
+
+More generally, an implementation of Common Lisp has great latitude in deciding
+exactly when to expand macro calls within a program.  For example,
+it is acceptable for the \cd{defun} special form to expand all macro
+calls within its body at the time the \cd{defun} form is executed
+and record the fully expanded body as the body of the function
+being defined.
+(An implementation might even choose always to compile functions defined
+by \cd{defun}, even when operating in an ``interpretive'' mode.)
+
+Macros should be written so as to depend as little as possible
+on the execution environment to produce a correct expansion.  To ensure
+consistent behavior, it is best to ensure that all macro definitions are
+available, whether to the interpreter or compiler, before any code
+containing calls to those macros is introduced.
+
+In Common Lisp, macros are not functions.
+In particular, macros cannot be used as
+functional arguments to such functions as \cd{apply}, \cd{funcall},
+or \cd{map}; in such situations, the list representing the ``original macro
+call'' does not exist, and cannot exist, because in some sense the arguments
+have already been evaluated.
+
+
+\section{Macro Definition}
+
+The function \cd{macro-function} determines whether a given symbol
+is the name of a macro.  The \cd{defmacro} construct provides
+a convenient way to define new macros.
+
+\begin{obsolete}
+\begin{defun}[Function]
+macro-function symbol
+
+The argument must be a symbol.  If the symbol has a global function definition
+that is a macro definition, then the expansion function
+(a function of two arguments, the macro-call form and an environment)
+is returned.
+If the symbol has no global function definition, or has a definition
+as an ordinary function or as a special form but not as a macro, then
+{\false} is returned.  The function \cd{macroexpand}
+is the best way to invoke the expansion function.
+
+It is possible for {\it both} \cd{macro-function} and \cd{special-form-p}
+to be true of a symbol.  This is possible because an implementation is
+permitted to implement any macro also as a special form for speed.
+On the other hand, the macro definition must be available
+for use by programs that understand only the standard special forms
+listed in table~\ref{SPECIAL-FORM-TABLE}.
+
+\cd{macro-function} cannot be used to determine whether a symbol names
+a locally defined macro established by \cd{macrolet};
+\cd{macro-function} can
+examine only global definitions.
+
+\cd{setf} may be used with \cd{macro-function} to install
+a macro as a symbol's global function definition:
+\begin{lisp}
+(setf (macro-function {\it symbol}) {\it fn})
+\end{lisp}
+The value installed must be a function that accepts two arguments,
+an entire macro call and an environment, and computes the expansion for that call.
+Performing this operation causes the symbol to have {\it only} that
+macro definition as its global function definition; any previous
+definition, whether as a macro or as a function, is lost.
+It is an error to attempt to redefine the name of a special
+form.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{MACRO-FUNCTION-ENVIRONMENT}
+to add an optional environment argument to \cd{macro-function}.
+
+\begin{defun}[Function]
+macro-function symbol &optional env
+
+The first argument must be a symbol.  If the symbol has a function definition
+that is a macro definition, whether a local one established in the
+environment {\it env} by \cd{macrolet} or a global one established as
+if by \cd{defmacro},
+then the expansion function
+(a function of two arguments, the macro-call form and an environment)
+is returned.
+If the symbol has no function definition, or has a definition
+as an ordinary function or as a special form but not as a macro, then
+{\false} is returned.  The function \cd{macroexpand} or \cd{macroexpand-1}
+is the best way to invoke the expansion function.
+
+It is possible for {\it both} \cd{macro-function} and \cd{special-form-p}
+to be true of a symbol.  This is possible because an implementation is
+permitted to implement any macro also as a special form for speed.
+On the other hand, the macro definition must be available
+for use by programs that understand only the standard special forms
+listed in table~\ref{SPECIAL-FORM-TABLE}.
+
+\cd{setf} may be used with \cd{macro-function} to install
+a macro as a symbol's global function definition:
+\begin{lisp}
+(setf (macro-function {\it symbol}) {\it fn})
+\end{lisp}
+The value installed must be a function that accepts two arguments,
+an entire macro call and an environment, and computes the expansion for that call.
+Performing this operation causes the symbol to have {\it only} that
+macro definition as its global function definition; any previous
+definition, whether as a macro or as a function, is lost.
+One cannot use \cd{setf} to establish a local macro definition;
+it is an error to supply a second argument to \cd{macro-function}
+when using it with \cd{setf}.
+It is an error to attempt to redefine the name of a special form.
+
+See also \cd{compiler-macro-function}.
+\end{defun}
+\end{newer}
+
+\begin{defmac}
+defmacro name lambda-list <{declaration}* | doc-string> {\,form}*
+
+\cd{defmacro} is a macro-defining macro that
+arranges to decompose the macro-call form in an elegant and useful way.
+\cd{defmacro} has essentially the same syntax as \cd{defun}: {\it name} is the
+symbol whose macro definition we are creating, {\it lambda-list} is similar in
+form to a lambda-list, and
+the {\it form\/}s constitute the body of the expander function.
+The \cd{defmacro} construct arranges to install this expander function,
+as the global macro definition of {\it name}.
+
+\begin{obsolete}
+The expander function
+is effectively defined in the {\it global} environment;
+lexically scoped entities established
+outside the \cd{defmacro} form that would ordinarily be lexically apparent
+are not visible within the body of the expansion function.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
+to clarify that, while defining forms normally appear at top level,
+it is meaningful to place them in non-top-level contexts.
+Furthermore, \cd{defmacro} should define the expander function
+within the enclosing lexical environment, not within the global
+environment.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{FLET-IMPLICIT-BLOCK}
+to specify that the body of the expander function defined
+by \cd{defmacro} is implicitly enclosed in a \cd{block} construct
+whose name is the same as the {\it name} of the defined macro.
+Therefore \cd{return-from} may be used to exit from the function.
+\end{newer}
+
+The {\it name} is returned
+as the value of the \cd{defmacro} form.
+
+If we view the 
+macro call as a list containing a function name and some argument forms,
+in effect the expander function and the list of (unevaluated) argument
+forms is given to \cd{apply}.
+The parameter specifiers are processed as for any lambda-expression,
+using the macro-call argument forms as the arguments.
+Then the body forms are evaluated
+as an implicit \cd{progn}, and the value of the last form
+is returned as the expansion of the macro call.
+
+If the optional documentation string {\it doc-string} is present (if not
+followed by a declaration, it may be
+present only if at least one {\it form} is also specified, as it is
+otherwise taken to be a {\it form}), then it is attached to the {\it name}
+as a documentation string of type \cd{function}; see \cd{documentation}.
+
+\begin{obsolete}
+Like the lambda-list in a \cd{defun}, a \cd{defmacro} {\it lambda-list} may contain
+the lambda-list keywords \cd{\&optional}, \cd{\&rest}, \cd{\&key},
+\cd{\&allow-other-keys}, and \cd{\&aux}.
+For \cd{\&optional} and \cd{\&key} parameters, initialization forms and
+supplied-p parameters may be specified, just as for \cd{defun}.
+Three additional markers
+are allowed in \cd{defmacro} variable lists only.
+\end{obsolete}
+\begin{new}
+These three markers are now allowed in other constructs as well.
+\end{new}
+\begin{indentdesc}{6pc}
+\item[\cd{\&body}]
+This is identical in function to \cd{\&rest}, but it informs certain
+output-formatting and editing functions that the remainder of the form is
+treated as a body and should be indented accordingly.
+(Only one of \cd{\&body} or \cd{\&rest} may be used.)
+
+\item[\cd{\&whole}]
+This is followed by a single variable that is bound to the
+entire macro-call form; this is the value that the macro definition function
+receives as its single argument.
+\cd{\&whole} and the following variable should appear first in the lambda-list,
+before any other parameter or lambda-list keyword.
+
+\item[\cd{\&environment}]
+This is followed by a single variable that is bound
+to an environment representing the lexical environment in which the
+macro call is to be interpreted.   This environment may not be the
+complete lexical environment; it should be used only with
+the function \cd{macroexpand} for the sake of any local
+macro definitions that the \cd{macrolet} construct may have
+established within that lexical environment.  This is useful primarily
+in the rare cases where a macro definition must explicitly expand any macros
+in a subform of the macro call before computing its own expansion.
+\end{indentdesc}
+See \cd{lambda-list-keywords}.
+
+\begin{new}%CORR
+{\it Notice of correction.}
+In the first edition, the symbol \cd{\&environment} at the
+left margin above was inadvertently omitted.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+to specify that macro environment objects received with the \cd{\&environment}
+argument of a macro function
+have only dynamic extent.  The consequences are undefined if such objects are
+referred to outside the dynamic extent of that particular
+invocation of the macro function.
+This allows implementations to use somewhat more efficient techniques
+for representing environment objects. 
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFMACRO-LAMBDA-LIST} to clarify the permitted
+uses of \cd{\&body}, \cd{\&whole}, and \cd{\&environment}:
+\begin{itemize}
+\item \cd{\&body} may appear at any level of a \cd{defmacro} lambda-list.
+\item \cd{\&whole} may appear at any level of a \cd{defmacro} lambda-list.
+At inner levels a \cd{\&whole} variable is bound to that part of the argument
+that matches the sub-lambda-list in which \cd{\&whole} appears.  No matter where
+\cd{\&whole} is used, other parameters or lambda-list keywords may follow it.
+\item \cd{\&environment} may occur only at the outermost level of a \cd{defmacro}
+lambda-list, and it may occur at most once, but it may occur anywhere within
+that lambda-list, even before an occurrence of \cd{\&whole}.
+\end{itemize}
+\end{newer}
+
+\cd{defmacro}, unlike any other Common Lisp construct that has a lambda-list
+as part of its syntax, provides an additional facility known as
+{\it destructuring}.
+\begin{newer}
+See \cd{destructuring-bind}, which provides the destructuring facility separately.
+\end{newer}
+Anywhere in the lambda-list where a parameter
+name may appear, and where ordinary lambda-list syntax (as described
+in section~\ref{LAMBDA-EXPRESSIONS-SECTION}) does not
+otherwise allow a list, a lambda-list may appear in place
+of the parameter name.  When this is done, then the argument form
+that would match the parameter is treated as a (possibly dotted) list,
+to be used as an argument forms list for satisfying the
+parameters in the embedded lambda-list.
+As an example, one could write the macro definition
+for \cd{dolist} in this manner:
+\begin{lisp}
+(defmacro dolist ((var listform \cd{\&optional} resultform) \\
+~~~~~~~~~~~~~~~~~~\&rest body) \\
+~~...)
+\end{lisp}
+More examples of embedded lambda-lists in \cd{defmacro} are shown below.
+
+Another destructuring rule is that \cd{defmacro} allows any lambda-list
+(whether top-level or embedded) to be dotted, ending
+in a parameter name.  This situation is treated exactly as if the
+parameter name that ends the list had appeared preceded by \cd{\&rest}.
+For example, the definition skeleton for \cd{dolist} shown above could
+instead have been written
+\begin{lisp}
+(defmacro dolist ((var listform \&optional resultform) \\
+~~~~~~~~~~~~~~~~~~. body) \\
+~~...)
+\end{lisp}
+
+If the compiler encounters a \cd{defmacro},
+the new macro is added to the compilation
+environment, and a compiled form of the expansion function is also added
+to the output file so that the new macro will be operative at run time.
+If this is not the desired effect, the \cd{defmacro} form can be wrapped
+in an \cd{eval-when} construct.
+
+It is permissible to use \cd{defmacro} to redefine a macro
+(for example, to install
+a corrected version of an incorrect definition), or to redefine
+a function as a macro.
+It is an error to attempt to redefine the name of a special
+form (see table~\ref{SPECIAL-FORM-TABLE}) as a macro.
+See \cd{macrolet}, which establishes macro
+definitions over a restricted lexical scope.
+
+\begin{newer}
+See also \cd{define-compiler-macro}.
+\end{newer}
+
+Suppose, for the sake of example, that it were desirable
+to implement a conditional construct analogous to the
+Fortran arithmetic IF statement.  (This of course requires a certain
+stretching of the imagination and suspension of disbelief.)
+The construct should accept four forms: a {\it test-value},
+a {\it neg-form}, a {\it zero-form}, and a {\it pos-form}.
+One of the last three forms is chosen to be executed according
+to whether the value of the {\it test-form} is positive, negative,
+or zero.
+Using \cd{defmacro}, a definition for such a construct
+might look like this:
+\begin{lisp}
+(defmacro arithmetic-if (test neg-form zero-form pos-form) \\
+~~(let ((var (gensym))) \\
+~~~~{\Xbq}(let ((,var ,test)) \\
+~~~~~~~(cond ((< ,var 0) ,neg-form) \\
+~~~~~~~~~~~~~((= ,var 0) ,zero-form) \\
+~~~~~~~~~~~~~(t ,pos-form)))))
+\end{lisp}
+Note the use of the backquote facility in this definition
+(see section~\ref{MACRO-CHARACTERS-SECTION}).
+Also note the use of \cd{gensym} to generate a new variable name.
+This is necessary to avoid conflict with any variables that might
+be referred to in {\it neg-form}, {\it zero-form}, or {\it pos-form}.
+
+If the form is executed by the interpreter, it will cause the
+function definition of the symbol \cd{arithmetic-if}
+to be a macro associated with which is
+a two-argument expansion function roughly equivalent to
+\begin{lisp}
+(lambda (calling-form environment) \\
+~~(declare (ignore environment)) \\
+~~(let ((var (gensym))) \\
+~~~~(list 'let \\
+~~~~~~~~~~(list (list 'var (cadr calling-form))) \\
+~~~~~~~~~~(list 'cond \\
+~~~~~~~~~~~~~~~~(list (list '< var '0) (caddr calling-form)) \\
+~~~~~~~~~~~~~~~~(list (list '= var '0) (cadddr calling-form)) \\
+~~~~~~~~~~~~~~~~(list 't (fifth calling-form))))))
+\end{lisp}
+The lambda-expression is produced by the \cd{defmacro} declaration.
+The calls to \cd{list} are the (hypothetical) result of the backquote (\cd{{\Xbq}})
+macro character and its associated commas.
+The precise macro expansion function may depend on the implementation,
+for example providing some degree of explicit error checking on the number
+of argument forms in the macro call.
+
+Now, if \cd{eval} encounters
+\begin{lisp}
+(arithmetic-if (- x 4.0) \\
+~~~~~~~~~~~~~~~(- x) \\
+~~~~~~~~~~~~~~~(error "Strange zero") \\
+~~~~~~~~~~~~~~~x)
+\end{lisp}
+this will be expanded into something like
+\begin{lisp}
+(let ((g407 (- x 4.0))) \\
+~~(cond ((< g407 0) (- x)) \\
+~~~~~~~~((= g407 0) (error "Strange zero")) \\
+~~~~~~~~(t x)))
+\end{lisp}
+and \cd{eval} tries again on this new form.
+(It should be clear now that the backquote facility
+is very useful in writing macros, since the form to be returned is
+normally a complex list structure, typically consisting of a
+mostly constant template with a few evaluated forms here and there.
+The backquote template provides a ``picture'' of the resulting
+code, with places to be filled in indicated by preceding commas.)
+
+To expand on this example, stretching credibility to its limit,
+we might allow the {\it pos-form}
+and {\it zero-form} to be omitted, allowing their values to default to {\nil},
+in much the same way that the {\it else} form of a Common Lisp \cd{if} construct
+may be omitted:
+\begin{lisp}
+(defmacro arithmetic-if (test neg-form \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~\cd{\&optional} zero-form pos-form) \\*
+~~(let ((var (gensym))) \\*
+~~~~{\Xbq}(let ((,var ,test)) \\*
+~~~~~~~(cond ((< ,var 0) ,neg-form) \\*
+~~~~~~~~~~~~~((= ,var 0) ,zero-form) \\*
+~~~~~~~~~~~~~(t ,pos-form)))))
+\end{lisp}
+Then one could write
+\begin{lisp}
+(arithmetic-if (- x 4.0) (print x))
+\end{lisp}
+which would be expanded into something like
+\begin{lisp}
+(let ((g408 (- x 4.0))) \\*
+~~(cond ((< g408 0) (print x)) \\*
+~~~~~~~~((= g408 0) nil) \\*
+~~~~~~~~(t nil)))
+\end{lisp}
+The resulting code is correct but rather silly-looking.
+One might rewrite the macro definition to produce better code
+when {\it pos-form} and possibly {\it zero-form} are omitted,
+or one might simply rely on the Common Lisp implementation to provide
+a compiler smart enough to improve the code itself.
+
+Destructuring is a very powerful facility that allows
+the \cd{defmacro} lambda-list to express the structure of
+a complicated macro-call syntax.  If no lambda-list keywords
+appear, then the \cd{defmacro} lambda-list is simply a list,
+nested to some extent, containing parameter names at the leaves.
+The macro-call form must have the same list structure.
+For example, consider this macro definition:
+\begin{lisp}
+(defmacro halibut ((mouth eye1 eye2) \\*
+~~~~~~~~~~~~~~~~~~~((fin1 length1) (fin2 length2)) \\*
+~~~~~~~~~~~~~~~~~~~tail) \\*
+~~...)
+\end{lisp}
+Now consider this macro call:
+\begin{lisp}
+(halibut (m (car eyes) (cdr eyes)) \\*
+~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\*
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+This would cause the expansion function to receive the following
+values for its parameters:
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}ll@{}}
+{\rm Parameter}&{\rm Value} \\
+\hlinesp
+mouth&m \\
+eye1&(car eyes) \\
+eye2&(cdr eyes) \\
+fin1&f1 \\
+length1&(count-scales f1) \\
+fin2&f2 \\
+length2&(count-scales f2) \\
+tail&my-favorite-tail \\
+\hline
+\end{tabular}
+\end{flushleft}
+The following macro call would be in error because there would be no
+argument form to match the parameter \cd{length1}:
+\begin{lisp}
+(halibut (m (car eyes) (cdr eyes)) \\
+~~~~~~~~~((f1) (f2 (count-scales f2))) \\
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+The following macro call would be in error because a symbol appears
+in the call where the structure of the lambda-list requires a list.
+\begin{lisp}
+(halibut my-favorite-head \\
+~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+The fact that the value of the variable \cd{my-favorite-head}
+might happen to be a list is irrelevant here.  It is the macro call
+itself whose structure must match that of the \cd{defmacro} lambda-list.
+
+The use of lambda-list keywords adds even greater flexibility.
+For example, suppose it is convenient within the expansion
+function for \cd{halibut} to be able to refer to the list
+whose components are called \cd{mouth}, \cd{eye1}, and \cd{eye2} as \cd{head}.
+One may write this:
+\begin{lisp}
+(defmacro halibut ((\cd{\&whole} head mouth eye1 eye2) \\
+~~~~~~~~~~~~~~~~~~~((fin1 length1) (fin2 length2)) \\
+~~~~~~~~~~~~~~~~~~~tail)
+\end{lisp}
+Now consider the same valid macro call as before:
+\begin{lisp}
+(halibut (m (car eyes) (cdr eyes)) \\
+~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+This would cause the expansion function to receive the same
+values for its parameters and also a value for the parameter \cd{head}:
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}ll@{}}
+{\rm Parameter}&{\rm Value} \\
+\hlinesp
+head&(m (car eyes) (cdr eyes)) \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+The stipulation that
+an embedded lambda-list is permitted only
+where ordinary lambda-list syntax would permit a parameter name
+but not a list is made to prevent ambiguity.  For example,
+one may not write
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} (a b \cd{\&rest} c) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+because ordinary lambda-list syntax does permit a list following \cd{\&optional};
+the list \cd{(a b \cd{\&rest} c)} would be interpreted as describing an
+optional parameter named \cd{a} whose default value is that of the
+form \cd{b}, with a supplied-p parameter named \cd{\&rest} (not legal),
+and an extraneous symbol \cd{c} in the list (also not legal).  An almost
+correct way to express this is
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} ((a b \cd{\&rest} c)) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+The extra set of parentheses removes the ambiguity.  However, the
+definition is now incorrect because a macro call such as \cd{(loser (car pool))}
+would not provide any argument form for the lambda-list \cd{(a b \cd{\&rest} c)},
+and so the default value against which to match the lambda-list would be
+{\nil} because no explicit default value was specified.  This is in error
+because {\nil} is an empty list; it does not have forms to satisfy the
+parameters \cd{a} and \cd{b}.  The fully correct definition would be either
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} ((a b \cd{\&rest} c) '(nil nil)) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+or
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} ((\cd{\&optional} a b \cd{\&rest} c)) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+These differ slightly: the first requires that if the macro call
+specifies \cd{a} explicitly then it must also specify \cd{b} explicitly,
+whereas the second does not have this requirement.  For example,
+\begin{lisp}
+(loser (car pool) ((+ x 1)))
+\end{lisp}
+would be a valid call for the second definition but not for the first.
+\end{defmac}
+
+\section{Macro Expansion}
+
+The \cd{macroexpand} function is the conventional means for
+expanding a macro call.  A hook is provided for a user function
+to gain control during the expansion process.
+
+\begin{defun}[Function]
+macroexpand form &optional env \\
+macroexpand-1 form &optional env
+
+If {\it form} is a macro call, then \cd{macroexpand-1} will expand the macro
+call {\it once} and return two values: the expansion and \cd{t}.
+If {\it form} is not a macro call, then the two values {\it form} and {\nil} are
+returned.
+
+A {\it form} is considered to be a macro call only if it is a cons whose
+{\it car} is a symbol that names a macro.  The environment {\it env} is similar
+to that used within the evaluator (see \cd{evalhook});
+it defaults to a null environment.
+Any local macro definitions established within {\it env} by
+\cd{macrolet} will be considered.  If only {\it form} is given as an
+argument, then the environment is effectively null,
+and only global macro definitions
+(as established by \cd{defmacro}) will be considered.
+
+Macro expansion is carried out as follows.  Once \cd{macroexpand-1} has
+determined that a symbol names a macro, it obtains the expansion
+function for that macro.  The value of the variable
+\cd{*macroexpand-hook*} is then called as a function of three arguments:
+the expansion function, the {\it form}, and the environment {\it env}.
+The value returned from
+this call is taken to be the expansion of the macro call.
+The initial value of \cd{*macroexpand-hook*} is \cd{funcall},
+and the net effect is to invoke the expansion function, giving
+it {\it form} and {\it env} as its two arguments.
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to specify
+that the value of \cd{*macroexpand-hook*} is first coerced to a
+function before being called as the expansion interface hook.
+Therefore its value may be a symbol, a lambda-expression, or any
+object of type \cd{function}.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+to specify that macro environment objects received
+by a \cd{*macroexpand-hook*} function
+have only dynamic extent.  The consequences are undefined if such objects are
+referred to outside the dynamic extent of that particular invocation of the hook
+function.  This allows implementations to use somewhat more efficient techniques
+for representing environment objects. 
+\end{newer}
+
+\begin{obsolete}
+(The purpose of
+\cd{*macroexpand-hook*} is to facilitate various techniques
+for improving interpretation speed by caching macro expansions.)
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{MACRO-CACHING} to clarify that, while
+\cd{*macroexpand-hook*} may be useful for debugging purposes, despite
+the original design intent there is
+currently no correct portable way to use it for caching macro expansions.
+\begin{itemize}
+\item
+ Caching by displacement (performing a side effect on the
+ macro-call form) won't work because the same (\cd{eq}) macro-call
+ form may appear in distinct lexical contexts.  In addition, the macro-call
+ form may be a read-only constant (see \cd{quote} and also
+ section~\ref{COMPILER-SECTION}).
+\item
+ Caching by table lookup won't work because such a table would have to
+ be keyed by both the macro-call form and the environment,
+ but X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+ to permit macro environments to have only dynamic extent.
+\item
+ Caching by storing macro-call forms and expansions within the
+ environment object itself would work, but there are no portable
+ primitives that would allow users to do this.
+\end{itemize}
+X3J13 also noted that, although there seems to be no correct portable way to use
+\cd{*macroexpand-hook*} to cache macro expansions, there is no
+requirement that an implementation call the macro expansion
+function more than once for a given form and lexical environment.
+\end{newer}
+
+\begin{new}
+X3J13 voted in March 1989
+\issue{SYMBOL-MACROLET-SEMANTICS}
+to specify that \cd{macroexpand-1} will also expand symbol macros
+defined by \cd{symbol-macrolet}; therefore a {\it form} may also be
+a macro call if it is a symbol.  The vote did not address the interaction
+of this feature with the \cd{*macroexpand-hook*} function.  An obvious
+implementation choice is that the hook function is indeed called
+and given a special expansion function that, when applied to the
+{\it form} (a symbol) and {\it env}, will produce the expansion,
+just as for an ordinary macro; but this is only my suggestion.
+\end{new}
+
+The evaluator expands macro calls as if through the use of \cd{macroexpand-1};
+the point is that \cd{eval} also uses \cd{*macroexpand-hook*}.
+
+\cd{macroexpand} is similar to \cd{macroexpand-1},
+but repeatedly expands {\it form} until it is no longer a macro call.
+(In effect, \cd{macroexpand} simply calls \cd{macroexpand-1} repeatedly
+until the second value returned is {\nil}.)
+A second value of \cd{t} or {\nil} is returned as for \cd{macroexpand-1},
+indicating whether the original {\it form} was a macro call.
+\end{defun}
+
+\begin{defun}[Variable]
+*macroexpand-hook*
+
+The value of \cd{*macroexpand-hook*} is used as the expansion
+interface hook by \cd{macroexpand-1}.
+\end{defun}
+
+\begin{newer}
+\section{Destructuring}
+
+X3J13 voted in March 1989 \issue{DESTRUCTURING-BIND}
+to make the destructuring feature of \cd{defmacro}
+available as a separate facility.
+
+\begin{defmac}
+destructuring-bind lambda-list expression {declaration}* {\,form}*
+
+   This macro binds the variables specified in {\it lambda-list} to the corresponding
+   values in the tree structure resulting from evaluating the {\it expression},
+   then executes the {\it form\/}s as an implicit \cd{progn}.
+
+A \cd{destructuring-bind} {\it lambda-list} may contain
+the lambda-list keywords \cd{\&optional}, \cd{\&rest}, \cd{\&key},
+\cd{\&allow-other-keys}, and \cd{\&aux}; \cd{\&body} and \cd{\&whole}
+may also be used as they are in \cd{defmacro}, but \cd{\&environment} may
+{\it not} be used.  Nested and dotted lambda-lists are also permitted
+as for \cd{defmacro}.
+The idea is that a \cd{destructuring-bind} {\it lambda-list}
+has the same format as inner levels of a \cd{defmacro} lambda-list.
+
+   If the result of evaluating the {\it expression} does not match the 
+   destructuring pattern, an error should be signaled.
+\end{defmac}
+\end{newer}
+
+
+\begin{newer}
+\section{Compiler Macros}
+
+X3J13 voted in June 1989 \issue{DEFINE-COMPILER-MACRO}
+to add a facility for defining {\it compiler macros} that
+take effect only when compiling code, not when interpreting it.
+
+The purpose of this facility is to permit selective source-code
+transformations only when the compiler is processing the code.
+When the compiler is about to compile a non-atomic form, it first calls
+\cd{compiler-macroexpand-1} repeatedly until there is no more expansion
+(there might not be any to begin with).  Then it continues its
+remaining processing, which may include calling \cd{macroexpand-1} and so on.
+
+The compiler is required to expand compiler macros.  It is unspecified
+whether the interpreter does so.  The intention is that only the
+compiler will do so, but the range of possible ``compiled-only''
+implementation strategies precludes any firm specification.
+
+
+\begin{defmac}
+define-compiler-macro name lambda-list
+                      {declaration | doc-string}* {\,form}*
+
+  This is just like \cd{defmacro} except the definition is not stored in the
+  symbol function cell of {\it name} and is not seen by \cd{macroexpand-1}.
+  It is, however, seen by \cd{compiler-macroexpand-1}.  As with \cd{defmacro}, the
+  {\it lambda-list} may include \cd{\&environment} and \cd{\&whole}
+  and may include destructuring.  The definition is
+  global.  (There is no provision for defining local compiler
+  macros in the way that \cd{macrolet} defines local macros.)
+
+  A top-level call to \cd{define-compiler-macro} in a file being compiled by
+  \cd{compile-file} has an effect on the compilation environment similar to
+  that of a call to \cd{defmacro}, except it is noticed as a
+  compiler macro (see section~\ref{COMPILER-SECTION}).
+
+Note that compiler macro definitions do not appear in information returned by
+\cd{function-information}; they are global, and their interaction
+with other lexical and global definitions can be reconstructed by
+\cd{compiler-macro-function}.  It is up to code-walking programs to decide
+whether to invoke compiler macro expansion.
+
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{FLET-IMPLICIT-BLOCK}
+to specify that the body of the expander function defined
+by \cd{defmacro} is implicitly enclosed in a \cd{block} construct
+whose name is the same as the {\it name} of the defined macro;
+presumably this applies also to \cd{define-compiler-macro}.
+Therefore \cd{return-from} may be used to exit from the function.
+\end{newer}
+
+\end{defmac}
+
+\begin{defun}[Function]
+compiler-macro-function name &optional env
+
+  The {\it name} must be a symbol.
+  If it has been defined as a compiler macro, then
+  \cd{compiler-macro-function} returns the macro expansion
+  function; otherwise it returns \cd{nil}.  The
+  lexical environment {\it env} may override any global definition for {\it name}
+  by defining a local function or local macro (such as by \cd{flet}, \cd{labels}, or
+  \cd{macrolet}) in which case \cd{nil} is returned.
+
+  \cd{setf} may be used with \cd{compiler-macro-function} to install a function as
+  the expansion function for the compiler macro {\it name}, in the same manner as for
+  \cd{macro-function}.  Storing the value \cd{nil} removes any existing
+  compiler macro definition.  As with \cd{macro-function}, a non-\cd{nil} stored value
+  must be a function of two arguments, the entire macro call and 
+  the environment.  The second argument to \cd{compiler-macro-function} must
+  be omitted when it is used with \cd{setf}.
+\end{defun}
+
+\begin{defun}[Function]
+compiler-macroexpand form &optional env \\
+compiler-macroexpand-1 form &optional env
+
+  These are just like \cd{macroexpand} and \cd{macroexpand-1}
+  except that the expander function is obtained as if by a call to
+  \cd{compiler-macro-function} on the {\it car} of the {\it form} rather than by a call to
+  \cd{macro-function}.
+  Note that \cd{compiler-macroexpand} performs repeated expansion
+  but \cd{compiler-macroexpand-1} performs at most one expansion.
+  Two values are returned, the expansion (or the original {\it form})
+  and a value that is true if any expansion occurred and \cd{nil} otherwise.
+
+  There are three cases where no expansion happens:
+  \begin{itemize}
+    \item There is no compiler macro definition for the {\it car} of {\it form}.
+    \item There is such a definition but there is also a \cd{notinline}
+        declaration, either globally or in the lexical environment {\it env}.
+    \item A global compiler macro definition is shadowed by a local
+        function or macro definition (such as by \cd{flet}, \cd{labels}, or
+        \cd{macrolet}).
+  \end{itemize}
+  Note that if there is no expansion, the original {\it form} is returned as
+  the first value, and \cd{nil} as the second value.
+  
+  Any macro expansion performed by the function \cd{compiler-macroexpand}
+  or by the function \cd{compiler-macroexpand-1} is carried out
+  by calling the function that is the value of \cd{*macroexpand-hook*}.
+
+A compiler macro may decline to provide any expansion merely
+by returning the original form. This is useful when using the facility
+to put ``compiler optimizers'' on various function names.  For example,
+here is a compiler macro that ``optimizes'' (one would hope)
+the zero-argument and one-argument cases of
+a function called \cd{plus}:
+\begin{lisp}
+(define-compiler-macro plus (\&whole form \&rest args) \\*
+~~(case (length args) \\*
+~~~~(0 0) \\*
+~~~~(1 (car args)) \\*
+~~~~(t form)))
+\end{lisp}
+\end{defun}
+\end{newer}
+
+
+\begin{newer}
+\section{Environments}
+
+X3J13 voted in June 1989 \issue{SYNTACTIC-ENVIRONMENT-ACCESS} to add some facilities for obtaining information
+from environment objects of the kind received as arguments
+by macro expansion functions, \cd{*macroexpand-hook*} functions,
+and \cd{*evalhook*} functions.
+There is a minimal set of accessors (\cd{variable-information},
+\cd{function-information}, and \cd{declaration-information}) and a constructor
+(\cd{augment-environment}) for environments.
+
+All of the standard declaration specifiers, with the exception of \cd{special},
+can be defined fairly easily using \cd{define-declaration}.  It also
+seems to be able to handle most extended declarations.
+
+The function \cd{parse-macro} is provided so that
+users don't have to write their
+  own code to destructure macro arguments.
+This function is not entirely necessary since X3J13 voted
+in March 1989 \issue{DESTRUCTURING-BIND}
+to add \cd{destructuring-bind} to the language.
+  However, \cd{parse-macro} is worth having anyway, since any program-analyzing
+  program is going to need to define it, and the implementation isn't completely
+  trivial even with \cd{destructuring-bind} to build upon.
+
+  The function \cd{enclose} allows expander functions to be defined in a non-null
+  lexical environment, as required by the vote of X3J13 in
+  March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}.  It
+  also provides a mechanism by which a program processing
+  the body of an \cd{(eval-when (:compile-toplevel)~...)} form
+  can execute it in the enclosing environment (see issue
+  \issue{EVAL-WHEN-NON-TOP-LEVEL}).
+
+In all of these functions the argument named {\it env} is an environment
+object.  (It is not required that implementations
+ provide a distinguished representation for such objects.)  Optional {\it env}
+ arguments default to \cd{nil}, which represents the local null lexical environment
+ (containing only global definitions and proclamations that are present in the
+ run-time environment).  All of these functions should signal an error of type
+ \cd{type-error} if the value of an environment argument is not a syntactic
+ environment object.
+
+ The accessor functions \cd{variable-information}, \cd{function-information}, and
+ \cd{declaration-information} retrieve information about
+ declarations that are in
+ effect in the environment.  Since implementations are permitted to ignore
+ declarations (except for \cd{special} declarations and \cd{optimize safety}
+ declarations if they ever compile unsafe code), these accessors are required
+ only to return information about declarations that were explicitly added to
+ the environment using \cd{augment-environment}.  They might also return
+ information about declarations recognized and added to the environment by the
+ interpreter or the compiler, but that is at the discretion of the
+ implementor.  Implementations are also permitted to canonicalize
+ declarations, so the information returned by the accessors might not be
+ identical to the information that was passed to \cd{augment-environment}.
+
+\begin{defun}[Function]
+variable-information variable &optional env
+
+  This function returns information about the interpretation of the symbol
+  {\it variable} when it appears as a variable within the lexical environment {\it env}.
+  Three values are returned.
+
+  The first value indicates the type of definition or binding for {\it variable}
+  in {\it env\/}:
+\begin{indentdesc}{7pc}
+\item[\cd{nil}]
+There is no apparent definition or binding for {\it variable}.
+
+\item[\cd{:special}]
+The {\it variable} refers to a special variable, either declared or proclaimed. 
+
+\item[\cd{:lexical}]
+The {\it variable} refers to a lexical variable.
+
+\item[\cd{:symbol-macro}]
+The {\it variable} refers to a \cd{symbol-macrolet} binding.
+
+\item[\cd{:constant}]
+Either the {\it variable} refers to a named constant defined by
+\cd{defconstant} or the {\it variable} is a keyword symbol.
+\end{indentdesc}
+
+  The second value indicates whether there is a local binding of the name.  If
+  the name is locally bound, the second value is true; otherwise, the second value
+  is \cd{nil}.
+
+  The third value is an a-list containing information about declarations
+  that apply to the apparent binding of the {\it variable}.  The keys in the a-list
+  are symbols that name declaration specifiers, and the format of the
+  corresponding value in the {\it cdr} of each pair depends on the particular 
+  declaration name involved.  The standard declaration names
+  that might appear as keys in this a-list are:
+\begin{indentdesc}{7pc}
+\item[\cd{dynamic-extent}]
+A non-\cd{nil} value indicates that the {\it variable} has been
+                declared \cd{dynamic-extent}. If the value is \cd{nil}, the pair
+                might be omitted.
+
+\item[\cd{ignore}]
+A non-\cd{nil} value indicates that the {\it variable} has been declared
+                \cd{ignore}. If the value is \cd{nil}, the pair might be omitted.
+
+\item[\cd{type}]
+The value is a type specifier associated with the {\it variable} by a \cd{type}
+                declaration or an abbreviated declaration such as
+                \cd{(fixnum {\it variable})}.
+                If no explicit association exists, either by \cd{proclaim} or
+                \cd{declare}, then the type specifier is \cd{t}.  It is permissible for
+                implementations to use a type specifier that is equivalent
+                to or a supertype of the one appearing in the original
+                declaration.  If the value is \cd{t}, the pair might be
+                omitted.
+\end{indentdesc}
+  If an implementation supports additional declaration specifiers that
+  apply to variable bindings, those declaration names might also
+  appear in the a-list.  However, the corresponding key must not
+  be a symbol that is external in any package defined in the standard
+  or that is otherwise accessible in the \cd{common-lisp-user} package.
+
+  The a-list might contain multiple entries for a given key.
+  The consequences of destructively modifying the list
+  structure of this a-list or its elements (except for values that 
+  appear in the a-list as a result of \cd{define-declaration}) are undefined.
+
+  Note that the global binding might differ from the
+  local one and can be retrieved by calling \cd{variable-information}
+  with a null lexical environment.
+\end{defun}
+
+\begin{defun}[Function]
+function-information function &optional env
+
+  This function returns information about the interpretation of the function-name
+  {\it function} when it appears in a functional position within lexical 
+  environment {\it env}.  Three values are returned.
+
+  The first value indicates the type of definition or binding of the function-name
+  which is apparent in {\it env}:
+\begin{indentdesc}{7pc}
+\item[\cd{nil}] There is no apparent definition for {\it function}.
+
+\item[\cd{:function}] The {\it function} refers to a function.
+
+\item[\cd{:macro}] The {\it function} refers to a macro.
+
+\item[\cd{:special-form}] The {\it function} refers to a special form.
+\end{indentdesc}
+  Some function-names can refer to both a global macro and a global special
+  form.  In such a case the macro takes precedence and \cd{:macro} is returned as
+  the first value.
+
+  The second value specifies whether the definition is local or global.  If
+  local, the second value is true; it is \cd{nil} when the definition is
+  global.
+
+  The third value is an a-list containing information about declarations
+  that apply to the apparent binding of the function.  The keys in the a-list
+  are symbols that name declaration specifiers, and the format of the
+  corresponding values in the {\it cdr} of each pair depends on the particular 
+  declaration name involved.  The standard declaration names
+  that might appear as keys in this a-list are:
+\begin{indentdesc}{7pc}
+\item[\cd{dynamic-extent}]
+A non-\cd{nil} value indicates that the function has been
+                declared \cd{dynamic-extent}.  If the value is \cd{nil}, the pair
+                might be omitted.
+
+\item[\cd{inline}]
+The value is one of the symbols \cd{inline}, \cd{notinline}, or \cd{nil} to indicate
+                whether the function-name has been declared \cd{inline},
+                declared \cd{notinline}, or neither, respectively.
+                If the value is \cd{nil}, the pair might be omitted.
+
+\item[\cd{ftype}]
+The value is the type specifier associated with the function-name in the
+                environment, or the symbol \cd{function} if there is no functional
+                type declaration or proclamation associated with the function-name.
+                This value might not include all the apparent \cd{ftype}
+                declarations for the function-name.  It is permissible for
+                implementations to use a type specifier that is equivalent
+                to or a supertype of the one that appeared in the original
+                declaration.  If the value is \cd{function}, the pair might be
+                omitted. 
+\end{indentdesc}
+  If an implementation supports additional declaration specifiers that
+  apply to function bindings, those declaration names might also
+  appear in the a-list.  However, the corresponding key must not be
+  a symbol that is external in any package defined in the standard or
+  that is otherwise accessible in the \cd{common-lisp-user} package.
+
+  The a-list might contain multiple entries for a given key.
+  In this case the value associated with the first entry has
+  precedence.  The consequences of destructively modifying the list
+  structure of this a-list or its elements (except for values
+  that appear in the a-list as a result of \cd{define-declaration}) are 
+  undefined.
+
+  Note that the global binding might differ from the local
+  one and can be retrieved by calling \cd{function-information} with a null
+  lexical environment.
+\end{defun}
+
+\begin{defun}[Function]
+declaration-information decl-name &optional env
+
+  This function returns information about declarations named by the
+  symbol {\it decl-name} that are in force in the environment {\it env}.
+  Only declarations that do not apply to function or variable bindings
+  can be accessed with this function.  The format of the information
+  that is returned depends on the {\it decl-name} involved.
+
+  It is required that this function recognize \cd{optimize} and \cd{declaration} as
+  {\it decl-name\/}s.  The values returned for these two cases are as follows:
+\begin{indentdesc}{7pc}
+\item[\cd{optimize}]
+A single value is returned,
+a list whose entries are of the form \cd{({\it quality} {\it value})}, where
+                {\it quality} is one of the standard optimization qualities
+                (\cd{speed}, \cd{safety}, \cd{compilation-speed}, \cd{space}, \cd{debug})
+                or some implementation-specific optimization quality, and
+                {\it value} is an integer in the range 0 to 3 (inclusive).
+                The returned list
+                always contains an entry for each of the standard qualities and
+                for each of the implementation-specific qualities.  In the
+                absence of any previous declarations, the associated values are
+                implementation-dependent.  The list might contain multiple
+                entries for a quality, in which case the first such entry
+                specifies the current value.
+                The consequences of destructively modifying this list or
+		its elements are undefined.
+                
+
+\item[\cd{declaration}]
+A single value is returned,
+a list of the declaration names that have been proclaimed as
+                valid through the use of the \cd{declaration} proclamation.
+                The consequences of destructively modifying this list or
+		its elements are undefined.
+\end{indentdesc}
+  If an implementation is extended to recognize additional
+  declaration specifiers in \cd{declare} or \cd{proclaim}, it is required that
+  either the \cd{declaration-information} function should recognize those
+  declarations also or the implementation should provide a similar accessor that is
+  specialized for that declaration specifier.  If \cd{declaration-information}
+  is used to return the information, the corresponding {\it decl-name} must not
+  be a symbol that is external in any package defined in the standard or
+  that is otherwise accessible in the \cd{common-lisp-user} package.
+\end{defun}
+
+\begin{defun}[Function]
+augment-environment env &key :variable :symbol-macro :function :macro :declare
+
+  This function returns a new environment containing the information present in
+  {\it env} augmented with the information provided by the keyword arguments.  It is
+  intended to be used by program analyzers that perform a code walk.
+
+  The arguments are supplied as follows.
+\begin{flushdesc}
+\item[\cd{:variable}]
+     The argument is a list of symbols that will be visible as bound variables in
+                the new environment.  Whether each binding is to be interpreted
+                as special or lexical depends on \cd{special} declarations recorded
+                in the environment or provided in the \cd{:declare} argument.
+
+\item[\cd{:symbol-macro}]
+ The argument is a list of symbol macro definitions, each of the form
+                \cd{({\it name} {\it definition})}; that is, the argument is
+                in the same format as the
+                {\it cadr} of a \cd{symbol-macrolet} special form.  The new environment
+                will have local symbol-macro bindings of each symbol to the
+                corresponding expansion, so that \cd{macroexpand} will be able to
+                expand them properly.  A type declaration in the \cd{:declare}
+                argument that refers to a name in this list implicitly
+                modifies the definition associated with the name.  The effect
+                is to wrap a \cd{the} form mentioning the type around the
+                definition.
+
+\item[\cd{:function}]
+     The argument is a list of function-names that will be visible as local
+                function bindings in the new environment.
+
+\item[\cd{:macro}]
+        The argument is a list of local macro definitions, 
+        each of the form \cd{({\it name} {\it definition})}.
+        Note that the argument is {\it not}
+                in the same format as the
+                {\it cadr} of a \cd{macrolet} special form.
+                Each {\it definition} must be a function of two
+                arguments (a form and an environment).  The new environment
+                will have local macro bindings of each name to the
+                corresponding expander function, which will be returned by
+                \cd{macro-function} and used by \cd{macroexpand}.
+
+\item[\cd{:declare}]
+      The argument is a list of declaration specifiers.
+      Information about these declarations can
+                be retrieved from the resulting environment using
+                \cd{variable-information}, \cd{function-information}, and
+                \cd{declaration-information}.
+\end{flushdesc}
+  The consequences of subsequently
+  destructively modifying the list
+  structure of any of the arguments to this function are undefined.
+
+  An error is signaled if any of the symbols naming a symbol macro in the
+  \cd{:symbol-macro} argument is also included in the \cd{:variable} argument.
+  An error is
+  signaled if any symbol naming a symbol macro in the \cd{:symbol-macro} argument is
+  also included in a \cd{special} declaration specifier in the \cd{:declare} argument.
+  An error is
+  signaled if any symbol naming a macro in the \cd{:macro} argument is also included
+  in the \cd{:function} argument.
+  The condition type of each of these errors is \cd{program-error}.
+
+  The extent of the returned environment is the same as the extent of the
+  argument environment {\it env}.  The result might share structure with {\it env}
+  but {\it env} is not modified.
+
+  While an environment argument received by an \cd{*evalhook*}
+  function is permitted to be used as the
+  environment argument to \cd{augment-environment}, the consequences are undefined if an
+  attempt is made to use the result of \cd{augment-environment} as the environment
+  argument for \cd{evalhook}.  The environment
+  returned by \cd{augment-environment} can be used only for syntactic analysis, that is,
+  as an argument to
+  the functions defined in this section and functions such as \cd{macroexpand}.
+\end{defun}
+
+\begin{defmac}
+define-declaration decl-name lambda-list {\,form}*
+
+  This macro defines a handler for the named declaration.  It is the mechanism by which
+  \cd{augment-environment} is extended to support additional declaration
+  specifiers.  The function defined by this macro will be called with two
+  arguments, a declaration specifier whose {\it car} is {\it decl-name}
+  and the {\it env} argument to
+  \cd{augment-environment}.  This function must return two values.  The
+  first value must be one of the following keywords:
+\begin{indentdesc}{7pc}
+\item[\cd{:variable}]     The declaration applies to variable bindings.
+\item[\cd{:function}]     The declaration applies to function bindings.
+\item[\cd{:declare}]      The declaration does not apply to bindings.
+\end{indentdesc}
+If the first value is \cd{:variable} or \cd{:function}
+then the second value must be a list, the elements of which are lists of the
+  form \cd{({\it binding-name} {\it key} {\it value})}.  If the corresponding information
+  function (either \cd{variable-information} or \cd{function-information}) is applied to
+  the {\it binding-name} and the augmented environment, the a-list returned
+  by the information function as its third value will contain the {\it value}
+  under the specified {\it key}.
+
+  If the first value is \cd{:declare}, the second value must be a cons
+  of the form \cd{({\it key}~.~{\it value})}.  The function
+  \cd{declaration-information} will return {\it value} when applied to the
+  {\it key} and the augmented environment.
+
+  \cd{define-declaration} causes {\it decl-name} to be proclaimed to be a
+  declaration; it is as if its expansion included a call \cd{(proclaim
+  '(declaration {\it decl-name}))}.  As is the case with standard
+  declaration specifiers, the evaluator and compiler are permitted,
+  but not required, to add information about declaration specifiers
+  defined with \cd{define-declaration} to the macro expansion and \cd{*evalhook*}
+  environments.
+
+  The consequences are undefined if {\it decl-name} is a symbol that can
+  appear as the {\it car} of any standard declaration specifier.
+
+  The consequences are also undefined if the return value from a 
+  declaration handler defined with \cd{define-declaration} includes a {\it key} name
+  that is used by the corresponding accessor to return information about
+  any standard declaration specifier.  (For example, if
+  the first return value from the handler is \cd{:variable}, the second return
+  value may not use the symbols \cd{dynamic-extent}, \cd{ignore}, or \cd{type}
+  as {\it key} names.)
+
+  The \cd{define-declaration} macro does not have any special compile-time
+  side effects (see section~\ref{COMPILER-SECTION}).
+\end{defmac}
+
+\begin{defun}[Function]
+parse-macro name lambda-list body &optional env
+
+  This function is used to process a macro definition in the same way
+  as \cd{defmacro} and \cd{macrolet}.  It returns a lambda-expression that accepts
+  two arguments, a form and an environment.  The {\it name}, {\it lambda-list},
+  and {\it body} arguments correspond to the parts of a \cd{defmacro} or \cd{macrolet}
+  definition.
+
+  The {\it lambda-list} argument may include \cd{\&environment} and \cd{\&whole}
+  and may include destructuring.
+  The {\it name}
+  argument is used to enclose the {\it body} in an implicit \cd{block} and might also
+  be used for implementation-dependent purposes (such as including the name of
+  the macro in error messages if the form does not match the {\it lambda-list}).
+\end{defun}
+
+\begin{defun}[Function]
+enclose lambda-expression &optional env
+
+  This function returns an object of type \cd{function} that is equivalent to what
+  would be obtained by evaluating \cd{{\Xbq}(function ,{\it lambda-expression})}
+  in a syntactic
+  environment {\it env}.  The {\it lambda-expression} is permitted to reference only the
+  parts of the environment argument {\it env} that are relevant only to syntactic
+  processing, specifically declarations and the definitions of macros and
+  symbol macros.  The consequences are undefined if the {\it lambda-expression}
+  contains any references to variable or function bindings that are 
+  lexically visible in {\it env}, any \cd{go} to a tag that is lexically visible in 
+  {\it env}, or any \cd{return-from} mentioning a block name that is lexically 
+  visible in {\it env}.
+\end{defun}  
+\end{newer}

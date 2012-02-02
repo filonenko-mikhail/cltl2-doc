@@ -1,0 +1,4108 @@
+%Part{Number, Root = "CLM.MSS"}
+%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\begingroup
+\def\arcsinh{\mathop{\rm arcsinh}\nolimits}
+\def\arccosh{\mathop{\rm arccosh}\nolimits}
+\def\arctanh{\mathop{\rm arctanh}\nolimits}
+\def\cis{\mathop{\rm cis}\nolimits}
+\def\phase{\mathop{\rm phase}\nolimits}
+
+
+\chapter{Numbers}
+\label{NUMBER}
+
+
+Common Lisp provides several different representations for numbers.
+These representations may be divided into four categories: integers,
+ratios, floating-point numbers, and complex numbers.  Many numeric
+functions will accept any kind of number; they are {\it generic}.  Other
+functions accept only certain kinds of numbers.
+
+\begin{new}
+Note that this remark, predating the design of the Common Lisp Object System,
+uses the term ``generic'' in a generic sense and not necessarily
+in the technical sense used by CLOS
+(see chapter~\ref{DTYPES}).
+\end{new}
+
+
+
+In general, numbers in Common Lisp are not true objects; \cd{eq} cannot
+be counted upon to operate on them reliably.  In particular,
+it is possible that the expression
+\begin{lisp}
+(let ((x z) (y z)) (eq x y))
+\end{lisp}
+may be false rather than true if the value of \cd{z} is a number.
+
+\beforenoterule
+\begin{rationale}
+This odd breakdown of \cd{eq} in the case of numbers
+allows the implementor enough design freedom to produce exceptionally
+efficient numerical code on conventional architectures.
+MacLisp requires this freedom, for example, in order to produce compiled
+numerical code equal in speed to Fortran.
+Common Lisp makes this same restriction,
+if not for this freedom, then at least for the sake of compatibility.
+\end{rationale}
+\afternoterule
+
+If two objects are to be compared for ``identity,'' but either might be
+a number, then the predicate \cd{eql} is probably appropriate;
+if both objects are known to be numbers, then \cd{=}
+may be preferable.
+
+\section{Precision, Contagion, and Coercion}
+\label{PRECISION-CONTAGION-COERCION-SECTION}
+
+In general,
+computations with floating-point numbers are only approximate.
+The {\it precision} of a floating-point number is not necessarily
+correlated at all with the {\it accuracy} of that number.
+For instance, 3.142857142857142857 is a more precise approximation
+to $\pi$ than 3.14159, but the latter is more accurate.
+The precision refers to the number of bits retained in the representation.
+When an operation combines a short floating-point number with a long one,
+the result will be a long floating-point number.  This rule is made
+to ensure that as much accuracy as possible is preserved; however,
+it is by no means a guarantee.
+Common Lisp numerical routines do assume, however, that the accuracy of
+an argument does not exceed its precision.  Therefore
+when two small floating-point numbers
+are combined, the result will always be a small floating-point number.
+This assumption can be overridden by first explicitly converting
+a small floating-point number to a larger representation.
+(Common Lisp never converts automatically from a larger size to a smaller one.)
+
+Rational computations cannot overflow in the usual sense
+(though of course there may not be enough storage
+to represent one), as integers and ratios may in principle be of any magnitude.
+Floating-point computations may get exponent overflow or underflow;
+this is an error.
+
+\vskip 0pt plus 24pt
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{FLOAT-UNDERFLOW}
+to address certain problems relating to floating-point overflow and
+underflow, but certain parts of the proposed solution were not adopted, namely
+to add the macro \cd{without-floating-underflow-traps} to the language and to
+require certain behavior of floating-point overflow and underflow.
+The committee agreed that this area of the language requires more
+discussion before a solution is standardized.
+
+For the record, the proposal that was considered and rejected
+(for the nonce) introduced a macro
+\cd{without-\discretionary{}{}{}floating-\discretionary{}{}{}underflow-\discretionary{}{}{}traps}
+that would execute its body in such a way that, within its dynamic extent,
+a floating-point underflow
+must not signal an error but instead must produce
+either a denormalized number or zero as the result.
+The rejected proposal also specified the following treatment of overflow and underflow:
+\begin{itemize}
+\item A floating-point computation that overflows should signal
+  an error of type \cd{floating-point-overflow}.
+\item Unless the dynamic extent of a use of
+  \cd{without-floating-underflow-traps}, a floating-point computation that
+  underflows should signal an error of type \cd{floating-point-underflow}.  A
+  result that can be represented only in denormalized form must be considered an
+  underflow in implementations that support denormalized floating-point
+  numbers.
+\end{itemize}
+These points refer to conditions \cd{floating-point-overflow}
+and \cd{floating-\discretionary{}{}{}point-\discretionary{}{}{}underflow}
+that were approved by X3J13
+and are described in section~\ref{PREDEFINED-CONDITIONS-SECTION}.
+\end{newer}
+
+\vskip 0pt plus 24pt
+
+When rational and floating-point numbers are compared or combined by
+a numerical function, the rule of {\it floating-point contagion}
+is followed: when a rational meets a floating-point number,\vadjust{\penalty-10000}
+the rational is first converted to a floating-point number of
+the same format.  For functions such as \cd{+}
+that take more than two arguments,
+it may be that part of the operation is carried out exactly using
+rationals and then the rest is done using floating-point arithmetic.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{CONTAGION-ON-NUMERICAL-COMPARISONS}
+to apply the rule of floating-point
+contagion stated above to the case of {\it combining} rational and floating-point numbers.
+For {\it comparing}, the following rule is to be used instead:
+When a rational number and a floating-point number are to be compared
+by a numerical function, in effect the floating-point number is first
+converted to a rational number as if by the function \cd{rational},
+and then an exact comparison of two rational numbers is performed.
+It is of course valid to use a more efficient implementation than
+actually calling the function \cd{rational}, as long as the result
+of the comparison is the same.  In the case of complex numbers, the
+real and imaginary parts are handled separately.
+
+\beforenoterule
+\begin{rationale}
+In general, accuracy cannot be preserved in combining operations, but
+it can be preserved in comparisons, and preserving it makes that part
+of Common Lisp algebraically a bit more tractable.  In particular,
+this change prevents the breakdown of transitivity.
+Let \cd{a} be the result of \cd{(/~10.0 single-float-epsilon)}, and
+let \cd{j} be the result of \cd{(floor~a)}.  (Note that \cd{(=~a~(+~a~1.0))}
+is true, by the definition of \cd{single-float-epsilon}.)
+Under the old rules,
+all of \cd{(<=~a~j)}, \cd{(<~j~(+~j~1))}, and \cd{(<=~(+~j~1)~a)}
+would be true; transitivity would then imply that \cd{(<~a~a)} ought to be
+true, but of course it is false, and therefore transitivity fails.
+Under the new rule, however, \cd{(<=~(+~j~1)~a)} is false.
+\end{rationale}
+\afternoterule
+\end{new}
+
+For functions that are mathematically associative (and possibly commutative),
+a Common Lisp implementation may process the arguments in any manner consistent
+with associative (and possibly commutative) rearrangement.
+This does not affect the order in which the argument forms
+are evaluated, of course; that order is always left to right,
+as in all Common Lisp function calls.  What is left loose is the
+order in which the argument values are processed.
+The point of all this is that implementations may differ in 
+which automatic coercions are applied because of differing
+orders of argument processing.  As an example, consider this
+expression:
+\begin{lisp}
+(+ 1/3 2/3 1.0D0 1.0 1.0E-15)
+\end{lisp}
+One implementation might process the arguments from left to right,
+first adding \cd{1/3} and \cd{2/3} to get \cd{1}, then converting that
+to a double-precision floating-point number for combination
+with \cd{1.0D0}, then successively converting and adding \cd{1.0} and
+\cd{1.0E-15}.  Another implementation might process the arguments
+from right to left, first performing a single-precision floating-point addition
+of \cd{1.0} and \cd{1.0E-15} (and probably losing some accuracy
+in the process!), then converting the sum to double precision
+and adding \cd{1.0D0}, then converting \cd{2/3} to double-precision
+floating-point and adding it, and then converting \cd{1/3} and adding that.
+A third implementation might first scan all the arguments, process
+all the rationals first to keep that part of the computation exact,
+then find an argument of the largest floating-point format among all
+the arguments and add that, and then add in all other arguments,
+converting each in turn (all in a perhaps misguided attempt to make
+the computation as accurate as possible).  In any case, all three
+strategies are legitimate.  The user can of course control the order of
+processing explicitly by writing several calls; for example:
+\begin{lisp}
+(+ (+ 1/3 2/3) (+ 1.0D0 1.0E-15) 1.0)
+\end{lisp}
+The user can also control all coercions simply by writing calls
+to coercion functions explicitly.
+
+In general, then, the type of the result of a numerical function
+is a floating-point number of the largest format among all the
+floating-point arguments to the function; but if the arguments
+are all rational, then the result is rational (except for functions
+that can produce mathematically irrational results, in which case
+a single-format floating-point number may result).
+
+There is a separate rule of complex contagion.
+As a rule, complex numbers never result from a numerical function
+unless one or more of the
+arguments is complex.  (Exceptions to this
+rule occur among the irrational and transcendental functions,
+specifically \cd{expt}, \cd{log}, \cd{sqrt},
+\cd{asin}, \cd{acos}, \cd{acosh}, and \cd{atanh};
+see section~\ref{TRANSCENDENTAL-SECTION}.)
+When a non-complex number meets a complex number, the non-complex
+number is in effect first converted to a complex number by providing an
+imaginary part of zero.
+
+If any computation produces a result that is a ratio of
+two integers such that the denominator evenly divides the
+numerator, then the result is immediately converted to the equivalent
+integer.  This is called the rule of {\it rational canonicalization}.
+
+If the result of any computation would be a complex rational
+with a zero imaginary part, the result is immediately
+converted to a non-complex rational number by taking the
+real part.  This is called the rule of {\it complex canonicalization}.
+Note that this rule does {\it not} apply to complex numbers whose components
+are floating-point numbers.  Whereas \cd{\#C(5 0)} and \cd{5} are not
+distinct values in Common Lisp (they are always \cd{eql}),
+\cd{\#C(5.0 0.0)} and \cd{5.0} are always distinct values in Common Lisp
+(they are never \cd{eql}, although they are \cd{equalp}).
+
+\section{Predicates on Numbers}
+
+Each of the following functions tests a single number for
+a specific property.
+Each function requires that its argument be
+a number; to call one with a non-number is an error.
+
+\begin{defun}[Function]
+zerop number
+
+This predicate is true if {\it number} is zero (the integer zero,
+a floating-point zero, or a complex zero), and is false otherwise.
+Regardless of whether an implementation provides distinct representations
+for positive and negative floating-point zeros,
+\cd{(zerop -0.0)} is always true.
+It is an error if the argument {\it number} is not a number.
+\end{defun}
+
+\begin{defun}[Function]
+plusp number
+
+This predicate is true if {\it number} is strictly greater than zero,
+and is false otherwise.
+It is an error if the argument {\it number} is not a non-complex number.
+\end{defun}
+
+\begin{defun}[Function]
+minusp number
+
+This predicate is true if {\it number} is strictly less than zero,
+and is false otherwise.
+Regardless of whether an implementation provides distinct representations
+for positive and negative floating-point zeros,
+\cd{(minusp -0.0)} is always false.
+(The function \cd{float-sign} may be used to distinguish a negative zero.)
+It is an error if the argument {\it number} is not a non-complex number.
+\end{defun}
+
+\begin{defun}[Function]
+oddp integer
+
+This predicate is true if the argument {\it integer} is odd (not divisible
+by 2), and otherwise is false.  It is an error if the argument is not
+an integer.
+\end{defun}
+
+\begin{defun}[Function]
+evenp integer
+
+This predicate is true if the argument {\it integer} is even (divisible
+by 2), and otherwise is false.  It is an error if the argument is not
+an integer.
+\end{defun}
+
+See also the data-type predicates \cd{integerp},
+\cd{rationalp}, \cd{floatp}, \cd{complexp}, and \cd{numberp}.
+
+\section{Comparisons on Numbers}
+
+Each of the functions in this section requires that its arguments all be
+numbers; to call one with a non-number is an error.  Unless otherwise
+specified, each works on all types of numbers, automatically performing
+any required coercions when arguments are of different types.
+
+\begin{defun}[Function]
+= number &rest more-numbers \\
+/= number &rest more-numbers \\
+< number &rest more-numbers \\
+> number &rest more-numbers \\
+<= number &rest more-numbers \\
+>= number &rest more-numbers
+
+These functions each take one or more arguments.  If the sequence
+of arguments satisfies a certain condition:
+\begin{tabbing}
+\hskip 5pc\=\kill
+\cd{=}\>all the same \\
+\cd{/=}\>all different \\
+\cd{<}\>monotonically increasing \\
+\cd{>}\>monotonically decreasing \\
+\cd{<=}\>monotonically nondecreasing \\
+\cd{>=}\>monotonically nonincreasing
+\end{tabbing}
+then the predicate is true, and otherwise is false.
+Complex numbers may be compared using \cd{=} and \cd{/=},
+but the others require non-complex arguments.
+Two complex numbers are considered equal by \cd{=}
+if their real parts are equal and their imaginary parts are equal
+according to \cd{=}.
+A complex number may be compared with a non-complex number with \cd{=} or \cd{/=}.
+For example:
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+(= 3 3) {\rm is true.}\>(/= 3 3) {\rm is false.} \\
+(= 3 5) {\rm is false.}\>(/= 3 5) {\rm is true.} \\
+(= 3 3 3 3) {\rm is true.}\>(/= 3 3 3 3) {\rm is false.} \\
+(= 3 3 5 3) {\rm is false.}\>(/= 3 3 5 3) {\rm is false.} \\
+(= 3 6 5 2) {\rm is false.}\>(/= 3 6 5 2) {\rm is true.} \\
+(= 3 2 3) {\rm is false.}\>(/= 3 2 3) {\rm is false.} \\
+(< 3 5) {\rm is true.}\>(<= 3 5) {\rm is true.} \\
+(< 3 -5) {\rm is false.}\>(<= 3 -5) {\rm is false.} \\
+(< 3 3) {\rm is false.}\>(<= 3 3) {\rm is true.} \\
+(< 0 3 4 6 7) {\rm is true.}\>(<= 0 3 4 6 7) {\rm is true.} \\
+(< 0 3 4 4 6) {\rm is false.}\>(<= 0 3 4 4 6) {\rm is true.} \\
+(> 4 3) {\rm is true.}\>(>= 4 3) {\rm is true.} \\
+(> 4 3 2 1 0) {\rm is true.}\>(>= 4 3 2 1 0) {\rm is true.} \\
+(> 4 3 3 2 0) {\rm is false.}\>(>= 4 3 3 2 0) {\rm is true.} \\
+(> 4 3 1 2 0) {\rm is false.}\>(>= 4 3 1 2 0) {\rm is false.} \\
+(= 3) {\rm is true.}\>(/= 3) {\rm is true.} \\
+(< 3) {\rm is true.}\>(<= 3) {\rm is true.} \\
+(= 3.0 \#C(3.0 0.0)) {\rm is true.}\>(/= 3.0 \#C(3.0 1.0)) {\rm is true.} \\
+(= 3 3.0) {\rm is true.}\>(= 3.0s0 3.0d0) {\rm is true.} \\
+(= 0.0 -0.0) {\rm is true.}\>(= 5/2 2.5) {\rm is true.} \\
+(> 0.0 -0.0) {\rm is false.}\>(= 0 -0.0) {\rm is true.}
+\end{lisp}
+With two arguments, these functions perform the usual arithmetic
+comparison tests.
+With three or more arguments, they are useful for range checks,
+as shown in the following example:
+\begin{lisp}
+(<= 0 x 9)~~~~~~~~~~~~~~~~~~~~~~;{\rm true if \cd{x} is between 0 and 9, inclusive} \\
+(< 0.0 x 1.0)~~~~~~~~~~~~~~~~~~~;{\rm true if \cd{x} is between 0.0 and 1.0, exclusive} \\
+(< -1 j (length s))~~~~~~~~~~~~~;{\rm true if \cd{j} is a valid index for \cd{s}} \\
+(<= 0 j k (- (length s) 1))~~~~~;{\rm true if \cd{j} and \cd{k} are each valid} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~{\rm indices for \cd{s} and $\hbox{\cd{j}}\leq\hbox{\cd{k}}$}
+\end{lisp}
+
+\beforenoterule
+\begin{rationale}
+The ``unequality'' relation is called \cd{/=} rather than
+\cd{<>}
+(the name used in Pascal) for two reasons.  First, \cd{/=} of more than two
+arguments is not the same as the \cd{or} of \cd{<} and \cd{>} of those same
+arguments.  Second, unequality is meaningful for complex numbers even though
+\cd{<} and \cd{>} are not.  For both reasons it would be misleading to
+associate unequality with the names of \cd{<} and \cd{>}.
+\end{rationale}
+\betweennoterule
+\begin{incompatibility}
+In Common Lisp, the comparison operations
+perform ``mixed-mode'' comparisons: \cd{(= 3 3.0)} is true.  In MacLisp,
+there must be exactly two arguments, and they must be either both fixnums
+or both floating-point numbers.  To compare two numbers for numerical
+equality and type equality, use \cd{eql}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+max number &rest more-numbers \\
+min number &rest more-numbers
+
+The arguments may be any non-complex numbers.
+\cd{max} returns the argument that is greatest (closest
+to positive infinity).
+\cd{min} returns the argument that is least (closest to
+negative infinity).
+
+For \cd{max},
+if the arguments are a mixture of rationals and floating-point
+numbers, and the largest argument
+is a rational, then the implementation is free to
+produce either that rational or its floating-point approximation;
+if the largest argument is a floating-point number of a smaller format
+than the largest format of any floating-point argument,
+then the implementation is free to
+return the argument in its given format or expanded to the larger format.
+More concisely, the implementation has the choice of returning the largest
+argument as is or applying the rules of floating-point contagion,
+taking all the arguments into consideration for contagion purposes.
+Also, if two or more of the arguments are equal, then any one
+of them may be chosen as the value to return.
+Similar remarks apply to \cd{min} (replacing ``largest argument'' by
+``smallest argument'').
+
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+(max 6 12) \EV\ 12\>(min 6 12) \EV\ 6 \\
+(max -6 -12) \EV\ -6\>(min -6 -12) \EV\ -12 \\
+(max 1 3 2 -7) \EV\ 3\>(min 1 3 2 -7) \EV\ -7 \\
+(max -2 3 0 7) \EV\ 7\>(min -2 3 0 7) \EV\ -2 \\
+(max 3) \EV\ 3\>(min 3) \EV\ 3 \\
+(max 5.0 2) \EV\ 5.0\>(min 5.0 2) \EV\ 2 {\it or} 2.0 \\
+(max 3.0 7 1) \EV\ 7 {\it or} 7.0\>(min 3.0 7 1) \EV\ 1 {\it or} 1.0 \\
+(max 1.0s0 7.0d0) \EV\ 7.0d0 \\
+(min 1.0s0 7.0d0) \EV\ 1.0s0 {\it or} 1.0d0 \\
+(max 3 1 1.0s0 1.0d0) \EV\ 3 {\it or} 3.0d0 \\
+(min 3 1 1.0s0 1.0d0) \EV\ 1 {\it or} 1.0s0 {\it or} 1.0d0
+\end{lisp}
+\end{defun}
+
+\section{Arithmetic Operations}
+
+Each of the functions in this section requires that its arguments all be
+numbers; to call one with a non-number is an error.  Unless otherwise
+specified, each works on all types of numbers, automatically performing
+any required coercions when arguments are of different types.
+
+\begin{defun}[Function]
++ &rest numbers
+
+This returns the sum of the arguments.  If there are no arguments, the result
+is \cd{0}, which is an identity for this operation.
+
+\beforenoterule
+\begin{incompatibility}
+While \cd{+} is compatible with its use in Lisp Machine Lisp,
+it is incompatible with MacLisp, which uses \cd{+} for fixnum-only
+addition.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+- number &rest more-numbers
+
+The function \cd{-}, when given one argument, returns the negative
+of that argument.
+
+The function \cd{-}, when given more than one argument, successively subtracts
+from the first argument all the others, and returns the result.
+For example, \cd{(- 3 4 5)} \EV\ \cd{-6}.
+
+\beforenoterule
+\begin{incompatibility}
+While \cd{-} is compatible with its use in Lisp Machine Lisp,
+it is incompatible with MacLisp, which uses \cd{-} for fixnum-only
+subtraction.
+Also, \cd{-} differs from \cd{difference} as used in most Lisp
+systems in the case of one argument.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+* &rest numbers
+
+This returns the product of the arguments.
+If there are no arguments, the result
+is \cd{1}, which is an identity for this operation.
+
+\beforenoterule
+\begin{incompatibility}
+While \cd{*} is compatible with its use in Lisp Machine Lisp,
+it is incompatible with MacLisp, which uses \cd{*} for fixnum-only
+multiplication.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+/ number &rest more-numbers
+
+The function \cd{/}, when given more than one argument, successively divides
+the first argument by all the others and returns the result.
+
+\begin{new}%CORR
+It is generally accepted that it is an error for any argument other than the
+first to be zero.
+\end{new}
+
+With one argument, \cd{/} reciprocates the argument.
+
+\begin{new}%CORR
+It is generally accepted that it is an error in this case for the argument
+to be zero.
+\end{new}
+
+\cd{/} will produce a ratio if the mathematical quotient of two integers
+is not an exact integer.  For example:
+\begin{lisp}
+(/ 12 4) \EV\ 3 \\
+(/ 13 4) \EV\ 13/4 \\
+(/ -8) \EV\ -1/8 \\
+(/ 3 4 5) \EV\ 3/20
+\end{lisp}
+To divide one integer by another producing an integer result,
+use one of the functions \cd{floor}, \cd{ceiling}, \cd{truncate},
+or \cd{round}.
+
+If any argument is a floating-point number,
+then the rules of floating-point contagion apply.
+
+\beforenoterule
+\begin{incompatibility}
+What \cd{/} does is totally unlike what the usual
+\cd{//} or \cd{quotient} operator does.  In most Lisp systems,
+\cd{quotient} behaves like \cd{/} except when dividing integers,
+in which case it behaves like \cd{truncate} of two arguments;
+this behavior is mathematically intractable, leading to such
+anomalies as
+\begin{lisp}
+(quotient 1.0 2.0) \EV\ 0.5   {\rm but}   (quotient 1 2) \EV\ 0
+\end{lisp}
+In contrast, the Common Lisp function \cd{/} produces these results:
+\begin{lisp}
+(/ 1.0 2.0) \EV\ 0.5          {\rm and}   (/ 1 2) \EV\ 1/2
+\end{lisp}
+In practice \cd{quotient} is used only when one is sure that both arguments
+are integers, {\it or} when one is sure that at least one argument
+is a floating-point number.  \cd{/} is tractable for its purpose
+and works for {\it any} numbers.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+1+ number \\
+1- number
+
+\cd{(1+ {\it x})} is the same as \cd{(+ {\it x} 1)}.
+
+\cd{(1- {\it x})} is the same as \cd{(- {\it x} 1)}.
+Note that the short name may be confusing: \cd{(1- {\it x})} does {\it not} mean
+$1-{\it x}$; rather, it means ${\it x}-1$.
+
+\beforenoterule
+\begin{rationale}
+These are included primarily for compatibility with MacLisp
+and Lisp Machine Lisp.  Some programmers prefer always to write \cd{(+ x 1)} and
+\cd{(- x 1)} instead of \cd{(1+ x)} and \cd{(1- x)}.
+\end{rationale}
+\betweennoterule
+\begin{implementation}
+Compiler writers are very strongly encouraged to ensure
+that \cd{(1+ x)} and \cd{(+ x 1)} compile into identical code, and
+similarly for \cd{(1- x)} and \cd{(- x 1)}, to avoid pressure on a Lisp
+programmer to write possibly less clear code for the sake of efficiency.
+This can easily be done as a source-language transformation.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defmac}
+incf place [delta] \\
+decf place [delta]
+
+The number produced by the form {\it delta}
+is added to (\cd{incf}) or subtracted from (\cd{decf})
+the number in the generalized variable named by {\it place},
+and the sum is stored back into {\it place} and returned.
+The form {\it place} may be any form acceptable
+as a generalized variable to \cd{setf}.
+If {\it delta} is not supplied, then the number in {\it place} is changed
+by \cd{1}.
+For example:
+\begin{lisp}
+\hskip 9pc\=\kill
+(setq n 0) \\
+(incf n) \EV\ 1\>{\rm and now} n \EV\ 1 \\
+(decf n 3) \EV\ -2\>{\rm and now} n \EV\ -2 \\
+(decf n -5) \EV\ 3\>{\rm and now} n \EV\ 3 \\
+(decf n) \EV\ 2\>{\rm and now} n \EV\ 2
+\end{lisp}
+The effect of \cd{(incf {\it place} {\it delta})}
+is roughly equivalent to
+\begin{lisp}
+(setf {\it place} (+ {\it place} {\it delta}))
+\end{lisp}
+except that the latter would evaluate any subforms of {\it place}
+twice, whereas \cd{incf} takes care to evaluate them only once.
+Moreover, for certain {\it place} forms \cd{incf} may be
+significantly more efficient than the \cd{setf} version.
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+\end{defmac}
+
+\begin{defun}[Function]
+conjugate number
+
+This returns the complex conjugate of {\it number}.  The conjugate
+of a non-complex number is itself.  For a complex number \cd{z},
+\begin{lisp}
+(conjugate z) \EQ\ (complex (realpart z) (- (imagpart z)))
+\end{lisp}
+For example:
+\begin{lisp}
+(conjugate \#C(3/5 4/5)) \EV\ \#C(3/5 -4/5) \\
+(conjugate \#C(0.0D0 -1.0D0)) \EV\ \#C(0.0D0 1.0D0) \\
+(conjugate 3.7) \EV\ 3.7
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+gcd &rest integers
+
+This returns the greatest common divisor of all the arguments,
+which must be integers.  The result of \cd{gcd} is always a non-negative
+integer.
+If one argument is given, its absolute value is returned.
+If no arguments are given, \cd{gcd} returns \cd{0},
+which is an identity for this operation.
+For three or more arguments,
+\begin{lisp}
+(gcd {\it a} {\it b} {\it c} ... {\it z}) \EQ\ (gcd (gcd {\it a} {\it b}) {\it c} ... {\it z})
+\end{lisp}
+
+Here are some examples of the use of \cd{gcd}:
+\begin{lisp}
+(gcd 91 -49) \EV\ 7 \\
+(gcd 63 -42 35) \EV\ 7 \\
+(gcd 5) \EV\ 5 \\
+(gcd -4) \EV\ 4 \\
+(gcd) \EV\ 0
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+lcm integer &rest more-integers
+
+This returns the least common multiple of its arguments,
+which must be integers.
+The result of \cd{lcm} is always a non-negative integer.
+For two arguments that are not both zero,
+\begin{lisp}
+(lcm {\it a} {\it b}) \EQ\ (/ (abs (* {\it a} {\it b})) (gcd {\it a} {\it b}))
+\end{lisp}
+If one or both arguments are zero,
+\begin{lisp}
+(lcm {\it a} 0) \EQ\ (lcm 0 {\it a}) \EQ\ 0
+\end{lisp}
+
+For one argument, \cd{lcm} returns the absolute value of that argument.
+For three or more arguments,
+\begin{lisp}
+(lcm {\it a} {\it b} {\it c} ... {\it z}) \EQ\ (lcm (lcm {\it a} {\it b}) {\it c} ... {\it z})
+\end{lisp}
+
+Some examples:
+\begin{lisp}
+(lcm 14 35) \EV\ 70 \\
+(lcm 0 5) \EV\ 0 \\
+(lcm 1 2 3 4 5 6) \EV\ 60
+\end{lisp}
+
+Mathematically, \cd{(lcm)} should return infinity.  Because Common Lisp
+does not have a representation for infinity, \cd{lcm}, unlike \cd{gcd},
+always requires at least one argument.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{LCM-NO-ARGUMENTS}
+to specify that \cd{(lcm)~\EV~1}.
+
+This is one of my biggest boners.  The identity for \cd{lcm} is of course 1,
+not infinity, and so \cd{(lcm)} ought to have been defined to return 1.
+Sorry about that, though in point of fact very few users have complained
+to me that this mistake in the first edition has cramped their programming style.
+\end{new}
+\end{defun}
+
+\section{Irrational and Transcendental Functions}
+\label{TRANSCENDENTAL-SECTION}
+
+Common Lisp provides no data type that can accurately represent irrational
+numerical values.
+The functions in this section are described as if the results
+were mathematically accurate, but actually they all produce floating-point
+approximations to the true mathematical result in the general case.
+In some places
+mathematical identities are set forth that are intended to elucidate the
+meanings of the functions; however, two mathematically identical
+expressions may be computationally different because of errors
+inherent in the floating-point approximation process.
+
+When the arguments to
+a function in this section are all rational and the true mathematical result
+is also (mathematically) rational, then unless otherwise noted
+an implementation is free to return either an accurate result of
+type \cd{rational} or a single-precision floating-point approximation.
+If the arguments are all rational but the result cannot be expressed
+as a rational number, then a single-precision floating-point
+approximation is always returned.
+
+\begin{newer}
+X3J13 voted in March 1989
+\issue{COMPLEX-RATIONAL-RESULT}
+to clarify that the provisions of the previous paragraph apply to complex
+numbers.  If the arguments to a function are all of type
+\cd{(or~rational (complex rational))} and the true mathematical result
+is (mathematically) a complex number with rational real
+and imaginary parts, then unless otherwise noted
+an implementation is free to return either an accurate result of
+type \cd{(or rational (complex rational))}
+or a single-precision floating-point approximation
+of type \cd{single-float} (permissible only if the imaginary part
+of the true mathematical result is zero) or \cd{(complex single-float)}.
+If the arguments are all of type
+\cd{(or~rational (complex rational))} but the result cannot be expressed
+as a rational or complex rational number, then the returned value
+will be of type \cd{single-float} (permissible only if the imaginary part
+of the true mathematical result is zero) or \cd{(complex single-float)}.
+\end{newer}
+
+The rules of floating-point contagion and complex contagion are 
+effectively obeyed by all the functions in this section except \cd{expt},
+which treats some cases of rational exponents specially.
+When, possibly after contagious conversion, all of the arguments are of
+the same floating-point or complex floating-point type,
+then the result will be of that same type unless otherwise noted.
+
+\beforenoterule
+\begin{implementation}
+There is a ``floating-point cookbook'' by
+Cody and Waite \cite{CODY-AND-WAITE} that may be a useful aid
+in implementing the functions defined in this section.
+\end{implementation}
+\afternoterule
+
+\subsection{Exponential and Logarithmic Functions}
+
+Along with the usual one-argument and two-argument exponential and
+logarithm functions, \cd{sqrt} is considered to be an exponential
+function, because it raises a number to the power 1/2.
+
+\begin{defun}[Function]
+exp number
+
+Returns {\it e} raised to the power {\it number},
+where {\it e} is the base of the natural logarithms.
+\end{defun}
+
+\begin{defun}[Function]
+expt base-number power-number
+
+Returns {\it base-number} raised to the power {\it power-number}.
+If the {\it base-number} is of type \cd{rational} and the {\it power-number} is
+an \cd{integer},
+the calculation will be exact and the result will be of type \cd{rational};
+otherwise a floating-point approximation may result.
+
+\begin{newer}
+X3J13 voted in March 1989
+\issue{COMPLEX-RATIONAL-RESULT}
+to clarify that provisions similar to those of the previous paragraph apply to complex
+numbers.  If the {\it base-number} is of type \cd{(complex~rational)}
+and the {\it power-number} is
+an \cd{integer},
+the calculation will also be exact and the result will be of type
+\cd{(or~rational (complex rational))};
+otherwise a floating-point or complex floating-point approximation may result.
+\end{newer}
+
+When {\it power-number} is \cd{0} (a zero of type integer),
+then the result is always the value 1 in the type of {\it base-number},
+even if the {\it base-number} is zero (of any type).  That is:
+\begin{lisp}
+(expt {\it x} 0) \EQ\ (coerce 1 (type-of {\it x}))
+\end{lisp}
+If the {\it power-number} is a zero of any other data type,
+then the result is also the value 1, in the type of the arguments
+after the application of the contagion rules, with one exception:
+it is an error if {\it base-number} is zero when the {\it power-number}
+is a zero not of type integer.
+
+Implementations of \cd{expt} are permitted to use different algorithms
+for the cases of a rational {\it power-number} and a floating-point
+{\it power-number}; the motivation is that in many cases greater accuracy
+can be achieved for the case of a rational {\it power-number}.
+For example, \cd{(expt pi 16)} and \cd{(expt pi 16.0)} may yield
+slightly different results if the first case is computed by repeated squaring
+and the second by the use of logarithms.  Similarly, an implementation
+might choose to compute \cd{(expt x 3/2)} as if it had
+been written \cd{(sqrt (expt x 3))}, perhaps producing a more accurate
+result than would \cd{(expt x 1.5)}.  It is left to the implementor
+to determine the best strategies.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{EXPT-RATIO}
+to clarify that the preceding remark is in
+error, because \cd{(sqrt (expt~x~3))} does not produce the same value
+as \cd{(expt~x~3/2)} in most cases, and to specify that the
+specification of the principal value of \cd{expt} as given in section~\ref{BRANCH-CUTS-SECTION}
+should be regarded as definitive.
+
+As an example of the difficulty, let
+\( {\it x}=\cis {2 \pi \over 3}= -{1 \over 2} + {\sqrt{3} \over 2}{\it i} \).
+Then \( \sqrt{{\it x}^3} = \sqrt{1} = 1 \), but
+\( {\it x}^{3 / 2} = {\it e}^{(3/2) \log {\hbox{\scriptsize\it x}}}
+   = {\it e}^{(3/2) (2\pi/3) \hbox{\scriptsize\it i}} = {\it e}^{\pi \hbox{\scriptsize\it i}} = -1 \).
+Another example is ${\it x}=-1$; then \( \sqrt{{\it x}^3} = \sqrt{-1} = {\it i} \), but
+\( {\it x}^{3/2} = {\it e}^{(3 / 2) \log {\hbox{\scriptsize\it x}}}
+   = {\it e}^{(3/2) \pi \hbox{\scriptsize\it \hbox{\scriptsize\it i}}} = -{\it i} \).
+\end{new}
+
+The result of \cd{expt} can be a complex number, even when neither argument
+is complex, if {\it base-number} is negative and {\it power-number}
+is not an integer.  The result is always the principal complex value.
+Note that \cd{(expt -8 1/3)} is not permitted to return \cd{-2};
+while \cd{-2} is indeed one of the cube roots of \cd{-8}, it is
+not the principal cube root, which is a complex number
+approximately equal to \cd{\#C(1.0 1.73205)}.
+
+\begin{new}%CORR
+{\it Notice of correction.}  The first edition gave the incorrect value
+\cd{\#C(0.5 1.73205)} for the principal cube root of \cd{-8}.  The correct
+value is \cd{\#C(1.0 1.73205)}, that is, $1+\sqrt{3}{\it i}$.  I simply don't know what
+I was thinking of!
+\end{new}
+\end{defun}
+
+
+\begin{defun}[Function]
+log number &optional base
+
+Returns the logarithm of {\it number} in the base {\it base},
+which defaults to {\it e}, the base of the natural logarithms.
+For example:
+\begin{lisp}
+(log 8.0 2) \EV\ 3.0 \\
+(log 100.0 10) \EV\ 2.0
+\end{lisp}
+The result of \cd{(log 8 2)} may be either \cd{3} or \cd{3.0}, depending on the
+implementation.
+
+Note that \cd{log} may return a complex result when given a non-complex
+argument if the argument is negative.  For example:
+\begin{lisp}
+(log -1.0) \EQ\ (complex 0.0 (float pi 0.0))
+\end{lisp}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of complex logarithm
+in terms of real logarithm, absolute value,
+arc tangent of two real arguments, and the phase function as
+\begin{tabbing}
+\hskip 10pc\=\kill
+Logarithm\>\( \log \left| {\it z} \right| + {\it i} \phase {\it z} \)
+\end{tabbing}
+This specifies the branch cuts precisely whether minus zero is supported or not;
+see \cd{phase} and \cd{atan}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+sqrt number
+
+Returns the principal square root of {\it number}.
+If the {\it number} is not complex but is negative, then the result
+will be a complex number.
+For example:
+\begin{lisp}
+(sqrt 9.0) \EV\ 3.0 \\
+(sqrt -9.0) \EV\ \#c(0.0 3.0)
+\end{lisp}
+The result of \cd{(sqrt 9)} may be either \cd{3} or \cd{3.0}, depending on the
+implementation.  The result of \cd{(sqrt -9)} may be either \cd{\#c(0 3)}
+or \cd{\#c(0.0 3.0)}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of complex square root
+in terms of complex logarithm and exponential functions as
+\begin{tabbing}
+\hskip 10pc\=\kill
+Square root\>\( {\it e}^{(\log \hbox{\scriptsize\it z})/2} \)
+\end{tabbing}
+This specifies the branch cuts precisely whether minus zero is supported or not;
+see \cd{phase} and \cd{atan}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+isqrt integer
+
+Integer square root: the argument must be a non-negative integer, and the
+result is the greatest integer less than or equal to the exact positive
+square root of the argument.
+For example:
+\begin{lisp}
+(isqrt 9) \EV\ 3 \\
+(isqrt 12) \EV\ 3 \\
+(isqrt 300) \EV\ 17 \\
+(isqrt 325) \EV\ 18
+\end{lisp}
+\end{defun}
+
+\subsection{Trigonometric and Related Functions}
+
+Some of the functions in this section, such as \cd{abs}
+and \cd{signum}, are apparently unrelated
+to trigonometric functions when considered as functions of
+real numbers only.  The way in which they are extended to
+operate on complex numbers makes the trigonometric connection clear.
+
+\begin{defun}[Function]
+abs number
+
+Returns the absolute value of the argument.  For a non-complex number {\it x},
+\begin{lisp}
+(abs {\it x}) \EQ\ (if (minusp {\it x}) (- {\it x}) {\it x})
+\end{lisp}
+and the result is always of the same type as the argument.
+
+For a complex number {\it z}, the absolute value may be computed as
+\begin{lisp}
+(sqrt (+ (expt (realpart {\it z}) 2) (expt (imagpart {\it z}) 2)))
+\end{lisp}
+
+\beforenoterule
+\begin{implementation}
+The careful implementor will not use this formula directly
+for all complex numbers
+but will instead handle very large or very small components specially
+to avoid intermediate overflow or underflow.
+\end{implementation}
+\afternoterule
+
+For example:
+\begin{lisp}
+(abs \#c(3.0 -4.0)) \EV\ 5.0
+\end{lisp}
+The result of \cd{(abs \#c(3 4))} may be either \cd{5} or \cd{5.0},
+depending on the implementation.
+\end{defun}
+
+\begin{defun}[Function]
+phase number
+
+The phase of a number is the angle part of its polar representation
+as a complex number.  That is,
+\begin{lisp}
+(phase {\it z}) \EQ\ (atan (imagpart {\it z}) (realpart {\it z}))
+\end{lisp}
+\begin{obsolete}
+The result is in radians, in the range $-\pi$ (exclusive)
+to $\pi$ (inclusive).  The phase of a positive non-complex number
+is zero; that of a negative non-complex number is $\pi$.
+The phase of zero is arbitrarily defined to be zero.
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported;
+\cd{phase} is still defined in terms of \cd{atan} as above,
+but thanks to a change in \cd{atan} the range of \cd{phase}
+becomes $-\pi$ {\it inclusive} to $\pi$ inclusive.  The value $-\pi$
+results from an argument\vadjust{\penalty-10000}
+whose real part is negative and whose imaginary
+part is minus zero.  The \cd{phase} function therefore has a branch cut
+along the negative real axis.  The phase of $+0+0{\it i}$ is $+0$, of $+0-0{\it i}$ is $-0$,
+of $-0+0{\it i}$ is $+\pi$, and of $-0-0{\it i}$ is $-\pi$.
+\end{new}
+
+If the argument is a complex floating-point number, the result
+is a floating-point number of the same type as the components of
+the argument.
+If the argument is a floating-point number, the result is a
+floating-point number of the same type.
+If the argument is a rational number or complex rational number, the result
+is a single-format floating-point number.
+\end{defun}
+
+\begin{defun}[Function]
+signum number
+
+By definition,
+\begin{lisp}
+(signum {\it x}) \EQ\ (if (zerop {\it x}) {\it x} (/ {\it x} (abs {\it x})))
+\end{lisp}
+For a rational number, \cd{signum} will return one of \cd{-1}, \cd{0}, or \cd{1}
+according to whether the number is negative, zero, or positive.
+For a floating-point number, the result will be a floating-point number
+of the same format whose value is $-1$, $0$, or $1$.
+For a complex number {\it z}, \cd{(signum {\it z})} is a complex number of
+the same phase but with unit magnitude, unless {\it z} is a complex zero,
+in which case the result is {\it z}.
+For example:
+\begin{lisp}
+(signum 0) \EV\ 0 \\
+(signum -3.7L5) \EV\ -1.0L0 \\
+(signum 4/5) \EV\ 1 \\
+(signum \#C(7.5 10.0)) \EV\ \#C(0.6 0.8) \\
+(signum \#C(0.0 -14.7)) \EV\ \#C(0.0 -1.0)
+\end{lisp}
+For non-complex rational numbers, \cd{signum} is a rational function,
+but it may be irrational for complex arguments.
+\end{defun}
+
+\begin{defun}[Function]
+sin radians \\
+cos radians \\
+tan radians
+
+\cd{sin} returns the sine of the argument, \cd{cos} the cosine,
+and \cd{tan} the tangent.  The argument is in radians.
+The argument may be complex.
+\end{defun}
+
+\begin{defun}[Function]
+cis radians
+
+This computes \( {\it e} ^ {\hbox{\scriptsize\it i} \cdot \hbox{\scriptsize\it radians}} \).
+The name \cd{cis} means ``cos + {\it i} sin,'' because
+\( {\it e} ^{ \hbox{\scriptsize\it i} \theta } = \cos \theta + {\it i} \sin \theta \).
+The argument is in
+radians and may be any non-complex number.  The result is a complex
+number whose real part is the cosine of the argument and whose imaginary
+part is the sine.  Put another way, the result is a complex number whose
+phase is the equal to the argument (mod $2\pi$)
+and whose magnitude is unity.
+
+\beforenoterule
+\begin{implementation}
+Often it is cheaper to calculate the sine and cosine
+of a single angle together than to perform two disjoint calculations.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+asin number \\
+acos number
+
+\cd{asin} returns the arc sine of the argument, and \cd{acos} the arc cosine.
+The result is in radians.  The argument may be complex.
+
+The arc sine and arc cosine functions may be defined mathematically for
+an argument {\it z} as follows:
+\begin{tabbing}
+\hskip 10pc\=\kill
+Arc sine\>\( -{\it i} \log \left({\it i}{\it z} + \sqrt{1-{\it z}^2}\right) \) \\[2pt]
+Arc cosine\>\( -{\it i} \log \left({\it z} + {\it i}\sqrt{1-{\it z}^2}\right) \)
+\end{tabbing}
+Note that the result of \cd{asin} or \cd{acos} may be
+complex even if the argument is not complex; this occurs
+when the absolute value of the argument is greater than 1.
+
+\begin{newer}
+Kahan \cite{KAHAN-COMPLEX-FNS} suggests for \cd{acos} the
+defining formula
+\begin{tabbing}
+\hskip 10pc\=\kill
+Arc cosine\>\(  \displaystyle { 2 \log \left( \sqrt{{1+{\it z} \over 2}} + {\it i} \sqrt{{1-{\it z} \over 2}} \right) \over i}\)
+\end{tabbing}
+or even the much simpler \( (\pi/2)-\arcsin {\it z} \).  Both equations are mathematically
+equivalent to the formula shown above.
+\end{newer}
+
+\beforenoterule
+\begin{implementation}
+These formulae are mathematically correct, assuming
+completely accurate computation.  They may be terrible methods for
+floating-point computation.  Implementors should consult a good text on
+numerical analysis.  The formulae given above are not necessarily
+the simplest ones for real-valued computations, either; they are chosen
+to define the branch cuts in desirable ways for the complex case.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+atan y &optional x
+
+An arc tangent is calculated and the result is returned in radians.
+
+With two arguments {\it y} and {\it x}, neither argument may be complex.
+The result is the arc tangent of the quantity {\it y/x}.
+The signs of {\it y} and {\it x} are used to derive quadrant
+information; moreover, {\it x} may be zero provided
+{\it y} is not zero.  The value of \cd{atan} is always between
+$-\pi$ (exclusive) and $\pi$ (inclusive).
+The following table details various special cases.
+
+\begin{flushleft}
+\begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}llc@{}}
+\multicolumn{2}{c}{Condition}&Cartesian Locus&Range of Result \\
+\hlinesp
+\hbox to 0.4in{${\it y}=0$\hss}&\hbox to 0.4in{${\it x}>0$\hss}&\hbox to 1.6in{Positive {\it x}-axis\hss}&$0$ \\
+${\it y}>0$&${\it x}>0$&Quadrant I&$0 < {\rm result} < \pi/2$ \\
+${\it y}>0$&${\it x}=0$&Positive {\it y}-axis&$\pi/2$ \\
+${\it y}>0$&${\it x}<0$&Quadrant II&$\pi/2 < {\rm result} < \pi$ \\
+${\it y}=0$&${\it x}<0$&Negative {\it x}-axis&$\pi$ \\
+${\it y}<0$&${\it x}<0$&Quadrant III&$-\pi < {\rm result} < -\pi/2$ \\
+${\it y}<0$&${\it x}=0$&Negative {\it y}-axis&$-\pi/2$ \\
+${\it y}<0$&${\it x}>0$&Quadrant IV&$-\pi/2 < {\rm result} < 0$ \\
+${\it y}=0$&${\it x}=0$&Origin&error \\
+\hline
+\end{tabular*}
+\end{flushleft}
+\vskip 0pt plus 6pt\relax%manual
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+When there is a minus zero, the preceding table must be modified slightly:
+
+\begin{flushleft}
+\begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}llc@{}}
+\multicolumn{2}{c}{Condition}&Cartesian Locus&Range of Result \\
+\hlinesp
+\hbox to 0.4in{${\it y}=+0$\hss}&\hbox to 0.4in{${\it x}>0$\hss}&\hbox to 1.6in{Just above positive {\it x}-axis\hss}&$+0$ \\
+${\it y}>0$&${\it x}>0$&Quadrant I&$+0 < {\rm result} < \pi/2$ \\
+${\it y}>0$&${\it x}=\pm 0$&Positive {\it y}-axis&$\pi/2$ \\
+${\it y}>0$&${\it x}<0$&Quadrant II&$\pi/2 < {\rm result} < \pi$ \\
+${\it y}=+0$&${\it x}<0$&Just below negative {\it x}-axis&$\pi$ \\
+${\it y}=-0$&${\it x}<0$&Just above negative {\it x}-axis&$\pi$ \\
+${\it y}<0$&${\it x}<0$&Quadrant III&$-\pi < {\rm result} < -\pi/2$ \\
+${\it y}<0$&${\it x}=\pm 0$&Negative {\it y}-axis&$-\pi/2$ \\
+${\it y}<0$&${\it x}>0$&Quadrant IV&$-\pi/2 < {\rm result} < -0$ \\
+${\it y}=-0$&${\it x}>0$&Just below positive {\it x}-axis&$-0$ \\
+${\it y}=+0$&${\it x}=+0$&Near origin&$+0$ \\
+${\it y}=-0$&${\it x}=+0$&Near origin&$-0$ \\
+${\it y}=+0$&${\it x}=-0$&Near origin&$\pi$ \\
+${\it y}=-0$&${\it x}=-0$&Near origin&$-\pi$ \\
+\hline
+\end{tabular*}
+\end{flushleft}
+\vskip 0pt plus 6pt\relax%manual
+
+Note that the case ${\it y}=0,{\it x}=0$ is an error in the absence of minus zero,
+but the four cases ${\it y}=\pm 0,{\it x}=\pm 0$ are defined in the presence of minus zero.
+\end{new}
+
+\begin{obsolete}
+With only one argument {\it y}, the argument may be complex.
+The result is the arc tangent of {\it y}, which may be defined by
+the following formula:
+\begin{tabbing}
+\hskip 10pc\=\kill
+Arc tangent\>\( -{\it i}\log \left((1+{\it i}{\it y}) \sqrt{1/(1+{\it y}^2)}\right) \)
+\end{tabbing}
+\end{obsolete}
+
+\newpage%manual
+
+\beforenoterule
+\begin{implementation}
+This formula is mathematically correct, assuming
+completely accurate computation.  It may be a terrible method for
+floating-point computation.  Implementors should consult a good text on
+numerical analysis.  The formula given above is not necessarily
+the simplest one for real-valued computations, either; it is chosen
+to define the branch cuts in desirable ways for the complex case.
+\end{implementation}
+\afternoterule
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{COMPLEX-ATAN-BRANCH-CUT}
+to replace the preceding formula with the formula
+\begin{tabbing}
+\hskip 10pc\=\kill
+Arc tangent\>\( \displaystyle { \log (1+{\it i}{\it y}) - \log (1-{\it i}{\it y}) \over 2{\it i} } \)
+\end{tabbing}
+This change alters the direction of continuity for the
+branch cuts, which alters the result returned by \cd{atan}
+only for arguments on the imaginary axis that
+are of magnitude greater than 1.
+See section~\ref{BRANCH-CUTS-SECTION} for further details.
+\end{new}
+
+For a non-complex argument {\it y}, the result is non-complex and lies between
+$-\pi/2$ and $\pi/2$ (both exclusive).
+
+\beforenoterule
+\begin{incompatibility}
+MacLisp has a function called \cd{atan} whose
+range is from 0 to $2\pi$.  Almost every other programming language
+(ANSI Fortran, IBM PL/1, Interlisp) has a two-argument arc tangent
+function with range $-\pi$ to $\pi$.
+Lisp Machine Lisp provides two two-argument
+arc tangent functions, \cd{atan} (compatible with MacLisp)
+and \cd{atan2} (compatible with all others).
+
+Common Lisp makes two-argument \cd{atan} the standard one
+with range $-\pi$ to $\pi$.  Observe that this makes
+the one-argument and two-argument versions of \cd{atan} compatible
+in the sense that the branch cuts do not fall in different places.
+The Interlisp one-argument function \cd{arctan} has a range
+from 0 to $\pi$, while nearly every other programming language
+provides the range $-\pi/2$ to $\pi/2$ for
+one-argument arc tangent!
+Nevertheless, since Interlisp uses the standard two-argument
+version of arc tangent, its branch cuts are inconsistent anyway.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Constant]
+pi
+
+This global variable has as its value the best possible approximation to
+$\pi$ in {\it long} floating-point format.
+For example:
+\begin{lisp}
+(defun sind (x)~~~~~;{\rm The argument is in degrees} \\
+~~(sin (* x (/ (float pi x) 180))))
+\end{lisp}
+An approximation to $\pi$ in some other precision can
+be obtained by writing \cd{(float pi {\it x})}, where {\it x} is a
+floating-point number of the desired precision,
+or by writing \cd{(coerce pi {\it type})}, where {\it type} is the
+name of the desired type, such as \cd{short-float}.
+\end{defun}
+
+\penalty-10000\relax
+
+\begin{defun}[Function]
+sinh number \\
+cosh number \\
+tanh number \\
+asinh number \\
+acosh number \\
+atanh number
+
+\begin{obsolete}\noindent
+These functions compute the hyperbolic sine, cosine, tangent,
+arc sine, arc cosine, and arc tangent functions, which are mathematically
+defined for an argument {\it z} as follows:
+
+\begin{tabbing}
+\hskip 10pc\=\kill
+Hyperbolic sine\>\( ({\it e}^{\hbox{\scriptsize\it z}}-{\it e}^{-\hbox{\scriptsize\it z}})/2 \) \\
+Hyperbolic cosine\>\( ({\it e}^{\hbox{\scriptsize\it z}}+{\it e}^{-\hbox{\scriptsize\it z}})/2 \) \\
+Hyperbolic tangent\>\( ({\it e}^{\hbox{\scriptsize\it z}}-{\it e}^{-\hbox{\scriptsize\it z}})/({\it e}^{\hbox{\scriptsize\it z}}+{\it e}^{-\hbox{\scriptsize\it z}}) \) \\[2pt]
+Hyperbolic arc sine\>\( \log \left({\it z}+\sqrt{1+{\it z}^2}\right) \) \\[2pt]
+Hyperbolic arc cosine\>\( \log \left({\it z}+({\it z}+1)\sqrt{({\it z}-1)/({\it z}+1)}\right) \) \\[2pt]
+Hyperbolic arc tangent\>\( \log \left((1+{\it z})\sqrt{1-1/{\it z}^2}\right) \)\`{\bf WRONG!}
+\end{tabbing}
+\end{obsolete}
+
+\begin{newer}
+WARNING!  {\it The formula shown above for hyperbolic arc tangent is incorrect.}
+It is not a matter of incorrect branch cuts; it simply does not compute anything
+like a hyperbolic arc tangent.  This unfortunate error in the first edition
+was the result of mistranscribing a (correct) APL formula from Penfield's paper
+\cite{APL-BRANCH-CUTS}.  The formula should have been transcribed as
+\begin{tabbing}
+\hskip 10pc\=\kill
+Hyperbolic arc tangent\>\( \log \left((1+{\it z})\sqrt{1/(1-{\it z}^2)}\right) \)
+\end{tabbing}
+A proposal was submitted to X3J13 in September 1989 to replace the
+formulae for \cd{acosh} and \cd{atanh}.
+See section~\ref{BRANCH-CUTS-SECTION} for further discussion.
+\end{newer}
+
+Note that the result of \cd{acosh} may be
+complex even if the argument is not complex; this occurs
+when the argument is less than 1.
+Also, the result of \cd{atanh} may be
+complex even if the argument is not complex; this occurs
+when the absolute value of the argument is greater than 1.
+
+\beforenoterule
+\begin{implementation}
+These formulae are mathematically correct, assuming
+completely accurate computation.  They may be terrible methods for
+floating-point computation.  Implementors should consult a good text on
+numerical analysis.  The formulae given above are not necessarily
+the simplest ones for real-valued computations, either; they are chosen
+to define the branch cuts in desirable ways for the complex case.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\subsection{Branch Cuts, Principal Values, and Boundary Conditions in the Complex Plane}
+\label{BRANCH-CUTS-SECTION}
+
+
+
+Many of the irrational and transcendental functions are multiply defined
+in the complex domain; for example, there are in general an infinite
+number of complex values for the logarithm function.  In each such
+case, a principal value must be chosen for the function to return.
+In general, such values cannot be chosen so as to make the range
+continuous; lines in the domain
+called {\it branch cuts} must be defined, which in turn
+define the discontinuities in the range.
+
+Common Lisp defines the branch cuts, principal values, and boundary
+conditions for the complex functions following
+a proposal for complex functions in APL \cite{APL-BRANCH-CUTS}.
+The contents of this section are borrowed largely from that proposal.
+
+\beforenoterule
+\begin{incompatibility}
+The branch cuts defined here differ in a few very minor
+respects from those advanced by W.~Kahan, who considers not only the
+``usual'' definitions but also the special modifications necessary for
+{IEEE} proposed floating-point arithmetic, which has infinities and
+minus zero as explicit computational objects.  For example, he proposes
+that $\sqrt{-4+0{\it i}}=2{\it i}$, but $\sqrt{-4-0{\it i}}=-2{\it i}$.
+
+It may be that the differences between the APL proposal and Kahan's
+proposal will be ironed out.  If so, Common Lisp may be
+changed as necessary to be compatible with these other groups.  Any changes
+from the specification below are likely to be quite minor,
+probably concerning primarily questions of which side of a branch cut
+is continuous with the cut itself.
+\end{incompatibility}
+\afternoterule
+
+\begin{new}
+Indeed, X3J13 voted in January 1989
+\issue{COMPLEX-ATAN-BRANCH-CUT}
+to alter the direction of continuity for
+the branch cuts of \cd{atan}, and also
+\issue{IEEE-ATAN-BRANCH-CUT}
+to address the treatment of branch cuts
+in implementations that have a distinct floating-point minus zero.
+
+The treatment of minus zero centers in two-argument \cd{atan}.
+If there is no minus zero, then the branch cut runs just below the negative real
+axis as before, and the range of two-argument \cd{atan} is $(-\pi,\pi]$.
+If there is a minus zero, however, then the branch cut runs precisely on the negative real
+axis, skittering between pairs of numbers of the form $-{\it x}\pm 0{\it i}$,
+and the range of two-argument \cd{atan} is $[-\pi,\pi]$.
+
+The treatment of minus zero by all other irrational and transcendental functions
+is then specified by defining those functions in terms of two-argument \cd{atan}.
+First, \cd{phase} is defined in terms of two-argument \cd{atan}, and
+complex \cd{abs} in terms of real \cd{sqrt};
+then complex \cd{log} is defined in terms of \cd{phase}, \cd{abs}, and real \cd{log};
+then complex \cd{sqrt} in terms of complex \cd{log};
+and finally all others are defined in terms of these.
+
+Kahan \cite{KAHAN-COMPLEX-FNS} treats these matters in some detail and also
+suggests specific algorithms for implementing irrational and transcendental functions
+in IEEE standard floating-point arithmetic \cite{IEEE-PROPOSED-FLOATING-POINT-STANDARD}.
+
+Remarks in the first edition about the direction of the continuity of branch
+cuts continue to hold in the absence of minus zero and may be ignored if minus zero
+is supported; since all branch cuts happen to run along the principal axes, they
+run {\it between} plus zero and minus zero, and so each sort of zero is associated
+with the obvious quadrant.
+\end{new}
+
+\begin{flushdesc}
+\item[\cd{sqrt}]
+The branch cut for square root lies along the negative real axis,
+continuous with quadrant II.
+The range consists of the right half-plane, including the non-negative
+imaginary axis and excluding the negative imaginary axis.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of complex square root:
+\begin{tabbing}
+\( \sqrt{{\it z}} = {\it e}^{(\log \hbox{\scriptsize\it z})/2} \)
+\end{tabbing}
+This defines the branch cuts precisely, whether minus zero is supported or not.
+\end{new}
+
+\item[\cd{phase}]
+The branch cut for the phase function lies along the negative real
+axis, continuous with quadrant II.  The range consists of that portion of
+the real axis between $-\pi$ (exclusive) and $\pi$ (inclusive).
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of phase:
+\begin{tabbing}
+\( \phase {\it z} = \arctan (\Im {\it z}, \Re {\it z}) \)
+\end{tabbing}
+where $\Im {\it z}$ is the imaginary part of ${\it z}$ and $\Re {\it z}$ the real part of ${\it z}$.
+This defines the branch cuts precisely, whether minus zero is supported or not.
+\end{new}
+
+\item[\cd{log}]
+The branch cut for the logarithm function of one argument (natural
+logarithm) lies along the negative real axis, continuous with quadrant II.
+The domain excludes the origin.  For a complex number ${\it z}$,
+$\log {\it z}$ is defined to be
+\begin{tabbing}
+\( \log {\it z} = \left(\log \left|{\it z}\right|\right)+{\it i} (\phase {\it z}) \)
+\end{tabbing}
+Therefore the range of the one-argument logarithm function is that strip
+of the complex plane containing numbers with imaginary parts between
+$-\pi$ (exclusive) and $\pi$ (inclusive).
+
+\begin{new}
+The X3J13 vote on minus zero
+\issue{IEEE-ATAN-BRANCH-CUT}
+would alter that exclusive bound of $-\pi$  to be inclusive if minus zero is supported.
+\end{new}
+
+The two-argument logarithm function is defined as \( \log_{\hbox{\scriptsize\it b}} {\it z}=(\log {\it z})/(\log {\it b}) \).
+This defines the principal values precisely.  The range of the two-argument
+logarithm function is the entire complex plane.
+It is an error if ${\it z}$ is zero.  If ${\it z}$ is non-zero and ${\it b}$ is zero,
+the logarithm is taken to be zero.
+
+\item[\cd{exp}]
+The simple exponential function has no branch cut.
+
+\item[\cd{expt}]
+The two-argument exponential function is defined
+as \( {\it b}^{\hbox{\scriptsize\it x}}={\it e}^{\hbox{\scriptsize\it x} \log \hbox{\scriptsize\it b} } \).
+This defines the principal values precisely.  The range of the
+two-argument exponential function is the entire complex plane.  Regarded
+as a function of ${\it x}$, with ${\it b}$ fixed, there is no branch cut.
+Regarded as a function of {\it b}, with ${\it x}$ fixed, there is in general
+a branch cut along the negative real axis, continuous with quadrant II.
+The domain excludes the origin.
+By definition, $0^0=1$.  If ${\it b}=0$ and the real part of ${\it x}$ is strictly
+positive, then ${\it b}^{\hbox{\scriptsize\it x}}=0$.
+For all other values of ${\it x}$, $0^{\hbox{\scriptsize\it x}}$
+is an error.
+
+\item[\cd{asin}]
+The following definition for arc sine determines the range and
+branch cuts:
+\begin{tabbing}
+\( \arcsin {\it z}=-{\it i} \log \left({\it i}{\it z}+\sqrt{1-{\it z}^2}\right) \)
+\end{tabbing}
+
+\begin{newer}\noindent
+This is equivalent to the formula
+\begin{tabbing}
+\( \displaystyle \arcsin {\it z} = { \arcsinh {\it i}{\it z} \over {\it i} }\)
+\end{tabbing}
+recommended by Kahan \cite{KAHAN-COMPLEX-FNS}.
+\end{newer}
+
+The branch cut for the arc sine function is in two pieces:
+one along the negative real axis to the left of $-1$
+(inclusive), continuous with quadrant II, and one along the positive real
+axis to the right of 1 (inclusive), continuous with quadrant IV.  The
+range is that strip of the complex plane containing numbers whose real
+part is between $-\pi/2$ and $\pi/2$.  A number with real
+part equal to $-\pi/2$ is in the range if and only if its imaginary
+part is non-negative; a number with real part equal to $\pi/2$ is in
+the range if and only if its imaginary part is non-positive.
+
+\item[\cd{acos}]
+The following definition for arc cosine determines the range and
+branch cuts:
+\begin{tabbing}
+\( \arccos {\it z}=-{\it i} \log \left({\it z}+{\it i} \sqrt{1-{\it z}^2}\right) \)
+\end{tabbing}
+or, which is equivalent,
+\begin{tabbing}
+\( \arccos {\it z}={\pi \over 2}-\arcsin {\it z} \)
+\end{tabbing}
+The branch cut for the arc cosine function is in two pieces:
+one along the negative real axis to the left of $-1$
+(inclusive), continuous with quadrant II, and one along the positive real
+axis to the right of 1 (inclusive), continuous with quadrant IV.  
+This is the same branch cut as for arc sine.
+The range is that strip of the complex plane containing numbers whose real
+part is between zero and $\pi$.  A number with real
+part equal to zero is in the range if and only if its imaginary
+part is non-negative; a number with real part equal to $\pi$ is in
+the range if and only if its imaginary part is non-positive.
+
+\item[\cd{atan}]
+The following definition for (one-argument) arc tangent determines the
+range and branch cuts:
+\begin{obsolete}
+\noindent\leavevmode\vtop{
+\begin{tabbing}
+\( \arctan {\it z}=-{\it i} \log \left((1+{\it i} {\it z}) \sqrt{1/(1+{\it z}^2)}\right)\)
+\end{tabbing}
+}
+
+Beware of simplifying this formula; ``obvious'' simplifications are likely
+to alter the branch cuts or the values on the branch cuts incorrectly.
+
+The branch cut for the arc tangent function is in two pieces:
+one along the positive imaginary axis above {\it i}
+(exclusive), continuous with quadrant II, and one along the negative imaginary
+axis below $-{\it i}$ (exclusive), continuous with quadrant IV.  
+The points {\it i} and $-{\it i}$ are excluded from the domain.
+The range is that strip of the complex plane containing numbers whose real
+part is between $-\pi/2$ and $\pi/2$.  A number with real
+part equal to $-\pi/2$ is in the range if and only if its imaginary
+part is strictly positive; a number with real part equal to $\pi/2$ is in
+the range if and only if its imaginary part is strictly negative.  Thus the range of
+the arc tangent function is identical to that of the arc sine function with the points
+$-\pi/2$ and $\pi/2$ excluded.
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{COMPLEX-ATAN-BRANCH-CUT}
+to replace the formula shown above with the formula
+\begin{tabbing}
+\( \displaystyle \arctan {\it z} = { \log (1+{\it i}{\it z}) - \log (1-{\it i}{\it z}) \over 2{\it i} }\)
+\end{tabbing}
+This is equivalent to the formula
+\begin{tabbing}
+\( \displaystyle \arctan {\it z} = { \arctanh {\it i}{\it z} \over {\it i} }\)
+\end{tabbing}
+recommended by Kahan \cite{KAHAN-COMPLEX-FNS}.
+It causes the upper branch cut to be continuous with
+quadrant I rather than quadrant II, and the lower branch cut to
+be continuous with quadrant III rather than quadrant IV; otherwise it agrees with the
+formula of the first edition.  Therefore this change alters the result returned by \cd{atan}
+only for arguments on the positive imaginary axis that
+are of magnitude greater than 1.  The full description for this new formula is as follows.
+
+The branch cut for the arc tangent function is in two pieces:
+one along the positive imaginary axis above {\it i}
+(exclusive), continuous with quadrant I, and one along the negative imaginary
+axis below $-{\it i}$ (exclusive), continuous with quadrant III.  
+The points {\it i} and $-{\it i}$ are excluded from the domain.
+The range is that strip of the complex plane containing numbers whose real
+part is between $-\pi/2$ and $\pi/2$.  A number with real
+part equal to $-\pi/2$ is in the range if and only if its imaginary
+part is strictly negative; a number with real part equal to $\pi/2$ is in
+the range if and only if its imaginary part is strictly positive.  Thus the range of
+the arc tangent function is {\it not} identical to that of the arc sine function.
+\end{new}
+
+\item[\cd{asinh}]
+The following definition for the inverse hyperbolic sine determines
+the range and branch cuts:
+\begin{tabbing}
+\( \arcsinh {\it z}=\log \left({\it z}+\sqrt{1+{\it z}^2}\right)\)
+\end{tabbing}
+The branch cut for the inverse hyperbolic sine function is in two pieces:
+one along the positive imaginary axis above {\it i}
+(inclusive), continuous with quadrant I, and one along the negative imaginary
+axis below $-{\it i}$ (inclusive), continuous with quadrant III.
+The range is that strip of the complex plane containing numbers whose imaginary
+part is between $-\pi/2$ and $\pi/2$.  A number with imaginary
+part equal to $-\pi/2$ is in the range if and only if its real
+part is non-positive; a number with imaginary part equal to $\pi/2$ is in
+the range if and only if its real part is non-negative.
+
+\item[\cd{acosh}]
+The following definition for the inverse hyperbolic cosine
+determines the range and branch cuts:
+\begin{tabbing}
+\( \arccosh {\it z}=\log \left({\it z}+({\it z}+1)\sqrt{({\it z}-1)/({\it z}+1)}\right) \)
+\end{tabbing}
+
+\begin{newer}
+Kahan \cite{KAHAN-COMPLEX-FNS} suggests the formula
+\begin{tabbing}
+\( \arccosh {\it z}=2 \log \left(  \sqrt{({\it z}+1)/2} + \sqrt{({\it z}-1)/2} \right) \)
+\end{tabbing}
+pointing out that it yields the same principal value but eliminates
+a gratuitous removable singularity at ${\it z}=-1$.
+A proposal was submitted to X3J13 in September 1989 to replace the
+formula \cd{acosh} with that recommended by Kahan.
+There is a good possibility that it will be adopted.
+\end{newer}
+
+The branch cut for the inverse hyperbolic cosine function
+lies along the real axis to the left of 1 (inclusive), extending
+indefinitely along the negative real axis, continuous with quadrant II
+and (between 0 and 1) with quadrant I.
+The range is that half-strip of the complex plane containing numbers whose
+real part is non-negative and whose imaginary
+part is between $-\pi$ (exclusive) and $\pi$ (inclusive).
+A number with real part zero is in the range 
+if its imaginary part is between zero (inclusive) and $\pi$ (inclusive).
+
+\item[\cd{atanh}]
+The following definition for the inverse hyperbolic tangent
+determines the range and branch cuts:
+\begin{obsolete}
+\noindent\leavevmode\vtop{
+\begin{tabbing}
+\( \arctanh {\it z}=\log \left((1+{\it z})\sqrt{1-1/{\it z}^2}\right) \)\`{\bf WRONG!}
+\end{tabbing}
+}
+\end{obsolete}
+
+\begin{newer}
+WARNING!  {\it The formula shown above for hyperbolic arc tangent is incorrect.}
+It is not a matter of incorrect branch cuts; it simply does not compute anything
+like a hyperbolic arc tangent.  This unfortunate error in the first edition
+was the result of mistranscribing a (correct) APL formula from Penfield's paper
+\cite{APL-BRANCH-CUTS}.  The formula should have been transcribed as
+\begin{tabbing}
+\( \arctanh {\it z}=\log \left((1+{\it z})\sqrt{1/(1-{\it z}^2)}\right) \)
+\end{tabbing}
+\end{newer}
+
+\begin{obsolete}
+Beware of simplifying this formula; ``obvious'' simplifications are
+likely to alter the branch cuts or the values on the branch cuts
+incorrectly.
+
+The branch cut for the inverse hyperbolic tangent function
+is in two pieces: one along the negative real axis to the left of
+$-1$ (inclusive), continuous with quadrant III, and one along
+the positive real axis to the right of 1 (inclusive), continuous with
+quadrant I.  The points $-1$ and 1 are excluded from the
+domain.
+The range is that strip of the complex plane containing
+numbers whose imaginary part is between $-\pi/2$ and
+$\pi/2$.  A number with imaginary part equal to $-\pi/2$
+is in the range if and only if its real part is strictly negative; a number with
+imaginary part equal to $\pi/2$ is in the range if and only if its real
+part is strictly positive.  Thus the range of the inverse
+hyperbolic tangent function is identical to
+that of the inverse hyperbolic sine function with the points
+$-\pi {\it i}/2$ and $\pi {\it i}/2$ excluded.
+\end{obsolete}
+
+\begin{newer}
+A proposal was submitted to X3J13 in September 1989 to replace the
+formula \cd{atanh} with that recommended by Kahan \cite{KAHAN-COMPLEX-FNS}:
+\begin{tabbing}
+\( \displaystyle \arctanh {\it z}= { \left(\log(1+{\it z}) - \log(1-{\it z})\right) \over 2 } \)
+\end{tabbing}
+There is a good possibility that it will be adopted.  If it is, the complete
+description of the branch cuts of \cd{atanh} will then be as follows.
+
+The branch cut for the inverse hyperbolic tangent function
+is in two pieces: one along the negative real axis to the left of
+$-1$ (inclusive), continuous with quadrant II, and one along
+the positive real axis to the right of 1 (inclusive), continuous with
+quadrant IV.  The points $-1$ and 1 are excluded from the
+domain.
+The range is that strip of the complex plane containing
+numbers whose imaginary part is between $-\pi/2$ and
+$\pi/2$.  A number with imaginary part equal to $-\pi/2$
+is in the range if and only if its real part is strictly positive; a number with
+imaginary part equal to $\pi/2$ is in the range if and only if its real
+part is strictly negative.  Thus the range of the inverse
+hyperbolic tangent function is {\it not} the same as
+that of the inverse hyperbolic sine function.
+\end{newer}
+\end{flushdesc}
+
+With these definitions, the following useful identities are obeyed
+throughout the applicable portion of the complex domain, even on
+the branch cuts:
+
+
+\begin{flushleft}
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
+$\sin {\it i}{\it z} = {\it i} \sinh {\it z}$&$\sinh {\it i}{\it z} = {\it i} \sin {\it z}$&$\arctan {\it i}{\it z} = {\it i} \arctanh {\it z}$ \\
+$\cos {\it i}{\it z} = \cosh {\it z}$&$\cosh {\it i}{\it z} = \cos {\it z}$&$\arcsinh {\it i}{\it z} = {\it i} \arcsin {\it z}$ \\
+$\tan {\it i}{\it z} = {\it i} \tanh {\it z}$&$\arcsin {\it i}{\it z} = {\it i} \arcsinh {\it z}$&$\arctanh {\it i}{\it z} = {\it i} \arctan {\it z}$
+\end{tabular*}
+\end{flushleft}
+
+\begin{new}
+I thought it would be useful to provide some graphs illustrating the behavior
+of the irrational and transcendental functions in the complex plane.
+It also provides an opportunity to show off the Common Lisp code that
+was used to generate them.
+
+Imagine the complex plane to be decorated
+as follows.  The real and imaginary axes are painted with thick lines.
+Parallels from the axes on both sides at distances of 1, 2, and 3 are painted
+with thin lines; these parallels are doubly infinite lines, as are the axes.
+Four annuli (rings) are painted in gradated shades of gray.  Ring 1, the inner ring,
+consists of points whose radial distances from the origin lie in the range
+$[1/4,1/2]$; ring 2 is in the radial range
+$[3/4, 1]$; ring 3, in the range
+$[\pi /2, 2]$; and ring 4, in the range $[3, \pi]$.
+Ring {\it j} is divided into $2^{\hbox{\scriptsize\it j}+1}$ equal sectors, with each sector
+painted a different shade of gray, darkening as one proceeds counterclockwise
+from the positive real axis.
+
+We can illustrate the behavior of a numerical function ${\it f}$ by considering how
+it maps the complex plane to itself.  More specifically, consider each
+point ${\it z}$ of the decorated plane.  We decorate a new plane by coloring
+the point ${\it f}({\it z})$ with the same color that point ${\it z}$ had in the original
+decorated plane.  In other words, the newly decorated plane illustrates
+how the ${\it f}$ maps the axes, other horizontal and vertical lines, and annuli.
+
+In each figure we will show only a fragment of the complex plane,
+with the real axis horizontal in the usual manner ($-\infty$ to the left, $+\infty$
+to the right) and the imaginary axis vertical ($-\infty {\it i}$ below, $+\infty {\it i}$
+above).  Each fragment shows a region containing points whose real and imaginary
+parts are in the range $[-4.1, 4.1]$.  The axes of the new plane are shown as very
+thin lines, with large tick marks at integer coordinates and somewhat smaller
+tick marks at multiples of $\pi/2$.
+
+Figure~\ref{IDENTITY-PLOT} shows the result of plotting the \cd{identity} function
+(quite literally); the graph exhibits the decoration of the original plane.
+
+Figures~\ref{SECOND-PLOT} through~\ref{LAST-PLOT} show the graphs for the functions
+\cd{sqrt}, \cd{exp}, \cd{log}, \cd{sin}, \cd{asin}, \cd{cos}, \cd{acos}, \cd{tan}, \cd{atan},
+\cd{sinh}, \cd{asinh}, \cd{cosh}, \cd{acosh}, \cd{tanh}, and \cd{atanh}, and
+as a bonus, the graphs for the functions $\sqrt{1-{\it z}^2}$,
+$\sqrt{1+{\it z}^2}$, $({\it z}-1)/({\it z}+1)$, and $(1+{\it z})/(1-{\it z})$.  All of these are related
+to the trigonometric functions in various ways.  For example, if
+${\it f}({\it z})=({\it z}-1)/({\it z}+1)$, then $\tanh {\it z} = {\it f}({\it e}^{2\hbox{\scriptsize\it z}})$, and if ${\it g}({\it z})=\sqrt{1-{\it z}^2}$, then
+$\cos {\it z} = {\it g}(\sin {\it z})$.  It is instructive to examine the graph for $\sqrt{1-{\it z}^2}$
+and try to visualize how it transforms the graph for \cd{sin} into the graph for~\cd{cos}.
+
+Each figure is accompanied by a commentary on what maps to what and other interesting
+features.  None of this material is terribly new; much of it may be found in any
+good textbook on complex analysis.  I believe that the particular form in which the
+graphs are presented is novel, as well as the fact that the graphs have been generated
+as PostScript \cite{ADOBE-POSTSCRIPT} code by Common Lisp code.  This PostScript
+code was then fed directly to the typesetting equipment that set the pages for this book.
+Samples of this PostScript code follow the figures themselves,
+after which the code for the entire program is presented.
+
+
+
+In the commentaries that accompany the figures I
+sometimes speak of mapping the points $\pm\infty$ or $\pm\infty {\it i}$.
+When I say that function ${\it f}$ maps $+\infty$ to a certain point ${\it z}$, I mean that
+\begin{tabbing}
+\( \displaystyle {\it z}=\lim_{\hbox{\scriptsize\it x}\rightarrow +\infty} {\it f}({\it x}+0{\it i\/}) \)
+\end{tabbing}
+Similarly, when I say that ${\it f}$ maps
+$-\infty {\it i}$ to ${\it z}$, I mean that
+\begin{tabbing}
+\( \displaystyle {\it z} = \lim_{\hbox{\scriptsize\it y}\rightarrow -\infty} {\it f}(0+{\it y}{\it i\/}) \)
+\end{tabbing}
+In other words, I am considering a limit as one travels out along one of the
+main axes.  I~also speak in a similar manner of mapping {\it to} one of these
+infinities.
+\end{new}
+\clearpage
+
+\begingroup
+\newcommand{\numplot}[1]{\includegraphics{#1-plot}\\}
+
+\newdimen\foodimen
+\foodimen=\textheight
+\setbox0=\vbox{\hrule}
+\advance\foodimen by -2\ht0
+\advance\foodimen by -16pt
+
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Initial Decoration of the Complex Plane (Identity Function)}
+\label{IDENTITY-PLOT}
+\numplot{identity}
+\small\noindent
+This figure was produced in exactly the same manner as succeeding figures,
+simply by plotting the function \cd{identity} instead of a numerical function.
+Thus the first of these figures was produced by the last function of the first edition.
+I knew it would come in handy someday!
+}
+\end{figure}
+
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Square Root Function}
+\label{SECOND-PLOT}
+\numplot{sqrt}
+\small\noindent
+The \cd{sqrt} function maps the complex plane into the right half
+of the plane by slitting it along the negative real axis and then sweeping
+it around as if half-closing a folding fan.
+The fan also shrinks, as if it were made of cotton and had gotten
+wetter at the periphery than at the center.
+The positive real axis is mapped onto itself.  The negative real axis is mapped
+onto the positive imaginary axis (but if minus zero is supported, then
+$-{\it x}+0{\it i}$ is mapped onto the positive imaginary axis and $-{\it x}-0{\it i}$ onto
+the negative imaginary axis, assuming ${\it x}>0$).  The positive imaginary axis
+is mapped onto the northeast diagonal, and the negative imaginary axis
+onto the southeast diagonal.  More generally, lines are mapped to rectangular hyperbolas
+(or fragments thereof\,) centered on the origin;
+lines through the origin are mapped to degenerate
+hyperbolas (perpendicular lines through the origin).
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Exponential Function}
+\numplot{exp}
+\small\noindent
+The \cd{exp} function maps horizontal lines to radii and maps vertical
+lines to circles centered at the origin.
+The origin is mapped to 1.  (It is instructive to compare
+this graph with those of other functions
+that map the origin to 1, for example $(1+{\it z})/(1-{\it z})$, $\cos {\it z}$, and $\sqrt{1-{\it z}^2}$.)
+The entire real axis is mapped to the positive
+real axis, with $-\infty$ mapping to the origin and $+\infty$ to itself.
+The imaginary axis is mapped to the unit circle with infinite multiplicity (period $2\pi$);
+therefore the mapping of the imaginary infinities $\pm\infty {\it i}$ is indeterminate.
+It follows that the entire left half-plane is mapped to the interior of the unit circle,
+and the right half-plane is mapped to the exterior of the unit circle.
+A line at any angle other than horizontal or vertical is mapped to a
+logarithmic spiral (but this is not illustrated here).
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Natural Logarithm Function}
+\numplot{log}
+\small\noindent
+The \cd{log} function, which is the inverse of \cd{exp}, naturally maps radial lines to
+horizontal lines and circles centered at the origin to vertical lines.
+The interior of the unit circle is thus mapped to the entire left half-plane,
+and the exterior of the unit circle is mapped to the right half-plane.
+The positive real axis is mapped to the entire real axis, and the negative
+real axis to a horizontal line of height $\pi$.  The positive and negative
+imaginary axes are mapped to horizontal lines of height $\pm\pi/2$.
+The origin is mapped to $-\infty$.
+
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Function $({\it z}-1)/({\it z}+1)$}
+\numplot{minus-over-plus}
+\small\noindent
+A line is a degenerate circle with infinite radius;
+when I say ``circles'' here I also mean lines.
+Then $({\it z}-1)/({\it z}+1)$ maps circles into circles.
+All circles through $-1$ become lines; all lines become
+circles through $1$.
+The real axis is mapped onto itself: 1 to
+the origin, the origin to $-1$, $-1$ to infinity, and infinity to 1.
+The imaginary axis becomes the unit circle; {\it i} is mapped to itself,
+as is $-{\it i}$.  Thus the entire right half-plane is mapped to the interior
+of the unit circle, the unit circle interior to the left half-plane,
+the left half-plane to the unit circle exterior, and the unit circle exterior
+to the right half-plane.  Imagine the complex plane to be a vast sea.
+The Colossus of Rhodes straddles the origin, its left foot on {\it i} and its right foot on $-{\it i}$.
+It bends down and briefly paddles water between its legs so furiously that the water
+directly beneath is pushed out into the entire area behind it; much that was
+behind swirls forward to either side; and all that was before is
+sucked in to lie between its feet.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Function $(1+{\it z})/(1-{\it z})$}
+\numplot{plus-over-minus}
+\small\noindent
+The function ${\it h}({\it z})=(1+{\it z})/(1-{\it z})$
+is the inverse of ${\it f}({\it z})=({\it z}-1)/({\it z}+1)$; that is,
+${\it h}({\it f}({\it z}))={\it f}({\it h}({\it z}))={\it z}$. At first glance,
+the graph of ${\it h}$ appears to be that of ${\it f}$
+flipped left-to-right, or perhaps reflected in the origin, but careful
+consideration of the shaded annuli reveals that this is not so; something more
+subtle is going on.  Note that
+${\it f}({\it f}({\it z}))={\it h}({\it h}({\it z}))={\it g}({\it z})=-1/{\it z}$.
+The functions ${\it f}$, ${\it g}$, ${\it h}$, and the identity function
+thus form a group under composition, isomorphic to the group
+of the cyclic permutations of the points $-1$, $0$, $1$, and $\infty$, as
+indeed these functions accomplish the four possible cyclic permutations
+on those points.  This function group is a subset of the group of bilinear
+transformations $({\it a}{\it z}+{\it b})/({\it c}{\it z}+{\it d})$,
+all of which are conformal (angle-preserving) and map circles
+onto circles.  Now, doesn't that tangle of circles through $-1$ look like something
+the cat got into?
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Sine Function}
+\numplot{sin}
+\small\noindent
+We are used to seeing \cd{sin} looking like a wiggly ocean wave,
+graphed vertically as a function of the real axis only.  Here is a different view.
+The entire real axis is mapped to the segment $[-1, 1]$ of the real axis
+with infinite multiplicity (period $2\pi$).  The imaginary axis is mapped to itself
+as if by \cd{sinh} considered as a real function.  The origin is mapped to itself.
+Horizontal lines are mapped to ellipses with foci at $\pm1$ (note that two horizontal
+lines equidistant from the real axis will map onto the same ellipse).
+Vertical lines are mapped to hyperbolas with the same foci.  There is a curious accident:
+the ellipse for horizontal
+lines at distance $\pm1$ from the real axis appears to intercept the real axis at
+$\pm\pi/2\approx \pm1.57\ldots$ but this is not so; the intercepts are actually at
+$\pm({\it e}+1/{\it e})/2\approx \pm1.54\ldots\,\hbox{}$.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Arc Sine Function}
+\numplot{asin}
+\small\noindent
+Just as \cd{sin} grabs horizontal lines and bends them into elliptical loops around
+the origin, so its inverse \cd{asin} takes annuli and yanks them more
+or less horizontally straight.  Because sine is not injective,
+its inverse as a function cannot be surjective.  This is just a highfalutin
+way of saying that the range of the \cd{asin} function doesn't
+cover the entire plane but only a strip $\pi$ wide; arc sine as a one-to-many relation
+would cover the plane with an infinite number of copies of this strip side by side,
+looking for all the world like the tail of a peacock with an infinite number of feathers.
+The imaginary axis is mapped to itself as if by \cd{asinh} considered as a real function.
+The real axis is mapped to a bent path, turning corners at $\pm\pi/2$ (the points to
+which $\pm 1$ are mapped); $+\infty$ is mapped to $\pi/2-\infty {\it i}$, and
+$-\infty$ to $-\pi/2+\infty {\it i}$.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Cosine Function}
+\numplot{cos}
+\small\noindent
+We are used to seeing \cd{cos} looking exactly like \cd{sin}, a wiggly ocean wave,
+only displaced.  Indeed the complex mapping of \cd{cos} is also similar
+to that of \cd{sin}, with horizontal and vertical lines mapping to the same ellipses
+and hyperbolas with foci at $\pm 1$, although mapping to them in a different
+manner, to be sure.
+The entire real axis is again mapped to the segment $[-1, 1]$ of the real axis,
+but each half of the imaginary axis is mapped to the real axis to the right of 1
+(as if by \cd{cosh} considered as a real function).  Therefore $\pm\infty {\it i}$
+both map to $+\infty$.
+The origin is mapped to 1.  Whereas \cd{sin} is an odd function, \cd{cos} is an
+even function; as a result {\it two} points in each annulus, one the negative
+of the other, are mapped to the same shaded point in this graph; the shading shown here
+is taken from points in the original upper half-plane.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Arc Cosine Function}
+\numplot{acos}
+\small\noindent
+The graph of \cd{acos} is very much like that of \cd{asin}.
+One might think that our nervous peacock has shuffled half a step
+to the right, but the shading on the annuli shows that we have instead caught
+the bird exactly in mid-flight while doing a cartwheel.
+This is easily understood if we recall that $\arccos {\it z}=(\pi/2)-\arcsin {\it z}$;
+negating $\arcsin {\it z}$ rotates it upside down, and adding the result to $\pi/2$
+translates it $\pi/2$ to the right.
+The imaginary axis is mapped upside down to the vertical line at $\pi/2$.
+The point $+1$ is mapped to the origin, and $-1$ to $\pi$.
+The image of the real axis is again cranky; $+\infty$ is mapped to $+\infty {\it i}$,
+and $-\infty$ to $\pi-\infty {\it i}$.
+
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Tangent Function}
+\numplot{tan}
+\small\noindent
+The usual graph of \cd{tan} as a real function looks like an infinite chorus
+line of disco dancers, left hands pointed skyward and right hands to the floor.
+The \cd{tan} function is the quotient of \cd{sin} and \cd{cos}
+but it doesn't much look like either except for having period $2\pi$.
+This goes for the complex plane as well, although the swoopy loops produced
+from the annulus between $\pi/2$ and $2$ look vaguely like
+those from the graph of \cd{sin} inside out.
+The real axis is mapped onto itself with infinite multiplicity (period $2\pi$).
+The imaginary axis is mapped backwards onto $[-{\it i},{\it i}]$:
+$+\infty {\it i}$ is mapped to $-{\it i}$ and $-\infty {\it i}$ to $+{\it i}$.
+Horizontal lines below or above the real axis
+become circles surrounding $+{\it i}$ or $-{\it i}$, respectively.
+Vertical lines become circular arcs from $+{\it i}$ to $-{\it i}$;
+two vertical lines separated by $(2{\it k}+1)\pi$ for integer ${\it k}$
+together become a complete circle.  It seems that two arcs
+shown hit the real axis at $\pm\pi/2=\pm 1.57\ldots$ but that is a coincidence;
+they really hit the axis at $\pm\tan 1= 1.55\ldots\,\hbox{}$.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Arc Tangent Function}
+\numplot{xatan}
+\small\noindent
+All I can say is that this peacock is a horse of another color.
+At first glance, the axes seem to map in the same way as for \cd{asin} and
+\cd{acos}, but look again: this time it's the imaginary axis doing weird things.
+All infinities map multiply to the points
+$(2{\it k}+1)\pi/2$; within the strip of principal values we may say that
+the real axis is mapped to the interval $[-\pi/2,+\pi/2]$ and therefore
+$-\infty$ is mapped to $-\pi/2$ and $+\infty$ to $+\pi/2$.
+The point $+{\it i}$ is mapped to $+\infty {\it i}$, and $-{\it i}$ to $-\infty {\it i}$, and
+so the imaginary axis is mapped into three pieces: the segment
+$[-\infty {\it i},-{\it i}]$ is mapped to $[\pi/2,\pi/2-\infty {\it i}]$; the segment
+$[-{\it i},{\it i}]$ is mapped to the imaginary axis $[-\infty {\it i},+\infty {\it i}]$; and the segment
+$[+{\it i},+\infty {\it i}]$ is mapped to $[-\pi/2+\infty {\it i},-\pi/2]$.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Hyperbolic Sine Function}
+\numplot{sinh}
+\small\noindent
+It would seem that the graph of \cd{sinh} is merely that of \cd{sin}
+rotated 90 degrees.  If that were so, then we would have $\sinh {\it z} = {\it i} \sin {\it z}$.
+Careful inspection of the shading, however, reveals that this is not quite the case;
+in both graphs the lightest and darkest shades, which initially are adjacent to
+the positive real axis, remain adjacent to the positive real axis in both cases.
+To derive the graph of \cd{sinh} from \cd{sin} we must therefore first
+rotate the complex plane by $-90$ degrees, then apply \cd{sin}, then
+rotate the result by 90 degrees. In other words, $\sinh {\it z} = {\it i} \sin (-{\it i\/}){\it z}$;
+consistently replacing ${\it z}$ with ${\it i}{\it z}$ in this formula yields the familiar identity
+$\sinh {\it i}{\it z} = {\it i} \sin {\it z}$.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Hyperbolic Arc Sine Function}
+\numplot{asinh}
+\small\noindent
+The peacock sleeps.  Because $\arcsinh {\it i}{\it z} = {\it i} \arcsin {\it z}$,
+the graph of \cd{asinh}
+is related to that of \cd{asin} by pre- and post-rotations of the complex plane
+in the same way as for \cd{sinh} and \cd{sin}.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Hyperbolic Cosine Function}
+\numplot{cosh}
+\small\noindent
+The graph of \cd{cosh} does {\it not} look like that of \cd{cos} rotated
+90 degrees; instead it looks like that of \cd{cos} unrotated.
+That is because $\cosh {\it i}{\it z}$ is not equal to ${\it i} \cos {\it z}$;
+rather, $\cosh {\it i}{\it z} = \cos {\it z}$.
+Interpreted, that means that the shading is pre-rotated but there is no
+post-rotation.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Hyperbolic Arc Cosine Function}
+\numplot{acosh}
+\small\noindent
+Hmm---I'd rather not say what happened to this peacock.
+This feather looks a bit mangled.  Actually it is all right---the principal
+value for \cd{acosh} is so chosen that its graph does not look simply
+like a rotated version of the graph of \cd{acos}, but if all values were
+shown, the two graphs would fill the plane in repeating patterns related
+by a rotation.
+
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Hyperbolic Tangent Function}
+\numplot{tanh}
+\small\noindent
+The diagram for \cd{tanh} is simply that of \cd{tan} turned on its ear:
+${\it i} \tan {\it z} = \tanh {\it i}{\it z}$.
+The imaginary axis is mapped onto itself with infinite multiplicity (period $2\pi$),
+and the real axis is mapped onto the segment $[-1,+1]$:
+$+\infty$ is mapped to $+1$, and $-\infty$ to $-1$.
+Vertical lines to the left or right of the real axis
+are mapped to circles surrounding $-1$ or $1$, respectively.
+Horizontal lines are mapped to circular arcs anchored at $-1$ and $+1$;
+two horizontal lines separated by a distance $(2{\it k}+1)\pi$ for integer ${\it k}$ are
+together mapped into a complete circle.  How do we know these really are circles?
+Well, $\tanh {\it z} = ((\exp 2{\it z})-1)/((\exp 2{\it z})+1)$, which is the composition of the
+bilinear transform $({\it z}-1)/({\it z}+1)$, the exponential $\exp {\it z}$,
+and the magnification $2{\it z}$.
+Magnification maps lines to lines of the same slope; the exponential maps
+horizontal lines to circles and vertical lines to radial lines;
+and a bilinear transform maps generalized circles (including lines) to
+generalized circles.  Q.E.D.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Hyperbolic Arc Tangent Function}
+\label{ATANH-PLOT}
+\numplot{really-good-atanh}
+\small\noindent
+A sleeping peacock of another color: $\arctanh {\it i}{\it z} = {\it i} \arctan {\it z}$.
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Function $\protect\sqrt{1-{\it z}^2}$}
+\numplot{sqrt-one-minus-sq}
+\small\noindent
+Here is a curious graph indeed for so simple a function!
+The origin is mapped to 1.  The real axis segment $[0,1]$ is
+mapped backwards (and non-linearly) into itself; the segment $[1,+\infty]$
+is mapped non-linearly onto the positive imaginary axis.
+The negative real axis is mapped to the same points as the positive real axis.
+Both halves of the imaginary axis are mapped into $[1,+\infty]$ on the real axis.
+Horizontal lines become vaguely vertical, and
+vertical lines become vaguely horizontal.
+Circles centered at the origin are transformed into Cassinian \hbox{(half-)ovals}; the unit
+circle is mapped to a \hbox{(half-)lemniscate} of Bernoulli.  The outermost annulus appears
+to have its {\it inner} edge at $\pi$ on the real axis and its {\it outer}
+edge at 3 on the imaginary axis, but this is another accident; the intercept
+on the real axis, for example, is not really at $\pi\approx 3.14\ldots$ but
+at $\sqrt{1-(3{\it i\/})^2}=\sqrt{10}\approx 3.16\ldots\,\hbox{}$.
+
+}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\vbox to \foodimen{
+\caption{Illustration of the Range of the Function $\protect\sqrt{1+{\it z}^2}$}
+\label{LAST-PLOT}
+\numplot{sqrt-one-plus-sq}
+\small\noindent
+The graph of ${\it q}({\it z})=\sqrt{1+{\it z}^2}$ looks like that
+of ${\it p}({\it z})=\sqrt{1-{\it z}^2}$ except for
+the shading.  You might not expect ${\it p}$ and ${\it q}$ to be related in the same
+way that \cd{cos} and \cd{cosh} are, but after a little reflection (or perhaps
+I should say, after turning it around in one's mind) one can see that
+${\it q}({\it i}{\it z})={\it p}({\it z})$.  This formula is indeed of exactly the same form as
+$\cosh {\it i}{\it z} = \cos {\it z}$.  The function
+$\sqrt{1+{\it z}^2}$ maps both halves of the real axis into $[1,+\infty]$ on the real axis.
+The segments $[0,{\it i}]$ and $[0,-{\it i}]$ of the imaginary axis are each mapped
+backwards onto segment $[0,1]$ of the real axis; $[{\it i},+\infty {\it i}]$ and
+$[-{\it ,}-\infty {\it i}]$ are each mapped onto the positive imaginary axis
+(but if minus zero is supported then opposite sides of the
+imaginary axis map to opposite halves of the imaginary axis---for example,
+$q(+0+2{\it i\/})=\sqrt{5}{\it i}$ but $q(-0+2{\it i\/})=-\sqrt{5}{\it i}$).
+}
+\end{figure}
+
+\clearpage
+\endgroup
+\begin{new}
+Here is a sample of the PostScript code that generated
+figure~\ref{IDENTITY-PLOT}, showing the initial scaling,
+translation, and clipping parameters; the code for one
+sector of the innermost annulus; and the code for the negative
+imaginary axis.  Comment lines indicate how path or boundary
+segments were generated separately and then spliced (in order to
+allow for the places that a singularity might lurk, in which case
+the generating code can ``inch up'' to the problematical argument
+value).
+
+The size of the entire PostScript file for the
+\cd{identity} function was about 68 kilobytes (2757 lines, including comments).
+The smallest files
+were the plots for \cd{atan} and \cd{atanh}, about 65 kilobytes apiece;
+the largest were the plots for \cd{sin}, \cd{cos}, \cd{sinh}, and \cd{cosh},
+about 138 kilobytes apiece.
+
+\begingroup\small  \topsep 0pt plus 6pt \relax
+\begin{lisp}
+\\
+\% PostScript file for plot of function IDENTITY \\
+\% Plot is to fit in a region 4.666666666666667 inches square \\
+\% ~showing axes extending 4.1 units from the origin. \\
+ \\
+40.97560975609756 40.97560975609756 scale \\
+4.1 4.1 translate \\
+newpath \\
+~~-4.1 -4.1 moveto \\
+~~4.1 -4.1 lineto \\
+~~4.1 4.1 lineto \\
+~~-4.1 4.1 lineto \\
+~~closepath \\
+clip \\
+\% Moby grid for function IDENTITY \\
+\% Annulus 0.25 0.5 4 0.97 0.45 \\
+\% Sector from 4.7124 to 6.2832 (quadrant 3) \\
+newpath \\
+~~0.0 -0.25 moveto \\
+~~0.0 -0.375 lineto \\
+~~\%middle radial \\
+~~0.0 -0.375 lineto \\
+~~0.0 -0.5 lineto \\
+~~\%end radial \\
+~~0.0 -0.5 lineto \\
+~~0.092 -0.4915 lineto \\
+~~0.1843 -0.4648 lineto \\
+~~0.273 -0.4189 lineto \\
+~~0.3536 -0.3536 lineto \\
+~~\%middle circumferential \\
+~~0.3536 -0.3536 lineto \\
+~~0.413 -0.2818 lineto \\
+~~0.4594 -0.1974 lineto \\
+~~0.4894 -0.1024 lineto \\
+~~0.5 0.0 lineto \\
+~~\%end circumferential \\
+~~0.5 0.0 lineto \\
+~~0.375 0.0 lineto \\
+~~\%middle radial \\
+~~0.375 0.0 lineto \\
+~~0.25 0.0 lineto \\
+~~\%end radial \\
+~~0.25 0.0 lineto \\
+~~0.2297 -0.0987 lineto \\
+~~0.1768 -0.1768 lineto \\
+~~\%middle circumferential \\
+~~0.1768 -0.1768 lineto \\
+~~0.0922 -0.2324 lineto \\
+~~0.0 -0.25 lineto \\
+~~\%end circumferential \\
+~~closepath \\
+currentgray~~~0.45 setgray~~~fill~~~setgray
+\end{lisp}
+{\rm {\lbrack}2598 lines omitted{\rbrack}}
+\begin{lisp}
+\% Vertical line from (0.0, -0.5) to (0.0, 0.0) \\
+newpath \\
+~~0.0 -0.5 moveto \\
+~~0.0 0.0 lineto \\
+0.05 setlinewidth~~~1 setlinecap~~stroke \\
+\% Vertical line from (0.0, -0.5) to (0.0, -1.0) \\
+newpath \\
+~~0.0 -0.5 moveto \\
+~~0.0 -1.0 lineto \\
+0.05 setlinewidth~~~1 setlinecap~~stroke \\
+\% Vertical line from (0.0, -2.0) to (0.0, -1.0) \\
+newpath \\
+~~0.0 -2.0 moveto \\
+~~0.0 -1.0 lineto \\
+0.05 setlinewidth~~~1 setlinecap~~stroke \\
+\% Vertical line from (0.0, -2.0) to (0.0, -1.1579208923731617E77) \\
+newpath \\
+~~0.0 -2.0 moveto \\
+~~0.0 -6.3553 lineto \\
+~~0.0 -6.378103166302659 lineto \\
+~~0.0 -6.378103166302659 lineto \\
+~~0.0 -6.378103166302659 lineto \\
+0.05 setlinewidth   1 setlinecap  stroke
+\end{lisp}
+{\rm {\lbrack}84 lines omitted{\rbrack}}
+\begin{lisp}
+\% End of PostScript file for plot of function IDENTITY
+\end{lisp}
+\endgroup
+
+
+\penalty-10000%manual
+
+Here is the program that generated the PostScript code for
+the graphs shown in figures~\ref{IDENTITY-PLOT} through~\ref{LAST-PLOT}.
+It contains a mixture of fairly general mechanisms and {\it ad hoc} kludges
+for plotting functions of a single complex argument while gracefully handling
+extremely large and small values,
+branch cuts, singularities, and periodic behavior.
+The aim was to provide a simple user interface that would not
+require the caller to provide special advice for each function
+to be plotted.
+The file for figure~\ref{IDENTITY-PLOT}, for example, was generated
+by the call \cd{(picture~'identity)}, which resulted in the writing of
+a file named \cd{identity-plot.ps}.
+
+The program assumes that any periodic behavior will have a period that is a multiple of
+$2\pi$; that branch cuts will fall along the real or imaginary axis;
+and that singularities or very large or small values
+will occur only at the origin, at $\pm 1$ or $\pm {\it i}$,
+or on the boundaries of the annuli (particularly those with radius $\pi/2$ or $\pi$).
+The central function is \cd{parametric-path}, which accepts four arguments:
+two real numbers that are the endpoints of an interval of real numbers,
+a function that maps this interval into a path in the complex plane,
+and the function to be plotted; the task of \cd{parametric-path} is to
+generate PostScript code (a series of \cd{lineto} operations)
+that will plot an approximation to the image of the parametric path
+as transformed by the function to be plotted.
+Each of the functions \cd{hline}, \cd{vline}, \cd{-hline}, \cd{-vline}, \cd{radial},
+and \cd{circumferential} takes appropriate parameters
+and returns a function suitable for use as the third argument
+to \cd{parametric-path}.
+There is some code that defends against errors
+(by using \cd{ignore-errors}) and against certain peculiarities of
+IEEE floating-point arithmetic (the code that checks for not-a-number (NaN) results).
+
+The program is offered here without further comment or apology.
+
+\vskip 0pt plus 10pt%manual
+\hrule width 0pt\relax
+
+\begingroup\small \topsep 0pt plus 10pt \relax
+\begin{lisp}
+\\
+(defparameter units-to-show 4.1) \\*
+(defparameter text-width-in-picas 28.0) \\*
+(defparameter device-pixels-per-inch 300) \\*
+(defparameter pixels-per-unit \\*
+~~(* (/ (/ text-width-in-picas 6) \\*
+~~~~~~~~(* units-to-show 2)) \\*
+~~~~~device-pixels-per-inch)) \\
+\\
+(defparameter big (sqrt (sqrt most-positive-single-float))) \\*
+(defparameter tiny (sqrt (sqrt least-positive-single-float))) \\
+\\
+(defparameter path-really-losing 1000.0) \\
+(defparameter path-outer-limit (* units-to-show (sqrt 2) 1.1)) \\
+(defparameter path-minimal-delta (/ 10 pixels-per-unit)) \\
+(defparameter path-outer-delta (* path-outer-limit 0.3)) \\
+(defparameter path-relative-closeness 0.00001) \\*
+(defparameter back-off-delta 0.0005)
+\end{lisp}
+\newpage%manual
+\begin{lisp}
+(defun comment-line (stream \&rest stuff) \\*
+~~(format stream "{\Xtilde}\%\% ") \\*
+~~(apply \#'format stream stuff) \\*
+~~(format t "{\Xtilde}\%\% ") \\*
+~~(apply \#'format t stuff)) \\
+\\
+(defun parametric-path (from to paramfn plotfn) \\*
+~~(assert (and (plusp from) (plusp to))) \\*
+~~(flet ((domainval (x) (funcall paramfn x)) \\*
+~~~~~~~~~(rangeval (x) (funcall plotfn (funcall paramfn x))) \\*
+~~~~~~~~~(losing (x) (or (null x) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(/= (realpart x) (realpart x))~~;NaN? \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(/= (imagpart x) (imagpart x))~~;NaN? \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(> (abs (realpart x)) path-really-losing) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(> (abs (imagpart x)) path-really-losing)))) \\
+~~~~(when (> to 1000.0) \\*
+~~~~~~(let ((f0 (rangeval from)) \\*
+~~~~~~~~~~~~(f1 (rangeval (+ from 1))) \\*
+~~~~~~~~~~~~(f2 (rangeval (+ from (* 2 pi)))) \\*
+~~~~~~~~~~~~(f3 (rangeval (+ from 1 (* 2 pi)))) \\*
+~~~~~~~~~~~~(f4 (rangeval (+ from (* 4 pi))))) \\
+~~~~~~~~(flet ((close (x y) \\*
+~~~~~~~~~~~~~~~~~(or (< (careful-abs (- x y)) path-minimal-delta) \\*
+~~~~~~~~~~~~~~~~~~~~~(< (careful-abs (- x y)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~(* (+ (careful-abs x) (careful-abs y)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~path-relative-closeness))))) \\
+~~~~~~~~~~(when (and (close f0 f2) \\*
+~~~~~~~~~~~~~~~~~~~~~(close f2 f4) \\*
+~~~~~~~~~~~~~~~~~~~~~(close f1 f3) \\*
+~~~~~~~~~~~~~~~~~~~~~(or (and (close f0 f1) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(close f2 f3)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(and (not (close f0 f1)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(not (close f2 f3))))) \\*
+~~~~~~~~~~~~(format t "{\Xtilde}\&Periodicity detected.") \\*
+~~~~~~~~~~~~(setq to (+ from (* (signum (- to from)) 2 pi))))))) \\
+~~~~~(let ((fromrange (ignore-errors (rangeval from))) \\*
+~~~~~~~~~~(torange (ignore-errors (rangeval to)))) \\*
+~~~~~~(if (losing fromrange) \\*
+~~~~~~~~~~(if (losing torange) \\*
+~~~~~~~~~~~~~~'() \\*
+~~~~~~~~~~~~~~(parametric-path (back-off from to) to paramfn plotfn)) \\
+~~~~~~~~~~(if (losing torange) \\*
+~~~~~~~~~~~~~~(parametric-path from (back-off to from) paramfn plotfn) \\*
+~~~~~~~~~~~~~~(expand-path (refine-path (list from to) \#'rangeval) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~\#'rangeval))))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+(defun back-off (point other) \\*
+~~(if (or (> point 10.0) (< point 0.1)) \\*
+~~~~~~(let ((sp (sqrt point))) \\*
+~~~~~~~~(if (or (> point sp other) (< point sp other)) \\*
+~~~~~~~~~~~~sp \\*
+~~~~~~~~~~~~(* sp (sqrt other)))) \\*
+~~~~~~(+ point (* (signum (- other point)) back-off-delta)))) \\
+\\
+(defun careful-abs (z) \\*
+~~(cond ((or (> (realpart z) big) \\*
+~~~~~~~~~~~~~(< (realpart z) (- big)) \\*
+~~~~~~~~~~~~~(> (imagpart z) big) \\*
+~~~~~~~~~~~~~(< (imagpart z) (- big))) \\*
+~~~~~~~~~big) \\
+~~~~~~~~((complexp z) (abs z)) \\*
+~~~~~~~~((minusp z) (- z)) \\*
+~~~~~~~~(t z))) \\      %intentional extra \\
+\end{lisp}
+\begin{lisp}
+(defparameter max-refinements 5000) \\
+\\
+(defun refine-path (original-path rangevalfn) \\*
+~~(flet ((rangeval (x) (funcall rangevalfn x))) \\*
+~~~~(let ((path original-path)) \\*
+~~~~~~(do ((j 0 (+ j 1))) \\*
+~~~~~~~~~~((null (rest path))) \\
+~~~~~~~~(when (zerop (mod (+ j 1) max-refinements)) \\*
+~~~~~~~~~~~~~~(break "Runaway path")) \\
+~~~~~~~~(let* ((from (first path)) \\*
+~~~~~~~~~~~~~~~(to (second path)) \\*
+~~~~~~~~~~~~~~~(fromrange (rangeval from)) \\*
+~~~~~~~~~~~~~~~(torange (rangeval to)) \\*
+~~~~~~~~~~~~~~~(dist (careful-abs (- torange fromrange))) \\*
+~~~~~~~~~~~~~~~(mid (* (sqrt from) (sqrt to))) \\*
+~~~~~~~~~~~~~~~(midrange (rangeval mid))) \\
+~~~~~~~~~~(cond ((or (and (far-out fromrange) (far-out torange)) \\*
+~~~~~~~~~~~~~~~~~~~~~(and (< dist path-minimal-delta) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~(< (abs (- midrange fromrange)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~path-minimal-delta) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~;; Next test is intentionally asymmetric to \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~;;~~avoid problems with periodic functions. \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~(< (abs (- (rangeval (/ (+ to (* from 1.5)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~2.5)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fromrange)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~path-minimal-delta))) \\*
+~~~~~~~~~~~~~~~~~(pop path)) \\
+~~~~~~~~~~~~~~~~((= mid from) (pop path)) \\*
+~~~~~~~~~~~~~~~~((= mid to) (pop path)) \\*
+~~~~~~~~~~~~~~~~(t (setf (rest path) (cons mid (rest path))))))))) \\*
+~~original-path) \\
+\\
+(defun expand-path (path rangevalfn) \\*
+~~(flet ((rangeval (x) (funcall rangevalfn x))) \\*
+~~~~(let ((final-path (list (rangeval (first path))))) \\*
+~~~~~~(do ((p (rest path) (cdr p))) \\*
+~~~~~~~~~~((null p) \\*
+~~~~~~~~~~~(unless (rest final-path) \\*
+~~~~~~~~~~~~~(break "Singleton path")) \\*
+~~~~~~~~~~~(reverse final-path)) \\
+~~~~~~~~(let ((v (rangeval (car p)))) \\*
+~~~~~~~~~~(cond ((and (rest final-path) \\*
+~~~~~~~~~~~~~~~~~~~~~~(not (far-out v)) \\*
+~~~~~~~~~~~~~~~~~~~~~~(not (far-out (first final-path))) \\*
+~~~~~~~~~~~~~~~~~~~~~~(between v (first final-path) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(second final-path))) \\*
+~~~~~~~~~~~~~~~~~(setf (first final-path) v)) \\
+~~~~~~~~~~~~~~~~((null (rest p))~~~;Mustn't omit last point \\*
+~~~~~~~~~~~~~~~~~(push v final-path)) \\
+~~~~~~~~~~~~~~~~((< (abs (- v (first final-path))) path-minimal-delta)) \\
+~~~~~~~~~~~~~~~~((far-out v) \\*
+~~~~~~~~~~~~~~~~~(unless (and (far-out (first final-path)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(< (abs (- v (first final-path))) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~path-outer-delta)) \\*
+~~~~~~~~~~~~~~~~~~~(push (* 1.01 path-outer-limit (signum v)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~final-path))) \\*
+~~~~~~~~~~~~~~~~(t (push v final-path)))))))) \\
+\\
+(defun far-out (x) \\*
+~~(> (careful-abs x) path-outer-limit)) \\
+\\
+(defparameter between-tolerance 0.000001) \\
+\\
+(defun between (p q r) \\*
+~~(let ((px (realpart p)) (py (imagpart p)) \\*
+~~~~~~~~(qx (realpart q)) (qy (imagpart q)) \\*
+~~~~~~~~(rx (realpart r)) (ry (imagpart r))) \\
+~~~~(and (or (<= px qx rx) (>= px qx rx)) \\*
+~~~~~~~~~(or (<= py qy ry) (>= py qy ry)) \\*
+~~~~~~~~~(< (abs (- (* (- qx px) (- ry qy)) \\*
+~~~~~~~~~~~~~~~~~~~~(* (- rx qx) (- qy py)))) \\*
+~~~~~~~~~~~~between-tolerance))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+(defun circle (radius) \\*
+~~\#'(lambda (angle) (* radius (cis angle)))) \\
+\\
+(defun hline (imag) \\*
+~~\#'(lambda (real) (complex real imag))) \\
+\\
+(defun vline (real) \\*
+~~\#'(lambda (imag) (complex real imag))) \\
+\\
+(defun -hline (imag) \\*
+~~\#'(lambda (real) (complex (- real) imag))) \\
+\\
+(defun -vline (real) \\*
+~~\#'(lambda (imag) (complex real (- imag)))) \\
+\\
+(defun radial (phi quadrant) \\*
+~~\#'(lambda (rho) (repair-quadrant (* rho (cis phi)) quadrant))) \\
+\\
+(defun circumferential (rho quadrant) \\*
+~~\#'(lambda (phi) (repair-quadrant (* rho (cis phi)) quadrant))) \\
+\\
+;;; Quadrant is 0, 1, 2, or 3, meaning I, II, III, or IV. \\
+\\
+(defun repair-quadrant (z quadrant) \\*
+~~(complex (* (+ (abs (realpart z)) tiny) \\*
+~~~~~~~~~~~~~~(case quadrant (0 1.0) (1 -1.0) (2 -1.0) (3 1.0))) \\*
+~~~~~~~~~~~(* (+ (abs (imagpart z)) tiny) \\*
+~~~~~~~~~~~~~~(case quadrant (0 1.0) (1 1.0) (2 -1.0) (3 -1.0))))) \\
+\\
+(defun clamp-real (x) \\*
+~~(if (far-out x) \\*
+~~~~~~(* (signum x) path-outer-limit) \\*
+~~~~~~(round-real x))) \\
+\\
+(defun round-real (x) \\*
+~~(/ (round (* x 10000.0)) 10000.0)) \\
+\\
+(defun round-point (z) \\*
+~~(complex (round-real (realpart z)) (round-real (imagpart z)))) \\
+\\
+(defparameter hiringshade 0.97) \\*
+(defparameter loringshade 0.45) \\
+\\
+(defparameter ticklength 0.12) \\*
+(defparameter smallticklength 0.09)
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+;;; This determines the pattern of lines and annuli to be drawn. \\*
+(defun moby-grid (\&optional (fn 'sqrt) (stream t)) \\*
+~~(comment-line stream "Moby grid for function {\Xtilde}S" fn) \\
+~~(shaded-annulus 0.25 0.5 4 hiringshade loringshade fn stream) \\*
+~~(shaded-annulus 0.75 1.0 8 hiringshade loringshade fn stream) \\*
+~~(shaded-annulus (/ pi 2) 2.0 16 hiringshade loringshade fn stream) \\*
+~~(shaded-annulus 3 pi 32 hiringshade loringshade fn stream) \\
+~~(moby-lines :horizontal 1.0 fn stream) \\*
+~~(moby-lines :horizontal -1.0 fn stream) \\*
+~~(moby-lines :vertical 1.0 fn stream) \\*
+~~(moby-lines :vertical -1.0 fn stream) \\
+~~(let ((tickline 0.015) \\*
+~~~~~~~~(axisline 0.008)) \\
+~~~~(flet ((tick (n) (straight-line (complex n ticklength) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex n (- ticklength)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream)) \\
+~~~~~~~~~~~(smalltick (n) (straight-line (complex n smallticklength) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex n (- smallticklength)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream))) \\
+~~~~~~(comment-line stream "Real axis") \\*
+~~~~~~(straight-line \#c(-5 0) \#c(5 0) axisline stream) \\*
+~~~~~~(dotimes (j (floor units-to-show)) \\*
+~~~~~~~~(let ((q (+ j 1))) (tick q) (tick (- q)))) \\
+~~~~~~(dotimes (j (floor units-to-show (/ pi 2))) \\*
+~~~~~~~~(let ((q (* (/ pi 2) (+ j 1)))) \\*
+~~~~~~~~~~(smalltick q) \\*
+~~~~~~~~~~(smalltick (- q))))) \\
+~~~~(flet ((tick (n) (straight-line (complex ticklength n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex (- ticklength) n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream)) \\
+~~~~~~~~~~~(smalltick (n) (straight-line (complex smallticklength n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex (- smallticklength) n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream))) \\
+~~~~~~(comment-line stream "Imaginary axis") \\*
+~~~~~~(straight-line \#c(0 -5) \#c(0 5) axisline stream) \\*
+~~~~~~(dotimes (j (floor units-to-show)) \\*
+~~~~~~~~(let ((q (+ j 1))) (tick q) (tick (- q)))) \\
+~~~~~~(dotimes (j (floor units-to-show (/ pi 2))) \\*
+~~~~~~~~(let ((q (* (/ pi 2) (+ j 1)))) \\*
+~~~~~~~~~~(smalltick q) \\*
+~~~~~~~~~~(smalltick (- q)))))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+(defun straight-line (from to wid stream) \\*
+~~(format stream \\*
+~~~~~~~~~~"{\Xtilde}\%newpath~~{\Xtilde}S {\Xtilde}S moveto~~{\Xtilde}S {\Xtilde}S lineto~~{\Xtilde}S {\Xtilde} \\
+~~~~~~~~~~~setlinewidth~~1~~setlinecap~~stroke" \\*
+~~~~~~~~~~(realpart from) \\*
+~~~~~~~~~~(imagpart from) \\*
+~~~~~~~~~~(realpart to) \\*
+~~~~~~~~~~(imagpart to) \\*
+~~~~~~~~~~wid)) \\
+\end{lisp}
+\begin{lisp}
+;;; This function draws the lines for the pattern. \\
+(defun moby-lines (orientation signum plotfn stream) \\*
+~~(let ((paramfn (ecase orientation \\*
+~~~~~~~~~~~~~~~~~~~(:horizontal (if (< signum 0) \#'-hline \#'hline)) \\*
+~~~~~~~~~~~~~~~~~~~(:vertical (if (< signum 0) \#'-vline \#'vline))))) \\
+~~~~(flet ((foo (from to other wid) \\*
+~~~~~~~~~~~~~(ecase orientation \\*
+~~~~~~~~~~~~~~~(:horizontal \\*
+~~~~~~~~~~~~~~~~(comment-line stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"Horizontal line from ({\Xtilde}S, {\Xtilde}S) to ({\Xtilde}S, {\Xtilde}S)" \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum from)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum to)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other))) \\
+~~~~~~~~~~~~~~~(:vertical \\*
+~~~~~~~~~~~~~~~~(comment-line stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"Vertical line from ({\Xtilde}S, {\Xtilde}S) to ({\Xtilde}S, {\Xtilde}S)" \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum from)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum to))))) \\
+~~~~~~~~~~~~~(postscript-path \\*
+~~~~~~~~~~~~~~~stream \\*
+~~~~~~~~~~~~~~~(parametric-path from \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~to \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(funcall paramfn other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotfn)) \\*
+~~~~~~~~~~~~~(postscript-penstroke stream wid))) \\
+~~~~~~(let* ((thick 0.05) \\*
+~~~~~~~~~~~~~(thin 0.02)) \\*
+~~~~~~~~;; Main axis \\*
+~~~~~~~~(foo 0.5 tiny 0.0 thick) \\*
+~~~~~~~~(foo 0.5 1.0 0.0 thick) \\*
+~~~~~~~~(foo 2.0 1.0 0.0 thick) \\*
+~~~~~~~~(foo 2.0 big 0.0 thick) \\
+~~~~~~~~;; Parallels at 1 and -1 \\*
+~~~~~~~~(foo 2.0 tiny 1.0 thin) \\*
+~~~~~~~~(foo 2.0 big 1.0 thin) \\*
+~~~~~~~~(foo 2.0 tiny -1.0 thin) \\*
+~~~~~~~~(foo 2.0 big -1.0 thin) \\
+~~~~~~~~;; Parallels at 2, 3, -2, -3 \\*
+~~~~~~~~(foo tiny big 2.0 thin) \\*
+~~~~~~~~(foo tiny big -2.0 thin) \\*
+~~~~~~~~(foo tiny big 3.0 thin) \\*
+~~~~~~~~(foo tiny big -3.0 thin))))) \\
+\\
+(defun splice (p q) \\*
+~~(let ((v (car (last p))) \\*
+~~~~~~~~(w (first q))) \\
+~~~~(and (far-out v) \\*
+~~~~~~~~~(far-out w) \\*
+~~~~~~~~~(>= (abs (- v w)) path-outer-delta) \\
+~~~~~~~~~;; Two far-apart far-out points.~~Try to walk around \\*
+~~~~~~~~~;;~~outside the perimeter, in the shorter direction. \\*
+~~~~~~~~~(let* ((pdiff (phase (/ v w))) \\*
+~~~~~~~~~~~~~~~~(npoints (floor (abs pdiff) (asin .2))) \\*
+~~~~~~~~~~~~~~~~(delta (/ pdiff (+ npoints 1))) \\*
+~~~~~~~~~~~~~~~~(incr (cis delta))) \\
+~~~~~~~~~~~(do ((j 0 (+ j 1)) \\*
+~~~~~~~~~~~~~~~~(p (list w "end splice") (cons (* (car p) incr) p))) \\*
+~~~~~~~~~~~~~~~((= j npoints) (cons "start splice" p))))))) \\
+\end{lisp}
+\begin{lisp}
+;;; This function draws the annuli for the pattern. \\
+(defun shaded-annulus (inner outer sectors firstshade lastshade fn stream) \\*
+~~(assert (zerop (mod sectors 4))) \\*
+~~(comment-line stream "Annulus {\Xtilde}S {\Xtilde}S {\Xtilde}S {\Xtilde}S {\Xtilde}S" \\*
+~~~~~~~~~~~~~~~~(round-real inner) (round-real outer) \\*
+~~~~~~~~~~~~~~~~sectors firstshade lastshade) \\
+~~(dotimes (jj sectors) \\*
+~~~~(let ((j (- sectors jj 1))) \\
+~~~~~~(let* ((lophase (+ tiny (* 2 pi (/ j sectors)))) \\*
+~~~~~~~~~~~~~(hiphase (* 2 pi (/ (+ j 1) sectors))) \\*
+~~~~~~~~~~~~~(midphase (/ (+ lophase hiphase) 2.0)) \\*
+~~~~~~~~~~~~~(midradius (/ (+ inner outer) 2.0)) \\*
+~~~~~~~~~~~~~(quadrant (floor (* j 4) sectors))) \\
+~~~~~~~~(comment-line stream "Sector from {\Xtilde}S to {\Xtilde}S (quadrant {\Xtilde}S)" \\*
+~~~~~~~~~~~~~~~~~~~~~~(round-real lophase) \\*
+~~~~~~~~~~~~~~~~~~~~~~(round-real hiphase) \\*
+~~~~~~~~~~~~~~~~~~~~~~quadrant) \\
+~~~~~~~~(let ((p0 (reverse (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~inner \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial lophase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p1 (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~outer \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial lophase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn)) \\*
+~~~~~~~~~~~~~~(p2 (reverse (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~lophase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential outer \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p3 (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~hiphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential outer quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn)) \\
+~~~~~~~~~~~~~~(p4 (reverse (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~outer \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial hiphase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p5 (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~inner \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial hiphase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn)) \\
+~~~~~~~~~~~~~~(p6 (reverse (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~hiphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential inner \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p7 (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~lophase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential inner quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~(postscript-closed-path stream \\*
+~~~~~~~~~~~~(append \\*
+~~~~~~~~~~~~~~p0 (splice p0 p1) '("middle radial") \\*
+~~~~~~~~~~~~~~p1 (splice p1 p2) '("end radial") \\
+~~~~~~~~~~~~~~p2 (splice p2 p3) '("middle circumferential") \\
+~~~~~~~~~~~~~~p3 (splice p3 p4) '("end circumferential") \\
+~~~~~~~~~~~~~~p4 (splice p4 p5) '("middle radial") \\
+~~~~~~~~~~~~~~p5 (splice p5 p6) '("end radial") \\
+~~~~~~~~~~~~~~p6 (splice p6 p7) '("middle circumferential") \\
+~~~~~~~~~~~~~~p7 (splice p7 p0) '("end circumferential") \\*
+~~~~~~~~~~~~~~)))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+~~~~~~~~(postscript-shade stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~(/ (+ (* firstshade (- (- sectors 1) j)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(* lastshade j)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(- sectors 1))))))) \\
+\\
+(defun postscript-penstroke (stream wid) \\*
+~~(format stream "{\Xtilde}\%{\Xtilde}S setlinewidth~~~1 setlinecap~~stroke" \\
+~~~~~~~~~~wid)) \\
+\\
+(defun postscript-shade (stream shade) \\*
+~~(format stream "{\Xtilde}\%currentgray~~~{\Xtilde}S setgray~~~fill~~~setgray" \\
+~~~~~~~~~~shade)) \\
+\\
+(defun postscript-closed-path (stream path) \\*
+~~(unless (every \#'far-out (remove-if-not \#'numberp path)) \\*
+~~~~(postscript-raw-path stream path) \\*
+~~~~(format stream "{\Xtilde}\%~~closepath"))) \\
+\\
+(defun postscript-path (stream path) \\*
+~~(unless (every \#'far-out (remove-if-not \#'numberp path)) \\*
+~~~~(postscript-raw-path stream path))) \\
+\\
+;;; Print a path as a series of PostScript "lineto" commands. \\*
+(defun postscript-raw-path (stream path) \\*
+~~(format stream "{\Xtilde}\%newpath") \\*
+~~(let ((fmt "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S moveto")) \\*
+~~~~(dolist (pt path) \\*
+~~~~~~(cond ((stringp pt) \\*
+~~~~~~~~~~~~~(format stream "{\Xtilde}\%~~\%{\Xtilde}A" pt)) \\
+~~~~~~~~~~~~(t (format stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~fmt \\*
+~~~~~~~~~~~~~~~~~~~~~~~(clamp-real (realpart pt)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~(clamp-real (imagpart pt))) \\*
+~~~~~~~~~~~~~~~(setq fmt "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto")))))) \\
+\\
+;;; Definitions of functions to be plotted that are not \\*
+;;; standard Common Lisp functions. \\*
+\\*
+(defun one-plus-over-one-minus (x) (/ (+ 1 x) (- 1 x))) \\
+\\
+(defun one-minus-over-one-plus (x) (/ (- 1 x) (+ 1 x))) \\
+\\
+(defun sqrt-square-minus-one (x) (sqrt (- 1 (* x x)))) \\
+\\
+(defun sqrt-one-plus-square (x) (sqrt (+ 1 (* x x))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+;;; Because X3J13 voted for a new definition of the atan function, \\*
+;;; the following definition was used in place of the atan function \\*
+;;; provided by the Common Lisp implementation I was using. \\*
+\\*
+(defun good-atan (x) \\*
+~~(/ (- (log (+ 1 (* x \#c(0 1)))) \\*
+~~~~~~~~(log (- 1 (* x \#c(0 1))))) \\*
+~~~~~\#c(0 2))) \\
+\\
+;;; Because the first edition had an erroneous definition of atanh, \\*
+;;; the following definition was used in place of the atanh function \\*
+;;; provided by the Common Lisp implementation I was using. \\*
+\\*
+(defun really-good-atanh (x) \\*
+~~(/ (- (log (+ 1 x)) \\
+~~~~~~~~(log (- 1 x))) \\
+~~~~~2)) \\
+\end{lisp}
+\begin{lisp}
+;;; This is the main procedure that is intended to be called by a user. \\*
+(defun picture (\&optional (fn \#'sqrt)) \\*
+~~(with-open-file (stream (concatenate 'string \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(string-downcase (string fn)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"-plot.ps") \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~:direction :output) \\
+~~~~(format stream "\% PostScript file for plot of function {\Xtilde}S{\Xtilde}\%" fn) \\*
+~~~~(format stream "\% Plot is to fit in a region {\Xtilde}S inches square{\Xtilde}\%" \\*
+~~~~~~~~~~~~(/ text-width-in-picas 6.0)) \\
+~~~~(format stream \\*
+~~~~~~~~~~~~"\%~~showing axes extending {\Xtilde}S units from the origin.{\Xtilde}\%" \\*
+~~~~~~~~~~~~units-to-show) \\
+~~~~(let ((scaling (/ (* text-width-in-picas 12) (* units-to-show 2)))) \\*
+~~~~~~(format stream "{\Xtilde}\%{\Xtilde}S {\Xtilde}:*{\Xtilde}S scale" scaling)) \\
+~~~~(format stream "{\Xtilde}\%{\Xtilde}S {\Xtilde}:*{\Xtilde}S translate" units-to-show) \\
+~~~~(format stream "{\Xtilde}\%newpath") \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S moveto" (- units-to-show) (- units-to-show)) \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto" units-to-show (- units-to-show)) \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto" units-to-show units-to-show) \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto" (- units-to-show) units-to-show) \\
+~~~~(format stream "{\Xtilde}\%~~closepath") \\
+~~~~(format stream "{\Xtilde}\%clip") \\
+~~~~(moby-grid fn stream) \\
+~~~~(format stream \\*
+~~~~~~~~~~~~"{\Xtilde}\%\% End of PostScript file for plot of function {\Xtilde}S" \\*
+~~~~~~~~~~~~fn) \\
+~~~~(terpri stream)))
+\end{lisp}
+\endgroup
+\end{new}
+
+\section{Type Conversions and Component Extractions on Numbers}
+
+While most arithmetic functions will operate on any kind of number,
+coercing types if necessary, the following functions are provided to
+allow specific conversions of data types to be forced when desired.
+
+\begin{defun}[Function]
+float number &optional other
+
+This converts any non-complex number to a floating-point number.
+With no second argument, if {\it number} is already a floating-point
+number, then {\it number} is returned;
+otherwise a \cd{single-float} is produced.
+If the argument {\it other} is provided, then it must be a floating-point
+number, and {\it number} is converted to the same format as {\it other}.
+See also \cd{coerce}.
+\end{defun}
+
+\begin{defun}[Function]
+rational number \\
+rationalize number
+
+Each of these functions converts any non-complex number to a rational
+number.  If the argument is already rational, it is returned.
+The two functions differ in their treatment of floating-point numbers.
+
+\cd{rational} assumes that the floating-point number is completely accurate
+and returns a rational number mathematically equal to the precise
+value of the floating-point number.
+
+\cd{rationalize} assumes that the
+floating-point number is accurate only to the precision of the
+floating-point representation and may return any rational number for
+which the floating-point number is the best available approximation of
+its format; in doing this it attempts to keep both numerator and
+denominator small.
+
+It is always the case that
+\begin{lisp}
+(float (rational {\it x}) {\it x}) \EQ\ {\it x}
+\end{lisp}
+and
+\begin{lisp}
+(float (rationalize {\it x}) {\it x}) \EQ\ {\it x}
+\end{lisp}
+That is, rationalizing a floating-point number by either method
+and then converting it back
+to a floating-point number of the same format produces the original number.
+What distinguishes the two functions is that \cd{rational} typically
+has a simple, inexpensive implementation, whereas \cd{rationalize} goes
+to more trouble to produce a result that is more pleasant to view and
+simpler to compute with for some purposes.
+\end{defun}
+
+\begin{defun}[Function]
+numerator rational \\
+denominator rational
+
+These functions take a rational number (an integer or ratio)
+and return as an integer the numerator or denominator of the canonical
+reduced form of the rational.  The numerator of an integer is that integer;
+the denominator of an integer is \cd{1}.  Note that
+\begin{lisp}
+(gcd (numerator {\it x}) (denominator {\it x})) \EV\ 1
+\end{lisp}
+The denominator will always be a strictly positive integer;
+the numerator may be any integer.
+For example:
+\begin{lisp}
+(numerator (/ 8 -6)) \EV\ -4 \\
+(denominator (/ 8 -6)) \EV\ 3
+\end{lisp}
+\end{defun}
+
+There is no \cd{fix} function in Common Lisp because there are several
+interesting ways to convert non-integral values to integers.
+These are provided by the functions below, which perform not only
+type conversion but also some non-trivial calculations as well.
+
+\begin{defun}[Function]
+floor number &optional divisor \\
+ceiling number &optional divisor \\
+truncate number &optional divisor \\
+round number &optional divisor
+
+In the simple one-argument case,
+each of these functions converts its argument {\it number}
+(which must not be complex) to an integer.
+If the argument is already an integer, it is returned directly.
+If the argument is a ratio or floating-point number, the functions use
+different algorithms for the conversion.
+
+\cd{floor} converts its argument by truncating toward negative
+infinity; that is, the result is the largest integer that is not larger
+than the argument.
+
+\cd{ceiling} converts its argument by truncating toward positive
+infinity; that is, the result is the smallest integer that is not smaller
+than the argument.
+
+\cd{truncate} converts its argument by truncating toward zero;
+that is, the result is the integer of the same sign as the argument
+and which has the greatest integral
+magnitude not greater than that of the argument.
+
+\cd{round} converts its argument by rounding to the nearest
+integer; if {\it number} is exactly halfway between two integers
+(that is, of the form $\hbox{\it integer}+\hbox{\rm 0.5}$), then it is rounded to the one that
+is even (divisible by 2).
+
+The following table shows what the four functions produce when given
+various arguments.
+
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}ccccc@{}}
+{\rm Argument}&floor&ceiling&truncate&round\\
+\hlinesp
+~2.6& ~2& ~3& ~2& ~3 \\
+~2.5& ~2& ~3& ~2& ~2 \\
+~2.4& ~2& ~3& ~2& ~2 \\
+~0.7& ~0& ~1& ~0& ~1 \\
+~0.3& ~0& ~1& ~0& ~0 \\
+-0.3& -1& ~0& ~0& ~0 \\
+-0.7& -1& ~0& ~0& -1 \\
+-2.4& -3& -2& -2& -2 \\
+-2.5& -3& -2& -2& -2 \\
+-2.6& -3& -2& -2& -3 \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+If a second argument {\it divisor} is supplied, then the result
+is the appropriate type of rounding or truncation applied to the
+result of dividing the {\it number} by the {\it divisor}.
+For example, \cd{(floor 5~2)}~\EQ~\cd{(floor (/~5~2))} but is potentially more
+efficient.
+\begin{new}%CORR
+This statement is not entirely accurate; one should instead say that
+\cd{(values (floor 5~2))}~\EQ~\cd{(values (floor (/~5~2)))},
+because there is a second value to consider, as discussed below.
+In other words, the first values returned by the two forms will be the same, but
+in general the second values will differ.  Indeed, we have
+\begin{lisp}
+(floor 5 2) \EV\ 2 {\rm and} 1 \\
+(floor (/ 5 2)) \EV\ 2 {\rm and} 1/2
+\end{lisp}
+for this example.
+\end{new}
+The {\it divisor} may be any non-complex number.
+\begin{new}%CORR
+It is generally accepted that it is an error for the {\it divisor} to be zero.
+\end{new}
+The one-argument case is exactly like the two-argument case where the second
+argument is \cd{1}.
+
+\begin{newer}
+In other words, the one-argument case returns an integer and fractional part
+for the {\it number}: \cd{(truncate 5.3) \EV\ 5.0 {\rm and} 0.3}, for example.
+\end{newer}
+Each of the functions actually returns {\it two} values,
+whether given one or two arguments.  The second
+result is the remainder and may be obtained using
+\cd{multiple-value-bind} and related constructs.
+If any of these functions is given two arguments ${\it x}$ and ${\it y}$
+and produces results ${\it q}$ and ${\it r}$, then ${\it q} \cdot {\it y}+{\it r}={\it x}$.
+The first result ${\it q}$ is always an integer.
+The remainder ${\it r}$ is an integer if both arguments are integers,
+is rational if both arguments are rational,
+and is floating-point if either argument is floating-point.
+One consequence is that
+in the one-argument case the remainder is always a number of the same type
+as the argument.
+
+When only one argument is given, the two results are exact;
+the mathematical sum of the two results is always equal to the
+mathematical value of the argument.
+
+\goodbreak
+
+\beforenoterule
+\begin{incompatibility}
+The names of the functions \cd{floor}, \cd{ceiling},
+\cd{truncate}, and \cd{round} are more accurate than names like \cd{fix}
+that have heretofore been used in various Lisp systems.
+The names used here are compatible with standard mathematical
+terminology (and with PL/1, as it happens).  In Fortran
+\cd{ifix} means \cd{truncate}.  Algol 68 provides \cd{round}
+and uses \cd{entier} to mean \cd{floor}.
+In MacLisp, \cd{fix} and \cd{ifix} both
+mean \cd{floor} (one is generic, the other flonum-in/fixnum-out).
+In Interlisp, \cd{fix} means \cd{truncate}.
+In Lisp Machine Lisp, \cd{fix} means \cd{floor} and \cd{fixr} means \cd{round}.
+Standard Lisp provides a \cd{fix} function but does not
+specify precisely what it does.  The existing usage
+of the name \cd{fix} is so confused that it seemed best to avoid it
+altogether.
+
+The names and definitions given here have recently been adopted
+by Lisp Machine Lisp, and MacLisp and NIL (New Implementation of Lisp) seem likely to follow suit.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+mod number divisor \\
+rem number divisor
+
+\cd{mod} performs the operation \cd{floor} on its two arguments
+and returns the {\it second} result of \cd{floor} as its only result.
+Similarly,
+\cd{rem} performs the operation \cd{truncate} on its arguments
+and returns the {\it second} result of \cd{truncate} as its only result.
+
+\cd{mod} and \cd{rem} are therefore the usual modulus
+and remainder functions when applied to two integer arguments.
+In general, however, the arguments may be integers or floating-point
+numbers.
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+(mod 13 4) \EV\ 1\>(rem 13 4) \EV\ 1 \\
+(mod -13 4) \EV\ 3\>(rem -13 4) \EV\ -1 \\
+(mod 13 -4) \EV\ -3\>(rem 13 -4) \EV\ 1 \\
+(mod -13 -4) \EV\ -1\>(rem -13 -4) \EV\ -1 \\
+(mod 13.4 1) \EV\ 0.4\>(rem 13.4 1) \EV\ 0.4 \\
+(mod -13.4 1) \EV\ 0.6\>(rem -13.4 1) \EV\ -0.4
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+The Interlisp function \cd{remainder} is essentially
+equivalent to the Common Lisp function \cd{rem}.  The MacLisp function \cd{remainder}
+is like \cd{rem} but accepts only integer arguments.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+ffloor number &optional divisor \\
+fceiling number &optional divisor \\
+ftruncate number &optional divisor \\
+fround number &optional divisor
+
+These functions are just like \cd{floor}, \cd{ceiling}, \cd{truncate}, and
+\cd{round}, except that the result (the first result of two) is always a
+floating-point number rather than an integer.  It is roughly as if
+\cd{ffloor} gave its arguments to \cd{floor}, and then applied \cd{float} to
+the first result before passing them both back.  In practice, however,
+\cd{ffloor} may be implemented much more efficiently.  Similar remarks
+apply to the other three functions.  If the first argument is a
+floating-point number, and the second argument is not a floating-point
+number of longer format, then the first result will be a floating-point
+number of the same type as the first argument.
+For example:
+\begin{lisp}
+(ffloor -4.7) \EV\ -5.0 and 0.3 \\
+(ffloor 3.5d0) \EV\ 3.0d0 and 0.5d0
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+decode-float float \\
+scale-float float integer \\
+float-radix float \\
+float-sign float1 &optional float2 \\
+float-digits float \\
+float-precision float \\
+integer-decode-float float
+
+The function \cd{decode-float} takes a floating-point number
+and returns three values.
+
+The first value is a new floating-point number of the same format
+representing the significand; the second value is an integer
+representing the exponent; and the third value is a floating-point
+number of the same format indicating the sign ($-1.0$ or $1.0$).
+Let {\it b} be the radix for the floating-point representation;
+then \cd{decode-float} divides the argument by an integral power of {\it b}
+so as to bring its value between 1/{\it b} (inclusive) and 1 (exclusive)
+and returns the quotient as the first value.
+If the argument is zero, however, the result
+is equal to the absolute value of the argument (that is, if there is a negative
+zero, its significand is considered to be a positive~zero).
+
+The second value of \cd{decode-float} is
+the integer exponent {\it e} to which {\it b} must be raised
+to produce the appropriate power for the division.
+If the argument is zero, any integer value may be returned, provided
+that the identity shown below for \cd{scale-float} holds.
+
+The third value of \cd{decode-float} is a floating-point number,
+of the same format as the argument, whose absolute value is 1
+and whose sign matches that of the argument.
+
+The function \cd{scale-float} takes a floating-point number {\it f}
+(not necessarily between 1/{\it b} and 1) and
+an integer {\it k}, and returns \cd{(* {\it f} (expt (float {\it b} {\it f}) {\it k}))}.
+(The use of \cd{scale-float} may be much more efficient than using
+exponentiation and multiplication and avoids intermediate
+overflow and underflow if the final result is representable.)
+
+Note that
+\begin{lisp}
+(multiple-value-bind (signif expon sign) \\*
+~~~~~~~~~~~~~~~~~~~~~(decode-float {\it f}) \\*
+~~(scale-float signif expon)) \\*
+\EQ\ (abs {\it f})
+\end{lisp}
+and
+\begin{lisp}
+(multiple-value-bind (signif expon sign) \\*
+~~~~~~~~~~~~~~~~~~~~~(decode-float {\it f}) \\*
+~~(* (scale-float signif expon) sign)) \\*
+\EQ\ {\it f}
+\end{lisp}
+
+The function \cd{float-radix} returns (as an integer)
+the radix {\it b} of the floating-point argument.
+
+The function \cd{float-sign} returns a floating-point number ${\it z}$ such
+that ${\it z}$ and {\it float1} have the same sign and also such that
+${\it z}$ and {\it float2} have the same absolute value.
+The argument {\it float2} defaults to the value of \cd{(float 1 {\it float1})};
+\cd{(float-sign x)} therefore always produces a \cd{1.0} or \cd{-1.0}
+of appropriate format
+according to the sign of \cd{x}.  (Note that if an implementation
+has distinct representations for negative zero and positive zero,
+then \cd{(float-sign -0.0)} \EV\ \cd{-1.0}.)
+
+The function \cd{float-digits} returns, as a non-negative integer,
+the number of radix-{\it b} digits
+used in the representation of its argument (including any implicit
+digits, such as a ``hidden bit'').
+The function \cd{float-precision}
+returns, as a non-negative integer,
+the number of significant radix-{\it b} digits present in the
+argument; if the argument is (a floating-point)
+zero, then the result is (an integer) zero.
+For normalized floating-point numbers, the results of \cd{float-digits}
+and \cd{float-precision}
+will be the same, but the precision will be less than the
+number of representation digits for a denormalized or zero number.
+
+The function \cd{integer-decode-float} is similar to \cd{decode-float}
+but for its first value returns,
+as an \cd{integer}, the significand scaled so as to be an integer.
+For an argument {\it f}, this integer will be strictly less than
+\begin{lisp}
+\cd{(expt {\it b} (float-precision {\it f}))}
+\end{lisp}
+but no less than
+\begin{lisp}
+\cd{(expt {\it b} (- (float-precision {\it f}) 1))}
+\end{lisp}
+except that if {\it f} is zero, then the integer value will be zero.
+
+The second value bears the same relationship to the first value
+as for \cd{decode-float}:
+\begin{lisp}
+(multiple-value-bind (signif expon sign) \\*
+~~~~~~~~~~~~~~~~~~~~~(integer-decode-float {\it f}) \\*
+~~(scale-float (float signif {\it f}) expon)) \\*
+\EQ\ (abs {\it f})
+\end{lisp}
+
+The third value of \cd{integer-decode-float} will be \cd{1} or \cd{-1}.
+
+\beforenoterule
+\begin{rationale}
+These functions allow the writing of machine-independent,
+or at least machine-parameterized, floating-point software of reasonable
+efficiency.
+\end{rationale}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+complex realpart &optional imagpart
+
+The arguments must be non-complex numbers; a number is returned
+that has {\it realpart} as its real part and {\it imagpart} as its imaginary
+part, possibly converted according to the rule of floating-point
+contagion (thus both components will be of the same type).
+If {\it imagpart} is not specified,
+then \cd{(coerce 0 (type-of {\it realpart}))} is
+effectively used.  Note that if both the {\it realpart} and {\it imagpart} are
+rational and the {\it imagpart} is zero, then the result is just the
+{\it realpart} because of the rule of canonical representation
+for complex rationals.  It follows that the result of \cd{complex}
+is not always a complex number; it may be simply a \cd{rational}.
+\end{defun}
+
+\begin{defun}[Function]
+realpart number \\
+imagpart number
+
+These return the real and imaginary parts of a complex number.  If
+{\it number} is a non-complex number, then \cd{realpart} returns its
+argument {\it number} and \cd{imagpart}
+returns \cd{(* 0 {\it number})}, which
+has the effect that the imaginary part of a rational is \cd{0} and that of
+a floating-point number is a floating-point zero of the same format.
+
+\begin{newer}
+A clever way to multiply a complex number {\it z} by {\it i} is to write
+\begin{lisp}
+(complex (- (imagpart {\it z})) (realpart {\it z}))
+\end{lisp}
+instead of \cd{(*~{\it z} \#c(0~1))}.  This cleverness is not always
+gratuitous; it may be of particular importance in the presence of minus
+zero.  For example, if we are using IEEE standard floating-point arithmetic
+and $z=4+0{\it i}$, the result of the clever expression is $-0+4{\it i}$, a true
+$90^\circ$ rotation of ${\it z}$, whereas the result of \cd{(*~{\it z} \#c(0~1))}
+is likely to be
+\begin{tabbing}
+\( (4+0{\it i\/})(+0+{\it i\/}) = ((4)(+0) - (+0)(1)) + ((4)(1) + (+0)(+0)){\it i} \) \\
+\hskip2pc\( = ((+0)-(+0))+((4)+(+0)){\it i} = +0+4{\it i} \)
+\end{tabbing}
+which could
+land on the wrong side of a branch cut, for example.
+\end{newer}
+\end{defun}
+
+
+\section{Logical Operations on Numbers}
+
+The logical operations in this section require integers
+as arguments; it is an error to supply a non-integer as an argument.
+The functions all treat integers as if
+they were represented in two's-complement notation.
+
+\beforenoterule
+\begin{implementation}
+Internally, of course, an implementation of
+Common Lisp may or may not use a two's-complement representation.
+All that is necessary is that the logical operations
+perform calculations so as to give this appearance to the user.
+\end{implementation}
+\afternoterule
+
+The logical operations provide a convenient way to represent
+an infinite vector of bits.  Let such a conceptual vector be
+indexed by the non-negative integers.  Then bit ${\it j}$ is assigned
+a ``weight'' $2^{\hbox{\scriptsize\it j}}$.
+Assume that only a finite number of bits are 1's
+or only a finite number of bits are 0's.
+A vector with only a finite number of one-bits is represented
+as the sum of the weights of the one-bits, a positive integer.
+A vector with only a finite number of zero-bits is represented
+as \cd{-1} minus the sum of the weights of the zero-bits, a negative integer.
+
+This method of using integers to represent bit-vectors can in turn
+be used to represent sets.  Suppose that some (possibly countably
+infinite) universe of discourse
+for sets is mapped into the non-negative integers.
+Then a set can be represented as a bit vector; an element is in the
+set if the bit whose index corresponds to that element is a one-bit.
+In this way all finite sets can be represented (by positive
+integers), as well as all sets whose complements are finite
+(by negative integers).  The functions \cd{logior}, \cd{logand},
+and \cd{logxor} defined below then compute the union,
+intersection, and symmetric difference operations on sets
+represented in this way.
+
+\begin{defun}[Function]
+logior &rest integers
+
+This returns the bit-wise logical {\it inclusive or} of its arguments.
+If no argument is given, then the result is zero,
+which is an identity for this operation.
+\end{defun}
+
+\begin{defun}[Function]
+logxor &rest integers
+
+This returns the bit-wise logical {\it exclusive or} of its arguments.
+If no argument is given, then the result is zero,
+which is an identity for this operation.
+\end{defun}
+
+\begin{defun}[Function]
+logand &rest integers
+
+This returns the bit-wise logical {\it and} of its arguments.
+If no argument is given, then the result is \cd{-1},
+which is an identity for this operation.
+\end{defun}
+
+\begin{defun}[Function]
+logeqv &rest integers
+
+This returns the bit-wise logical {\it equivalence} (also known as {\it exclusive nor})
+of its arguments.
+If no argument is given, then the result is \cd{-1},
+which is an identity for this operation.
+\end{defun}
+
+\begin{defun}[Function]
+lognand integer1 integer2 \\
+lognor integer1 integer2 \\
+logandc1 integer1 integer2 \\
+logandc2 integer1 integer2 \\
+logorc1 integer1 integer2 \\
+logorc2 integer1 integer2
+
+These are the other six non-trivial bit-wise logical operations
+on two arguments.  Because they are not associative,
+they take exactly two arguments rather than any non-negative number
+of arguments.
+\begin{lisp}
+(lognand {\it n1} {\it n2}) \EQ\ (lognot (logand {\it n1} {\it n2})) \\[2pt]
+(lognor {\it n1} {\it n2}) \EQ\ (lognot (logior {\it n1} {\it n2})) \\[2pt]
+(logandc1 {\it n1} {\it n2}) \EQ\ (logand (lognot {\it n1}) {\it n2}) \\[2pt]
+(logandc2 {\it n1} {\it n2}) \EQ\ (logand {\it n1} (lognot {\it n2})) \\[2pt]
+(logorc1 {\it n1} {\it n2}) \EQ\ (logior (lognot {\it n1}) {\it n2}) \\[2pt]
+(logorc2 {\it n1} {\it n2}) \EQ\ (logior {\it n1} (lognot {\it n2}))
+\end{lisp}
+\end{defun}
+
+The ten bit-wise logical operations on two integers are summarized
+in the following table:
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}rlllll@{}}
+{\it integer1}&0&0&1&1 \\
+{\it integer2}&0&1&0&1&{\rm Operation Name} \\
+\hlinesp
+\hbox{logand~~}&0&0&0&1&{\rm and} \\
+\hbox{logior~~}&0&1&1&1&{\rm inclusive or} \\
+\hbox{logxor~~}&0&1&1&0&{\rm exclusive or} \\
+\hbox{logeqv~~}&1&0&0&1&{\rm equivalence (exclusive nor)} \\
+\hbox{lognand~}&1&1&1&0&{\rm not-and} \\
+\hbox{lognor~~}&1&0&0&0&{\rm not-or} \\
+\hbox{logandc1}&0&1&0&0&{\rm and complement of {\it integer1} with {\it integer2}} \\
+\hbox{logandc2}&0&0&1&0&{\rm and {\it integer1} with complement of {\it integer2}} \\
+\hbox{logorc1~}&1&1&0&1&{\rm or complement of {\it integer1} with {\it integer2}} \\
+\hbox{logorc2~}&1&0&1&1&{\rm or {\it integer1} with complement of {\it integer2}} \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+
+\begin{defun}[Function][Constant]
+boole op integer1 integer2 \\
+boole-clr \\
+boole-set \\
+boole-1 \\
+boole-2 \\
+boole-c1 \\
+boole-c2 \\
+boole-and \\
+boole-ior \\
+boole-xor \\
+boole-eqv \\
+boole-nand \\
+boole-nor \\
+boole-andc1 \\
+boole-andc2 \\
+boole-orc1 \\
+boole-orc2
+
+The function \cd{boole} takes an operation {\it op} and two integers,
+and returns an integer produced by performing the logical operation
+specified by {\it op} on the two integers.  The precise values of
+the sixteen constants are implementation-dependent, but they are
+suitable for use as the first argument to \cd{boole}:
+
+\vskip 0pt minus 4pt
+
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}rlllll@{}}
+{\it integer1}&0&0&1&1 \\
+{\it integer2}&0&1&0&1&{\rm Operation Performed} \\
+\hlinesp
+\hbox{boole-clr~~}&0&0&0&0&{\rm always 0} \\
+\hbox{boole-set~~}&1&1&1&1&{\rm always 1} \\
+\hbox{boole-1~~~~}&0&0&1&1&{\it integer1} \\
+\hbox{boole-2~~~~}&0&1&0&1&{\it integer2} \\
+\hbox{boole-c1~~~}&1&1&0&0&{\rm complement of {\it integer1}} \\
+\hbox{boole-c2~~~}&1&0&1&0&{\rm complement of {\it integer2}} \\
+\hbox{boole-and~~}&0&0&0&1&{\rm and} \\
+\hbox{boole-ior~~}&0&1&1&1&{\rm inclusive or} \\
+\hbox{boole-xor~~}&0&1&1&0&{\rm exclusive or} \\
+\hbox{boole-eqv~~}&1&0&0&1&{\rm equivalence (exclusive nor)} \\
+\hbox{boole-nand~}&1&1&1&0&{\rm not-and} \\
+\hbox{boole-nor~~}&1&0&0&0&{\rm not-or} \\
+\hbox{boole-andc1}&0&1&0&0&{\rm and complement of {\it integer1} with {\it integer2}} \\
+\hbox{boole-andc2}&0&0&1&0&{\rm and {\it integer1} with complement of {\it integer2}} \\
+\hbox{boole-orc1~}&1&1&0&1&{\rm or complement of {\it integer1} with {\it integer2}} \\
+\hbox{boole-orc2~}&1&0&1&1&{\rm or {\it integer1} with complement of {\it integer2}} \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+\cd{boole} can therefore compute all sixteen logical functions on two
+arguments.  In general,
+\begin{lisp}
+(boole boole-and x y) \EQ\ (logand x y)
+\end{lisp}
+and the latter is more perspicuous.  However, \cd{boole} is useful when it
+is necessary to parameterize a procedure so that it can use
+one of several logical operations.
+\end{defun}
+
+\begin{defun}[Function]
+lognot integer
+
+This returns the bit-wise logical {\it not} of its argument.
+Every bit of the result is the complement of the corresponding bit
+in the argument.
+\begin{lisp}
+(logbitp {\it j} (lognot {\it x})) \EQ\ (not (logbitp {\it j} {\it x}))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+logtest integer1 integer2
+
+\cd{logtest} is a predicate that is true if any of
+the bits designated by the 1's in {\it integer1} are 1's in {\it integer2}.
+\begin{lisp}
+(logtest {\it x} {\it y}) \EQ\ (not (zerop (logand {\it x} {\it y})))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+logbitp index integer
+
+\cd{logbitp} is true if the bit in {\it integer} whose index
+is {\it index} (that is, its weight is $2^{\hbox{\scriptsize\it index}}$) is a one-bit;
+otherwise it is false.
+For example:
+\begin{lisp}
+(logbitp 2 6) {\rm is true} \\
+(logbitp 0 6) {\rm is false} \\
+(logbitp {\it k} {\it n}) \EQ\ (ldb-test (byte 1 {\it k}) {\it n})
+\end{lisp}
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARGUMENTS-UNDERSPECIFIED}
+to clarify that the {\it index} must be a non-negative integer.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+ash integer count
+
+This function shifts {\it integer} arithmetically left by {\it count} bit
+positions if {\it count} is positive,
+or right by $-\hbox{\it count}$ bit positions if {\it count} is negative.
+The sign of the result is always the same as the sign of {\it integer}.
+
+Mathematically speaking, this operation performs the computation
+${\it floor}({\it integer}\cdot2^{\hbox{\scriptsize\it count}}$).
+
+Logically, this moves all of the bits in {\it integer} to the left,
+adding zero-bits at the bottom, or moves them to the right,
+discarding bits.  (In this context the question of what gets shifted
+in on the left is irrelevant; integers, viewed as strings of bits,
+are ``half-infinite,'' that is, conceptually extend infinitely far to the left.)
+For example:
+\begin{lisp}
+(logbitp {\it j} (ash {\it n} {\it k})) \EQ\ (and (>= {\it j} {\it k}) (logbitp (- {\it j} {\it k}) {\it n}))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+logcount integer
+
+The number of bits in {\it integer} is determined and returned.
+If {\it integer} is positive, the \cd{1}-bits in its binary
+representation are counted.  If {\it integer} is negative,
+the \cd{0}-bits in its two's-complement binary representation are counted.
+The result is always a non-negative integer.
+For example:
+\begin{lisp}
+(logcount 13) \EV\ 3~~~~~~;{\rm Binary representation is} ...0001101 \\
+(logcount -13) \EV\ 2~~~~~;{\rm Binary representation is} ...1110011 \\
+(logcount 30) \EV\ 4~~~~~~;{\rm Binary representation is} ...0011110 \\
+(logcount -30) \EV\ 4~~~~~;{\rm Binary representation is} ...1100010
+\end{lisp}
+The following identity always holds:
+\begin{lisp}
+(logcount x) \EQ\ (logcount (- (+ x 1))) \\
+~~~~~~~~~~~~~\EQ\ (logcount (lognot x))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+integer-length integer
+
+This function performs the computation
+\begin{tabbing}
+\( {\it ceiling}(\log_2 ({\bf if}\; {\it integer} < 0 \;{\bf then} \;
+    -{\it integer} \;{\bf else}\; {\it integer}+1)) \)
+\end{tabbing}
+This is useful in two different ways.
+First, if {\it integer} is non-negative, then its value can be represented
+in unsigned binary form in a field whose width in bits is
+no smaller than \cd{(integer-length {\it integer})}.
+Second, regardless of the sign of {\it integer}, its value can be
+represented in signed binary two's-complement form in a field
+whose width in bits is no smaller than \cd{(+ (integer-length {\it integer}) 1)}.
+For example:
+\begin{lisp}
+(integer-length 0) \EV\ 0 \\
+(integer-length 1) \EV\ 1 \\
+(integer-length 3) \EV\ 2 \\
+(integer-length 4) \EV\ 3 \\
+(integer-length 7) \EV\ 3 \\
+(integer-length -1) \EV\ 0 \\
+(integer-length -4) \EV\ 2 \\
+(integer-length -7) \EV\ 3 \\
+(integer-length -8) \EV\ 3
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+This function is similar to the MacLisp
+function \cd{haulong}.  One may define \cd{haulong} as
+\begin{lisp}
+(haulong x) \EQ\ (integer-length (abs x))
+\end{lisp}
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+
+\section{Byte Manipulation Functions}
+
+Several functions are provided for dealing with an arbitrary-width field of
+contiguous bits appearing anywhere in an integer.
+Such a contiguous set of bits is called a {\it byte}.
+Here the term {\it byte} does not imply some fixed number of bits
+(such as eight), rather a field of arbitrary and user-specifiable width.
+
+The byte-manipulation functions use objects called {\it byte specifiers} to
+designate a specific byte position within an integer.
+The representation of a byte specifier is implementation-dependent;
+in particular, it may or may not be a number.
+It is sufficient to know that the function \cd{byte} will construct one,
+and that the byte-manipulation functions will accept them.
+The function \cd{byte} accepts two integers representing
+the {\it position} and {\it size} of the byte and returns
+a byte specifier.
+Such a specifier designates a byte whose width is {\it size}
+and whose bits have weights \( 2^{\hbox{\scriptsize\it position}+\hbox{\scriptsize\it size}-1} \)
+through \( 2^{\hbox{\scriptsize\it position}} \).
+
+\begin{defun}[Function]
+byte size position
+
+\cd{byte} takes two integers representing the size and position
+of a byte and returns a byte specifier suitable for use
+as an argument to byte-manipulation functions.
+\end{defun}
+
+\begin{defun}[Function]
+byte-size bytespec \\
+byte-position bytespec
+
+Given a byte specifier, \cd{byte-size} returns the size specified as an
+integer; \cd{byte-position} similarly returns the position.
+For example:
+\begin{lisp}
+(byte-size (byte {\it j} {\it k})) \EQ\ {\it j} \\
+(byte-position (byte {\it j} {\it k})) \EQ\ {\it k}
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+ldb bytespec integer
+
+{\it bytespec} specifies a byte of {\it integer} to be extracted.
+The result is returned as a non-negative integer.
+For example:
+\begin{lisp}
+(logbitp {\it j} (ldb (byte {\it s} {\it p}) {\it n})) \EQ\ (and (< {\it j} {\it s}) (logbitp (+ {\it j} {\it p}) {\it n}))
+\end{lisp}
+The name of the function \cd{ldb} means ``load byte.''
+
+\beforenoterule
+\begin{incompatibility}
+The MacLisp function \cd{haipart} can be
+implemented in terms of \cd{ldb} as follows:
+\begin{lisp}
+(defun haipart (integer count) \\
+~~(let ((x (abs integer))) \\
+~~~~(if (minusp count) \\
+~~~~~~~~(ldb (byte (- count) 0) x) \\
+~~~~~~~~(ldb (byte count (max 0 (- (integer-length x) count))) \\
+~~~~~~~~~~~~~x))))
+\end{lisp}
+\end{incompatibility}
+\afternoterule
+
+If the argument {\it integer} is specified by a form that is a {\it place} form
+acceptable to \cd{setf}, then
+\cd{setf} may be used with \cd{ldb} to modify
+a byte within the integer that is stored
+in that {\it place}.
+The effect is to perform a \cd{dpb} operation
+and then store the result back into the {\it place}.
+\end{defun}
+
+\begin{defun}[Function]
+ldb-test bytespec integer
+
+\cd{ldb-test} is a predicate that is true if any of
+the bits designated by the byte specifier {\it bytespec} are 1's in {\it integer};
+that is, it is true if the designated field is non-zero.
+\begin{lisp}
+(ldb-test {\it bytespec} {\it n}) \EQ\ (not (zerop (ldb {\it bytespec} {\it n})))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+mask-field bytespec integer
+
+This is similar to \cd{ldb}; however, the result contains
+the specified byte
+of {\it integer} in the position specified by {\it bytespec},
+rather than in position 0 as with \cd{ldb}.
+The result therefore agrees with {\it integer} in the byte specified
+but has zero-bits everywhere else.
+For example:
+\begin{lisp}
+(ldb {\it bs} (mask-field {\it bs} {\it n})) \EQ\ (ldb {\it bs} {\it n}) \\
+ \\
+(logbitp {\it j} (mask-field (byte {\it s} {\it p}) {\it n})) \\
+~~~\EQ\ (and (>= {\it j} {\it p}) (< {\it j} (+ {\it p} {\it s})) (logbitp {\it j} {\it n})) \\
+ \\
+(mask-field {\it bs} {\it n}) \EQ\ (logand {\it n} (dpb -1 {\it bs} 0))
+\end{lisp}
+
+If the argument {\it integer} is specified by a form that is a {\it place} form
+acceptable to \cd{setf},
+then \cd{setf} may be used with \cd{mask-field}
+to modify a byte within the integer that is stored
+in that {\it place}.
+The effect is to perform a \cd{deposit-field} operation
+and then store the result back into the {\it place}.
+\end{defun}
+
+\begin{defun}[Function]
+dpb newbyte bytespec integer
+
+This returns a number that is the same as {\it integer} except in the
+bits specified by {\it bytespec}.  Let {\it s} be the size specified
+by {\it bytespec}; then the low {\it s} bits of {\it newbyte} appear in
+the result in the byte specified by {\it bytespec}.
+The integer {\it newbyte} is therefore interpreted as
+being right-justified, as if it were the result of \cd{ldb}.
+For example:
+\begin{lisp}
+(logbitp {\it j} (dpb {\it m} (byte {\it s} {\it p}) {\it n})) \\
+~~\EQ\ (if \=(and (>= {\it j} {\it p}) (< {\it j} (+ {\it p} {\it s}))) \\
+\>(logbitp (- {\it j} {\it p}) {\it m}) \\
+\>(logbitp {\it j} {\it n}))
+\end{lisp}
+The name of the function \cd{dpb} means ``deposit byte.''
+\end{defun}
+
+\begin{defun}[Function]
+deposit-field newbyte bytespec integer
+
+This function is to \cd{mask-field} as \cd{dpb} is to \cd{ldb}.
+The result is an integer that contains the bits of {\it newbyte}
+within the byte specified by {\it bytespec}, and elsewhere contains the bits
+of {\it integer}.
+For example:
+\begin{lisp}
+(logbitp {\it j} (deposit-field {\it m} (byte {\it s} {\it p}) {\it n})) \\
+~~~\EQ\ (if \=(and (>= {\it j} {\it p}) (< {\it j} (+ {\it p} {\it s}))) \\
+\>(logbitp {\it j} {\it m}) \\
+\>(logbitp {\it j} {\it n}))
+\end{lisp}
+
+\beforenoterule
+\begin{implementation}
+If the {\it bytespec} is a constant, one may of course
+construct, at compile time, an equivalent mask {\it m}, for example
+by computing \cd{(deposit-field -1 {\it bytespec} 0)}.  Given
+this mask {\it m}, one may then compute
+\begin{lisp}
+(deposit-field {\it newbyte} {\it bytespec} {\it integer})
+\end{lisp}
+by computing
+\begin{lisp}
+(logior (logand {\it newbyte} {\it m}) (logand {\it integer} (lognot {\it m})))
+\end{lisp}
+where the result of \cd{(lognot {\it m})} can of course also be computed
+at compile time.  However, the following expression
+may also be used and may require fewer
+temporary registers in some situations:
+\begin{lisp}
+(logxor {\it integer} (logand {\it m} (logxor {\it integer} {\it newbyte})))
+\end{lisp}
+A related, though possibly less useful, trick is that
+\begin{lisp}
+(let ((z (logand (logxor x y) m))) \\
+~~(setq x (logxor z x)) \\
+~~(setq y (logxor z y)))
+\end{lisp}
+interchanges those bits of \cd{x} and \cd{y} for which the mask \cd{m} is
+\cd{1}, and leaves alone those bits of \cd{x} and \cd{y} for which \cd{m} is
+\cd{0}.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\section{Random Numbers}
+\label{RANDOM}
+
+The Common Lisp facility for generating pseudo-random numbers has
+been carefully defined to make its use reasonably portable.
+While two implementations may produce different series
+of pseudo-random numbers, the distribution of values should
+be relatively independent of such machine-dependent aspects
+as word size.
+
+\begin{defun}[Function]
+random number &optional state
+
+\cd{(random {\it n})} accepts a positive number {\it n} and returns
+a number of the same kind between zero (inclusive) and {\it n} (exclusive).
+The number {\it n} may be an integer or a floating-point number.
+An approximately uniform choice distribution is used.
+If {\it n} is an integer, each of the possible results
+occurs with (approximate) probability 1/{\it n}.
+(The qualifier ``approximate'' is used because of implementation
+considerations; in practice, the deviation from uniformity should be
+quite small.)
+
+The argument {\it state} must be an object of type \cd{random-state};
+it defaults to the value of the variable \cd{*random-state*}.
+This object is used to maintain the state of the pseudo-random-number
+generator and is altered as a side effect of the \cd{random} operation.
+
+\beforenoterule
+\begin{incompatibility}
+\cd{random} of zero arguments as defined in MacLisp
+has been omitted because
+its value is too implementation-dependent (limited by fixnum range).
+\end{incompatibility}
+\betweennoterule
+\begin{implementation}
+In general, even if \cd{random} of zero arguments
+were defined as in MacLisp,
+it is not adequate to define \cd{(random {\it n})} for integral {\it n}
+to be simply \cd{(mod (random) {\it n})}; this fails to be uniformly distributed
+if {\it n} is larger than the largest number produced by \cd{random},
+or even if {\it n} merely approaches this number.
+This is another reason for omitting \cd{random} of zero arguments in Common Lisp.
+Assuming that the underlying mechanism produces ``random bits''
+(possibly in chunks such as fixnums), the best approach is to produce
+enough random bits to construct an integer {\it k} some number {\it d} of bits
+larger than \cd{(integer-length {\it n})} (see \cd{integer-length}), and
+then compute \cd{(mod {\it k} {\it n})}.  The quantity {\it d} should be at
+least 7, and preferably 10 or more.
+
+To produce random floating-point numbers in the half-open
+range $[{\it A},{\it B})$,
+accepted practice (as determined by a look through the
+{\it Collected Algorithms from the ACM}, particularly algorithms
+133, 266, 294, and 370) is to compute ${\it X}\cdot({\it B}-{\it A})+{\it A}$,
+where {\it X} is a floating-point number uniformly distributed over
+$[0.0, 1.0)$
+and computed by calculating a random integer ${\it N}$ in the range
+$[0,{\it M})$
+(typically by a multiplicative-congruential or linear-congruential method
+mod ${\it M}$) and then setting ${\it X}={\it N}/{\it M}$.  See also \cite{KNUTH-VOLUME-2}.
+If one takes ${\it M}=2^{\hbox{\footnotesize\it f}}$, where ${\it f}$ is the length of the significand
+of a floating-point number (and it is in fact common to choose ${\it M}$
+to be a power of 2), then this method is equivalent to the following
+assembly-language-level procedure.  Assume the representation
+has no hidden bit.  Take a floating-point 0.5,
+and clobber its entire significand with random bits.  Normalize the
+result if necessary.
+
+For example, on the DEC PDP-10, assume that accumulator \cd{T} is completely random
+(all 36 bits are random).  Then the code sequence
+\begin{lisp}
+LSH T,-9~~~~~~~~~~~~~~~~~;{\rm Clear high 9 bits; low 27 are random} \\
+FSC T,128.~~~~~~~~~~~~~~~;{\rm Install exponent and normalize}
+\end{lisp}
+will produce in \cd{T} a random floating-point number uniformly distributed
+over $[0.0, 1.0)$.  (Instead of the \cd{LSH} instruction,
+one could do
+\begin{lisp}
+TLZ T,777000~~~~~~~~~~~~~;{\rm That's 777000 octal}
+\end{lisp}
+but if the 36 random bits came from a congruential random-number generator,
+the high-order bits tend to be ``more random'' than the low-order ones,
+and so the \cd{LSH} would be better for uniform distribution.
+Ideally all the bits would be the result of high-quality randomness.)
+
+With a hidden-bit representation, normalization is not a problem,
+but dealing with the hidden bit is.  The method can be adapted as follows.
+Take a floating-point 1.0 and clobber the explicit significand bits with
+random bits; this produces a random floating-point number in
+the range $[1.0, 2.0)$.  Then simply subtract 1.0.  In effect, we
+let the hidden bit creep in and then subtract it away again.
+
+For example, on the DEC VAX, assume that register \cd{T} is
+completely random (but a little less random than on the PDP-10, as
+it has only 32 random bits).  Then the code sequence
+\begin{lisp}
+INSV \#{\Xcircumflex}X81,\#7,\#9,T~~~~~;{\rm Install correct sign bit and exponent} \\
+SUBF \#{\Xcircumflex}F1.0,T~~~~~~~~~~;{\rm Subtract 1.0}
+\end{lisp}
+will produce in \cd{T} a random floating-point number uniformly distributed
+over $[0.0, 1.0)$.  Again, if the low-order bits are not random enough,
+then the instruction
+\begin{lisp}
+ROTL \#7,T
+\end{lisp}
+should be performed first.
+
+Implementors may wish to consult reference \cite{ADDITIVE-RANDOMS} for
+a discussion of some efficient methods of generating pseudo-random numbers.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Variable]
+*random-state*
+
+This variable holds a data structure,
+an object of type \cd{random-state}, that encodes the internal state
+of the random-number generator that \cd{random} uses by default.
+The nature
+of this data structure is implementation-dependent.  It may be
+printed out and successfully read back in, but may or may not function
+correctly as a random-number state object in another implementation.
+A call to \cd{random} will perform a side effect on this data structure.
+Lambda-binding this variable to a different random-number state object
+will correctly save and restore the old state object.
+\end{defun}
+
+\begin{defun}[Function]
+make-random-state &optional state
+
+This function returns a new object of type \cd{random-state},
+suitable for use as the value of the variable \cd{*random-state*}.
+If {\it state} is {\false} or omitted, \cd{make-random-state} returns a {\it copy}
+of the current random-number state object (the value of
+the variable \cd{*random-state*}).  If {\it state} is a state object,
+a copy of that state object is returned.  If {\it state} is {\true},
+then a new state object is returned that has been ``randomly''
+initialized by some means (such as by a time-of-day clock).
+
+\beforenoterule
+\begin{rationale}
+Common Lisp purposely provides no way to initialize a \cd{random-state}
+object from a user-specified ``seed.''  The reason for this is that
+the number of bits of state information in a \cd{random-state} object
+may vary widely from one implementation to another, and there is no
+simple way to guarantee that any user-specified seed value will be
+``random enough.''  Instead, the initialization of \cd{random-state}
+objects is left to the implementor in the case where the argument {\true}
+is given to \cd{make-random-state}.
+
+To handle the common situation of executing the same program many times
+in a reproducible manner, where that program uses \cd{random}, the following
+procedure may be used:
+\begin{enumerate}
+\item
+Evaluate \cd{(make-random-state t)} to create a \cd{random-state} object.
+
+\item
+Write that object to a file, using \cd{print}, for later use.
+
+\item
+Whenever the program is to be run, first use \cd{read} to create
+a copy of the \cd{random-state} object from the printed representation
+in the file.
+Then use the \cd{random-state} object newly created by the \cd{read} operation
+to initialize the random-number generator for the program.
+\end{enumerate}
+It is for the sake of this procedure for reproducible execution that
+implementations are required to provide a read/print syntax for objects
+of type \cd{random-state}.
+
+It is also possible to make copies of a \cd{random-state} object
+directly without going through the print/read process, simply by
+using the \cd{make-random-state} function to copy the object; this allows
+the same sequence of random numbers to be generated many times
+within a single program.
+\end{rationale}
+\betweennoterule
+\begin{implementation}
+A recommended way to implement the type \cd{random-state}
+is effectively to use the machinery for \cd{defstruct}.
+The usual structure syntax may then be used for printing \cd{random-state}
+objects; one might look something like
+\begin{lisp}
+\#S(RANDOM-STATE DATA \#(14 49 98436589 786345 8734658324 ...))
+\end{lisp}
+where the components are of course completely implementation-dependent.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+random-state-p object
+
+\cd{random-state-p} is true if its argument is a random-state object,
+and otherwise is false.
+\begin{lisp}
+(random-state-p {\it x}) \EQ\ (typep {\it x} 'random-state)
+\end{lisp}
+\end{defun}
+
+\section{Implementation Parameters}
+
+The values of the named constants defined in this section are
+implementation-dependent.  They may be useful for parameterizing
+code in some situations.
+
+\begin{defun}[Constant]
+most-positive-fixnum \\
+most-negative-fixnum
+
+The value of \cd{most-positive-fixnum} is that fixnum closest in value to
+positive infinity provided by the implementation.
+
+The value of \cd{most-negative-fixnum} is that fixnum closest in value to
+negative infinity provided by the implementation.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FIXNUM-NON-PORTABLE}
+to specify that \cd{fixnum} must be a supertype
+of the type \cd{(signed-byte 16)}, and additionally that the value
+of \cd{array-dimension-limit} must be a fixnum.  This implies that the value
+of \cd{most-negative-fixnum} must be less than or equal to $-2^{15}$,
+and the value of \cd{most-positive-fixnum} must be greater than or equal to
+both $2^{15}-1$ and the value of \cd{array-dimension-limit}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Constant]
+most-positive-short-float \\
+least-positive-short-float \\
+least-negative-short-float \\
+most-negative-short-float
+
+The value of \cd{most-positive-short-float} is that short-format
+floating-point number closest in value to (but not equal to)
+positive infinity provided by the implementation.
+
+The value of \cd{least-positive-short-float} is that positive short-format
+floating-point number closest in value to (but not equal to) zero provided by
+the implementation.
+
+The value of \cd{least-negative-short-float} is that negative short-format
+floating-point number closest in value to (but not equal to) zero provided by
+the implementation.  (Note that even if an implementation supports
+minus zero as a distinct short floating-point value,
+\cd{least-negative-short-float} must not be minus zero.)
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{FLOAT-UNDERFLOW}
+to clarify that these definitions are to be taken quite literally.
+In implementations that support denormalized numbers,
+the values of \cd{least-positive-short-float} and
+\cd{least-negative-short-float} may be denormalized.
+\end{newer}
+
+The value of \cd{most-negative-short-float} is that short-format
+floating-point number closest in value to (but not equal to)
+negative infinity provided by the implementation.
+\end{defun}
+
+
+\begin{defun}[Constant]
+most-positive-single-float \\
+least-positive-single-float \\
+least-negative-single-float \\
+most-negative-single-float \\
+most-positive-double-float \\
+least-positive-double-float \\
+least-negative-double-float \\
+most-negative-double-float \\
+most-positive-long-float \\
+least-positive-long-float \\
+least-negative-long-float \\
+most-negative-long-float
+
+These are analogous to the constants defined above for short-format
+floating-point numbers.
+\end{defun}
+
+\bigskip
+
+\begin{newer}
+\begin{defun}[Constant]
+least-positive-normalized-short-float \\
+least-negative-normalized-short-float
+
+X3J13 voted in June 1989 \issue{FLOAT-UNDERFLOW}
+to add these constants to the language.
+
+The value of \cd{least-positive-normalized-short-float} is that positive normalized
+short-format
+floating-point number closest in value to (but not equal to) zero provided by
+the implementation.  In implementations that do not support denormalized numbers
+this may be the same as the value of
+\cd{least-\discretionary{}{}{}positive-\discretionary{}{}{}short-float}.
+
+The value of \cd{least-negative-normalized-short-float} is that negative normalized short-format
+floating-point number closest in value to (but not equal to) zero provided by
+the implementation.
+(Note that even if an implementation supports
+minus zero as a distinct short floating-point value,
+\cd{least-\discretionary{}{}{}negative-\discretionary{}{}{}normalized-\discretionary{}{}{}short-float} must not be minus zero.)
+In implementations that do not support denormalized numbers
+this may be the same as the value of \cd{least-\discretionary{}{}{}positive-\discretionary{}{}{}short-float}.
+\end{defun}
+
+\begin{defun}[Constant]
+least-positive-normalized-single-float \\
+least-negative-normalized-single-float \\
+least-positive-normalized-double-float \\
+least-negative-normalized-double-float \\
+least-positive-normalized-long-float \\
+least-negative-normalized-long-float
+
+These are analogous to the constants defined above for short-format
+floating-point numbers.
+\end{defun}
+\end{newer}
+
+\begin{defun}[Constant]
+short-float-epsilon \\
+single-float-epsilon \\
+double-float-epsilon \\
+long-float-epsilon
+
+These constants have as value, for each floating-point format,
+the smallest positive floating-point number {\it e} of that format such that
+the expression
+\begin{lisp}
+(not (= (float 1 {\it e}) (+ (float 1 {\it e}) {\it e})))
+\end{lisp}
+is true when actually evaluated.
+\end{defun}
+
+\begin{defun}[Constant]
+short-float-negative-epsilon \\
+single-float-negative-epsilon \\
+double-float-negative-epsilon \\
+long-float-negative-epsilon
+
+These constants have as value, for each floating-point format,
+the smallest positive floating-point number {\it e} of that format such that
+the expression
+\begin{lisp}
+(not (= (float 1 {\it e}) (- (float 1 {\it e}) {\it e})))
+\end{lisp}
+is true when actually evaluated.
+\end{defun}
+
+\endgroup

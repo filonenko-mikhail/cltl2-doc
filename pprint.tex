@@ -1,0 +1,1128 @@
+%%%Chapter of Common Lisp Manual.  Copyright 1989 Guy L. Steele Jr.
+
+%  +++  Final version of chapter  +++
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapterauthor{Richard C. Waters}
+\chapter{Pretty Printing}
+\label{PPRINT}
+
+\prefaceword
+\begin{new}
+X3J13 voted in January 1989
+\issue{PRETTY-PRINT-INTERFACE}
+to adopt a facility for user-controlled pretty printing
+as a part of the forthcoming draft Common Lisp standard.
+This facility is the culmination of thirteen
+years of design, testing, revision, and use of this approach.
+\end{new}
+This chapter presents the bulk of the Common Lisp
+pretty printing specification, written by Richard C.~Waters.  I have
+edited it only very lightly
+to conform to the overall style of this book.
+
+\noindent\hbox to \textwidth{\hss---Guy L. Steele Jr.}
+\vskip 8pt plus 3pt minus 2pt
+
+\section{Introduction}
+
+Pretty printing has traditionally been a black box process, displaying
+program code using a set of fixed layout rules.  Its utility can be greatly
+enhanced by opening it up to user control.  The facilities described
+in this chapter provide general and powerful means for specifying pretty-printing
+behavior.
+
+By providing direct access to the mechanisms within the pretty printer that
+make dynamic decisions about layout, the macros and functions
+\cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}, \cd{pprint-newline}, and \cd{pprint-indent} make
+it possible to specify pretty printing layout rules as a part of any
+function that produces output.  They also make it very easy for the
+function to support
+detection of circularity and sharing and abbreviation based on length and
+nesting depth.  Using the function
+\cd{set-\discretionary{}{}{}pprint-\discretionary{}{}{}dispatch}, one can associate a user-defined pretty
+printing function with any type of object.  A small set of new \cd{format}
+directives allows concise implementation of user-defined pretty-printing
+functions.
+Together, these facilities
+enable users to redefine the way code is displayed and allow the full power
+of pretty printing to be applied to complex combinations of data
+structures.
+
+\penalty-10000 % required
+
+\beforenoterule
+\begin{implementation}
+This chapter describes the interface of
+the XP pretty printer.  XP is described fully
+in~\cite{XP-PRETTY-PRINTER},
+which also explains how to obtain a portable implementation.  XP uses
+a highly efficient linear-time algorithm.  When properly integrated into a
+Common Lisp, this algorithm supports pretty printing that is only
+fractionally slower than ordinary printing.
+\end{implementation}
+\afternoterule
+
+\section{Pretty Printing Control Variables}
+\label{PPRINT-VARIABLES-SECTION}
+
+The function \cd{write} accepts keyword arguments named
+\cd{:pprint-dispatch}, \cd{:miser-width}, \cd{:right-margin}, and \cd{:lines},
+corresponding to these variables.
+
+\begin{defun}[Variable]
+*print-pprint-dispatch*
+
+When \cd{*print-pretty*} is not \cd{nil}, printing is controlled by the `pprint
+dispatch table' stored in the variable \cd{*print-pprint-dispatch*}.  The
+initial value of \cd{*print-pprint-dispatch*} is implementation-dependent and
+causes traditional pretty printing of Lisp code.  The last section of this
+chapter explains how the contents of this table can be changed.
+\end{defun}
+
+\begin{defun}[Variable]
+*print-right-margin*
+
+A primary goal of pretty printing is to keep the output between a pair of
+margins.  The left margin is set at the column where the output begins.  If
+this cannot be determined, the left margin is set to zero.
+
+When \cd{*print-right-margin*} is not \cd{nil}, it specifies the right
+margin to use when making layout decisions.  When \cd{*print-right-margin*}
+is \cd{nil} (the initial value), the right margin is set at the maximum
+line length that can be displayed by the output stream without wraparound
+or truncation.  If this cannot be determined, the right margin is set to an
+implementation-dependent value.
+
+To allow for the possibility of variable-width fonts,
+\cd{*print-right-margin*} is in units of ems---the width of an
+``m'' in the font being used to display characters on the relevant output
+stream at the moment when the variables are consulted.
+\end{defun}
+
+\begin{defun}[Variable]
+*print-miser-width*
+
+If \cd{*print-miser-width*} is not \cd{nil}, the pretty printer switches to a compact
+style of output (called miser style) whenever the width available for
+printing a substructure is less than or equal to \cd{*print-miser-width*} ems.
+The initial value of \cd{*print-miser-width*} is implementation-dependent.
+\end{defun}
+
+\begin{defun}[Variable]
+*print-lines*
+
+When given a value other than its initial value of \cd{nil},
+\cd{*print-lines*} limits the number of output lines produced when
+something is pretty printed.  If an attempt is made to go beyond
+\cd{*print-lines*} lines, ``\cd{~..}'' (a space and two periods)
+is printed at the end of the last
+line followed by all of the suffixes (closing delimiters) that are pending
+to be printed.
+\begin{lisp}
+(let ((*print-right-margin* 25) (*print-lines* 3)) \\*
+~~(pprint '(progn (setq a 1 b 2 c 3 d 4)))) \\*
+\\
+(PROGN (SETQ A 1 \\*
+~~~~~~~~~~~~~B 2 \\*
+~~~~~~~~~~~~~C 3 ..))
+\end{lisp}
+
+(The symbol ``\cd{..}'' is printed out to ensure that a reader error will
+occur if the output is later read.  A symbol different from ``\cd{...}'' is
+used to indicate that a different kind of abbreviation has occurred.)
+\end{defun}
+
+
+
+\section{Dynamic Control of the Arrangement of Output}
+
+The following functions and macros support precise control of what should
+be done when a piece of output is too large to fit in the space available.
+Three concepts underlie the way these operations work: {\it logical blocks},
+{\it conditional newlines}, and {\it sections}.  Before proceeding further, it is
+important to define these terms.
+
+The first line of figure~\ref{PRETTY-PRINT-SECTIONS-FIGURE} shows a
+schematic piece of output.  The characters in the output are represented by
+hyphens.  The positions of conditional newlines are indicated by
+digits.  The beginnings and ends of logical blocks are indicated in the
+figure by ``\cd{<}'' and ``\cd{>}'' respectively.
+
+The output as a whole is a logical block and the outermost section.  This
+section is indicated by the \cd{0}'s on the second line of
+figure~\ref{PRETTY-PRINT-SECTIONS-FIGURE}.  Logical blocks nested within
+the output are specified by the macro
+\cd{pprint-logical-block}.  Conditional newline positions are specified by calls
+on \cd{pprint-newline}.  Each conditional newline defines two sections (one
+before it and one after it) and is associated with a third (the section
+immediately containing it).
+
+The section after a conditional newline consists of all the output up to,
+but not including, (a) the next conditional newline immediately contained
+in the same logical block; or if (a) is not applicable, (b) the next
+newline that is at a lesser level of nesting in logical blocks; or if (b)
+is not applicable, (c) the end of the output.
+
+The section before a conditional newline consists of all the output back
+to, but not including, (a) the previous conditional newline that is
+immediately contained in the same logical block; or if (a) is not
+applicable, (b) the beginning of the immediately containing logical block.
+The last four lines in figure~\ref{PRETTY-PRINT-SECTIONS-FIGURE} indicate
+the sections before and after the four conditional newlines.
+
+The section immediately containing a conditional newline is the shortest
+section that contains the conditional newline in question.  In
+figure~\ref{PRETTY-PRINT-SECTIONS-FIGURE}, the first conditional newline is
+immediately contained in the section marked with \cd{0}'s, the second and third
+conditional newlines are immediately contained in the section before the
+fourth conditional newline, and the fourth conditional newline is
+immediately contained in the section after the first conditional newline.
+
+\begin{figure}[t]
+\caption{Example of Logical Blocks, Conditional Newlines, and Sections}
+\label{PRETTY-PRINT-SECTIONS-FIGURE}
+\begin{lisp}
+~~~~~~~~~~~~~~~~~<-1---<--<--2---3->--4-->-> \\[4pt]
+~~~~~~~~~~~~~~~~~000000000000000000000000000 \\
+~~~~~~~~~~~~~~~~~11~111111111111111111111111 \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~22~222            \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~333~3333       \\
+~~~~~~~~~~~~~~~~~~~~~~~~44444444444444~44444
+\end{lisp}
+\end{figure}
+
+Whenever possible, the pretty printer displays the entire contents of a
+section on a single line.  However, if the section is too long to fit in
+the space available, line breaks are inserted at conditional newline
+positions within the section.
+
+\begin{defun}[Function]
+pprint-newline kind &optional stream 
+
+The {\it stream} (which defaults to \cd{*standard-output*}) follows the
+standard conventions for stream arguments to printing functions (that is,
+\cd{nil} stands for \cd{*standard-output*} and \cd{t} stands for
+\cd{*terminal-io*}).  The {\it kind} argument specifies the style of
+conditional newline.  It must be one of \cd{:linear}, \cd{:fill},
+\cd{:miser}, or \cd{:mandatory}.  An error is signaled if any other value is
+supplied.  If {\it stream} is a pretty printing stream created by
+\cd{pprint-logical-block}, a line break is inserted in the output when the
+appropriate condition below is satisfied.  Otherwise, \cd{pprint-newline}
+has no effect.  The value \cd{nil} is always returned.
+
+If {\it kind} is \cd{:linear}, it specifies a `linear-style' conditional newline.
+ A line break is inserted if and only if the immediately containing section
+cannot be printed on one line.  The effect of this is that line breaks are
+either inserted at every linear-style conditional newline in a logical
+block or at none of them.
+
+If {\it kind} is \cd{:miser}, it specifies a `miser-style' conditional newline. 
+A line break is inserted if and only if the immediately containing section
+cannot be printed on one line and miser style is in effect in the
+immediately containing logical block.  The effect of this is that
+miser-style conditional newlines act like linear-style conditional
+newlines, but only when miser style is in effect.  Miser style is in effect
+for a logical block if and only if the starting position of the logical
+block is less than or equal to \cd{*print-miser-width*} from the right margin.
+
+If {\it kind} is \cd{:fill}, it specifies a `fill-style' conditional
+newline.  A line break is inserted if and only if either (a) the following
+section cannot be printed on the end of the current line, (b) the preceding
+section was not printed on a single line, or (c) the immediately containing
+section cannot be printed on one line and miser style is in effect in the
+immediately containing logical block.  If a logical block is broken up into
+a number of subsections by fill-style conditional newlines, the basic
+effect is that the logical block is printed with as many subsections as
+possible on each line.  However, if miser style is in effect, fill-style
+conditional newlines act like linear-style conditional newlines.
+
+If {\it kind} is \cd{:mandatory}, it specifies a `mandatory-style' conditional
+newline.  A line break is always inserted.  This implies that none of the
+containing sections can be printed on a single line and will therefore
+trigger the insertion of line breaks at linear-style conditional newlines
+in these sections.
+
+When a line break is inserted by any type of conditional newline, any
+blanks that immediately precede the conditional newline are omitted from
+the output and indentation is introduced at the beginning of the next line.
+By default, the indentation causes the following line to begin in the same
+horizontal position as the first character in the immediately containing
+logical block.  (The indentation can be changed via \cd{pprint-indent}.)
+
+There are a variety of ways {\it un\/}conditional newlines can be introduced into
+the output (for example, via \cd{terpri} or by printing a string containing a newline
+character).  As with mandatory conditional newlines, this prevents any of
+the containing sections from being printed on one line.  In general, when
+an unconditional newline is encountered, it is printed out without
+suppression of the preceding blanks and without any indentation following
+it.  However, if a per-line prefix has been specified (see
+\cd{pprint-logical-block}), that prefix will always be printed no matter how a
+newline originates.
+\end{defun}
+
+\begin{defmac}
+pprint-logical-block (stream-symbol list
+                      <{\!:prefix! | \!:per-line-prefix!} p | \!:suffix! s>)  
+                     {\,form}*
+
+This macro causes printing to be grouped into a logical block.  It returns
+\cd{nil}.
+
+The {\it stream-symbol} must be a symbol.  If it is \cd{nil}, it is treated the same
+as if it were \cd{*standard-output*}.  If it is \cd{t}, it is treated the same as if
+it were \cd{*terminal-io*}.  The run-time value of {\it stream-symbol} must
+be a stream (or \cd{nil} standing for \cd{*standard-output*}
+or \cd{t} standing for \cd{*terminal-io*}).
+The logical block is printed into this destination stream.
+
+The body (which consists of the {\it form\/}s)
+can contain any arbitrary Lisp forms.  Within the body,
+{\it stream-symbol} (or \cd{*standard-output*} if {\it stream-symbol} is
+\cd{nil}, or \cd{*terminal-io*} if {\it stream-symbol} is \cd{t}) is bound
+to a ``pretty printing'' stream that supports decisions about the arrangement
+of output and then forwards the output to the destination stream.  All the
+standard printing functions (for example, \cd{write}, \cd{princ}, \cd{terpri}) can
+be used to send output to the pretty printing stream created by
+\cd{pprint-logical-block}.  All and only the output sent to this pretty
+printing stream is treated as being in the logical block.
+
+\cd{pprint-logical-block} and the pretty printing stream it creates have dynamic
+extent.  It is undefined what happens if output is attempted outside of
+this extent to the pretty printing stream created.  It is unspecified what
+happens if, within this extent, any output is sent directly to the
+underlying destination stream (by calling \cd{write-char}, for example).
+
+The \cd{:suffix}, \cd{:prefix}, and \cd{:per-line-prefix} arguments must all
+be expressions that (at run time) evaluate to strings.  The \cd{:suffix} argument {\it s}
+(which defaults to the null string) specifies a suffix that is printed just
+after the logical block.  The \cd{:prefix} and \cd{:per-line-prefix} arguments
+are mutually exclusive.  If neither \cd{:prefix} nor \cd{:per-line-prefix} is 
+specified, a \cd{:prefix} of the null string is assumed.
+The \cd{:prefix} argument
+specifies a prefix {\it p} that is printed before the beginning of the logical block.
+The \cd{:per-line-prefix} specifies a prefix {\it p} that is printed before the block 
+and at the beginning of each subsequent line in the block.
+An error is signaled if \cd{:prefix} and \cd{:per-line-prefix} are both used
+or if a \cd{:suffix}, \cd{:prefix}, or \cd{:pre-line-prefix} argument does not
+evaluate to a string.
+
+The {\it list} is interpreted as being a list that the body is responsible
+for printing.  (See \cd{pprint-exit-if-list-exhausted} and
+\cd{pprint-pop}.)  If {\it list} does not (at run time) evaluate to a list,
+it is printed using \cd{write}.  (This makes it easier to write printing
+functions that are robust in the face of malformed arguments.)  If
+\cd{*print-circle*} (and possibly also \cd{*print-shared*})
+is not \cd{nil} and {\it list} is a circular (or shared) reference
+to a cons, then an appropriate ``\cd{\#{\it n}\#}'' marker is printed.
+(This makes it easy to write printing functions that provide full support
+for circularity and sharing abbreviation.)  If \cd{*print-level*} is not
+\cd{nil} and the logical block is at a dynamic nesting depth of greater
+than \cd{*print-level*} in logical blocks, ``\cd{\#}'' is printed.  (This
+makes it easy to write printing functions that provide full support for depth
+abbreviation.)
+
+If any of the three preceding conditions occurs, the indicated output is
+printed on {\it stream-symbol} and the {\it body} is skipped along with the
+printing of the prefix and suffix.  (If the
+body is not responsible for printing a list, then the first two tests
+above can be turned off by supplying \cd{nil} for the {\it list} argument.)
+
+In addition to the {\it list} argument of \cd{pprint-logical-block}, the
+arguments of the standard printing functions such as \cd{write},
+\cd{print}, \cd{pprint}, \cd{print1}, and \cd{pprint}, as well as the
+arguments of the standard \cd{format} directives such as \cd{{\Xtilde}A},
+\cd{{\Xtilde}S}, (and \cd{{\Xtilde}W}) are all checked (when necessary) for
+circularity and sharing.  However, such checking is not applied to the
+arguments of the functions \cd{write-line}, \cd{write-string}, and
+\cd{write-char} or to the literal text output by \cd{format}.  A
+consequence of this is that you must use one of the latter functions if you
+want to print some literal text in the output that is not supposed to be
+checked for circularity or sharing.  (See the examples below.)
+
+\beforenoterule
+\begin{implementation}
+Detection of circularity and sharing is supported by the pretty printer by
+in essence performing the requested output twice.  On the first pass,
+circularities and sharing are detected and the actual outputting of
+characters is suppressed.  On the second pass, the appropriate 
+``\cd{\#{\it n}=}'' and ``\cd{\#{\it n}\#}'' markers are inserted and
+characters are output.
+
+A consequence of this two-pass approach to the detection of circularity and
+sharing is that the body of a \cd{pprint-logical-block} must not
+perform any side-effects on the surrounding environment.  This includes not
+modifying any variables that are bound outside of its scope.  Obeying this
+restriction is facilitated by using \cd{pprint-pop}, instead of an ordinary
+\cd{pop} when traversing a list being printed by the body of a
+\cd{pprint-logical-block}.)
+\end{implementation}
+\afternoterule
+\end{defmac}
+
+\begin{defmac}
+pprint-exit-if-list-exhausted \!!
+
+\cd{pprint-exit-if-list-exhausted} tests whether or not the {\it list}
+argument of \cd{pprint-logical-block} has been exhausted (see
+\cd{pprint-pop}).  If this list has been reduced to \cd{nil},
+\cd{pprint-exit-if-list-exhausted} terminates the execution of the
+immediately containing \cd{pprint-logical-block} except for the printing of
+the suffix.  Otherwise \cd{pprint-exit-if-list-exhausted} returns \cd{nil}.
+An error message is issued if \cd{pprint-exit-if-list-exhausted} is used
+anywhere other than syntactically nested within a call on
+\cd{pprint-logical-block}.  It is undefined what happens if \cd{pprint-pop}
+is executed outside of the dynamic extent of this
+\cd{pprint-logical-block}.
+\end{defmac}
+
+\begin{defmac}
+pprint-pop \!!
+
+\cd{pprint-pop} pops elements one at a time off the {\it list} argument of
+\cd{pprint-\discretionary{}{}{}logical-block}, taking care to obey \cd{*print-length*},
+\cd{*print-circle*}, and \cd{*print-\discretionary{}{}{}shared*}.  An error message is issued if it is
+used anywhere other than syntactically nested within a call on
+\cd{pprint-logical-block}. It is undefined what happens if \cd{pprint-pop} is executed
+outside of the dynamic extent of this call on \cd{pprint-\discretionary{}{}{}logical-block}.
+
+Each time \cd{pprint-pop} is called, it pops the next value off the {\it
+list} argument of \cd{pprint-logical-block} and returns it.  However,
+before doing this, it performs three tests.  If the remaining list is not a
+list (neither a cons nor \cd{nil}), ``\cd{.~}'' is printed
+followed by the remaining list.  (This makes it easier to write printing
+functions that are robust in the face of malformed arguments.)  If
+\cd{*print-length*} is \cd{nil} and \cd{pprint-pop} has already been called
+\cd{*print-length*} times within the immediately containing logical block,
+``\cd{...}'' is printed.  (This makes it easy to write printing functions
+that properly handle \cd{*print-length*}.)  If \cd{*print-circle*} (and possibly also
+\cd{*print-shared*}) is not \cd{nil}, and the remaining list is a circular
+(or shared) reference, then ``\cd{.~}'' is printed followed by an appropriate
+``\cd{\#{\it n}\#}'' marker.  (This catches instances of cdr circularity and sharing
+in lists.)
+
+If any of the three preceding conditions occurs, the indicated output is
+printed on the pretty printing stream created by the immediately containing
+\cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}
+and the execution of the immediately containing
+\cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}
+is terminated except for the printing of the suffix.
+
+If \cd{pprint-logical-block} is given a {\it list} argument of
+\cd{nil}---because it is not processing a list---\cd{pprint-pop} can still
+be used to obtain support for \cd{*print-length*} (see the example function
+\cd{pprint-vector} below).  In this situation, the first and third tests
+above are disabled and \cd{pprint-pop} always returns \cd{nil}.
+\end{defmac}
+
+\begin{defun}[Function]
+pprint-indent relative-to n &optional stream
+
+\cd{pprint-indent} specifies the indentation to use in a logical block.
+{\it Stream} (which defaults to \cd{*standard-output*}) follows the
+standard conventions for stream arguments to printing functions.  The argument {\it
+n} specifies the indentation in ems.  If {\it relative-to} is \cd{:block}, the
+indentation is set to the horizontal position of the first character in the
+block plus {\it n} ems.  If {\it relative-to} is \cd{:current}, the
+indentation is set to the current output position plus {\it n} ems.
+
+The argument {\it n} can be negative; however, the total indentation cannot be moved
+left of the beginning of the line or left of the end of the rightmost per-line
+prefix.  Changes in indentation caused by \cd{pprint-indent} do not take
+effect until after the next line break.  In addition, in miser mode all
+calls on \cd{pprint-indent} are ignored, forcing the lines corresponding to the
+logical block to line up under the first character in the block.
+
+An error is signaled if a value other than \cd{:block} or \cd{:current} is
+supplied for {\it relative-to}.  If {\it stream} is a pretty printing
+stream created by \cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}, \cd{pprint-indent} sets the
+indentation in the innermost dynamically enclosing logical block.
+Otherwise, \cd{pprint-indent} has no effect.  The value \cd{nil} is always
+returned.
+\end{defun}
+
+\begin{defun}[Function]
+pprint-tab kind colnum colinc &optional stream
+
+\cd{pprint-tab} specifies tabbing as performed by the standard \cd{format}
+directive \cd{{\Xtilde}T}.  {\it Stream} (which defaults to
+\cd{*standard-output*}) follows the standard conventions for stream
+arguments to printing functions.  The arguments {\it colnum} and {\it
+colinc} correspond to the two parameters to \cd{{\Xtilde}T} and are in
+terms of ems.  The {\it kind} argument specifies the style of tabbing.  It
+must be one of \cd{:line} (tab as by \cd{{\Xtilde}T}) \cd{:section} (tab as
+by \cd{{\Xtilde}T}, but measuring horizontal positions relative to the
+start of the dynamically enclosing section), \cd{:line-relative} (tab as by
+\cd{{\Xtilde}{\Xatsign}T}), or \cd{:section-relative} (tab as by
+\cd{{\Xtilde}{\Xatsign}T}, but measuring horizontal positions relative to
+the start of the dynamically enclosing section).  An error is signaled if
+any other value is supplied for {\it kind}.  If {\it stream} is a pretty
+printing stream created by \cd{pprint-logical-block}, tabbing is performed.
+Otherwise, \cd{pprint-tab} has no effect.  The value \cd{nil} is always
+returned.
+\end{defun}
+
+\begin{defun}[Function]
+pprint-fill stream list &optional colon? atsign? \\
+pprint-linear stream list &optional colon? atsign? \\
+pprint-tabular stream list &optional colon? atsign? tabsize
+
+These three functions specify particular ways of pretty printing lists.
+{\it Stream} follows the standard conventions for stream arguments to
+printing functions.  Each function prints parentheses around the output if
+and only if {\it colon?} (default \cd{t}) is not \cd{nil}.  Each function
+ignores its {\it atsign?} argument and returns \cd{nil}.  (These two
+arguments are included in this way so that these functions can be used via
+\cd{{\Xtilde}/.../} and as \cd{set-pprint-dispatch} functions as well as
+directly.)  Each function handles abbreviation and the detection of
+circularity and sharing correctly and uses \cd{write} to print {\it list}
+when given a non-list argument.
+
+The function \cd{pprint-linear} prints a list either all on one line or with
+each element on a separate line.  The function \cd{pprint-fill} prints a list
+with as many elements as possible on each line.  The function
+\cd{pprint-tabular} is the same as \cd{pprint-fill} except that it prints the
+elements so that they line up in columns.  This function takes an
+additional argument \cd{tabsize} (default 16) that specifies the column
+spacing in ems.
+\end{defun}
+
+As an example of the interaction of logical blocks, conditional newlines,
+and indentation, consider the function \cd{pprint-defun} below.  This
+function pretty prints a list whose {\it car} is \cd{defun} in the standard way assuming
+that the length of the list is exactly 4.
+\begin{lisp}
+;;; Pretty printer function for DEFUN forms. \\*
+\\*
+(defun pprint-defun (list) \\*
+~~(pprint-logical-block (nil list :prefix "(" :suffix ")") \\*
+~~~~(write (first list)) \\*
+~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~(pprint-newline :miser) \\*
+~~~~(pprint-indent :current 0) \\*
+~~~~(write (second list)) \\*
+~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~(pprint-newline :fill) \\*
+~~~~(write (third list)) \\*
+~~~~(pprint-indent :block 1) \\*
+~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~(pprint-newline :linear) \\*
+~~~~(write (fourth list))))
+\end{lisp}
+
+Suppose that one evaluates the following:
+\begin{lisp}
+(pprint-defun '(defun prod (x y) (* x y)))
+\end{lisp}
+
+If the line width available is greater than or equal to 26, all of the
+output appears on one line.  If the width is reduced to 25,
+a line break is inserted at the linear-style conditional newline before
+\cd{(*~X~Y)}, producing the output shown below.  The
+\cd{(pprint-indent~:block~1)} causes \cd{(*~X~Y)} to be printed at a relative
+indentation of 1 in the logical block.
+\begin{lisp}
+(DEFUN PROD (X Y)  \\*
+~~(* X Y))
+\end{lisp}
+
+If the width is 15, a line break is also inserted at the
+fill-style conditional newline before the argument list.  The argument list lines
+up under the function name because of the call on
+\cd{(pprint-indent~:current~0)} before the printing of the function name. 
+\begin{lisp}
+(DEFUN PROD \\*
+~~~~~~~(X Y) \\*
+~~(* X Y))
+\end{lisp}
+
+If \cd{*print-miser-width*} were greater than or equal to 14,
+the output would have been entirely in miser mode.
+All indentation changes are
+ignored in miser mode and line breaks are inserted at miser-style
+conditional newlines.  The result would have been as follows:
+\begin{lisp}
+(DEFUN \\*
+~PROD \\*
+~(X Y) \\*
+~(* X Y))
+\end{lisp}
+
+As an example of the use of a per-line prefix, consider that evaluating the expression
+\begin{lisp}
+(pprint-logical-block (nil nil :per-line-prefix ";;; ") \\*
+~~(pprint-defun '(defun prod (x y) (* x y))))
+\end{lisp}
+produces the output
+\begin{lisp}
+;;; (DEFUN PROD \\*
+;;;~~~~~~~~(X Y) \\*
+;;;~~~(* X Y))
+\end{lisp}
+with a line width of 20 and \cd{nil} as the value
+of the printer control variable \cd{*print-miser-width*}.
+
+(If \cd{*print-miser-width*} were not \cd{nil} the output
+\begin{lisp}
+;;; (DEFUN \\*
+;;; ~PROD \\*
+;;; ~(X Y) \\*
+;;; ~(* X Y))
+\end{lisp}
+might appear instead.)
+
+As a more complex (and realistic) example, consider the function
+\cd{pprint-let} below.  This specifies how to pretty print a \cd{let} in the
+standard style.  It is more complex than \cd{pprint-defun} because it has
+to deal with nested structure.  Also, unlike \cd{pprint-defun}, it contains
+complete code to print readably any possible list that begins with the
+symbol \cd{let}.  The outermost \cd{pprint-logical-block} handles the
+printing of the input list as a whole and specifies that parentheses should
+be printed in the output.  The second \cd{pprint-logical-block} handles the
+list of binding pairs.  Each pair in the list is itself printed by the
+innermost \cd{pprint-logical-block}.  (A \cd{loop} is used instead of
+merely decomposing the pair into two elements so that readable output will
+be produced no matter whether the list corresponding to the pair has one
+element, two elements, or (being malformed) has more than two elements.)  A
+space and a fill-style conditional newline are placed after each pair
+except the last.  The loop at the end of the topmost
+\cd{pprint-logical-block} prints out the forms in the body of the \cd{let}
+separated by spaces and linear-style conditional newlines.
+\begin{lisp}
+;;; Pretty printer function for LET forms, \\*
+;;; carefully coded to handle malformed binding pairs. \\*
+\\*
+(defun pprint-let (list) \\*
+~~(pprint-logical-block (nil list :prefix "(" :suffix ")") \\*
+~~~~(write (pprint-pop)) \\*
+~~~~(pprint-exit-if-list-exhausted) \\*
+~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~(pprint-logical-block \\*
+~~~~~~~~(nil (pprint-pop) :prefix "(" :suffix ")") \\*
+~~~~~~(pprint-exit-if-list-exhausted) \\*
+~~~~~~(loop (pprint-logical-block \\*
+~~~~~~~~~~~~~~~~(nil (pprint-pop) :prefix "(" :suffix ")") \\*
+~~~~~~~~~~~~~~(pprint-exit-if-list-exhausted) \\*
+~~~~~~~~~~~~~~(loop (write (pprint-pop)) \\*
+~~~~~~~~~~~~~~~~~~~~(pprint-exit-if-list-exhausted) \\*
+~~~~~~~~~~~~~~~~~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~~~~~~~~~~~~~~~~~(pprint-newline :linear))) \\*
+~~~~~~~~~~~~(pprint-exit-if-list-exhausted) \\*
+~~~~~~~~~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~~~~~~~~~(pprint-newline :fill))) \\*
+~~~~(pprint-indent :block 1) \\*
+~~~~(loop (pprint-exit-if-list-exhausted) \\*
+~~~~~~~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~~~~~~~(pprint-newline :linear) \\*
+~~~~~~~~~~(write (pprint-pop)))))
+\end{lisp}
+
+Suppose that the following is evaluated with \cd{*print-level*} having the value \cd{4} and
+\cd{*print-circle*} having the value \cd{t}.
+\begin{lisp}
+(pprint-let '\#1=(let (x (*print-length* (f (g 3)))  \\*
+~~~~~~~~~~~~~~~~~~~~~~(z . 2) (k (car y))) \\*
+~~~~~~~~~~~~~~~~~~(setq x (sqrt z)) \#1\#))
+\end{lisp}
+
+If the line length is greater than or equal to 77, the output produced
+appears on one line.  However, if the line length is 76, line breaks are
+inserted at the linear-style conditional newlines separating the forms in
+the body and the output below is produced.  Note that the degenerate
+binding pair \cd{X} is printed readably even though it fails to be a list; a
+depth abbreviation marker is printed in place of \cd{(G~3)}; the binding pair
+\cd{(Z~.~2)} is printed readably even though it is not a proper list; and
+appropriate circularity markers are printed.
+\begin{lisp}
+\#1=(LET (X (*PRINT-LENGTH* (F \#)) (Z . 2) (K (CAR Y)))  \\*
+~~~~~(SETQ X (SQRT Z)) \\*
+~~~~~\#1\#)
+\end{lisp}
+
+If the line length is reduced to 35, a line break is inserted at one of the
+fill-style conditional newlines separating the binding pairs.
+\begin{lisp}
+\#1=(LET (X (*PRINT-PRETTY* (F \#)) \\*
+~~~~~~~~~(Z . 2) (K (CAR Y))) \\*
+~~~~~(SETQ X (SQRT Z)) \\*
+~~~~~\#1\#)
+\end{lisp}
+
+Suppose that the line length is further reduced to 22 and \cd{*print-length*} is
+set to 3. In this situation, line breaks are inserted after both the first
+and second binding pairs.  In addition, the second binding pair is itself
+broken across two lines.  Clause (b) of the description of fill-style
+conditional newlines prevents the binding pair \cd{(Z~.~2)} from being printed
+at the end of the third line.  Note that the length abbreviation hides the
+circularity from view and therefore the printing of circularity markers
+disappears.
+\begin{lisp}
+(LET (X \\*
+~~~~~~(*PRINT-LENGTH* \\*
+~~~~~~~(F \#)) \\*
+~~~~~~(Z . 2) ...) \\*
+~~(SETQ X (SQRT Z)) \\*
+~~...)
+\end{lisp}
+
+The function \cd{pprint-tabular} could be defined as follows:
+\begin{lisp}
+(defun pprint-tabular (s list \&optional (c? t) a? (size 16)) \\*
+~~(declare (ignore a?)) \\*
+~~(pprint-logical-block \\*
+~~~~~~(s list :prefix (if c? "(" "") :suffix (if c? ")" "")) \\*
+~~~~(pprint-exit-if-list-exhausted) \\*
+~~~~(loop (write (pprint-pop) :stream s) \\*
+~~~~~~~~~~(pprint-exit-if-list-exhausted) \\*
+~~~~~~~~~~(write-char \#{\Xbackslash}space s) \\*
+~~~~~~~~~~(pprint-tab :section-relative 0 size s) \\*
+~~~~~~~~~~(pprint-newline :fill s))))
+\end{lisp}
+
+Evaluating the following with a line length of 25 produces the output shown.
+\begin{lisp}
+(princ "Roads ") \\*
+(pprint-tabular nil '(elm main maple center) nil nil 8) \\*
+\\
+Roads ELM~~~~~MAIN \\*
+~~~~~~MAPLE~~~CENTER
+\end{lisp}
+
+The function below prints a vector using \cd{\#(...)} notation.
+\begin{lisp}
+(defun pprint-vector (v) \\*
+~~(pprint-logical-block (nil nil :prefix "\#(" :suffix ")") \\*
+~~~~(let ((end (length v)) (i 0)) \\*
+~~~~~~(when (plusp end) \\*
+~~~~~~~~(loop (pprint-pop) \\*
+~~~~~~~~~~~~~~(write (aref v i)) \\*
+~~~~~~~~~~~~~~(if (= (incf i) end) (return nil)) \\*
+~~~~~~~~~~~~~~(write-char \#{\Xbackslash}space) \\*
+~~~~~~~~~~~~~~(pprint-newline :fill))))))
+\end{lisp}
+
+Evaluating the following with a line length of 15 produces the output shown.
+\begin{lisp}
+(pprint-vector '\#(12 34 567 8 9012 34 567 89 0 1 23)) \\*
+\\
+\#(12 34 567 8  \\*
+~~9012 34 567  \\*
+~~89 0 1 23)
+\end{lisp}
+
+\section{Format Directive Interface}
+\label{PPRINT-FORMAT-DIRECTIVES-SECTION}
+
+The primary interface to operations for dynamically determining the
+arrangement of output is provided through the functions above.  However, an
+additional interface is provided via a set of format directives
+because, as shown by the examples in this section and the
+next, \cd{format} strings are typically a much more compact way to specify
+pretty printing.  In addition, without such an interface, one would have to
+abandon the use of \cd{format} when interacting with the pretty printer.
+
+\begin{flushdesc}
+\item[\cd{{\Xtilde}W}]
+{\it Write.}  An {\it arg}, any Lisp object, is printed obeying {\it every}
+printer control variable (as by \cd{write}).  In addition, \cd{{\Xtilde}W}
+interacts correctly with depth abbreviation by not resetting the depth
+counter to zero.  \cd{{\Xtilde}W} does not accept parameters.  If given the colon
+modifier, \cd{{\Xtilde}W} binds \cd{*print-pretty*} to \cd{t}.  If given the atsign
+modifier, \cd{{\Xtilde}W} binds \cd{*print-level*} and \cd{*print-length*} to 
+\cd{nil}.
+
+\cd{{\Xtilde}W} provides automatic support for circularity detection.  If
+\cd{*print-circle*} (and possibly also \cd{*print-shared*}) is not \cd{nil} and
+\cd{{\Xtilde}W} is applied to an argument that is a circular (or shared) reference,
+an appropriate ``\cd{\#{\it n}\#}'' marker is inserted in the output
+instead of printing the argument.
+
+\item[\cd{{\Xtilde}{\Xunderscore}}]
+{\it Conditional newline.} Without any modifiers,
+\cd{{\Xtilde}{\Xunderscore}} is equivalent to
+\cd{(pprint-\discretionary{}{}{}newline :linear)}.
+The directive \cd{{\Xtilde}{\Xatsign}{\Xunderscore}} is
+equivalent to \cd{(pprint-\discretionary{}{}{}newline :miser)}.
+The directive \cd{{\Xtilde}:{\Xunderscore}}
+is equivalent to \cd{(pprint-\discretionary{}{}{}newline :fill)}.
+The directive \cd{{\Xtilde}:{\Xatsign}{\Xunderscore}} is
+equivalent to \cd{(pprint-\discretionary{}{}{}newline :mandatory)}.
+
+
+\item[\cd{{\Xtilde}<{\it str}{\Xtilde}:>}]
+{\it Logical block.} If \cd{{\Xtilde}:>} is used to terminate a
+\cd{{\Xtilde}<...} directive, the directive is equivalent to a call on
+\cd{pprint-logical-block}.  The \cd{format} argument corresponding to the
+\cd{{\Xtilde}<...{\Xtilde}:>} directive is treated in the same way as the {\it list}
+argument to \cd{pprint-logical-block}, thereby providing automatic support for
+non-list arguments and the detection of circularity, sharing, and depth abbreviation. 
+The portion of the \cd{format} control string nested within the
+\cd{{\Xtilde}<...{\Xtilde}:>} specifies the \cd{:prefix} (or \cd{:per-line-prefix}),
+\cd{:suffix}, and body of the \cd{pprint-logical-block}.
+
+The \cd{format} string portion enclosed by \cd{{\Xtilde}<...{\Xtilde}:>} can be
+divided into segments \cd{{\Xtilde}<{\it prefix\/}{\Xtilde};{\it body\/}{\Xtilde};{\it
+suffix\/}{\Xtilde}:>} by \cd{{\Xtilde};} directives.  If the first section is
+terminated by \cd{\Xtilde\Xatsign;}, it specifies a per-line prefix rather than a
+simple prefix.  The prefix and suffix cannot contain \cd{format} directives.  
+An error is signaled if either the prefix or suffix fails to be a constant string
+or if the enclosed portion is divided into more than three segments. 
+
+If the enclosed portion is divided into only two segments, the suffix defaults
+to the null string.  If the enclosed portion consists of only a single
+segment, both the prefix and the suffix default to the null string.  If the
+colon modifier is used (that is, \cd{{\Xtilde}:<...{\Xtilde}:>}), the prefix and
+suffix default to \cd{"("} and \cd{")"}, respectively, instead of the null
+string.  
+
+The body segment can be any arbitrary \cd{format} control string.  This \cd{format}
+control string is applied to the elements of the list corresponding to the
+\cd{{\Xtilde}<...{\Xtilde}:>} directive as a whole.  Elements are extracted from this
+list using \cd{pprint-pop}, thereby providing automatic support for malformed lists
+and the detection of circularity, sharing, and length abbreviation.
+Within the body segment, \cd{\Xtilde\Xcircumflex} acts like
+\cd{pprint-exit-if-list-exhausted}.
+
+\cd{{\Xtilde}<...{\Xtilde}:>} supports a feature not supported by
+\cd{pprint-logical-block}.  If \cd{\Xtilde:\Xatsign>} is used to terminate the
+directive (that is, \cd{{\Xtilde}<...{\Xtilde}:\Xatsign>}), then a fill-style
+conditional newline is automatically inserted after each group of blanks
+immediately contained in the body (except for blanks after a
+\cd{\Xtilde<newline>} directive).  This makes it easy to achieve the equivalent
+of paragraph filling.
+
+If the atsign modifier is used with \cd{{\Xtilde}<...{\Xtilde}:>}, the
+entire remaining argument list is passed to the directive as its argument.
+All of the remaining arguments are always consumed by
+\cd{{\Xtilde}\Xatsign<...{\Xtilde}:>}, even if they are not all used by the
+\cd{format} string nested in the directive.  Other than the difference in its
+argument, \cd{{\Xtilde}\Xatsign<...{\Xtilde}:>} is exactly the same as
+\cd{{\Xtilde}<...{\Xtilde}:>}, except that circularity (and sharing) detection 
+is not applied if the \cd{{\Xtilde}\Xatsign<...{\Xtilde}:>} is at top level
+in a \cd{format} string.  This ensures that circularity detection is applied 
+only to data lists and not to \cd{format} argument lists. 
+
+To a considerable extent, the basic form of the directive
+\cd{{\Xtilde}<...{\Xtilde}>} is incompatible with the dynamic control of
+the arrangement of output by \cd{{\Xtilde}W}, \cd{{\Xtilde}\Xunderscore},
+\cd{{\Xtilde}<...{\Xtilde}:>}, \cd{{\Xtilde}I}, and \cd{{\Xtilde}:T}.  As
+a result, an error is signaled if any of these directives is nested within
+\cd{{\Xtilde}<...{\Xtilde}>}.  Beyond this, an error is also signaled if
+the \cd{{\Xtilde}<...{\Xtilde}:;...{\Xtilde}>} form of
+\cd{{\Xtilde}<...{\Xtilde}>} is used in the same \cd{format} string with
+\cd{{\Xtilde}W}, \cd{{\Xtilde}\Xunderscore},
+\cd{{\Xtilde}<...{\Xtilde}:>}, \cd{{\Xtilde}I}, or \cd{{\Xtilde}:T}.
+
+
+\item[\cd{{\Xtilde}I}]
+{\it Indent.} \cd{{\Xtilde}{\it n}I} is equivalent to
+\cd{(pprint-indent~:block~{\it n})}.  \cd{{\Xtilde}:{\it n}I} is equivalent to
+\cd{(pprint-indent~:current~{\it n})}.  In both cases, {\it n} defaults to zero
+if it is omitted.
+
+
+\item[\cd{{\Xtilde}:T}] 
+{\it Tabulate.} If the colon modifier is used with the \cd{{\Xtilde}T}
+directive, the tabbing computation is done relative to the column where the
+section immediately containing the directive begins, rather than with
+respect to column zero.  \cd{{\Xtilde}{\it n},{\it m}:T} is equivalent to
+\cd{(pprint-tab~:section~{\it n}~{\it m})}.  \cd{{\Xtilde}{\it n},{\it m}:{\Xatsign}T}
+is equivalent to \cd{(pprint-tab~:section-relative~{\it n}~{\it m})}.  The numerical
+parameters are both interpreted as being in units of ems and both default
+to 1.
+
+\item[\cd{{\Xtilde}/{\it name}/}]
+{\it Call function.} User-defined functions can be called from within a
+\cd{format} string by using the directive \cd{{\Xtilde}/{\it name}/}.  The
+colon modifier, the atsign modifier, and arbitrarily many parameters can be
+specified with the \cd{{\Xtilde}/{\it name}/} directive.  The {\it name}
+can be any string that does not contain ``\cd{/}''.  All of the characters
+in {\it name} are treated as if they were upper case.  If {\it name}
+contains a ``\cd{:}'' or ``\cd{::}'', then everything up to but not
+including the first ``\cd{:}'' or ``\cd{::}'' is taken to be a string that
+names a package.  Everything after the first ``\cd{:}'' or ``\cd{::}'' (if
+any) is taken to be a string that names a symbol.  The function
+corresponding to a \cd{{\Xtilde}/{\it name}/} directive is obtained by
+looking up the symbol that has the indicated name in the indicated package.
+If {\it name} does not contain a ``\cd{:}'' or ``\cd{::}'', then the whole
+name string is looked up in the \cd{user} package.
+
+When a \cd{{\Xtilde}/{\it name}/} directive is encountered, the indicated
+function is called with four or more arguments.  The first four arguments
+are the output stream, the \cd{format} argument corresponding to the
+directive, the value \cd{t} if the colon modifier was used (\cd{nil}
+otherwise), and the value \cd{t} if the atsign modifier was used (\cd{nil}
+otherwise).  The remaining arguments consist of any parameters specified
+with the directive.  The function should print the argument appropriately.
+Any values returned by the function are ignored.
+
+The three functions \cd{pprint-linear}, \cd{pprint-fill}, and
+\cd{pprint-tabular} are designed so that they can be called by
+\cd{\Xtilde/.../} (that is, \cd{{\Xtilde}/pprint-linear/},
+\cd{{\Xtilde}/pprint-fill/}, and \cd{{\Xtilde}/pprint-tabular/}.  In
+particular they take colon and atsign arguments.
+\end{flushdesc}
+
+As examples of the convenience of specifying pretty printing with
+\cd{format} strings, consider the functions \cd{pprint-defun}
+and \cd{pprint-let} used as
+examples in the last section.  They can be more compactly defined as follows.  The
+function \cd{pprint-vector} cannot be defined using \cd{format}, because the data
+structure it traverses is not a list.  The function \cd{pprint-tabular} is
+inconvenient to define using \cd{format}, because of the need to pass its
+\cd{tabsize} argument through to a \cd{\Xtilde:T} directive nested within
+an iteration over a list.
+\begin{lisp}
+(defun pprint-defun (list) \\*
+~~(format t
+"{\Xtilde}:<{\Xtilde}W~{\Xtilde}\Xatsign\Xunderscore{\Xtilde}:I{\Xtilde}W~{\Xtilde}:\Xunderscore{\Xtilde}W{\Xtilde}1I~{\Xtilde}\Xunderscore{\Xtilde}W{\Xtilde}:>"
+list))\\
+ \\
+(defun pprint-let (list) \\*
+~~(format t "{\Xtilde}:<{\Xtilde}W{\Xtilde}{\Xcircumflex} \relax
+  {\Xtilde}:<{\Xtilde}{\Xatsign}\{{\Xtilde}:<{\Xtilde}{\Xatsign}\{{\Xtilde}W{\Xtilde}{\Xcircumflex} \relax
+      {\Xtilde}{\Xunderscore}{\Xtilde}\}{\Xtilde}:>{\Xtilde}{\Xcircumflex} \relax
+      {\Xtilde}:{\Xunderscore}{\Xtilde}\}{\Xtilde}:>{\Xtilde}1I{\Xtilde} \\*
+~~~~~~~~~~~~~~~~{\Xtilde}{\Xatsign}\{{\Xtilde}{\Xcircumflex} {\Xtilde}{\Xunderscore}{\Xtilde}W{\Xtilde}\}{\Xtilde}:>" \\*
+~~~~~~~~~~list))
+\end{lisp}
+
+\section{Compiling Format Control Strings}
+
+The control strings used by \cd{format} are essentially programs that
+perform printing.  The macro \cd{formatter} provides the efficiency of
+using a compiled function for printing without losing the visual compactness of
+\cd{format} strings.
+
+\begin{defmac}
+formatter control-string
+
+The {\it control-string} must be a literal string.  An error is signaled if
+{\it control-string} is not a valid \cd{format} control string.  The macro
+\cd{formatter} expands into an expression of the form
+\cd{(function~(lambda~(stream~\&rest~args)~...))} that does the printing
+specified by {\it control-string}.  The \cd{lambda} created accepts an
+output stream as its first argument and zero or more data values as its
+remaining arguments.  The value returned by the \cd{lambda} is the tail (if
+any) of the data values that are not printed out by {\it control-string}.
+(For example, if the {\it control-string} is \cd{"{\Xtilde}A{\Xtilde}A"}, the
+\cd{cddr} (if any) of the data values is returned.)  The form
+\cd{(formatter~"{\Xtilde}\%{\Xtilde}2\Xatsign\{{\Xtilde}S,~{\Xtilde}\}")} is
+equivalent to the following:
+\begin{lisp}
+\#'(lambda (stream \&rest args) \\*
+~~~~(terpri stream) \\*
+~~~~(dotimes (n 2) \\*
+~~~~~~(if (null args) (return nil)) \\*
+~~~~~~(prin1 (pop args) stream) \\*
+~~~~~~(write-string ", " stream)) \\*
+~~~~args)
+\end{lisp}
+
+In support of the above mechanism, \cd{format} is extended so that it accepts
+functions as its second argument as well as strings.  When a function is
+provided, it must be a function of the form created by \cd{formatter}.  The
+function is called with the appropriate output stream as its first argument
+and the data arguments to \cd{format} as its remaining arguments.  The
+function should perform whatever output is necessary and return the unused
+tail of the arguments (if any).  The directives \cd{\Xtilde?} and
+\cd{\Xtilde\{\Xtilde\}} with no body are also extended so that they accept
+functions as well as control strings.  Every other standard function that
+takes a \cd{format} string as an argument (for example, \cd{error} and \cd{warn})
+is also extended so that it can accept functions of the form above
+instead.
+\end{defmac}
+
+\section{Pretty Printing Dispatch Tables}
+
+When \cd{*print-pretty*} is not \cd{nil}, the pprint dispatch table in the variable
+\cd{*print-pprint-dispatch*} controls how objects are printed.  The information
+in this table takes precedence over all other mechanisms for specifying how
+to print objects.  In particular, it overrides user-defined \cd{print-object}
+methods and print functions for structures.  However, if there is no
+specification for how to pretty print a particular kind of object, it is then
+printed using the standard mechanisms as if \cd{*print-pretty*} were \cd{nil}.
+
+A pprint dispatch table is a mapping from keys to pairs of values.  The keys
+are type specifiers.  The values are functions and numerical priorities.
+Basic insertion and retrieval is done based on the keys with the equality
+of keys being tested by \cd{equal}.  The function to use when pretty printing an
+object is chosen by finding the highest priority function in
+\cd{*print-pprint-dispatch*} that is associated with a type specifier that
+matches the object.
+
+\begin{defun}[Function]
+copy-pprint-dispatch &optional table 
+
+A copy is made of {\it table}, which defaults to the current pprint dispatch
+table.  If {\it table} is \cd{nil}, a copy is returned of the initial value of
+\cd{*print-pprint-dispatch*}.
+\end{defun}
+
+\begin{defun}[Function]
+pprint-dispatch object &optional table 
+
+This retrieves the highest priority function from a pprint table that is
+associated with a type specifier in the table that matches {\it object}.
+The function is chosen by finding all the type specifiers in {\it table}
+that match the object and selecting the highest priority function
+associated with any of these type specifiers.  If there is more than one
+highest priority function, an arbitrary choice is made.  If no type
+specifiers match the object, a function is returned that prints object with
+\cd{*print-pretty*} bound to \cd{nil}.
+
+As a second return value, \cd{pprint-dispatch} returns a flag that is \cd{t} if a
+matching type specifier was found in {\it table} and \cd{nil} if not.
+
+{\it Table} (which defaults to \cd{*print-pprint-dispatch*}) must be a
+pprint dispatch table.  {\it Table} can be \cd{nil}, in which case
+retrieval is done in the initial value of \cd{*print-pprint-dispatch*}.
+
+When \cd{*print-pretty*} is \cd{t}, \cd{(write~object~:stream~s)} is equivalent to
+\cd{(funcall~(pprint-dispatch~object)~s~object)}.
+\end{defun}
+
+\begin{defun}[Function]
+set-pprint-dispatch type function &optional priority table 
+
+This puts an entry into a pprint dispatch table and returns \cd{nil}.  The {\it
+type} must be a valid type specifier and is the key of the entry.
+The first action of \cd{set-pprint-dispatch} is to remove any pre-existing
+entry associated with {\it type}.  This guarantees that there
+will never be two entries associated with the same type specifier in a
+given pprint dispatch table.  Equality of type specifiers is tested by
+\cd{equal}.
+
+Two values are associated with each type specifier in a pprint dispatch
+table: a function and a priority.  The {\it function} must accept two
+arguments:  the stream to send output to and the object to be printed.
+The {\it function} should pretty print the object on the stream.  The {\it
+function} can assume that object satisfies {\it type}.  The {\it function}
+should obey \cd{*print-readably*}.  Any values returned by the {\it function}
+are ignored.
+
+The {\it priority} (which defaults to 0) must be a non-complex number.
+This number is used as a
+priority to resolve conflicts when an object matches more than one entry.  An error
+is signaled if priority fails to be a non-complex number.
+
+The {\it table} (which defaults to the value of \cd{*print-pprint-dispatch*}) must be a pprint
+dispatch table.  The specified entry is placed in this table.
+
+It is permissible for {\it function} to be \cd{nil}.  In this situation,
+there will be no {\it type} entry in {\it table} after
+\cd{set-pprint-dispatch} is evaluated.
+
+To facilitate the use of pprint dispatch tables for controlling the pretty
+printing of Lisp code, the {\it type-specifier} argument of the function
+\cd{set-pprint-dispatch} is allowed to contain the form \cd{(cons}~{\it
+car-type~cdr-type}\cd{)}.  This form indicates that the corresponding object must be
+a cons whose {\it car} satisfies the type specifier {\it car-type} and whose
+{\it cdr} satisfies
+the type specifier {\it cdr-type}.  The {\it cdr-type} can be omitted, in which case
+it defaults to \cd{t}.
+\end{defun}
+
+The initial value of \cd{*print-pprint-dispatch*} is implementation-dependent.
+However, the initial entries all use a special class of priorities that
+are less than every priority that can be
+specified using \cd{set-pprint-dispatch}.  This guarantees that pretty printing
+functions specified by users will override everything in the initial value of
+\cd{*print-pprint-dispatch*}.
+
+Consider the following examples.  The first form restores
+\cd{*print-\discretionary{}{}{}pprint-\discretionary{}{}{}dispatch*} to its initial value.
+The next two forms then specify a special way of pretty printing ratios.  Note that the more specific type
+specifier has to be associated with a higher priority.
+\begin{lisp}
+(setq *print-pprint-dispatch* \\
+~~~~~~(copy-pprint-dispatch nil)) \\*
+\\
+(defun div-print (s r colon? atsign?) \\*
+~~(declare (ignore colon? atsign?)) \\*
+~~(format s "(/ {\Xtilde}D {\Xtilde}D)" (numerator (abs r)) (denominator r))) \\*
+\\
+(set-pprint-dispatch 'ratio (formatter "\#.\Xtilde/div-print/")) \\*
+\\
+(set-pprint-dispatch '(and ratio (satisfies minusp)) \\*
+~~(formatter "\#.(- \Xtilde/div-print/)") \\*
+~~5) \\*
+\\
+(pprint '(1/3 -2/3)) {\rm prints:} (\#.(/ 1 3) \#.(- (/ 2 3)))
+\end{lisp}
+
+The following two forms illustrate the specification of pretty printing
+functions for particular types of Lisp code.  The first form illustrates how to
+specify the traditional method for printing quoted objects using ``\cd{'}''
+syntax.  Note the care taken to ensure that data lists that happen to begin
+with \cd{quote} will be printed readably.  The second form specifies that lists
+beginning with the symbol \cd{my-let} should print the same way that lists
+beginning with \cd{let} print when the initial pprint dispatch table is in effect.
+\begin{lisp}
+(set-pprint-dispatch '(cons (member quote)) \\*
+~~\#'(lambda (s list) \\*
+~~~~~~(if (and (consp (cdr list)) (null (cddr list))) \\*
+~~~~~~~~~~(funcall (formatter "'{\Xtilde}W") s (cadr list)) \\*
+~~~~~~~~~~(pprint-fill s list))))) \\*
+\\
+(set-pprint-dispatch '(cons (member my-let)) \\*
+~~(pprint-dispatch '(let) nil)) \\*
+\end{lisp}
+
+The next example specifies a default method for printing lists that do not
+correspond to function calls.  Note that, as shown in the definition of
+\cd{pprint-tabular} above, \cd{pprint-linear}, \cd{pprint-fill}, and
+\cd{pprint-tabular} are defined with optional colon and atsign arguments so that
+they can be used as pprint dispatch functions as well as \cd{\Xtilde/.../} functions.
+\begin{lisp}
+(set-pprint-dispatch \\*
+~~'(cons (not (and symbol (satisfies fboundp)))) \\*
+~~\#'pprint-fill \\*
+~~-5)
+\end{lisp}
+With a line length of 9, \cd{(pprint '(0 b c d e f g h i j k))} prints:
+\begin{lisp}
+(0 b c d \\*
+~e f g h \\*
+~i j k)
+\end{lisp}
+
+This final example shows how to define a pretty printing function for a
+user defined data structure.
+\begin{lisp}
+(defstruct family mom kids) \\*
+\\
+(set-pprint-dispatch 'family \\*
+~~\#'(lambda (s f) \\*
+~~~~~~(format s "{\Xtilde}\Xatsign<\#<{\Xtilde};{\Xtilde}W and \relax
+ {\Xtilde}2I{\Xtilde}\Xunderscore{\Xtilde}/pprint-fill/{\Xtilde};>{\Xtilde}:>" \\*
+~~~~~~~~~~~~~~(family-mom f) (family-kids f))))
+\end{lisp}
+
+The pretty printing function for the structure \cd{family} specifies how to
+adjust the layout of the output so that it can fit aesthetically into a
+variety of line widths.  In addition, it obeys the printer control
+variables \cd{*print-level*}, \cd{*print-length*}, \cd{*print-lines*},
+\cd{*print-circle*}, \cd{*print-shared*}, and \cd{*print-escape*}, and can tolerate
+several different kinds of malformity in the data structure.  The output below
+shows what is printed out with a right margin of 25, \cd{*print-pretty*}
+\cd{t}, \cd{*print-escape*} \cd{nil}, and a malformed \cd{kids} list.
+\begin{lisp}
+(write (list 'principal-family \\*
+~~~~~~~~~~~~~(make-family :mom "Lucy" \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~:kids '("Mark" "Bob" . "Dan"))) \\*
+~~~~~~~:right-margin 25 :pretty T :escape nil :miser-width nil) \\*
+\\
+(PRINCIPAL-FAMILY \\*
+~\#<Lucy and \\*
+~~~~~Mark Bob . Dan>)
+\end{lisp}
+
+Note that a pretty printing function for a structure is different from the
+structure's print function.  While print functions are permanently
+associated with a structure, pretty printing functions are stored in pprint
+dispatch tables and can be rapidly changed to reflect different printing
+needs.  If there is no pretty printing function for a structure in the
+current print dispatch table, the print function (if any) is used instead.
+

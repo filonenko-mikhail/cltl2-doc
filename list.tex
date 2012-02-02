@@ -1,0 +1,1495 @@
+%Part{List, Root = "CLM.MSS"}
+%%% Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Lists}
+
+A {\it cons}, or dotted pair, is a compound data object having two components
+called the {\it car} and {\it cdr}.  Each component may be any Lisp object.
+A {\it list} is a chain of conses
+linked by {\it cdr} fields; the chain is terminated by some atom
+(a non-cons object).
+An ordinary list is terminated by {\nil}, the empty list
+(also written {\empty}).
+A list whose {\it cdr} chain is terminated by some non-{\nil} atom is called
+a {\it dotted list}.
+
+The recommended predicate for testing for the end of a list is \cd{endp}.
+
+\section{Conses}
+
+These are the basic operations on conses viewed as pairs rather than
+as the constituents of a list.
+
+\begin{defun}[Function]
+car list
+
+This returns the {\it car} of {\it list}, which must be a cons or {\empty};
+that is, {\it list} must satisfy the predicate \cd{listp}.
+By definition, the {\it car} of {\empty} is {\empty}.
+If the cons is regarded as the first cons of a list, then \cd{car}
+returns the first element of the list.
+For example:
+\begin{lisp}
+(car '(a b c)) \EV\ a
+\end{lisp}
+See \cd{first}.
+The {\it car} of a cons may be altered by using \cd{rplaca} or \cd{setf}.
+\end{defun}
+
+\begin{defun}[Function]
+cdr list
+
+This returns the {\it cdr} of {\it list}, which must be a cons or {\empty};
+that is, {\it list} must satisfy the predicate \cd{listp}.
+By definition, the {\it cdr} of {\empty} is {\empty}.
+If the cons is regarded as the first cons of a list, then \cd{cdr}
+returns the rest of the list, which is a list with all elements
+but the first of the original list.
+For example:
+\begin{lisp}
+(cdr '(a b c)) \EV\ (b c)
+\end{lisp}
+See \cd{rest}.
+The {\it cdr} of a cons may be altered by using \cd{rplacd} or \cd{setf}.
+\end{defun}
+
+\begin{defun}[Function]
+caar list \\
+cadr list \\
+cdar list \\
+cddr list \\
+caaar list \\
+caadr list \\
+cadar list \\
+caddr list \\
+cdaar list \\
+cdadr list \\
+cddar list \\
+cdddr list \\
+caaaar list \\
+caaadr list \\
+caadar list \\
+caaddr list \\
+cadaar list \\
+cadadr list \\
+caddar list \\
+cadddr list \\
+cdaaar list \\
+cdaadr list \\
+cdadar list \\
+cdaddr list \\
+cddaar list \\
+cddadr list \\
+cdddar list \\
+cddddr list
+
+All of the compositions of up to four \cd{car} and \cd{cdr} operations
+are defined as separate Common Lisp functions.
+The names of these functions begin with \cd{c} and end with \cd{r},
+and in between is a sequence of \cd{a} and \cd{d} letters
+corresponding to
+the composition performed by the function. 
+For example:
+\begin{lisp}
+(cddadr x) {\rm is the same as} (cdr (cdr (car (cdr x))))
+\end{lisp}
+If the argument is regarded as a list, then \cd{cadr} returns
+the second element of the list, \cd{caddr} the third, and \cd{cadddr}
+the fourth.  If the first element of a list is a list, then
+\cd{caar} is the first element of the sublist, \cd{cdar} is the
+rest of that sublist, and \cd{cadar} is the second element of the sublist,
+and so on.
+
+As a matter of style, it is often preferable to define a function or
+macro to access part of a complicated data structure, rather than to use
+a long \cd{car}/\cd{cdr} string.  For example, one might define
+a macro to extract the list of parameter variables from a lambda-expression:
+\begin{lisp}
+(defmacro lambda-vars (lambda-exp) `(cadr ,lambda-exp))
+\end{lisp}
+and then use \cd{lambda-vars} for this purpose instead of \cd{cadr}.
+See also \cd{defstruct}, which will automatically define
+new record data types and access functions for instances of them.
+
+Any of these functions may be used to specify a {\it place} for \cd{setf}.
+\end{defun}
+	
+\begin{defun}[Function]
+cons x y
+
+\cd{cons} is the primitive function to create a new {\it cons} whose
+{\it car} is {\it x} and whose {\it cdr} is {\it y}.
+For example:
+\begin{lisp}
+(cons 'a 'b) \EV\ (a . b) \\
+(cons 'a (cons 'b (cons 'c '{\empty}))) \EV\ (a b c) \\
+(cons 'a '(b c d)) \EV\ (a b c d)
+\end{lisp}
+\cd{cons} may be thought of as creating a {\it cons}, or as adding a new element
+to the front of a list.
+\end{defun}
+
+\begin{defun}[Function]
+tree-equal x y &key :test :test-not
+
+This is a predicate that is true if {\it x} and {\it y} are
+isomorphic trees with identical leaves, that is, if {\it x} and {\it y}
+are atoms that satisfy the test (by default \cd{eql}),
+or if they are both conses and their {\it car}'s are \cd{tree-equal}
+and their {\it cdr}'s are \cd{tree-equal}.
+Thus \cd{tree-equal} recursively compares conses (but not any other objects
+that have components).  See \cd{equal}, which does recursively
+compare certain other structured objects, such as strings.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}
+
+\section{Lists}
+
+
+The following functions perform various operations on lists.
+\begin{newer}
+The list is one of the original Lisp data types.  The very name ``Lisp''
+is an abbreviation for ``LISt Processing.''
+\end{newer}
+
+\goodbreak
+
+
+\begin{defun}[Function]
+endp object
+
+The predicate \cd{endp} is the recommended way to test for the end
+of a list.  It is false of conses, true of {\nil}, and an error for
+all other arguments.
+
+\beforenoterule
+\begin{implementation}
+Implementations are encouraged to signal an
+error, especially in the interpreter, for a non-list argument.
+The \cd{endp} function is defined so as to allow compiled code
+to perform simply an atom check or a null check if speed is more
+important than safety.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+list-length list
+
+\cd{list-length} returns, as an integer, the length of {\it list}.
+\cd{list-length} differs from \cd{length} when the {\it list} is
+circular; \cd{length} may fail to return, whereas \cd{list-length}
+will return {\nil}.
+For example:
+\begin{lisp}
+(list-length '{\empty}) \EV\ 0 \\
+(list-length '(a b c d)) \EV\ 4 \\
+(list-length '(a (b c) d)) \EV\ 3 \\
+(let ((x (list 'a b c))) \\
+~~(rplacd (last x) x) \\
+~~(list-length x)) \EV\ {\nil}
+\end{lisp}
+\cd{list-length} could be implemented as follows:
+\begin{lisp}
+(defun list-length (x) \\
+~~(do ((n 0 (+ n 2))~~~~~~~~~~~~;{\rm Counter} \\
+~~~~~~~(fast x (cddr fast))~~~~~;{\rm Fast pointer: leaps by 2} \\
+~~~~~~~(slow x (cdr slow)))~~~~~;{\rm Slow pointer: leaps by 1} \\
+~~~~~~(nil) \\
+~~~~;; If fast pointer hits the end, return the count. \\
+~~~~(when (endp fast) (return n)) \\
+~~~~(when (endp (cdr fast)) (return (+ n 1))) \\
+~~~~;; If fast pointer eventually equals slow pointer, \\
+~~~~;;  then we must be stuck in a circular list. \\
+~~~~;; (A deeper property is the converse: if we are \\
+~~~~;;  stuck in a circular list, then eventually the \\
+~~~~;;  fast pointer will equal the slow pointer. \\
+~~~~;;  That fact justifies this implementation.) \\
+~~~~(when (and (eq fast slow) (> n 0)) (return nil))))
+\end{lisp}
+See \cd{length}, which will return the length of any sequence.
+\end{defun}
+
+\begin{defun}[Function]
+nth n list
+
+\cd{(nth {\it n} {\it list})} returns the {\it n}th element of {\it list}, where
+the {\it car} of the list is the ``zeroth'' element.
+The argument {\it n} must be a non-negative integer.
+If the length of the list is not greater than {\it n}, then the result
+is {\empty}, that is, {\false}.
+(This is consistent with the idea that the {\it car} and {\it cdr}
+of {\empty} are each {\empty}.)
+For example:
+\begin{lisp}
+(nth 0 '(foo bar gack)) \EV\ foo \\
+(nth 1 '(foo bar gack)) \EV\ bar \\
+(nth 3 '(foo bar gack)) \EV\ {\empty}
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+This is not
+the same as the Interlisp function called \cd{nth},
+which is similar to but not exactly the same as the Common Lisp function
+\cd{nthcdr}.  This definition of \cd{nth} is compatible
+with Lisp Machine Lisp and NIL (New Implementation of Lisp).
+Also, some people have used macros and functions called \cd{nth} of their own in
+their old MacLisp programs, which may not work the same way.
+\end{incompatibility}
+\afternoterule
+
+\cd{nth} may be used to specify a {\it place} to \cd{setf};
+when \cd{nth} is used in this way, the argument {\it n} must be less
+than the length of the {\it list}.
+
+Note that the arguments to \cd{nth} are reversed from the order
+used by most other sequence selector functions such as \cd{elt}.
+\end{defun}
+
+
+\begin{defun}[Function]
+first list \\
+second list \\
+third list \\
+fourth list \\
+fifth list \\
+sixth list \\
+seventh list \\
+eighth list \\
+ninth list \\
+tenth list
+
+These functions are sometimes convenient for accessing particular
+elements of a list.  \cd{first} is the same as \cd{car},
+\cd{second} is the same as \cd{cadr}, \cd{third} is the
+same as \cd{caddr}, and so on.
+Note that the ordinal numbering used here is one-origin,
+as opposed to the zero-origin numbering used by \cd{nth}:
+\begin{lisp}
+(fifth x) \EQ\ (nth 4 x)
+\end{lisp}
+
+\cd{setf} may be used with each of these functions to store
+into the indicated position of a list.
+\end{defun}
+
+\begin{defun}[Function]
+rest list
+
+\cd{rest} means the same as \cd{cdr} but mnemonically complements \cd{first}.
+\cd{setf} may be used with \cd{rest} to replace the {\it cdr} of a list
+with a new value.
+\end{defun}
+
+\begin{defun}[Function]
+nthcdr n list
+
+\cd{(nthcdr {\it n} {\it list})} performs the \cd{cdr} operation {\it n} times
+on {\it list}, and returns the result.
+For example:
+\begin{lisp}
+(nthcdr 0 '(a b c)) \EV\ (a b c) \\
+(nthcdr 2 '(a b c)) \EV\ (c) \\
+(nthcdr 4 '(a b c)) \EV\ {\empty}
+\end{lisp}
+In other words, it returns the {\it n}th {\it cdr} of the list.
+
+\beforenoterule
+\begin{incompatibility}
+This is similar to the Interlisp function \cd{nth},
+except that the Interlisp function is one-based instead of zero-based.
+\end{incompatibility}
+\afternoterule
+
+\begin{lisp}
+(car (nthcdr n x)) \EQ\ (nth n x)
+\end{lisp}
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARGUMENTS-UNDERSPECIFIED}
+to clarify that the argument {\it n}
+must be a non-negative integer.
+\end{new}
+
+\end{defun}
+
+\begin{obsolete}
+\begin{defun}[Function]
+last list
+
+\cd{last} returns the last cons ({\it not} the last element!) of {\it list}.
+If {\it list} is {\empty}, it returns {\empty}.
+For example:
+\begin{lisp}
+(setq x '(a b c d)) \\
+(last x) \EV\ (d) \\
+(rplacd (last x) '(e f)) \\
+x \EV\ '(a b c d e f) \\
+(last '(a b c . d)) \EV\ (c . d)
+\end{lisp}
+\end{defun}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{LAST-N}
+to extend the \cd{last} function to accept
+an optional second argument.  The effect is to make \cd{last}
+complementary in operation to \cd{butlast}.
+The new description (with some additional examples) would be as follows.
+
+\begin{defun}[Function]
+last list &optional (n 1)
+
+\cd{last} returns the tail of the {\it list}
+consisting of the last {\it n} conses of {\it list}.  The {\it list} may
+be a dotted list.  It is an error if the {\it list} is circular.
+
+The argument {\it n} must be a non-negative integer.
+If {\it n} is zero, then the atom that terminates the {\it list}
+is returned.  If {\it n} is not less than the number of cons cells
+making up the {\it list}, then the {\it list} itself is returned.
+
+For example:
+\begin{lisp}
+(setq x '(a b c d)) \\
+(last x) \EV\ (d) \\
+(rplacd (last x) '(e f)) \\
+x \EV\ '(a b c d e f) \\
+(last x 3) \EV\ (d e f) \\
+(last '()) \EV\ () \\
+(last '(a b c . d)) \EV\ (c . d) \\
+(last '(a b c . d) 0) \EV\ d \\
+(last '(a b c . d) 2) \EV\ (b c . d) \\
+(last '(a b c . d) 1729) \EV\ (a b c . d)
+\end{lisp}
+\end{defun}
+\end{new}
+
+\begin{defun}[Function]
+list &rest args
+
+\cd{list} constructs and returns a list of its arguments.
+For example:
+\begin{lisp}
+(list 3 4 'a (car '(b . c)) (+ 6 -2)) \EV\ (3 4 a b 4)
+\end{lisp}
+
+\begin{newer}
+\begin{lisp}
+(list) \EV\ () \\
+(list (list 'a 'b) (list 'c 'd 'e)) \EV\ ((a b) (c d e))
+\end{lisp}
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+list* arg &rest others
+
+\cd{list*} is like \cd{list} except that the last {\it cons}
+of the constructed list is ``dotted.''  The last argument to \cd{list*}
+is used as the {\it cdr} of the last cons constructed;
+this need not be an atom.  If it is not an atom,
+then the effect is to add several new elements to the front of a list.
+For example:
+\begin{lisp}
+(list* 'a 'b 'c 'd) \EV\ (a b c . d)
+\end{lisp}
+This is like
+\begin{lisp}
+(cons 'a (cons 'b (cons 'c 'd)))
+\end{lisp}
+Also:
+\begin{lisp}
+(list* 'a 'b 'c '(d e f)) \EV\ (a b c d e f) \\*
+(list* x) \EQ\ x
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+make-list size &key :initial-element
+
+This creates and returns a list containing {\it size} elements, each
+of which is initialized to the \cd{:initial-element}
+argument (which defaults to {\false}).
+{\it size} should be a non-negative integer.
+For example:
+\begin{lisp}
+(make-list 5) \EV\ ({\false} {\false} {\false} {\false} {\false}) \\
+(make-list 3 \cd{:initial-element} 'rah) \EV\ (rah rah rah)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+append &rest lists
+
+The arguments to \cd{append} are lists.  The result is a list that is the
+concatenation of the arguments.
+The arguments are not destroyed.
+For example:
+\begin{lisp}
+(append '(a b c) '(d e f) '{\empty} '(g)) \EV\ (a b c d e f g)
+\end{lisp}
+Note that \cd{append} copies the top-level list structure of each of its
+arguments {\it except} the last.
+The function \cd{concatenate} can perform a similar operation, but always
+copies all its arguments.  See also \cd{nconc}, which is like \cd{append}
+but destroys all arguments but the last.
+
+The last argument actually need not be a list but may be any Lisp object,
+which becomes the tail end of the constructed list.
+For example, \cd{(append '(a b c) 'd)} \EV\ \cd{(a b c . d)}.
+
+\cd{(append {\it x} '{\empty})} is an idiom once frequently used to copy the
+list {\it x}, but the \cd{copy-list} function is more appropriate to this
+task.
+\end{defun}
+
+\begin{defun}[Function]
+copy-list list
+
+This returns a list that is \cd{equal} to {\it list}, but not \cd{eq}.
+Only the top level of list structure is copied; that is, \cd{copy-list}
+copies in the {\it cdr} direction but not in the {\it car} direction.
+If the list is ``dotted,'' that is, \cd{(cdr (last {\it list}))}
+is a non-{\nil} atom, this will be true of the returned list also.
+See also \cd{copy-seq} and \cd{copy-tree}.
+\end{defun}
+
+\begin{defun}[Function]
+copy-alist list
+
+\cd{copy-alist} is for copying association lists.  The top level of
+list structure of {\it list} is copied, just as for \cd{copy-list}.
+In addition, each element of {\it list} that is a cons is replaced
+in the copy by a new cons with the same {\it car} and {\it cdr}.
+\end{defun}
+
+\begin{defun}[Function]
+copy-tree object
+
+\cd{copy-tree} is for copying trees of conses.
+The argument {\it object} may be any Lisp object.
+If it is not a cons, it is returned; otherwise
+the result is a new cons of the results of calling \cd{copy-tree}
+on the {\it car} and {\it cdr} of the argument.  In other words,
+all conses in the tree are copied recursively, stopping
+only when non-conses are encountered.
+Circularities and the sharing of substructure are {\it not} preserved.
+
+\beforenoterule
+\begin{incompatibility}
+This function is called \cd{copy} in Interlisp.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+revappend x y
+
+\cd{(revappend {\it x} {\it y})} is exactly the same as 
+\cd{(append (reverse {\it x}) {\it y})} except that it is potentially more
+efficient.  Both {\it x} and {\it y} should be lists.
+The argument {\it x} is copied, not destroyed.
+Compare this with \cd{nreconc}, which destroys its first argument.
+\end{defun}
+
+\begin{defun}[Function]
+nconc &rest lists
+
+\cd{nconc} takes lists as arguments.  It returns a list that is the arguments
+concatenated together.  The arguments are changed rather than copied.
+(Compare this with \cd{append}, which copies arguments rather than
+destroying them.)
+For example:
+\begin{lisp}
+(setq x '(a b c)) \\
+(setq y '(d e f)) \\
+(nconc x y) \EV\ (a b c d e f) \\
+x \EV\ (a b c d e f)
+\end{lisp}
+Note, in the example, that the value of \cd{x} is now different,
+since its last cons has been \cd{rplacd}'d to the value of \cd{y}.
+If one were then to evaluate \cd{(nconc x y)} again,
+it would yield a piece of ``circular'' list
+structure, whose printed representation would be
+\cd{(a b c d e f d e f d e f ...)}, repeating forever;
+if the \cd{*print-circle*} switch were non-{\nil},
+it would be printed as \cd{(a b c . \#1=(d e f . \#1\#))}.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations.
+The side-effect behavior of \cd{nconc} is specified by a recursive relationship
+outlined in the following table, in which a call to \cd{nconc} matching
+the earliest possible
+pattern on the left is required to have side-effect behavior
+equivalent to the corresponding expression on the right.
+\begin{flushleft}
+\begin{tabular}{@{}ll@{}}
+\cd{(nconc)}&\cd{nil~~~~~;}{\rm No side effects} \\
+\cd{(nconc nil . {\it r})~~~~}&\cd{(nconc . {\it r})} \\
+\cd{(nconc {\it x})}&{\it x} \\
+\cd{(nconc {\it x} {\it y})}&\cd{(let ((p {\it x}) (q {\it y}))} \\
+                                  &\cd{~~(rplacd (last p) q)} \\
+                                  &\cd{~~p)} \\
+\cd{(nconc {\it x} {\it y} . {\it r})}&\cd{(nconc (nconc {\it x} {\it y}) . {\it
+r})} \end{tabular}
+\end{flushleft}
+\end{newer}
+\end{defun}
+
+\penalty-10000 %manual
+
+\begin{defun}[Function]
+nreconc x y
+
+\cd{(nreconc {\it x} {\it y})} is exactly the same as 
+\cd{(nconc (nreverse {\it x}) {\it y})} except that it is potentially more
+efficient.  Both {\it x} and {\it y} should be lists.
+The argument {\it x} is destroyed.
+Compare this with \cd{revappend}.
+
+\begin{newer}
+\begin{lisp}
+(setq planets '(jupiter mars earth venus mercury)) \\
+(setq more-planets '(saturn uranus pluto neptune)) \\
+(nreconc more-planets planets) \\
+\`\EV\ (neptune pluto uranus saturn jupiter mars earth venus mercury) \\
+~~{\rm and now the value of \cd{more-planets} is not well defined}
+\end{lisp}
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{(nreconc {\it x} {\it y})} is permitted and
+required to have side-effect behavior
+equivalent to that of \cd{(nconc (nreverse {\it x})~{\it y})}.
+\end{newer}
+
+\end{defun}
+
+
+\begin{defmac}
+push item place
+
+The form {\it place} should be the name of a generalized variable
+containing a list; {\it item} may refer to any Lisp object.  The {\it item}
+is consed onto the front of the list, and the augmented list is stored
+back into {\it place} and returned.
+The form {\it place} may be any form acceptable as a
+generalized variable to \cd{setf}.  If the list held in {\it place} is
+viewed as a push-down stack, then \cd{push} pushes an element onto the top
+of the stack.
+For example:
+\begin{lisp}
+(setq x '(a (b c) d)) \\
+(push 5 (cadr x)) \EV\ (5 b c)  {\rm and now} x \EV\ (a (5 b c) d)
+\end{lisp}
+The effect of \cd{(push {\it item} {\it place})}
+is roughly equivalent to
+\begin{lisp}
+(setf {\it place} (cons {\it item} {\it place}))
+\end{lisp}
+except that the latter would evaluate any subforms of {\it place}
+twice, while \cd{push} takes care to evaluate them only once.
+Moreover, for certain {\it place} forms \cd{push} may be
+significantly more efficient than the \cd{setf} version.
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+Note that {\it item} is fully evaluated before any part of {\it place}
+is evaluated.
+\end{newer}
+\end{defmac}
+
+\begin{defmac}
+pushnew item place \hbox\bgroup\cf &key :test :test-not :key\egroup
+
+The form {\it place} should be the name of a generalized variable
+containing a list; {\it item} may refer to any Lisp object.  If the
+{\it item} is not already a member of the list (as determined by
+comparisons using the \cd{:test} predicate, which defaults to \cd{eql}),
+then the {\it item} is consed onto the front of the list, and
+the augmented list is stored back into {\it place} and returned; otherwise
+the unaugmented list is returned.  The form {\it place} may be
+any form acceptable as a generalized variable to \cd{setf}.  If the
+list held in {\it place} is viewed as a set, then \cd{pushnew} adjoins an
+element to the set; see \cd{adjoin}.
+
+The keyword arguments to \cd{pushnew}
+follow the conventions for the generic sequence
+functions.  See chapter~\ref{KSEQUE}.
+In effect, these keywords are simply passed on to the \cd{adjoin} function.
+
+\cd{pushnew} returns the new contents of the {\it place}.
+For example:
+\begin{lisp}
+(setq x '(a (b c) d)) \\
+(pushnew 5 (cadr x)) \EV\ (5 b c)   {\rm and now} x \EV\ (a (5 b c) d) \\
+(pushnew 'b (cadr x)) \EV\ (5 b c)  {\rm and \cd{x} is unchanged}
+\end{lisp}
+The effect of
+\begin{lisp}
+(pushnew {\it item} {\it place} \cd{:test} {\it p})
+\end{lisp}
+is roughly equivalent to
+\begin{lisp}
+(setf {\it place} (adjoin {\it item} {\it place} \cd{:test} {\it p}))
+\end{lisp}
+except that the latter would evaluate any subforms of
+{\it place} twice, while \cd{pushnew} takes care to evaluate them only once.
+Moreover, for certain {\it place} forms \cd{pushnew} may be
+significantly more efficient than the \cd{setf} version.
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+Note that {\it item} is fully evaluated before any part of {\it place}
+is evaluated.
+\end{newer}
+\end{defmac}
+
+\begin{defmac}
+pop place
+
+The form {\it place} should be the name of a generalized variable
+containing a list.  The result of \cd{pop} is the \cd{car} of the contents
+of {\it place}, and as a side effect the \cd{cdr} of the contents is stored
+back into {\it place}.  The form {\it place} may be any form acceptable as a
+generalized variable to \cd{setf}.  If the list held in {\it place} is
+viewed as a push-down stack, then \cd{pop} pops an element from the top of
+the stack and returns it.
+For example:
+\begin{lisp}
+(setq stack '(a b c)) \\
+(pop stack) \EV\ a  {\rm and now} stack \EV\ (b c)
+\end{lisp}
+The effect of \cd{(pop {\it place})} is roughly equivalent to
+\begin{lisp}
+(prog1 (car {\it place}) (setf {\it place} (cdr {\it place})))
+\end{lisp}
+except that the latter would evaluate any subforms of {\it place}
+three times, while \cd{pop} takes care to evaluate them only once.
+Moreover, for certain {\it place} forms \cd{pop} may be
+significantly more efficient than the \cd{setf} version.
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
+\end{defmac}
+
+\begin{defun}[Function]
+butlast list &optional n
+
+This creates and returns a list with the same elements as {\it list},
+excepting the last {\it n} elements.
+{\it n} defaults to 1.  The argument is not destroyed.
+If the {\it list} has fewer than {\it n} elements, then {\empty} is returned.
+For example:
+\begin{lisp}
+(butlast '(a b c d)) \EV\ (a b c) \\
+(butlast '((a b) (c d))) \EV\ ((a b)) \\
+(butlast '(a)) \EV\ {\empty} \\
+(butlast nil) \EV\ {\empty}
+\end{lisp}
+The name is from the phrase ``all elements but the last.''
+\end{defun}
+
+\begin{defun}[Function]
+nbutlast list &optional n
+
+This is the destructive version of \cd{butlast}; it changes the {\it cdr} of
+the cons {\it n}+1 from the end of the {\it list} to {\nil}.  {\it n} defaults to 1.
+If the {\it list} has fewer than {\it n} elements, then \cd{nbutlast}
+returns {\empty}, and the argument is not modified.  (Therefore
+one normally writes \cd{(setq a (nbutlast a))} rather than simply
+\cd{(nbutlast a)}.)
+For example:
+\begin{lisp}
+(setq foo '(a b c d)) \\
+(nbutlast foo) \EV\ (a b c) \\
+foo \EV\ (a b c) \\
+(nbutlast '(a)) \EV\ {\empty} \\
+(nbutlast '{\nil}) \EV\ {\empty}
+\end{lisp}
+\end{defun}
+
+
+\begin{defun}[Function]
+ldiff list sublist
+
+{\it list} should be a list, and {\it sublist} should be a sublist
+of {\it list}, that is, one of the conses that make up {\it list}.
+\cd{ldiff} (meaning ``list difference'') will return a new (freshly consed)
+list, whose elements are those elements of {\it list} that appear before
+{\it sublist}.  If {\it sublist} is not a tail of {\it list}
+(and in particular if {\it sublist} is {\nil}),
+then a copy of the entire {\it list} is returned.
+The argument {\it list} is not destroyed.
+For example:
+\begin{lisp}
+(setq x '(a b c d e)) \\
+(setq y (cdddr x)) \EV\ (d e) \\
+(ldiff x y) \EV\ (a b c) \\[4pt]
+{\rm but} (ldiff '(a b c d) '(c d)) \EV\ (a b c d)
+\end{lisp}
+since the sublist was not \cd{eq} to any part of the list.
+\end{defun}
+
+
+\section{Alteration of List Structure}
+
+The functions \cd{rplaca} and \cd{rplacd}
+may be used to make alterations in already existing
+list structure, that is, to change the {\it car} or {\it cdr} of an
+existing cons.
+One may also use \cd{setf} in conjunction with \cd{car} and \cd{cdr}.
+
+The structure is not copied but is destructively altered;
+hence caution should be exercised when using these functions, as
+strange side effects can occur if portions of list structure become
+shared.
+The \cd{nconc}, \cd{nreverse}, \cd{nreconc},
+and \cd{nbutlast} functions, already
+described,
+have the same property, as do certain of the generic sequence
+functions such as \cd{delete}.
+However, they are normally not
+used for this side effect; rather, the list-structure modification
+is purely for efficiency, and compatible non-modifying functions
+are provided.
+
+\begin{defun}[Function]
+rplaca x y
+
+\cd{(rplaca {\it x} {\it y})} changes the {\it car} of {\it x} to {\it y} and returns
+(the modified) {\it x}.  {\it x} must be a cons, but {\it y} may be any
+Lisp object.
+For example:
+\begin{lisp}
+(setq g '(a b c)) \\
+(rplaca (cdr g) 'd) \EV\ (d c) \\
+{\rm Now} g \EV\ (a d c)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+rplacd x y
+
+\cd{(rplacd {\it x} {\it y})} changes the {\it cdr} of {\it x} to {\it y} and returns
+(the modified) {\it x}.  {\it x} must be a cons, but {\it y} may be
+any Lisp object.
+For example:
+\begin{lisp}
+(setq x '(a b c)) \\
+(rplacd x 'd) \EV\ (a . d) \\
+{\rm Now} x \EV\ (a . d)
+\end{lisp}
+\end{defun}
+
+\begin{newer}
+The functions \cd{rplaca} and \cd{rplacd} go back to the earliest
+origins of Lisp, along with \cd{car}, \cd{cdr}, and \cd{cons}.
+Nowadays, however, they seem to be falling by the wayside.
+More and more Common Lisp programmers use \cd{setf} for nearly
+all structure modifications: \cd{(rplaca x~y)} is rendered
+as \cd{(setf (car x)~y)} or perhaps as \cd{(setf (first x)~y)}.
+Even more likely is that a \cd{defstruct} structure or a CLOS class
+is used in place of a list, if the data structure is at all complicated;
+in this case \cd{setf} is used with a slot accessor.
+\end{newer}
+\newpage%manual
+
+\section{Substitution of Expressions}
+
+\indexterm{substitution}
+A number of functions are provided for performing substitutions
+within a tree.  All take a tree and a description
+of old subexpressions to be replaced by new ones.
+They come in non-destructive and destructive varieties
+and specify substitution either by two arguments or by an association list.
+
+The naming conventions for these functions and for their keyword
+arguments generally follow the conventions for the generic sequence
+functions.  See chapter~\ref{KSEQUE}.
+
+\begin{defun}[Function]
+subst new old tree &key :test :test-not :key \\
+subst-if new test tree &key :key \\
+subst-if-not new test tree &key :key
+
+\cd{(subst {\it new} {\it old} {\it tree})} makes a copy of {\it tree},
+substituting {\it new} for every subtree or leaf of {\it tree}
+(whether the subtree or leaf is a {\it car} or a {\it cdr} of its parent)
+such that {\it old} and the subtree or leaf satisfy the test.  It
+returns the modified copy of {\it tree}.  The original {\it tree} is
+unchanged, but the result tree may share with parts of the argument
+{\it tree}.
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, \cd{subst} is guaranteed {\it not} to share with
+the {\it tree} argument, and the idiom \cd{(subst {\nil} {\nil} x)} was
+used to copy a tree \cd{x}.  In Common Lisp, the function \cd{copy-tree} should
+be used to copy a tree, as the \cd{subst} idiom will not work.
+\end{incompatibility}
+\afternoterule
+
+For example:
+\begin{lisp}
+(subst 'tempest 'hurricane \\
+~~~~~~~'(shakespeare wrote (the hurricane))) \\
+~~~\EV\ (shakespeare wrote (the tempest)) \\
+\\
+(subst 'foo '{\nil} '(shakespeare wrote (twelfth night))) \\
+~~~\EV\ (shakespeare wrote (twelfth night . foo) . foo) \\
+\\
+(subst '(a . cons) '(old . pair) \\
+~~~~~~~'((old . spice) ((old . shoes) old . pair) (old . pair)) \\
+~~~~~~~\cd{:test} \#'equal) \\
+~~~\EV\ ((old . spice) ((old . shoes) a . cons) (a . cons))
+\end{lisp}
+This function is not destructive; that is, it does not change
+the {\it car} or {\it cdr} of any already existing list structure.
+One possible definition of \cd{subst}:
+\begin{lisp}
+(defun subst (old new tree \cd{\&rest} x \cd{\&key} test test-not key) \\*
+~~(cond ((satisfies-the-test old tree :test test \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~:test-not test-not :key key) \\*
+~~~~~~~~~new) \\*
+~~~~~~~~((atom tree) tree) \\
+~~~~~~~~(t (let ((a (apply \#'subst old new (car tree) x)) \\*
+~~~~~~~~~~~~~~~~~(d (apply \#'subst old new (cdr tree) x))) \\
+~~~~~~~~~~~~~(if (and (eql a (car tree)) \\*
+~~~~~~~~~~~~~~~~~~~~~~(eql d (cdr tree))) \\*
+~~~~~~~~~~~~~~~~~tree \\*
+~~~~~~~~~~~~~~~~~(cons a d))))))
+\end{lisp}
+See also \cd{substitute}, which substitutes for top-level elements
+of a sequence.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+nsubst new old tree &key :test :test-not :key \\
+nsubst-if new test tree &key :key \\
+nsubst-if-not new test tree &key :key
+
+\cd{nsubst} is a destructive version of \cd{subst}.  The list structure of
+{\it tree} is altered by destructively replacing with {\it new}
+each leaf or subtree of the {\it tree} such that {\it old} and the leaf
+or subtree satisfy the test.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+sublis alist tree &key :test :test-not :key
+
+\cd{sublis} makes substitutions for objects in a tree
+(a structure of conses).
+The first argument to \cd{sublis} is an association list.
+The second argument is the tree in which
+substitutions are to be made, as for \cd{subst}.
+\cd{sublis} looks at all subtrees and leaves of the tree;
+if a subtree or leaf appears as a key in the association
+list (that is, the key and the subtree or leaf satisfy the test),
+it is replaced by the object with which it is associated.
+This operation is non-destructive.  In effect, \cd{sublis} can
+perform several \cd{subst} operations simultaneously.
+For example:
+\begin{lisp}
+(sublis '((x . 100) (z . zprime)) \\*
+~~~~~~~~'(plus x (minus g z x p) 4 . x)) \\*
+~~~\EV\ (plus 100 (minus g zprime 100 p) 4 . 100) \\*
+ \\*
+(sublis '(((+ x y) . (- x y)) ((- x y) . (+ x y))) \\*
+~~~~~~~~'(* (/ (+ x y) (+ x p)) (- x y)) \\*
+~~~~~~~~:test \#'equal) \\*
+~~~\EV\ (* (/ (- x y) (+ x p)) (+ x y))
+\end{lisp}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+nsublis alist tree &key :test :test-not :key
+
+\cd{nsublis} is like \cd{sublis} but destructively modifies the relevant
+parts of the {\it tree}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}
+
+\section{Using Lists as Sets}
+
+Common Lisp includes functions that allow a list of items to be
+treated as a {\it set}.
+There are functions to add, remove, and search for items in a list,
+based on various criteria.
+There are also set union, intersection, and difference functions.
+
+The naming conventions for these functions and for their keyword
+arguments generally follow the conventions that apply to the generic sequence
+functions.  See chapter~\ref{KSEQUE}.
+
+\begin{defun}[Function]
+member item list &key :test :test-not :key \\
+member-if predicate list &key :key \\
+member-if-not predicate list &key :key
+
+The {\it list} is searched for an element that satisfies the test.
+If none is found, {\false} is returned;
+otherwise, the tail of {\it list} beginning
+with the first element that satisfied the test is returned.
+The {\it list} is searched on the top level only. 
+These functions are suitable for use as predicates.
+
+For example:
+\begin{lisp}
+(member 'snerd '(a b c d)) \EV\ {\false} \\
+(member-if \#'numberp '(a \#{\Xbackslash}Space 5/3 foo)) \EV\ (5/3 foo) \\
+(member 'a '(g (a y) c a d e a f)) \EV\ (a d e a f)
+\end{lisp}
+Note, in the last example,
+that the value returned by \cd{member} is \cd{eq} to the portion of the list
+beginning with \cd{a}.
+Thus \cd{rplaca} on the result of \cd{member} may be used
+to alter the found list element,
+if a check is first made that \cd{member} did not return {\false}.
+
+See also \cd{find} and \cd{position}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, the \cd{member} function uses
+an \cd{equal} comparison rather than \cd{eql}, which is the default
+test for \cd{member} in Common Lisp.  Where in MacLisp one would write
+\cd{(member x y)}, in Common Lisp one must write \cd{(member x y :test \#'equal)}
+to get a completely identical effect.  Similarly, one can get the
+precise effect, and no more, of the MacLisp \cd{(memq x y)}
+by writing in Common Lisp \cd{(member x y :test \#'eq)}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+tailp sublist list
+
+This predicate is true if {\it sublist} is a sublist of {\it list} (that is,
+one of the conses that makes up {\it list}); otherwise it is false.
+Another way to look at this is that \cd{tailp} is true if
+\cd{(nthcdr {\it n} {\it list})} is {\it sublist}, for some value of {\it n}.
+See \cd{ldiff}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{TAILP-NIL}
+to strike the parenthetical remark that suggests
+that the {\it sublist} must be a cons, to clarify that \cd{tailp}
+is true if and only if there exists an integer {\it n} such that
+\begin{lisp}
+(eql {\it sublist} (nthcdr {\it n} {\it list}))
+\end{lisp}
+and to specify that {\it list} may be a dotted list (implying that
+implementations must use \cd{atom} and not \cd{endp} to check for
+the end of the {\it list}).
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+adjoin item list &key :test :test-not :key
+
+\cd{adjoin} is used to add an element to a set, provided that
+it is not already a member.  The equality test defaults to \cd{eql}.
+\begin{lisp}
+(adjoin {\it item} {\it list}) \EQ\ (if (member {\it item} {\it list}) {\it list} (cons {\it item} {\it list}))
+\end{lisp}
+In general, the test may be any predicate; the {\it item} is added to the
+list only if there is no element of the list that ``satisfies the test.''
+
+\cd{adjoin} deviates from the usual rules described in chapter~\ref{KSEQUE}
+for the treatment of arguments named {\it item} and \cd{:key}.
+If a \cd{:key} function is specified, it is applied to {\it item}
+as well as to each element of the list.  The rationale is that
+if the {\it item} is not yet in the list, it soon will be, and so
+the test is more properly viewed as being between two elements
+rather than between a separate {\it item} and an element.
+\begin{lisp}
+(adjoin {\it item} {\it list} :key {\it fn}) \\
+~~\EQ\ (if (member (funcall {\it fn} {\it item}) {\it list}
+  :key {\it fn}) {\it list} (cons {\it item} {\it list})) \end{lisp}
+See \cd{pushnew}.
+\begin{new}%CORR
+{\it Notice of correction.}
+In the first edition, the form \cd{({\it fn} {\it item})} appeared
+in this example without the required \cd{funcall}.
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+union list1 list2 &key :test :test-not :key \\
+nunion list1 list2 &key :test :test-not :key
+
+\cd{union} takes two lists and returns a new list containing
+everything that is an element of either of the {\it lists}.
+If there is a duplication between two lists,
+only one of the duplicate instances will be in the result.
+If either of the arguments has duplicate entries within it,
+the redundant entries
+may or may not appear in the result.
+For example:
+\begin{lisp}
+(union '(a b c) '(f a d)) \\
+~~~\EV\ (a b c f d) {\rm or} (b c f a d) {\rm or} (d f a b c) {\rm or} ... \\
+ \\
+(union '((x 5) (y 6)) '((z 2) (x 4)) :key \#'car) \\
+~~~\EV\ ((x 5) (y 6) (z 2)) {\rm or} ((x 4) (y 6) (z 2)) {\rm or} ...
+\end{lisp}
+
+There is no guarantee that the order of elements in the result will
+reflect the ordering of the arguments in any particular way.
+The implementation is therefore free to use any of a variety of strategies.
+The result list may share cells with, or be \cd{eq} to, either of the arguments
+if appropriate.
+
+In general, the test may be any predicate, and the union operation may be
+described as follows.  For all possible ordered pairs consisting of one
+element from {\it list1} and one element from {\it list2}, the test is used
+to determine whether they ``match.''  For every matching pair, at least
+one of the two elements of the pair will be in the result.  Moreover, any
+element from either list that matches no element of the other will appear
+in the result.  All this is very general, but probably not particularly
+useful unless the test is an equivalence relation.
+
+The \cd{:test-not} argument can be useful when the test function
+is the logical negation of an equivalence test.  A good example
+of this is the function \cd{mismatch}, which is logically inverted
+so that possibly useful information can be returned if the arguments do not
+match.  This additional ``useful information'' is discarded in the following
+example; \cd{mismatch} is used purely as a predicate.
+\begin{lisp}
+(union '(\#(a b) \#(5 0 6) \#(f 3)) \\
+~~~~~~~'(\#(5 0 6) (a b) \#(g h)) \\
+~~~~~~~:test-not \\
+~~~~~~~\#'mismatch) \\
+~~~\EV\ (\#(a b) \#(5 0 6) \#(f 3) \#(g h))~~~~~;{\rm One possible result} \\
+~~~\EV\ ((a b) \#(f 3) \#(5 0 6) \#(g h))~~~~~~;{\rm Another possible result}
+\end{lisp}
+Using \cd{\cd{:test-not} \#'mismatch} differs from using
+\cd{\cd{:test} \#'equalp}, for example, because \cd{mismatch}
+will determine that \cd{\#(a b)} and \cd{(a b)} are the same,
+while \cd{equalp} would regard them as not the same.
+
+\cd{nunion} is the destructive version of \cd{union}.
+It performs the same operation but may destroy the argument lists,
+perhaps in order to use their cells to construct the result.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{nunion} is permitted to perform a \cd{setf} on any part,
+{\it car} or {\it cdr}, of the top-level list structure of 
+any of the argument lists.
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+intersection list1 list2 &key :test :test-not :key \\
+nintersection list1 list2 &key :test :test-not :key
+
+\cd{intersection} takes two lists and returns a new list containing
+everything that is an element of both argument lists.
+If either list has duplicate entries, the redundant entries
+may or may not appear in the result.
+For example:
+\begin{lisp}
+(intersection '(a b c) '(f a d)) \EV\ (a)
+\end{lisp}
+There is no guarantee that the order of elements in the result will
+reflect the ordering of the arguments in any particular way.
+The implementation is therefore free to use any of a variety of strategies.
+The result list may share cells with, or be \cd{eq} to, either of the arguments
+if appropriate.
+
+In general, the test may be any predicate, and the intersection operation
+may be described as follows.  For all possible ordered pairs consisting of
+one element from {\it list1} and one element from {\it list2}, the test is
+used to determine whether they ``match.''  For every matching pair,
+exactly one of the two elements of the pair will be put in the result.
+No element from either list appears in the result that does not match
+an element from the other list.
+All this is very general, but probably
+not particularly useful unless the test is an equivalence relation.
+
+\cd{nintersection} is the destructive version of \cd{intersection}.
+It performs the same operation, but may destroy {\it list1},
+perhaps in order to use its cells to construct the result.
+(The argument {\it list2} is {\it not} destroyed.)
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{nintersection} is permitted to perform a \cd{setf} on any part,
+{\it car} or {\it cdr}, of the top-level list structure of 
+any of the argument lists.
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+set-difference list1 list2 &key :test :test-not :key \\
+nset-difference list1 list2 &key :test :test-not :key
+
+\cd{set-difference} returns a list of elements of {\it list1}
+that do not appear in {\it list2}.  This operation is
+not destructive.
+
+There is no guarantee that the order of elements in the result will
+reflect the ordering of the arguments in any particular way.
+The implementation is therefore free to use any of a variety of strategies.
+The result list may share cells with, or be \cd{eq} to, either of the arguments
+if appropriate.
+
+In general, the test may be any predicate, and the set difference operation
+may be described as follows.  For all possible ordered pairs consisting of
+one element from {\it list1} and one element from {\it list2}, the test is
+used to determine whether they ``match.''  An element of {\it list1}
+appears in the result if and only if it does not match any element
+of {\it list2}.  This is very general and permits interesting applications.
+For example, one can remove from a list of strings all those strings
+containing one of a given list of characters:
+\begin{lisp}
+;; Remove all flavor names that contain "c" or "w". \\
+(set-difference '("strawberry" "chocolate" "banana" \\
+~~~~~~~~~~~~~~~~~~"lemon" "pistachio" "rhubarb") \\
+~~~~~~~~~~~~~~~~'(\#{\Xbackslash}c \#{\Xbackslash}w) \\
+~~~~~~~~~~~~~~~~:test \\
+~~~~~~~~~~~~~~~~\#'(lambda (s c) (find c s))) \\
+~~~\EV\ ("banana" "rhubarb" "lemon")~~~~~;{\rm One possible ordering}
+\end{lisp}
+
+\cd{nset-difference} is the destructive version of \cd{set-difference}.
+This operation may destroy {\it list1}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+
+\beforenoterule
+\begin{incompatibility}
+An approximately equivalent Interlisp function
+is \cd{ldifference}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+set-exclusive-or list1 list2 &key :test :test-not :key \\
+nset-exclusive-or list1 list2 &key :test :test-not :key
+
+\cd{set-exclusive-or} returns a list of elements that appear
+in exactly one of {\it list1} and {\it list2}.
+This operation is not destructive.
+
+There is no guarantee that the order of elements in the result will
+reflect the ordering of the arguments in any particular way.
+The implementation is therefore free to use any of a variety of strategies.
+The result list may share cells with, or be \cd{eq} to, either of the arguments
+if appropriate.
+
+In general, the test may be any predicate, and the set-exclusive-or operation
+may be described as follows.  For all possible ordered pairs consisting of
+one element from {\it list1} and one element from {\it list2}, the test is
+used to determine whether they ``match.''  The result contains precisely
+those elements of {\it list1} and {\it list2} that appear in no matching pair.
+
+\newpage%manual
+
+\cd{nset-exclusive-or} is the destructive version of \cd{set-exclusive-or}.
+Both lists may be destroyed in producing the result.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
+to clarify the permissible side effects of certain operations;
+\cd{nset-exclusive-or} is permitted to perform a \cd{setf} on any part,
+{\it car} or {\it cdr}, of the top-level list structure of 
+any of the argument lists.
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+subsetp list1 list2 &key :test :test-not :key
+
+\cd{subsetp} is a predicate that is true if every element of {\it list1}
+appears in (``matches'' some element of) {\it list2}, and false otherwise.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}
+
+
+\section{Association Lists}
+
+An {\it association list}, or {\it a-list}, is a data structure
+used very frequently in Lisp.  An a-list is a list of pairs (conses);
+each pair is an association.  The {\it car} of a pair is called the {\it key},
+and the {\it cdr} is called the {\it datum}.
+
+An advantage of the a-list representation is that an a-list can be
+incrementally augmented simply by adding new entries to the front.
+Moreover, because the searching function \cd{assoc} searches the
+a-list in order, new entries can ``shadow'' old entries.  If an a-list is
+viewed as a mapping from keys to data, then the mapping can be not only
+augmented but also altered in a non-destructive manner by adding new
+entries to the front of the a-list.
+
+Sometimes an a-list represents a bijective mapping, and it is desirable
+to retrieve a key given a datum.  For this purpose, the ``reverse'' searching
+function \cd{rassoc} is provided.  Other variants of a-list searches
+can be constructed using the function \cd{find} or \cd{member}.
+
+It is permissible to let {\false} be an element of an a-list in place of
+a pair.  Such an element is not considered to be a pair but is simply
+passed over when the a-list is searched by \cd{assoc}.
+
+\begin{defun}[Function]
+acons key datum a-list
+
+\cd{acons} constructs a new association list by adding the pair
+\cd{({\it key} . {\it datum})} to the old {\it a-list}.
+\begin{lisp}
+(acons x y a) \EQ\ (cons (cons x y) a)
+\end{lisp}
+\begin{newer}
+This is a trivial convenience function, but I find I use it a lot.
+\end{newer}
+\end{defun}
+
+\newpage%manual
+
+\begin{defun}[Function]
+pairlis keys data &optional a-list
+
+\cd{pairlis} takes two lists and makes an association list that associates
+elements of the first list to corresponding elements of the second
+list.  It is an error if the two lists {\it keys} and {\it data} are not of
+the same length.  If the optional argument {\it a-list} is provided, then the
+new pairs are added to the front of it.
+
+The new pairs may appear in the resulting a-list in any order;
+in particular, either forward or backward order is permitted.
+Therefore the result of the call
+\begin{lisp}
+(pairlis '(one two) '(1 2) '((three . 3) (four . 19)))
+\end{lisp}
+might be
+\begin{lisp}
+((one . 1) (two . 2) (three . 3) (four . 19))
+\end{lisp}
+but could equally well be
+\begin{lisp}
+((two . 2) (one . 1) (three . 3) (four . 19))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+assoc item a-list &key :test :test-not :key \\
+assoc-if predicate a-list \\
+assoc-if-not predicate a-list
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{ASSOC-RASSOC-IF-KEY}
+to allow \cd{assoc-if} and \cd{assoc-if-not}
+also to take a keyword argument named \cd{:key}, to be used
+to determine whether a pair ``satisfies the test'' in the same manner as
+for sequence functions.  The new function descriptions are therefore as follows:
+
+\begin{defun}[Function]
+assoc-if predicate a-list &key :key \\
+assoc-if-not predicate a-list &key :key
+
+\end{defun}
+The omission of \cd{:key} arguments for these
+functions in the first edition was probably an oversight.
+\end{new}
+
+Each of these searches the association list
+{\it a-list}.  The value is the first pair in the a-list such that
+the {\it car} of the pair satisfies the test, or {\false} if there is
+no such pair in the a-list.
+For example:
+\begin{lisp}
+(assoc 'r '((a . b) (c . d) (r . x) (s . y) (r . z))) \\
+~~~~~~~~\EV\  (r . x) \\
+(assoc 'goo '((foo . bar) (zoo . goo))) \EV\ {\false} \\
+(assoc '2 '((1 a b c) (2 b c d) (-7 x y z))) \EV\ (2 b c d)
+\end{lisp}
+It is possible to \cd{rplacd} the result of \cd{assoc} {\it provided}
+that it is not {\false},
+in order to ``update'' the ``table'' that was \cd{assoc}'s second argument.
+(However, it is often better to update an a-list by adding new pairs
+to the front, rather than altering old pairs.)
+For example:
+\begin{lisp}
+(setq values '((x . 100) (y . 200) (z . 50))) \\
+(assoc 'y values) \EV\ (y . 200) \\
+(rplacd (assoc 'y values) 201) \\
+(assoc 'y values) \EV\ (y . 201) {\rm now}
+\end{lisp}
+A typical trick is to say
+\cd{(cdr (assoc x y))}.
+Because the {\it cdr} of {\false} is guaranteed to be {\false},
+this yields {\false} if no pair is found {\it or} if a pair is
+found whose {\it cdr} is {\false}.  This is useful if {\false} serves
+its usual role as a ``default value.''
+
+The two expressions
+\begin{lisp}
+(assoc {\it item} {\it list} :test {\it fn})
+\end{lisp}
+and
+\begin{lisp}
+(find {\it item} {\it list} :test {\it fn} :key \#'car)
+\end{lisp}
+are equivalent in meaning with one important exception:
+if {\nil} appears in the a-list in place of a pair,
+and the {\it item} being searched for is {\nil},
+\cd{find} will blithely compute the {\it car} of the {\nil} in the a-list,
+find that it is equal to the {\it item}, and return {\nil},
+whereas \cd{assoc} will ignore the {\nil} in the a-list and continue
+to search for an actual pair (cons) whose {\it car} is {\nil}.
+See \cd{find} and \cd{position}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, the \cd{assoc} function uses
+an \cd{equal} comparison rather than \cd{eql}, which is the default
+test for \cd{assoc} in Common Lisp.  Where in MacLisp one would write
+\cd{(assoc x y)}, in Common Lisp one must write \cd{(assoc x y :test \#'equal)}
+to get the completely identical effect.  Similarly, one can get the
+precise effect, and no more, of the MacLisp \cd{(assq x y)}
+by writing in Common Lisp \cd{(assoc x y :test \#'eq)}.
+
+In Interlisp, \cd{assoc} uses an \cd{eq} test, and \cd{sassoc}
+uses an Interlisp \cd{equal} test.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+rassoc item a-list &key :test :test-not :key \\
+rassoc-if predicate a-list \\
+rassoc-if-not predicate a-list
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{ASSOC-RASSOC-IF-KEY}
+to allow \cd{rassoc-if} and \cd{rassoc-if-not}
+also to take a keyword argument named \cd{:key}, to be used
+to determine whether a pair ``satisfies the test'' in the same manner as
+for sequence functions.  The new function descriptions are therefore as follows:
+
+\begin{defun}[Function]
+rassoc-if predicate a-list &key :key \\
+rassoc-if-not predicate a-list &key :key
+
+\end{defun}
+The omission of \cd{:key} arguments for these
+functions in the first edition was probably an oversight.
+\end{new}
+
+\cd{rassoc} is the reverse form of \cd{assoc}; it searches for
+a pair whose {\it cdr} satisfies the test, rather than the {\it car}.
+If the {\it a-list} is considered to be a mapping, then \cd{rassoc}
+treats the {\it a-list} as representing the inverse mapping.
+For example:
+\begin{lisp}
+(rassoc 'a '((a . b) (b . c) (c . a) (z . a))) \EV\ (c . a)
+\end{lisp}
+
+The expressions
+\begin{lisp}
+(rassoc {\it item} {\it list} :test {\it fn})
+\end{lisp}
+and
+\begin{lisp}
+(find {\it item} {\it list} :test {\it fn} :key \#'cdr)
+\end{lisp}
+are equivalent in meaning, except when the {\it item} is {\nil}
+and {\nil} appears in place of a pair in the a-list.  See the discussion
+of the function \cd{assoc}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defun}

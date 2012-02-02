@@ -1,0 +1,1036 @@
+%Part{Char, Root = "CLM.MSS"}
+%%% Chapter of Common Lisp Manual.  Copyright 1984, 1987, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Characters}
+
+Common Lisp provides a character data type; objects of this type
+represent printed symbols such as letters.
+
+In general, characters in Common Lisp are not true objects; \cd{eq} cannot
+be counted upon to operate on them reliably.  In particular,
+it is possible that the expression
+\begin{lisp}
+(let ((x z) (y z)) (eq x y))
+\end{lisp}
+may be false rather than true, if the value of \cd{z} is a character.
+
+\beforenoterule
+\begin{rationale}
+This odd breakdown of \cd{eq} in the case of characters
+allows the implementor enough design freedom to produce exceptionally
+efficient code on conventional architectures.  In this respect the
+treatment of characters exactly parallels that of numbers, as described
+in chapter~\ref{NUMBER}.
+\end{rationale}
+\afternoterule
+
+\begin{table}
+\caption{Standard Character Labels, Glyphs, and Descriptions}
+\label{STANDARD-CHAR-REPERTOIRE-TABLE}
+\tabcolsep0pt
+\def\arraystretch{1.1}
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}llllllll@{}}
+           &&&\cd{SM05}&\cd{{\Xatsign}}&{\rm commercial at}&\cd{SD13}&\cd{{\Xbq}}&{\rm grave accent} \\
+\cd{SP02}&\cd{!}&{\rm exclamation mark}&\cd{LA02}&\cd{A}&{\rm capital A}&\cd{LA01}&\cd{a}&{\rm small a} \\
+\cd{SP04}&\cd{"}&{\rm quotation mark}&\cd{LB02}&\cd{B}&{\rm capital B}&\cd{LB01}&\cd{b}&{\rm small b} \\
+\cd{SM01}&\cd{\#}&{\rm number sign}&\cd{LC02}&\cd{C}&{\rm capital C}&\cd{LC01}&\cd{c}&{\rm small c} \\
+\cd{SC03}&\cd{\$}&{\rm dollar sign}&\cd{LD02}&\cd{D}&{\rm capital D}&\cd{LD01}&\cd{d}&{\rm small d} \\
+\cd{SM02}&\cd{\%}&{\rm percent sign}&\cd{LE02}&\cd{E}&{\rm capital E}&\cd{LE01}&\cd{e}&{\rm small e} \\
+\cd{SM03}&\cd{\&}&{\rm ampersand}&\cd{LF02}&\cd{F}&{\rm capital F}&\cd{LF01}&\cd{f}&{\rm small f} \\
+\cd{SP05}&\cd{'}&{\rm apostrophe}&\cd{LG02}&\cd{G}&{\rm capital G}&\cd{LG01}&\cd{g}&{\rm small g} \\
+\cd{SP06}&\cd{(}&{\rm left parenthesis}&\cd{LH02}&\cd{H}&{\rm capital H}&\cd{LH01}&\cd{h}&{\rm small h} \\
+\cd{SP07}&\cd{)}&{\rm right parenthesis}&\cd{LI02}&\cd{I}&{\rm capital I}&\cd{LI01}&\cd{i}&{\rm small i} \\
+\cd{SM04}&\cd{*}&{\rm asterisk}&\cd{LJ02}&\cd{J}&{\rm capital J}&\cd{LJ01}&\cd{j}&{\rm small j} \\
+\cd{SA01}&\cd{+}&{\rm plus sign}&\cd{LK02}&\cd{K}&{\rm capital K}&\cd{LK01}&\cd{k}&{\rm small k} \\
+\cd{SP08}&\cd{,}&{\rm comma}&\cd{LL02}&\cd{L}&{\rm capital L}&\cd{LL01}&\cd{l}&{\rm small l} \\
+\cd{SP10}&\cd{-}&{\rm hyphen or minus sign}&\cd{LM02}&\cd{M}&{\rm capital M}&\cd{LM01}&\cd{m}&{\rm small m} \\
+\cd{SP11}&\cd{.}&{\rm period or full stop}&\cd{LN02}&\cd{N}&{\rm capital N}&\cd{LN01}&\cd{n}&{\rm small n} \\
+\cd{SP12}&\cd{/}&{\rm solidus}&\cd{LO02}&\cd{O}&{\rm capital O}&\cd{LO01}&\cd{o}&{\rm small o} \\
+\cd{ND10}&\cd{0}&{\rm digit 0}&\cd{LP02}&\cd{P}&{\rm capital P}&\cd{LP01}&\cd{p}&{\rm small p} \\
+\cd{ND01}&\cd{1}&{\rm digit 1}&\cd{LQ02}&\cd{Q}&{\rm capital Q}&\cd{LQ01}&\cd{q}&{\rm small q} \\
+\cd{ND02}&\cd{2}&{\rm digit 2}&\cd{LR02}&\cd{R}&{\rm capital R}&\cd{LR01}&\cd{r}&{\rm small r} \\
+\cd{ND03}&\cd{3}&{\rm digit 3}&\cd{LS02}&\cd{S}&{\rm capital S}&\cd{LS01}&\cd{s}&{\rm small s} \\
+\cd{ND04}&\cd{4}&{\rm digit 4}&\cd{LT02}&\cd{T}&{\rm capital T}&\cd{LT01}&\cd{t}&{\rm small t} \\
+\cd{ND05}&\cd{5}&{\rm digit 5}&\cd{LU02}&\cd{U}&{\rm capital U}&\cd{LU01}&\cd{u}&{\rm small u} \\
+\cd{ND06}&\cd{6}&{\rm digit 6}&\cd{LV02}&\cd{V}&{\rm capital V}&\cd{LV01}&\cd{v}&{\rm small v} \\
+\cd{ND07}&\cd{7}&{\rm digit 7}&\cd{LW02}&\cd{W}&{\rm capital W}&\cd{LW01}&\cd{w}&{\rm small w} \\
+\cd{ND08}&\cd{8}&{\rm digit 8}&\cd{LX02}&\cd{X}&{\rm capital X}&\cd{LX01}&\cd{x}&{\rm small x} \\
+\cd{ND09}&\cd{9}&{\rm digit 9}&\cd{LY02}&\cd{Y}&{\rm capital Y}&\cd{LY01}&\cd{y}&{\rm small y} \\
+\cd{SP13}&\cd{:}&{\rm colon}&\cd{LZ02}&\cd{Z}&{\rm capital Z}&\cd{LZ01}&\cd{z}&{\rm small z} \\
+\cd{SP14}&\cd{;}&{\rm semicolon}&\cd{SM06}&\cd{{\Xlbracket}}&{\rm left square bracket}&\cd{SM11}&\cd{{\Xlbrace}}&{\rm left curly bracket} \\
+\cd{SA03}&\cd{<}&{\rm less-than sign}&\cd{SM07}&\cd{{\Xbackslash}}&{\rm reverse solidus}&\cd{SM13}&\cd{|}&{\rm vertical bar} \\
+\cd{SA04}&\cd{=}&{\rm equals sign}&\cd{SM08}&\cd{{\Xrbracket}}&{\rm right square bracket}&\cd{SM14}&\cd{{\Xrbrace}}&{\rm right curly bracket} \\
+\cd{SA05}&\cd{>}&{\rm greater-than sign}&\cd{SD15}&\cd{{\Xcircumflex}}&{\rm circumflex accent}&\cd{SD19}&\cd{{\Xtilde}}&{\rm tilde} \\
+\cd{SP15}&\cd{?}&{\rm question mark}&\cd{SP09}&\cd{{\Xunderscore}}&{\rm low line}&
+\end{tabular*}
+\vfill
+\begin{small}
+\noindent
+The characters in this table plus the space and newline characters make up
+the standard Common Lisp character repertoire (type \cd{standard-char}).
+The character labels and character descriptions shown here are taken
+from ISO standard 6937/2 .  The first character of the label
+categorizes the character as Latin, Numeric, or Special.
+\end{small}
+\end{table}
+
+If two objects are to be compared for ``identity,'' but either might be
+a character, then the predicate \cd{eql} is probably appropriate.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to approve the following definitions and terminology for use in
+discussing character facilities in Common Lisp.
+
+A {\it character repertoire} defines a collection of characters
+independent of their specific rendered image or font.  (This corresponds
+to the mathematical notion of a set, but the term {\it character set}
+is avoided here because it has been used in the past to mean
+both what is here called a repertoire and what is here called a coded
+character set.)
+Character repertoires are specified independent of coding and their characters
+are identified only with a unique {\it character label},
+a graphic symbol, and a character description.
+As an example, table~\ref{STANDARD-CHAR-REPERTOIRE-TABLE}
+shows the character labels, graphic symbols, and character descriptions for
+all of the characters in the repertoire \cd{standard-char}
+except for \cd{\#{\Xbackslash}Space} and \cd{\#{\Xbackslash}Newline}.
+
+Every Common Lisp implementation must support the standard character repertoire
+as well as repertoires named \cd{base-character}, \cd{extended-character},
+and \cd{character}.  Other repertoires may be supported as well.
+X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL} to specify that names of
+repertoires may be used as type specifiers.  Such types must be subtypes of \cd{character};
+that is, in a given implementation
+the repertoire named \cd{character} must encompass all the character objects supported
+by that implementation.
+
+A {\it coded character set} is a character repertoire plus an {\it encoding}
+that provides a bijective mapping between each character in the set and a number
+(typically a non-negative integer)
+that serves as the character representation.
+There are numerous internationally standardized coded character sets.
+
+A character may be included in one or more character repertoires.
+Similarly, a character may be included in one or more coded character sets.
+
+To ensure that each character is uniquely defined, we may use a universal registry of
+characters that incorporates a collection of distinguished repertoires
+called {\it character scripts} that form an exhaustive partition of all characters.
+That is, each character is included in exactly one character script.
+(Draft ISO 10646 Coded Character Set Standard, if eventually approved as a standard,
+may become the practical realization of this universal registry.)
+
+(X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL} to specify that
+an implementation must document the character scripts it supports.
+For each script the documentation should discuss character labels,
+glyphs, and descriptions; any canonicalization processes performed
+by the reader that result in treating distinct characters as equivalent;
+any canonicalization performed by \cd{format} in processing directives;
+the behavior of \cd{char-upcase}, \cd{char-downcase}, and the predicates
+\cd{alpha-char-p}, \cd{upper-case-p}, \cd{lower-case-p}, \cd{both-case-p},
+\cd{graphic-char-p}, \cd{alphanumericp}, \cd{char-equal}, \cd{char-not-equal},
+\cd{char-lessp}, \cd{char-greaterp}, \cd{char-not-greaterp}, and \cd{char-not-lessp}
+for characters in the script; and behavior with respect to input and output,
+including coded character sets and external coding schemes.)
+
+In Common Lisp a {\it character} data object is identified by its {\it character code},
+a unique numerical code.  Each character code is composed from a character script
+and a character label.  The convention by which a character script and
+character label compose a character code is implementation dependent.
+[X3J13 did not approve all parts of the proposal from its Subcommittee
+on Characters.  As a result, some features that were approved appear to
+have no purpose.  X3J13 wished to support the standardization by ISO of character
+scripts and coded character sets but declined to design facilities for use in
+Common Lisp until there has been more progress by ISO in this area.
+The approval of the terminology for scripts and labels gives a hint
+to implementors of likely directions for Common Lisp in the future.]
+
+A character object that is classified as {\it graphic}, or displayable,
+has an associated {\it glpyh}.  The glyph is the visual representation
+of the character.  All other character data objects are classified as
+{\it non-graphic}.
+
+This terminology assigns names to Common Lisp concepts
+in a manner consistent with
+related concepts discussed in various ISO standards for coded
+character sets and provides a demarcation between standardization
+activities.  For example, facilities for manipulating characters,
+character scripts, and coded character sets are properly defined
+by a Common Lisp standard, but Common Lisp should not define
+standard character sets or standard character scripts.
+\end{newer}
+
+\section{Character Attributes}
+
+Every character has three attributes: code, bits, and font.
+The code attribute is intended to distinguish among the printed glyphs
+and formatting functions for characters.  The bits attribute allows extra
+flags to be associated with a character.  The font attribute permits
+a specification of the style of the glyphs (such as italics).
+
+\begin{new}
+The treatment of character attributes in Common Lisp has not been
+entirely successful.  The font attribute has not been widely used,
+for two reasons.  First, a single integer, limited in most
+implementations to 255 at most, is not an adequate, convenient, or portable
+representation for a font.  Second, in many applications where font
+information matters it is more convenient or more efficient to represent
+font information as shift codes that apply to many characters, rather than
+attaching font information separately to each character.
+
+As for the bits attribute, it was intended to support
+character input from extended keyboards having extra ``shift'' keys.
+This, in turn, was imagined to support the programming of a portable
+EMACS-like editor in Common Lisp.  (The EMACS command set
+is most convenient when the keyboard has separate ``control'' and
+``meta'' keys.)   The bits attribute has been used in the implementation
+of such editors and other interactive interfaces.  However, software
+that relies crucially on these extended characters will not be portable
+to Common Lisp implementations that do not support them.
+
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+and in June 1989 \issue{MORE-CHARACTER-PROPOSAL}
+to revise considerably the treatment
+of characters in the language.  The bits and font attributes are eliminated;
+instead a character may have {\it implementation-defined attributes}.
+The treatment of such attributes by existing character-handling functions
+is carefully constrained by certain rules.
+
+Implementations are free to
+continue to support bits and font attributes, but they are
+formally regarded as implementation-defined attributes.
+The rules are generally consistent with the previous
+treatment of the bits and font attributes.
+My guess is that
+the font attribute as currently defined will wither away,
+but the bits attribute as defined by the first edition will
+continue to be supported as a {\it de facto} standard extension,
+because it fills a useful small purpose.
+\end{new}
+
+\begin{defun}[Constant]
+char-code-limit
+
+The value of \cd{char-code-limit} is a non-negative
+integer that is the upper exclusive bound on values produced
+by the function \cd{char-code}, which returns the {\it code} component
+of a given character; that is, the values returned by \cd{char-code}
+are non-negative and strictly less than the value of
+\cd{char-code-limit}.
+
+\begin{new}
+Common Lisp does not at present explicitly guarantee that all integers between
+zero and the value of \cd{char-code-limit} are valid character codes, and so
+it is wise in any case for the programmer to assume that the space of
+assigned character codes may be sparse.
+\end{new}
+\end{defun}
+
+\begin{obsolete}
+\begin{defun}[Constant]
+char-font-limit
+
+The value of \cd{char-font-limit} is a non-negative
+integer that is the upper exclusive bound on values produced
+by the function \cd{char-font}, which returns the {\it font} component
+of a given character; that is, the values returned by \cd{char-font}
+are non-negative and strictly less than the value of
+\cd{char-font-limit}.
+
+\beforenoterule
+\begin{implementation}
+No Common Lisp implementation is required to support
+non-zero font attributes; if it does not, then \cd{char-font-limit}
+should be \cd{1}.
+\end{implementation}
+\afternoterule
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{char-font-limit}.
+
+Experience has shown that numeric codes are not an especially
+convenient, let alone portable, representation for font information.
+A system based on typeface names, type styles, and point sizes would be much better.
+(Macintosh software developers made the same discovery and have recently
+converted to a new font identification scheme.)
+\end{newer}
+
+\begin{obsolete}
+\begin{defun}[Constant]
+char-bits-limit
+
+The value of \cd{char-bits-limit} is a non-negative
+integer that is the upper exclusive bound on values produced
+by the function \cd{char-bits}, which returns the {\it bits} component
+of a given character; that is, the values returned by \cd{char-bits}
+are non-negative and strictly less than the value of
+\cd{char-bits-limit}.  Note that the value of \cd{char-bits-limit}
+will be a power of 2.
+
+\beforenoterule
+\begin{implementation}
+No Common Lisp implementation is required to support
+non-zero bits attributes; if it does not, then \cd{char-bits-limit}
+should be \cd{1}.
+\end{implementation}
+\afternoterule
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{char-bits-limit}.
+\end{newer}
+
+\section{Predicates on Characters}
+
+The predicate \cd{characterp} may be used to determine
+whether any Lisp object is a character object.
+
+\begin{defun}[Function]
+standard-char-p char
+
+The argument {\it char} must be a character object.
+\cd{standard-char-p} is true if the argument is a ``standard character,''
+that is, an object of type \cd{standard-char}.
+
+Note that any character with a non-zero bits or
+font attribute is non-standard.
+\end{defun}
+
+\begin{defun}[Function]
+graphic-char-p char
+
+The argument {\it char} must be a character object.
+\cd{graphic-char-p} is true if the argument is a ``graphic'' (printing)
+character, and false if it is a ``non-graphic'' (formatting or control)
+character.  Graphic characters have a standard textual representation
+as a single glyph, such as \cd{A} or \cd{*} or \cd{=}.
+By convention, the space character is considered to be graphic.
+Of the standard characters
+all but \cd{\#{\Xbackslash}Newline} are graphic.
+The semi-standard characters
+\cd{\#{\Xbackslash}Backspace}, \cd{\#{\Xbackslash}Tab}, \cd{\#{\Xbackslash}Rubout}, \cd{\#{\Xbackslash}Linefeed}, \cd{\#{\Xbackslash}Return},
+and \cd{\#{\Xbackslash}Page} are not graphic.
+
+Programs may assume that
+graphic characters of font 0 are all of the same width
+when printed, for example, for purposes of columnar
+formatting.  (This does not prohibit the use of a variable-pitch font
+as font 0, but merely implies that every implementation of Common Lisp
+must provide {\it some} mode of operation in which font 0 is
+a fixed-pitch font.)
+Portable programs should assume that, in general,
+non-graphic characters and characters of
+other fonts may be of varying widths.
+
+Any character with a non-zero bits attribute is non-graphic.
+\end{defun}
+
+\begin{obsolete}
+\begin{defun}[Function]
+string-char-p char
+
+The argument {\it char} must be a character object.
+\cd{string-char-p} is true if {\it char} can be stored into
+a string, and otherwise is false.
+Any character that satisfies \cd{standard-char-p}
+also satisfies \cd{string-char-p}; others may also.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{string-char-p}.
+\end{newer}
+
+\begin{defun}[Function]
+alpha-char-p char
+
+The argument {\it char} must be a character object.
+\cd{alpha-char-p} is true if the argument is an alphabetic
+character, and otherwise is false.
+
+If a character is alphabetic, then it is perforce graphic.
+Therefore any character with a non-zero bits attribute cannot be alphabetic.
+Whether a character is alphabetic may depend on its font number.
+
+Of the standard characters (as defined by \cd{standard-char-p}),
+the letters \cd{A} through \cd{Z} and \cd{a} through \cd{z} are alphabetic.
+\end{defun}
+
+\begin{defun}[Function]
+upper-case-p char \\
+lower-case-p char \\
+both-case-p char
+
+The argument {\it char} must be a character object.
+
+\cd{upper-case-p} is true if the argument is an uppercase
+character, and otherwise is false.
+
+\cd{lower-case-p} is true if the argument is a lowercase
+character, and otherwise is false.
+
+\cd{both-case-p} is true if the argument is an uppercase character and
+there is a corresponding lowercase character (which can be obtained
+using \cd{char-downcase}), or if the argument is a lowercase character and
+there is a corresponding uppercase character (which can be obtained
+using \cd{char-upcase}).
+
+If a character is either uppercase or lowercase, it is necessarily
+alphabetic (and therefore is graphic, and therefore has a zero bits
+attribute).  However, it is permissible in theory for an alphabetic
+character to be neither uppercase nor lowercase (in a non-Roman font,
+for example).
+
+Of the standard characters (as defined by \cd{standard-char-p}),
+the letters \cd{A} through \cd{Z} are uppercase and \cd{a}
+through \cd{z} are lowercase.
+\end{defun}
+
+\begin{defun}[Function]
+digit-char-p char &optional (radix 10)
+
+The argument {\it char} must be a character object,
+and {\it radix} must be a non-negative integer.
+If {\it char} is not a digit of the radix
+specified by {\it radix}, then \cd{digit-char-p} is
+false; otherwise it returns
+a non-negative integer that is the ``weight'' of {\it char} in that radix.
+
+Digits are necessarily graphic characters.
+
+Of the standard characters (as defined by \cd{standard-char-p}),
+the characters \cd{0} through \cd{9}, \cd{A} through \cd{Z},
+and \cd{a} through \cd{z}
+are digits.  The weights of \cd{0} through \cd{9} are the integers 0 through 9,
+and of \cd{A} through \cd{Z} (and also \cd{a} through \cd{z}) are 10 through 35.
+\cd{digit-char-p} returns the weight for one of these digits if and only if
+its weight is strictly less than {\it radix}.  Thus, for example,
+the digits for radix 16 are
+\begin{lisp}
+0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+\end{lisp}
+
+Here is an example of the use of \cd{digit-char-p}:
+\begin{lisp}
+(defun convert-string-to-integer (str \&optional (radix 10)) \\
+~~"Given a digit string and optional radix, return an integer." \\
+~~(do ((j 0 (+ j 1)) \\
+~~~~~~~(n 0 (+ (* n radix) \\
+~~~~~~~~~~~~~~~(or (digit-char-p (char str j) radix) \\
+~~~~~~~~~~~~~~~~~~~(error "Bad radix-{\Xtilde}D digit: {\Xtilde}C" \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~radix \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~(char str j)))))) \\
+~~~~~~((= j (length str)) n)))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+alphanumericp char
+
+The argument {\it char} must be a character object.
+\cd{alphanumericp} is true if {\it char} is either alphabetic
+or numeric.  By definition,
+\begin{lisp}
+(alphanumericp x) \\
+~~~\EQ\ (or (alpha-char-p x) (not (null (digit-char-p x))))
+\end{lisp}
+Alphanumeric characters are therefore necessarily graphic
+(as defined by the predicate \cd{graphic-char-p}).
+
+Of the standard characters (as defined by \cd{standard-char-p}),
+the characters \cd{0} through \cd{9}, \cd{A} through \cd{Z},
+and \cd{a} through \cd{z} are alphanumeric.
+\end{defun}
+
+\begin{defun}[Function]
+char= character &rest more-characters \\
+char/= character &rest more-characters \\
+char< character &rest more-characters \\
+char> character &rest more-characters \\
+char<= character &rest more-characters \\
+char>= character &rest more-characters
+
+The arguments must all be character objects.
+These functions compare the objects using the implementation-dependent
+total ordering on characters, in a manner analogous to numeric
+comparisons by \cd{=} and related functions.
+
+The total ordering on characters is guaranteed to have the following
+properties:
+\begin{itemize}
+\item
+The standard alphanumeric characters obey the following partial ordering:
+\begin{lisp}
+A<B<C<D<E<F<G<H<I<J<K<L<M<N<O\hbox{<P<Q<R<S<T<U<V<W<X<Y<Z} \\
+\hbox to 0pt{a<b<c<d<e<f<g<h<i<j<k<l<m<n<o<\hss}~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~p<q<r<s<t<u<v<w<x<y<z \\
+0<1<2<3<4<5<6<7<8<9 \\
+{\it either} 9<A {\it or} Z<0 \\
+{\it either} 9<a {\it or} z<0
+\end{lisp}
+This implies that alphabetic ordering holds within each case (upper and
+lower), and that the digits as a group
+are not interleaved with letters.  However, the ordering
+or possible interleaving of
+uppercase letters and lowercase letters is unspecified.
+(Note that both the ASCII and the EBCDIC character sets
+conform to this specification.  As it happens, neither ordering
+interleaves uppercase and lowercase letters:
+in the ASCII ordering, \cd{9<A} and \cd{Z<a},
+whereas in the EBCDIC ordering \cd{z<A} and \cd{Z<0}.)
+\end{itemize}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+If two characters have the same bits and font attributes,
+then their ordering by \cd{char<} is consistent with the numerical
+ordering by the predicate \cd{<} on their code attributes.
+
+\item
+If two characters differ in any attribute (code, bits, or font), then they
+are different.
+\end{itemize}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to replace the notion of bits and font attributes with
+that of implementation-defined attributes.
+
+\begin{itemize}
+\item
+If two characters have identical implementation-defined attributes,
+then their ordering by \cd{char<} is consistent with the numerical
+ordering by the predicate \cd{<} on their codes, and similarly
+for \cd{char>}, \cd{char<=}, and \cd{char>=}.
+
+\item
+If two characters differ in any implementation-defined
+attribute, then they are not \cd{char=}.
+\end{itemize}
+\end{newer}
+
+The total ordering is not necessarily the same as the total
+ordering on the integers produced by applying \cd{char-int} to the
+characters (although it is a reasonable implementation technique to
+use that ordering).
+
+While alphabetic characters of a given case must be
+properly ordered, they need not be contiguous; thus \cd{(char<= \#{\Xbackslash}a x
+\#{\Xbackslash}z)} is {\it not} a valid way of determining whether or not \cd{x} is a
+lowercase letter.  That is why a separate
+\cd{lower-case-p} predicate is provided.
+
+\begin{lisp}
+(char= \#{\Xbackslash}d \#{\Xbackslash}d) {\rm is true.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}d) {\rm is false.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}x) {\rm is false.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}x) {\rm is true.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}D) {\rm is false.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}D) {\rm is true.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d) {\rm is true.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d) {\rm is false.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}x \#{\Xbackslash}d) {\rm is false.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}x \#{\Xbackslash}d) {\rm is false.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}y \#{\Xbackslash}x \#{\Xbackslash}c) {\rm is false.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}y \#{\Xbackslash}x \#{\Xbackslash}c) {\rm is true.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}d) {\rm is false.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}d) {\rm is false.} \\
+(char< \#{\Xbackslash}d \#{\Xbackslash}x) {\rm is true.} \\
+(char<= \#{\Xbackslash}d \#{\Xbackslash}x) {\rm is true.} \\
+(char< \#{\Xbackslash}d \#{\Xbackslash}d) {\rm is false.} \\
+(char<= \#{\Xbackslash}d \#{\Xbackslash}d) {\rm is true.} \\
+(char< \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}y \#{\Xbackslash}z) {\rm is true.} \\
+(char<= \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}y \#{\Xbackslash}z) {\rm is true.} \\
+(char< \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}e \#{\Xbackslash}y) {\rm is false.} \\
+(char<= \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}e \#{\Xbackslash}y) {\rm is true.} \\
+(char> \#{\Xbackslash}e \#{\Xbackslash}d) {\rm is true.} \\
+(char>= \#{\Xbackslash}e \#{\Xbackslash}d) {\rm is true.} \\
+(char> \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}b \#{\Xbackslash}a) {\rm is true.} \\
+(char>= \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}b \#{\Xbackslash}a) {\rm is true.} \\
+(char> \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}a) {\rm is false.} \\
+(char>= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}a) {\rm is true.} \\
+(char> \#{\Xbackslash}e \#{\Xbackslash}d \#{\Xbackslash}b \#{\Xbackslash}c \#{\Xbackslash}a) {\rm is false.} \\
+(char>= \#{\Xbackslash}e \#{\Xbackslash}d \#{\Xbackslash}b \#{\Xbackslash}c \#{\Xbackslash}a) {\rm is false.} \\
+(char> \#{\Xbackslash}z \#{\Xbackslash}A) {\rm may be true or false.} \\
+(char> \#{\Xbackslash}Z \#{\Xbackslash}a) {\rm may be true or false.}
+\end{lisp}
+
+There is no requirement that \cd{(eq c1 c2)} be true merely because
+\cd{(char= c1 c2)} is true.  While \cd{eq} may distinguish two character
+objects that \cd{char=} does not, it is distinguishing them not
+as {\it characters}, but in some sense on the basis of a lower-level
+implementation characteristic.
+(Of course, if \cd{(eq c1 c2)} is true,
+then one may expect \cd{(char= c1 c2)} to be true.)
+However, \cd{eql} and \cd{equal}
+compare character objects in the same
+way that \cd{char=} does.
+\end{defun}
+
+\begin{defun}[Function]
+char-equal character &rest more-characters \\
+char-not-equal character &rest more-characters \\
+char-lessp character &rest more-characters \\
+char-greaterp character &rest more-characters \\
+char-not-greaterp character &rest more-characters \\
+char-not-lessp character &rest more-characters
+
+\begin{obsolete}
+The predicate \cd{char-equal} is like \cd{char=}, and similarly
+for the others, except according to a different ordering such that
+differences of bits attributes and case are ignored,
+and font information is taken into account in an implementation-dependent
+manner.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to replace the notion of bits and font attributes with
+that of implementation-defined attributes.  The effect, if any,
+of each such attribute on the behavior of
+\cd{char-equal}, \cd{char-not-equal}, \cd{char-lessp}, \cd{char-greaterp},
+\cd{char-not-greaterp}, and \cd{char-not-lessp} must be specified
+as part of the definition of that attribute.
+\end{newer}
+
+
+For the standard characters, the ordering is such that
+\cd{A=a}, \cd{B=b}, and so on, up to \cd{Z=z}, and furthermore either
+\cd{9<A} or \cd{Z<0}.
+For example:
+\begin{lisp}
+(char-equal \#{\Xbackslash}A \#{\Xbackslash}a) {\rm is true.} \\
+(char= \#{\Xbackslash}A \#{\Xbackslash}a) {\rm is false.} \\
+(char-equal \#{\Xbackslash}A \#{\Xbackslash}Control-A) {\rm is true.}
+\end{lisp}
+\begin{obsolete}
+The ordering may depend on the font information. For example, an implementation
+might decree that \cd{(char-equal \#{\Xbackslash}p \#{\Xbackslash}{\it p})} be true, but that
+\cd{(char-equal \#{\Xbackslash}p \#{\Xbackslash}}$\pi$\cd{)} be false
+(where \cd{\#{\Xbackslash}}$\pi$ is a
+lowercase \cd{p} in some font).  Assuming italics to be in font 1
+and the Greek alphabet in font 2, this is the same as saying that
+\cd{(char-equal \#0{\Xbackslash}p \#1{\Xbackslash}p)} may be true and at the same time
+\cd{(char-equal \#0{\Xbackslash}p \#2{\Xbackslash}p)} may be false.
+\end{obsolete}
+\end{defun}
+
+\section{Character Construction and Selection}
+
+These functions may be used to extract attributes of a character
+and to construct new characters.
+
+\begin{defun}[Function]
+char-code char
+
+The argument {\it char} must be a character object.
+\cd{char-code} returns the code attribute of the character object;
+this will be a non-negative integer less than the (normal) value of
+the variable \cd{char-code-limit}.
+
+\begin{new}
+This is usually what you need in order to treat a character as an
+index into a vector.  The length of the vector should then be
+equal to \cd{char-code-limit}.  Be careful how you initialize this
+vector; remember that you cannot necessarily
+expect all non-negative integers less than
+\cd{char-code-limit} to be valid character codes.
+\end{new}
+\end{defun}
+
+
+\begin{obsolete}
+\begin{defun}[Function]
+char-bits char
+
+The argument {\it char} must be a character object.
+\cd{char-bits} returns the bits attribute of the character object;
+this will be a non-negative integer less than the (normal) value of
+the variable \cd{char-bits-limit}.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{char-bits}.
+\end{newer}
+
+
+\begin{obsolete}
+\begin{defun}[Function]
+char-font char
+
+The argument {\it char} must be a character object.
+\cd{char-font} returns the font attribute of the character object;
+this will be a non-negative integer less than the (normal) value of
+the variable \cd{char-font-limit}.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{char-font}.
+\end{newer}
+\medskip
+\begin{new}
+The references to the ``normal'' values of the ``variables''
+\cd{char-code-limit},
+\cd{char-bits-limit}, and \cd{char-font-limit} in the descriptions
+of \cd{char-code}, \cd{char-bits}, and \cd{char-font} were an oversight on
+my part.  Early in the design of Common Lisp they were indeed variables,
+but they are at present defined to be constants, and their values therefore
+are always normal and should not change.  But this point is now moot.
+\end{new}
+
+\begin{defun}[Function]
+code-char code &optional (bits 0) (font 0)
+
+\begin{obsolete}
+All three arguments must be non-negative integers.
+If it is possible in the implementation to construct a character
+object whose code attribute is {\it code}, whose bits attribute is {\it bits},
+and whose font attribute is {\it font}, then such an object is returned;
+otherwise {\false} is returned.
+
+For any integers {\it c}, {\it b}, and {\it f}, if \cd{(code-char {\it c} {\it b} {\it f})}
+is not {\false} then
+\begin{lisp}
+(char-code (code-char {\it c} {\it b} {\it f})) \EV\ {\it c} \\
+(char-bits (code-char {\it c} {\it b} {\it f})) \EV\ {\it b} \\
+(char-font (code-char {\it c} {\it b} {\it f})) \EV\ {\it f}
+\end{lisp}
+If the font and bits attributes of a character object \cd{c} are zero,
+then it is the case that
+\begin{lisp}
+(char= (code-char (char-code c)) c)
+\end{lisp}
+is true.
+\end{obsolete}
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the {\it bits} and {\it font} arguments from
+the specification of \cd{code-char}.
+\end{newer}
+\end{defun}
+
+
+\begin{obsolete}
+\begin{defun}[Function]
+make-char char &optional (bits 0) (font 0)
+
+The argument {\it char} must be a character,
+and {\it bits} and {\it font} must be non-negative integers.
+If it is possible in the implementation to construct a character
+object whose code attribute is the same as
+the code attribute of {\it char},
+whose bits attribute is {\it bits},
+and whose font attribute is {\it font}, then such an object is returned;
+otherwise {\false} is returned.
+
+If {\it bits} and {\it font} are zero, then \cd{make-char} cannot fail.
+This implies that for every character object one can ``turn off''
+its bits and font attributes.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{make-char}.
+\end{newer}
+
+\section{Character Conversions}
+
+
+These functions perform various transformations on characters,
+including case conversions.
+
+\begin{defun}[Function]
+character object
+
+The function \cd{character} coerces its argument to be a character
+if possible; see \cd{coerce}.
+\begin{lisp}
+(character x) \EQ\ (coerce x 'character)
+\end{lisp}
+\end{defun}
+
+
+\begin{defun}[Function]
+char-upcase char \\
+char-downcase char
+
+The argument {\it char} must be a character object.
+\cd{char-upcase} attempts to convert its argument to an uppercase
+equivalent; \cd{char-downcase} attempts to convert its argument
+to a lowercase equivalent.
+
+\begin{obsolete}
+\cd{char-upcase} returns a character object with the same font
+and bits attributes as {\it char}, but with possibly a different code
+attribute.  If the code is different from {\it char}'s, then the predicate
+\cd{lower-case-p} is true of {\it char}, and \cd{upper-case-p}
+is true of the result character.  Moreover, if \cd{(char= (char-upcase x) x)}
+is {\it not} true, then it is true that
+\begin{lisp}
+(char= (char-downcase (char-upcase x)) x)
+\end{lisp}
+Similarly,
+\cd{char-downcase} returns a character object with the same font
+and bits attributes as {\it char}, but with possibly a different code
+attribute.  If the code is different from {\it char}'s, then the predicate
+\cd{upper-case-p} is true of {\it char}, and \cd{lower-case-p}
+is true of the result character.  Moreover, if \cd{(char= (char-downcase x) x)}
+is {\it not} true, then it is true that
+\begin{lisp}
+(char= (char-upcase (char-downcase x)) x)
+\end{lisp}
+Note that the action of \cd{char-upcase} and \cd{char-downcase} may
+depend on the bits and font attributes of the character.  In particular,
+they have no effect on a character with a non-zero bits attribute,
+because such characters are by definition not alphabetic.
+See \cd{alpha-char-p}.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to replace the notion of bits and font attributes with
+that of implementation-defined attributes.  The effect of
+\cd{char-upcase} and \cd{char-downcase} is to preserve
+implementation-defined attributes.
+\end{newer}
+
+\end{defun}
+
+\begin{defun}[Function]
+digit-char weight &optional (radix 10) (font 0)
+
+All arguments must be integers.  \cd{digit-char}
+determines whether or not it is possible to construct
+a character object
+whose font attribute is {\it font}, and whose {\it code} is such that the
+result character has the weight {\it weight} when considered as
+a digit of the radix {\it radix} (see the predicate \cd{digit-char-p}).
+It returns such a character if that is possible, and otherwise returns {\false}.
+
+\cd{digit-char} cannot return {\false} if {\it font} is zero,
+{\it radix} is between 2 and 36 inclusive, and {\it weight} is non-negative
+and less than {\it radix}.
+
+If more than one character object can encode
+such a weight in the given radix, one will be chosen consistently
+by any given implementation; moreover, among the standard characters,
+uppercase letters are preferred to lowercase letters.
+For example:
+\begin{lisp}
+(digit-char 7) \EV\ \#{\Xbackslash}7 \\
+(digit-char 12) \EV\ {\false} \\
+(digit-char 12 16) \EV\ \#{\Xbackslash}C~~~~~;{\rm not} \#{\Xbackslash}c \\
+(digit-char 6 2) \EV\ {\false} \\
+(digit-char 1 2) \EV\ \#{\Xbackslash}1
+\end{lisp}
+Note that no argument is provided for specifying the {\it bits} component
+of the returned character, because a digit cannot have a non-zero
+{\it bits} component.  The reasoning is that every digit is graphic
+(see \cd{digit-char-p}) and no graphic character has a non-zero
+{\it bits} component (see \cd{graphic-char-p}).
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the {\it font} argument from the specification of \cd{digit-char}.
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+char-int char
+
+The argument {\it char} must be a character object.
+\cd{char-int} returns a non-negative integer encoding the character object.
+
+If the font and bits attributes of {\it char} are zero, then
+\cd{char-int} returns the same integer \cd{char-code} would.
+Also,
+\begin{lisp}
+(char= c1 c2) \EQ\ (= (char-int c1) (char-int c2))
+\end{lisp}
+for characters \cd{c1} and \cd{c2}.
+
+This function is provided primarily for the purpose of hashing characters.
+\end{defun}
+
+
+\begin{obsolete}
+\begin{defun}[Function]
+int-char integer
+
+The argument must be a non-negative integer.
+\cd{int-char} returns a character object \cd{c} such that
+\cd{(char-int c)} is equal to {\it integer}, if possible; otherwise
+\cd{int-char} returns false.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{int-char}.
+\end{newer}
+
+\begin{defun}[Function]
+char-name char
+
+The argument {\it char} must be a character object.
+If the character has a name, then that name (a string) is returned;
+otherwise {\false} is returned.  All characters that have
+zero font and bits attributes and that are non-graphic
+(do not satisfy the predicate \cd{graphic-char-p}) have names.
+Graphic characters may or may not have names.
+
+The standard newline and space characters have the respective
+names \cd{Newline} and \cd{Space}.
+The semi-standard characters have the names
+\cd{Tab}, \cd{Page}, \cd{Rubout}, \cd{Linefeed}, \cd{Return}, and \cd{Backspace}.
+
+
+Characters that have names can be notated as \cd{\#{\Xbackslash}} followed
+by the name.  (See section~\ref{SHARP-SIGN-MACRO-CHARACTER-SECTION}.)
+Although the name may be written in any case,
+it is stylish to capitalize it thus: \cd{\#{\Xbackslash}Space}.
+
+\cd{char-name} will only locate ``simple'' character names;
+it will not construct names such as \cd{Control-Space} on the
+basis of the character's bits attribute.
+
+\begin{new}
+The easiest way to get a name that includes the bits attribute of
+a character \cd{c} is \cd{(format nil "{\Xtilde}:C" c)}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+name-char name
+
+The argument \cd{name} must be an object coerceable to a string
+as if by the function \cd{string}.
+If the name is the same as the name of a character object
+(as determined by \cd{string-equal}), that object
+is returned; otherwise {\false} is returned.
+\end{defun}
+
+\begin{obsolete}
+
+\section{Character Control-Bit Functions}
+
+Common Lisp provides explicit names for four bits of the bits attribute:
+{\it Control}, {\it Meta}, {\it Hyper}, and {\it Super}.  The following
+definitions are provided for manipulating these.
+Each Common Lisp implementation provides these functions for compatibility,
+even if it does not support any or all of the bits named below.
+\end{obsolete}
+
+
+\begin{obsolete}
+\begin{defun}[Constant]
+char-control-bit \\
+char-meta-bit \\
+char-super-bit \\
+char-hyper-bit
+
+The values of these named constants are the ``weights'' (as integers) for
+the four named control bits.  The weight of the control bit is \cd{1};
+of the meta bit, \cd{2}; of the super bit, \cd{4}; and of the hyper bit, \cd{8}.
+
+If a given implementation of Common Lisp does not support a particular bit,
+then the corresponding constant is zero instead.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate all four of the constants
+\cd{char-control-bit}, \cd{char-meta-bit}, \cd{char-super-bit},
+and \cd{char-hyper-bit}.
+\end{newer}
+\medskip
+\begin{new}
+When Common Lisp was first designed, keyboards with ``extra bits'' were
+relatively rare.  The bits attribute was originally designed to support input
+from keyboards in use at Stanford and M.I.T.~circa 1981.
+
+Since that time such extended keyboards have come into wider use.
+Notable here are the keyboards associated with certain
+personal computers and workstations.  For example, in some specific applications
+the {\it command} and {\it option} keys of Apple Macintosh keyboards have
+had the connotations of {\it control} and {\it meta}.  Macintosh II
+extended keyboards also have keys marked {\it control} whose use
+is analogous to that of {\it hyper} on the old M.I.T.~keyboards.
+IBM PC personal computer keyboards have {\it alt} keys that function
+much like {\it meta} keys; similarly, keyboards on Sun workstations
+have keys very much like {\it meta} keys but labelled {\it left} and {\it right}.
+\end{new}
+
+\begin{obsolete}
+\begin{defun}[Function]
+char-bit char name
+
+\cd{char-bit} takes a character object {\it char} and the name of a bit,
+and returns non-{\false} if the bit of that name is set in {\it char},
+or {\false} if the bit is not set in {\it char}.
+For example:
+\begin{lisp}
+(char-bit \#{\Xbackslash}Control-X \cd{:control}) \EV\ {\it true}
+\end{lisp}
+Valid values for {\it name}
+are implementation-dependent, but typically are \cd{:control},
+\cd{:meta}, \cd{:hyper}, and \cd{:super}.
+It is an error to give \cd{char-bit} the name of a bit not supported
+by the implementation.
+
+If the argument {\it char} is specified by a form that is a {\it place} form
+acceptable to \cd{setf},
+then \cd{setf} may be used with \cd{char-bit}
+to modify a bit of the character stored in that
+{\it place}.
+The effect is to perform a \cd{set-char-bit} operation
+and then store the result back into the {\it place}.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{char-bit}.
+\end{newer}
+
+
+\begin{obsolete}
+\begin{defun}[Function]
+set-char-bit char name newvalue
+
+\cd{char-bit} takes a character object {\it char}, the name of a bit,
+and a flag.  A character is returned that is just like {\it char}
+except that the named bit is set or reset according to whether
+{\it newvalue} is non-{\false} or {\false}.
+Valid values for {\it name}
+are implementation-dependent, but typically are \cd{:control},
+\cd{:meta}, \cd{:hyper}, and \cd{:super}.
+For example:
+\begin{lisp}
+(set-char-bit \#{\Xbackslash}X \cd{:control} t) \EV\ \#{\Xbackslash}Control-X \\
+(set-char-bit \#{\Xbackslash}Control-X \cd{:control} t) \EV\ \#{\Xbackslash}Control-X \\
+(set-char-bit \#{\Xbackslash}Control-X \cd{:control} {\false}) \EV\ \#{\Xbackslash}X
+\end{lisp}
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{set-char-bit}.
+\end{newer}

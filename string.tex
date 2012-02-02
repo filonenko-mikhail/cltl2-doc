@@ -1,0 +1,474 @@
+%Part{String, Root = "CLM.MSS"}
+%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+
+\chapter{Strings}
+\def\pagestatus{FINAL PROOF}
+
+A string is a specialized vector (one-dimensional array)
+whose elements are characters.
+
+\begin{obsolete}
+Specifically, the type \cd{string}
+is identical to the type \cd{(vector string-char)}, which in turn
+is the same as \cd{(array string-char (*))}.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the type \cd{string-char} and to redefine the type
+\cd{string} to be the union of one or more specialized vector
+types, the types of whose elements are subtypes of the type \cd{character}.
+\end{newer}
+
+Any string-specific function defined in this chapter
+whose name begins with the prefix \cd{string}
+will accept a symbol instead of a string
+as an argument {\it provided} that the operation never modifies that argument;
+the print name of the symbol is used.
+\indexterm{print name}
+In this respect the string-specific sequence operations are not
+simply specializations of generic versions; the generic sequence
+operations described in chapter \ref{KSEQUE} never accept symbols as sequences.
+This slight inelegance is permitted in Common Lisp in the name of pragmatic utility.
+One may get the effect of having a generic sequence function
+operate on either symbols or strings by applying the coercion
+function \cd{string} to any argument whose data type is in doubt.
+\begin{new}
+Note that this remark, predating the design of the Common Lisp Object System,
+uses the term ``generic'' in a generic sense and not necessarily
+in the technical sense used by CLOS
+(see chapter \ref{DTYPES}).
+\end{new}
+
+Also, there is a slight non-parallelism in the names of string functions.
+Where the suffixes \cd{equalp} and \cd{eql} would be more appropriate,
+for historical compatibility the suffixes \cd{equal} and \cd{=} are used instead
+to indicate case-insensitive and case-sensitive character comparison,
+respectively.
+
+Any Lisp object may be tested for being a string by
+the predicate \cd{stringp}.
+
+Note that strings, like all vectors, may have fill pointers
+(though such strings are not necessarily {\it simple}).
+String operations generally operate only on the active portion of the string
+(below the fill pointer).  See \cd{fill-pointer} and related
+functions.
+
+\section{String Access}
+
+The following functions access a single character element of a string.
+
+\begin{defun}[Function]
+char string index \\
+schar simple-string index
+
+The given {\it index} must be a non-negative integer less than
+the length of {\it string}, which must be a
+string.  The character at position {\it index}
+of the string is returned as a character object.
+\begin{obsolete}
+(This character will necessarily satisfy the predicate \cd{string-char-p}.)
+\end{obsolete}
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate \cd{string-char-p}.
+\end{newer}
+As with all sequences in Common Lisp, indexing is zero-origin.
+For example:
+\begin{lisp}
+(char "Floob-Boober-Bab-Boober-Bubs" 0) \EV\ \#{\Xbackslash}F \\
+(char "Floob-Boober-Bab-Boober-Bubs" 1) \EV\ \#{\Xbackslash}l
+\end{lisp}
+See \cd{aref} and \cd{elt}.  In effect,
+\begin{lisp}
+(char s j) \EQ\ (aref (the string s) j)
+\end{lisp}
+\cd{setf} may be used with \cd{char} to destructively replace
+a character within a string.
+
+For \cd{char}, the string may be any string;
+for \cd{schar}, it must be a simple string.
+In some implementations of Common Lisp, the function \cd{schar} may
+be faster than \cd{char} when it is applicable.
+\end{defun}
+
+\section{String Comparison}
+
+The naming conventions for these functions and for their keyword
+arguments generally follow the conventions for the generic sequence
+functions (see chapter \ref{KSEQUE}).
+\begin{new}
+Note that this remark, predating the design of the Common Lisp Object System,
+uses the term ``generic'' in a generic sense and not necessarily
+in the technical sense used by CLOS
+(see chapter \ref{DTYPES}).
+\end{new}
+
+\begin{defun}[Function]
+string= string1 string2 &key :start1 :end1 :start2~:end2
+
+\cd{string=} compares two strings and is true if
+they are the same (corresponding characters are identical)
+but is false if they are not.
+The function \cd{equal} calls \cd{string=} if
+applied to two strings.
+
+The keyword arguments \cd{:start1} and \cd{:start2} are the places
+in the strings to start the comparison.
+The arguments \cd{:end1} and \cd{:end2} are the
+places in the strings to stop comparing; comparison stops just
+{\it before} the position specified by a limit.
+The ``start'' arguments default to zero (beginning of string),
+and the ``end'' arguments (if either omitted or {\false})
+default to the lengths of the strings (end of string),
+so that by default the entirety of each string is examined.
+These arguments are provided so that substrings can be compared
+efficiently.
+
+\cd{string=} is necessarily false if the (sub)strings
+being compared are of unequal length; that is, if
+\begin{lisp}
+(not (= (- end1 start1) (- end2 start2)))
+\end{lisp}
+is true, then \cd{string=} is false.
+
+\begin{lisp}
+(string= "foo" "foo") {\rm is true} \\
+(string= "foo" "Foo") {\rm is false} \\
+(string= "foo" "bar") {\rm is false} \\
+(string= "together" "frog" :start1 1 :end1 3 :start2 2) \\
+~~~{\rm is true}
+\end{lisp}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{STRING-COERCION}
+to clarify string coercion (see \cd{string}).
+\end{newer}
+
+\beforenoterule
+\begin{incompatibility}
+\cd{string=} is called \cd{strequal} in Interlisp.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+string-equal string1 string2 &key :start1 :end1 :start2~:end2
+
+\cd{string-equal} is just like \cd{string=} except that differences
+in case are ignored; two characters are considered to be the same
+if \cd{char-equal} is true of them.
+For example:
+\begin{lisp}
+(string-equal "foo" "Foo") {\rm is true}
+\end{lisp}
+\begin{newer}
+X3J13 voted in June 1989 \issue{STRING-COERCION}
+to clarify string coercion (see \cd{string}).
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+string< string1 string2 &key :start1 :end1 :start2~:end2 \\
+string> string1 string2 &key :start1 :end1 :start2~:end2 \\
+string<= string1 string2 &key :start1 :end1 :start2~:end2 \\
+string>= string1 string2 &key :start1 :end1 :start2~:end2 \\
+string/= string1 string2 &key :start1 :end1 :start2~:end2
+
+These functions compare the two string arguments lexicographically,
+and the result is {\false} unless {\it string1} is respectively
+less than, greater than,
+less than or equal to, greater than or equal to, or not equal to {\it string2}.
+If the condition is satisfied, however, then
+the result is the index within the strings of the first character
+position at which the strings fail to match; put another way,
+the result is the length of the longest common prefix of the strings.
+
+A string {\it a} is less than a string {\it b} if
+in the first position in which they differ the character of {\it a}
+is less than the corresponding character of {\it b} according to
+the function \cd{char<}, or
+if string {\it a} is a proper prefix of string {\it b}
+(of shorter length and matching in all the characters of {\it a}).
+
+The keyword arguments \cd{:start1} and \cd{:start2} are the places
+in the strings to start the comparison.
+The keyword arguments \cd{:end1} and \cd{:end2}
+are the places in the strings to stop comparing; comparison stops just
+{\it before} the position specified by a limit.
+The ``start'' arguments default to zero (beginning of string),
+and the ``end'' arguments (if either omitted or {\false})
+default to the lengths of the strings (end of string),
+so that by default the entirety of each string is examined.
+These arguments are provided so that substrings can be compared
+efficiently.  The index returned in case of a mismatch
+is an index into {\it string1}.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{STRING-COERCION}
+to clarify string coercion (see \cd{string}).
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+string-lessp string1 string2 &key :start1 :end1 :start2~:end2 \\
+string-greaterp string1 string2 &key :start1 :end1 :start2~:end2 \\
+string-not-greaterp string1 string2 &key :start1 :end1 :start2~:end2 \\
+string-not-lessp string1 string2 &key :start1 :end1 :start2~:end2 \\
+string-not-equal string1 string2 &key :start1 :end1 :start2~:end2
+
+These are exactly like \cd{string<}, \cd{string>}, \cd{string<=},
+\cd{string>=}, and \cd{string/=}, respectively, except that distinctions between
+uppercase and lowercase letters are ignored.  It is as if
+\cd{char-lessp} were used instead of \cd{char<}
+for comparing characters.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{STRING-COERCION}
+to clarify string coercion (see \cd{string}).
+\end{newer}
+\end{defun}
+
+\section{String Construction and Manipulation}
+
+Most of the interesting operations on strings may be performed
+with the generic sequence functions described in chapter \ref{KSEQUE}.
+The following functions perform additional operations that are specific
+to strings.
+\begin{new}
+Note that this remark, predating the design of the Common Lisp Object System,
+uses the term ``generic'' in a generic sense and not necessarily
+in the technical sense used by CLOS
+(see chapter \ref{DTYPES}).
+\end{new}
+
+\begin{obsolete}
+\begin{defun}[Function]
+make-string size &key :initial-element
+
+This returns a string (in fact a simple string)
+of length {\it size}, each of whose characters
+has been initialized to the \cd{:initial-element} argument.
+If an \cd{:initial-element} argument is not specified, then the string will
+be initialized in an implementation-dependent way.
+
+\beforenoterule
+\begin{implementation}
+It may be convenient to initialize the string
+to null characters, or to spaces, or to garbage (``whatever was there'').
+\end{implementation}
+\afternoterule
+
+A string is really just a one-dimensional array of ``string
+characters'' (that is, those characters that are members of type
+\cd{string-char}).  More complex character arrays may be constructed using the
+function \cd{make-array}.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the type \cd{string-char} and to add a keyword
+argument \cd{:element-type} to \cd{make-string}.  The new function
+description is as follows.
+
+\begin{defun}[Function]
+make-string size &key :initial-element :element-type
+
+This returns a simple string
+of length {\it size}, each of whose characters
+has been initialized to the \cd{:initial-element} argument.
+If an \cd{:initial-element} argument is not specified, then the string will
+be initialized in an implementation-dependent way.
+
+The \cd{:element-type} argument names the type of the elements
+of the string; a string is constructed of the most specialized type
+that can accommodate elements of the given type.  If \cd{:element-type}
+is omitted, the type \cd{character} is the default.
+
+X3J13 voted in January 1989
+\issue{ARGUMENTS-UNDERSPECIFIED}
+to clarify that the {\it size} argument
+must be a non-negative integer less than the value of
+\cd{array-dimension-limit}.
+\end{defun}
+\end{newer}
+
+
+
+\begin{defun}[Function]
+string-trim character-bag string \\
+string-left-trim character-bag string \\
+string-right-trim character-bag string
+
+\cd{string-trim} returns a substring of {\it string}, with all characters in
+{\it character-bag} stripped off the beginning and end.
+The function \cd{string-left-trim} is similar but strips characters
+off only the beginning; \cd{string-right-trim} strips off only the end.
+The argument {\it character-bag} may be any sequence containing
+characters.
+For example:
+\begin{lisp}
+(string-trim '(\#{\Xbackslash}Space \#{\Xbackslash}Tab \#{\Xbackslash}Newline) " garbanzo beans \\
+~~~~~~~~") \EV\ "garbanzo beans" \\
+(string-trim " (*)" " ( *three (silly) words* ) ") \\
+~~~\EV\ "three (silly) words" \\
+(string-left-trim " (*)" " ( *three (silly) words* ) ") \\
+~~~\EV\ "three (silly) words* ) " \\
+(string-right-trim " (*)" " ( *three (silly) words* ) ") \\
+~~~\EV\ " ( *three (silly) words"
+\end{lisp}
+If no characters need to be trimmed from the {\it string},
+then either the argument {\it string} itself or a copy of it may
+be returned, at the discretion of the implementation.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{STRING-COERCION}
+to clarify string coercion (see \cd{string}).
+\end{newer}
+\end{defun}
+
+\begin{defun}[Function]
+string-upcase string &key :start :end \\
+string-downcase string &key :start :end \\
+string-capitalize string &key :start :end
+
+\cd{string-upcase} returns a string just like {\it string} with all lowercase
+characters replaced by the corresponding uppercase characters.  More
+precisely, each character of the result string is produced by applying
+the function \cd{char-upcase} to the corresponding character of
+{\it string}.
+
+\cd{string-downcase} is similar, except that uppercase characters are
+converted to lowercase characters (using \cd{char-downcase}).
+
+The keyword arguments \cd{:start} and \cd{:end} delimit the portion
+of the string to be affected.  The result is always of the same length
+as {\it string}, however.
+
+The argument is not destroyed.  However, if no characters in the argument
+require conversion, the result may be either the argument or a copy of it,
+at the implementation's discretion.
+For example:
+\begin{lisp}
+(string-upcase "Dr. Livingstone, I presume?") \\
+~~~\EV\ "DR. LIVINGSTONE, I PRESUME?" \\
+(string-downcase "Dr. Livingstone, I presume?") \\
+~~~\EV\ "dr. livingstone, i presume?" \\
+(string-upcase "Dr. Livingstone, I presume?" \cd{:start} 6 \cd{:end} 10) \\
+~~~\EV\ "Dr. LiVINGstone, I presume?"
+\end{lisp}
+
+\cd{string-capitalize} produces a copy of {\it string} such that,
+for every word in the copy, the first character of the word,
+if case-modifiable, is uppercase and
+any other case-modifiable characters in the word are lowercase.
+For the purposes of \cd{string-capitalize},
+a word is defined to be a
+consecutive subsequence consisting of alphanumeric characters or digits,
+delimited at each end either by a non-alphanumeric character
+or by an end of the string.
+For example:
+\begin{lisp}
+(string-capitalize " hello ") \EV\ " Hello " \\
+(string-capitalize \\
+~~~~\="occlUDeD cASEmenTs FOreSTAll iNADVertent DEFenestraTION") \\
+\EV\>"Occluded Casements Forestall Inadvertent Defenestration" \\
+(string-capitalize 'kludgy-hash-search) \EV\ "Kludgy-Hash-Search" \\
+(string-capitalize "DON'T!") \EV\ "Don'T!"~~~~~;{\it not} "Don't!" \\
+(string-capitalize "pipe 13a, foo16c") \EV\ "Pipe 13a, Foo16c"
+\end{lisp}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{STRING-COERCION}
+to clarify string coercion (see \cd{string}).
+\end{newer}
+
+\beforenoterule
+\begin{incompatibility}
+Some very approximate Interlisp equivalents to
+\cd{string-upcase}, \cd{string-downcase}, and \cd{string-capitalize}
+are \cd{u-case}, \cd{l-case} with second argument {\nil},
+and \cd{l-case} with second argument {\true}.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+nstring-upcase string &key :start :end \\
+nstring-downcase string &key :start :end \\
+nstring-capitalize string &key :start :end
+
+These three functions are just like \cd{string-upcase},
+\cd{string-downcase}, and \cd{string-capitalize}
+but destructively modify the argument {\it string} by altering
+case-modifiable characters as necessary.
+
+The keyword arguments \cd{:start} and \cd{:end} delimit the portion
+of the string to be affected.  The argument {\it string} is returned as
+the result.
+\end{defun}
+
+\begin{defun}[Function]
+string x
+
+Most of the string
+functions effectively apply \cd{string}
+to such of their arguments as are supposed to be
+strings.
+If {\it x} is a string, it is returned.
+If {\it x} is a symbol, its print name is returned.
+\begin{obsolete}
+If {\it x} is a string character (a character of type \cd{string-char}),
+then a string containing that one character is returned.
+\end{obsolete}
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the type \cd{string-char} and to redefine the type
+\cd{string} to be the union of one or more specialized vector
+types, the types of whose elements are subtypes of the type \cd{character}.
+Presumably converting a character to a string always works according
+to this vote.
+\end{newer}
+In any other situation, an error is signaled.
+
+To convert a sequence of characters to a string, use \cd{coerce}.
+(Note that \cd{(coerce x 'string)} will not succeed if \cd{x} is a symbol.
+Conversely, \cd{string} will not convert a list or other sequence
+to be a string.)
+
+To get the string representation of a number or any other Lisp
+object, use \cd{prin1-to-string}, \cd{princ-to-string},
+or \cd{format}.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{STRING-COERCION}
+to specify that the following functions perform coercion
+on their {\it string} arguments identical to that performed
+by the function \cd{string}.
+
+\begin{flushleft}
+\cf
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
+string= & string-equal & string-trim \\
+string< & string-lessp &  string-left-trim \\
+string> & string-greaterp &  string-right-trim \\
+string<= & string-not-greaterp & string-upcase \\
+string>= & string-not-lessp & string-downcase \\
+string/= & string-not-equal & string-capitalize
+\end{tabular*}
+\end{flushleft}
+Note that \cd{nstring-upcase}, \cd{nstring-downcase}, and
+\cd{nstring-capitalize} are absent from this list; because they modify destructively,
+the argument must be a string.
+
+As part of the same vote X3J13 specified that \cd{string}
+may perform additional implementation-dependent coercions
+but the returned value must be of type \cd{string}.
+Only when no coercion is defined, whether standard or implementation-dependent,
+is \cd{string} required to signal an error, in which case the error condition
+must be of type \cd{type-error}.
+\end{newer}
+\end{defun}

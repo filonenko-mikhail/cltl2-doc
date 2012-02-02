@@ -1,0 +1,1489 @@
+%Part{Progs, Root = "CLM.MSS"}
+%Chapter of Spice Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+
+\chapter{Program Structure}
+\label{PROGS}
+
+In chapter~\ref{DTYPES} the syntax was sketched for notating data objects
+in Common Lisp.  The same syntax is used for notating programs because all
+Common Lisp programs have a representation as Common Lisp data objects.
+
+Lisp programs are organized as forms and functions.  Forms are
+{\it evaluated} (relative to some context) to produce values and side
+effects.  Functions are invoked by {\it applying} them to arguments.
+The most important kind of form performs a function call;
+conversely, a function performs computation by evaluating forms.
+
+In this chapter, forms are discussed first and then functions.
+Finally, certain ``top level'' special forms are discussed; the most
+important of these is \cd{defun}, whose purpose is to define a
+named function.
+
+\section{Forms}
+
+The standard unit of interaction with a Common Lisp implementation is the {\it form},
+which is simply a data object meant to be {\it evaluated} as a program
+to produce one or more {\it values} (which are also data objects).
+One may request evaluation of {\it any} data object, but only certain ones
+are meaningful.  For instance,
+symbols and lists are meaningful forms, while arrays
+normally are not.  Examples of meaningful forms are \cd{3},
+whose value is \cd{3}, and \cd{(+ 3 4)}, whose value is \cd{7}.
+We write \cd{3} \EV\ \cd{3} and \cd{(+ 3 4)} \EV\ \cd{7}
+to indicate these facts.  (\EV\ means ``evaluates to.'')
+
+Meaningful forms may be divided into three categories:
+self-evaluating forms, such as numbers; symbols, which stand
+for variables; and lists.  The lists in turn may be divided
+into three categories: special forms, macro calls, and function calls.
+
+\begin{obsolete}
+Any Common Lisp data object not explicitly defined here to be a valid form
+is not a valid form.  It is an error to evaluate
+anything but a valid form.
+
+\beforenoterule
+\begin{implementation}
+An implementation is free to make
+implementation-dependent extensions to the evaluator but is
+strongly encouraged to signal an error on any attempt to
+evaluate anything but a valid form or an object for which
+a meaningful evaluation extension has been purposely defined.
+\end{implementation}
+\afternoterule
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{EVAL-OTHER} to specify that
+{\it all} standard Common Lisp data objects other than symbols
+and lists (including \cd{defstruct} structures defined
+without the \cd{:type} option) are self-evaluating.
+\end{newer}
+
+\subsection{Self-Evaluating Forms}
+
+All numbers, characters, strings, and bit-vectors
+are {\it self-evaluating} forms.
+When such an object is evaluated, that object
+(or possibly a copy in the case of numbers or characters)
+is returned as the value
+of the form.  The empty list {\empty}, which is also the false value {\false},
+is also a self-evaluating form: the value of {\false} is {\false}.
+Keywords (symbols written with a leading colon) also evaluate
+to themselves: the value of \cd{:start} is \cd{:start}.
+
+\begin{newer}
+X3J13 voted in January 1989 \issue{CONSTANT-MODIFICATION} to clarify that
+it is an error to destructively modify any object that appears as a constant
+in executable code, whether as
+a self-evaluating form or within a \cd{quote} special form.
+\end{newer}
+
+\subsection{Variables}
+
+Symbols are used as names of variables in Common Lisp programs.
+When a symbol is evaluated as a form, the value of the variable it names
+is produced.  For example, after doing \cd{(setq items 3)}, which assigns
+the value \cd{3} to the variable named \cd{items}, then \cd{items} \EV\ \cd{3}.
+Variables can be {\it assigned} to, as by \cd{setq}, or {\it bound},
+as by \cd{let}.
+Any program construct that binds a variable effectively saves the old
+value of the variable and causes it to have a new value, and on exit from
+the construct the old value is reinstated.
+
+There are actually two kinds of variables in Common Lisp, called {\it lexical} (or
+{\it static}) variables and {\it special} (or {\it dynamic}) variables.
+At any given time either or both kinds of variable with the same name may
+have a current value.  Which of the two kinds of variable is referred to
+when a symbol is evaluated depends on the context of the evaluation.
+The general rule is that if the symbol occurs textually within a program
+construct that creates a {\it binding} for a variable of the same name,
+then the reference is to the variable specified by the binding;
+if no such program construct textually contains the reference, then
+it is taken to refer to the special variable of that name.
+
+The distinction between the two kinds of variable is one of scope
+and extent.  A lexically bound variable can be referred to {\it only}
+by forms occurring at any {\it place} textually within the program construct that
+binds the variable.  A dynamically bound (special) variable can
+be referred to at any {\it time} from the time the binding is made
+until the time evaluation of the construct that binds the variable
+terminates.  Therefore lexical binding of variables
+imposes a spatial limitation
+on occurrences of references (but no temporal limitation, for the
+binding continues to exist as long as the possibility of reference
+remains).  Conversely, dynamic binding of variables imposes a temporal
+limitation on occurrences of references (but no spatial limitation).
+For more information on scope and extent, see chapter~\ref{SCOPE}.
+
+The value a special variable has when there are currently
+no bindings of that variable is called the {\it global} value of the
+(special) variable.
+A global value can be given to a variable only by assignment,
+because a value given by binding is by definition not global.
+
+It is possible for a special variable to have no value at all,
+in which case it is said to be {\it unbound}.
+By default, every global variable is unbound unless and until
+explicitly assigned a value, except for those global variables
+defined in this book or by the implementation already to have values
+when the Lisp system is first started.
+It is also possible to establish a binding of a special variable
+and then cause that binding to be valueless by using the
+function \cd{makunbound}.  In this situation the variable
+is also said to be ``unbound,'' although this is a misnomer;
+precisely speaking, it is bound but valueless.
+It is an error to refer to a variable that is unbound.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{UNDEFINED-VARIABLES-AND-FUNCTIONS}
+to specify more precisely the effects of referring to an unbound variable.
+
+  Reading an unbound variable or an undefined function
+  must be detected in the highest safety setting (see the
+  \cd{safety} quality of the \cd{optimize} declaration specifier)
+  but the effect is undefined in any other safety setting. That is,
+   reading an unbound variable should signal an error and
+   reading an undefined function should signal an error.
+  (``Reading a function'' includes
+  both references to the function using the \cd{function}
+  special form, such as \cd{f} in \cd{(function~f)}, and references to the
+  function in a call, such as \cd{f} in \cd{(f~x~y)}.)
+
+  For the case of \cd{inline} functions (in implementations where they are
+  supported), a permitted point of view is that performing the inlining
+  constitutes the read of the function, so that an \cd{fboundp}
+  check need not be done at
+  execution time. Put another way, the effect of the application of
+  \cd{fmakunbound} to a function name
+  on potentially inlined references to that function is undefined.
+
+  When an unbound variable 
+  is detected an error of type \cd{unbound-variable} is signaled,
+  and the \cd{name} slot of the
+  \cd{unbound-variable} condition is initialized to the name of the
+  offending variable.
+
+  When an undefined function
+  is detected an error of type \cd{undefined-function} is signaled,
+  and the \cd{name} slot of the
+  \cd{undefined-function} condition is initialized to the name of the
+  offending function.
+
+  The condition type \cd{unbound-slot}, which inherits from
+  \cd{cell-error}, has an additional slot \cd{instance}, which
+  can be initialized using the \cd{:instance} keyword to \cd{make-condition}.
+  The function \cd{unbound-slot-instance} accesses this slot.
+
+  The type of error signaled by the default primary
+  method for the CLOS \cd{slot-unbound} generic function is \cd{unbound-slot}.
+  The \cd{instance} slot
+  of the \cd{unbound-slot} condition is initialized to the offending instance
+  and the \cd{name} slot is initialized
+  to the name of the offending variable.
+\end{newer}
+
+Certain global variables are reserved as ``named constants.''
+They have a global value and may not be bound or assigned to.
+For example,
+the symbols {\true} and {\false} are reserved.
+One may not assign a value to {\true} or {\false},
+and one may not bind {\true} or {\false}.  The global value of
+{\true} is always {\true}, and the global value of
+{\false} is always {\false}.  Constant symbols defined by
+\cd{defconstant} also become reserved and may not be further
+assigned to or bound (although they may be redefined, if necessary, by
+using \cd{defconstant} again).  Keyword symbols,
+which are notated with a leading colon, are reserved and
+may never be assigned to or bound; a keyword always evaluates
+to itself.
+
+\subsection{Special Forms}
+
+If a list is to be evaluated as a form, the first step is to examine
+the first element of the list.  If the first element is one of
+the symbols appearing in table~\ref{SPECIAL-FORM-TABLE},
+then the list is called a {\it special form}.  (This use of the word
+``special'' is unrelated to its use in the phrase ``special variable.'')
+
+Special forms are generally environment and control constructs.
+Every special form has its own idiosyncratic syntax.  An example
+is the \cd{if} special form:
+\cd{(if p (+ x 4) 5)} in Common Lisp means what
+``{\bf if} {\it p} {\bf then} {\it x}+4 {\bf else} 5'' means in Algol.
+
+The evaluation of a special form normally produces a value or values,
+but the evaluation may instead call for a non-local exit; see \cd{return-from},
+\cd{go}, and \cd{throw}.
+
+The set of special forms is fixed in Common Lisp; no way is provided
+for the user to define more.  The user can create new syntactic
+constructs, however, by defining macros.
+
+The set of special forms in Common Lisp is purposely kept very small
+because any program-analyzing program must have special knowledge
+about every type of special form.  Such a program needs no special
+knowledge about macros because it is simple to expand the macro
+and operate on the resulting expansion.  (This is not to say that
+many such programs, particularly compilers, will not have such
+special knowledge.  A compiler may be able
+to produce much better code if it recognizes such constructs
+as \cd{typecase} and \cd{multiple-value-bind} and gives them customized
+treatment.)
+
+\begin{table}[t]
+\caption{Names of All Common Lisp Special Forms}
+\label{SPECIAL-FORM-TABLE}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lll@{}}
+\cd{block}&\cd{if}&\cd{progv} \\
+\cd{catch}&\cd{labels}&\cd{quote} \\
+{\rm \lbrack}\cd{compiler-let}{\rm \rbrack}&\cd{let}&\cd{return-from} \\
+\cd{declare}&\cd{let*}&\cd{setq} \\
+\cd{eval-when}&\cd{macrolet}&\cd{tagbody} \\
+\cd{flet}&\cd{multiple-value-call}&\cd{the} \\
+\cd{function}&\cd{multiple-value-prog1}&\cd{throw} \\
+\cd{go}&\cd{progn}&\cd{unwind-protect}
+\end{tabular*}
+\vskip 4pt
+\begin{newer}
+X3J13 voted in June 1989 \issue{COMPILER-LET-CONFUSION} to remove
+\cd{compiler-let} from the language.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{CLOS} to add the special forms \cd{generic-flet},
+\cd{generic-labels}, \cd{symbol-macrolet}, and \cd{with-added-methods}.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LOCALLY-TOP-LEVEL} to make
+\cd{locally} a special form rather than a macro.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{LOAD-TIME-EVAL} to add the special form
+\cd{load-time-eval}.
+\end{newer}
+\end{table}
+
+An implementation is free to implement as a macro any construct described
+herein as a special form.  Conversely, an implementation is free
+to implement as a special form any construct described herein as a macro
+if an equivalent macro definition is also provided.
+The practical consequence is that the predicates \cd{macro-function} and
+\cd{special-form-p} may both be true of the same symbol.
+It is recommended that a program-analyzing program process
+a form that is a list whose {\it car} is a symbol as follows:
+\begin{enumerate}
+\item
+If the program has particular knowledge about the symbol,
+process the form using special-purpose code.
+All of the symbols listed in table~\ref{SPECIAL-FORM-TABLE}
+should fall into this category.
+
+\item
+Otherwise, if \cd{macro-function} is true of the symbol, apply either
+\cd{macroexpand} or \cd{macroexpand-1}, as appropriate,
+to the entire form and then start over.
+
+\item
+Otherwise, assume it is a function call.
+\end{enumerate}
+
+\subsection{Macros}
+
+If a form is a list and the first element is not the name of a special
+form, it may be the name of a {\it macro}; if so, the form is said
+to be a {\it macro call}.  A macro is essentially a function from
+forms to forms that will, given a call to that macro, compute
+a new form to be evaluated in place of the macro call.
+(This computation is sometimes referred to as {\it macro expansion}.)
+For example, the macro named \cd{return} will take a form such as
+\cd{(return x)} and from that form compute a new form
+\cd{(return-from {\nil} x)}.  We say that the old
+form {\it expands} into the new form.  The new form is then evaluated in
+place of the original form; the value of the new form is returned as the
+value of the original form.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DOTTED-MACRO-FORMS}
+to clarify that macro calls, and subforms
+of macro calls, need not be proper lists, but that use of dotted forms
+requires the macro definition to use ``\cd{.~{\it var}}'' or
+``\cd{\&rest~{\it var}}'' in order to match them properly.
+It is then the responsibility of the macro definition to recognize
+and appropriately handle such dotted forms or subforms.
+\end{new}
+
+There are a number of standard macros in Common Lisp, and the user can define more
+by using \cd{defmacro}.
+
+Macros provided by a Common Lisp implementation as described herein may expand
+into code that is not portable among differing implementations.
+That is, a macro call may be implementation-independent because
+the macro is defined in this book, but the expansion need not be.
+
+\beforenoterule
+\begin{implementation}
+Implementors are encouraged to implement the macros
+defined in this book, as far as is possible, in such a way that
+the expansion will not contain any implementation-dependent
+special forms, nor contain as forms data objects that
+are not considered to be forms in Common Lisp.
+The purpose of this restriction is to ensure that the expansion
+can be processed by a program-analyzing program in an
+implementation-independent manner.
+There is no problem with a macro expansion containing
+calls to implementation-dependent functions.
+This restriction is not a requirement of Common Lisp; it is recognized
+that certain complex macros may be able to expand into significantly
+more efficient code in certain implementations
+by using implementation-dependent special forms in the macro expansion.
+\end{implementation}
+\afternoterule
+
+\subsection{Function Calls}
+
+If a list is to be evaluated as a form and the first element is
+not a symbol that names a special form or macro, then the list
+is assumed to be a {\it function call}.  The first element of the
+list is taken to name a function.  Any and all remaining elements
+of the list are forms to be evaluated; one value is obtained
+from each form,
+and these values become the {\it arguments} to the function.
+The function is then {\it applied} to the arguments.
+The functional computation normally produces a value,
+but it may instead call for a non-local exit; see \cd{throw}.
+A function that does return may produce no value or several values;
+see \cd{values}.
+If and when the function returns, whatever values it returns
+become the values of the function-call form.
+
+
+For example, consider the evaluation of the form \cd{(+ 3 (* 4 5))}.
+The symbol \cd{+} names the addition function, not a special form or macro.
+Therefore the two forms \cd{3} and \cd{(* 4 5)} are evaluated to produce
+arguments.  The form \cd{3} evaluates to \cd{3}, and the form
+\cd{(* 4 5)} is a function call (to the multiplication function).
+Therefore the forms \cd{4} and \cd{5} are evaluated, producing arguments
+\cd{4} and \cd{5} for the multiplication.  The multiplication function
+calculates the number \cd{20} and returns it.  The values \cd{3} and \cd{20}
+are then given as arguments to the addition function, which calculates
+and returns the number \cd{23}.  Therefore we say \cd{(+ 3 (* 4 5)) \EV\ 23}.
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{FUNCTION-CALL-EVALUATION-ORDER}
+to clarify that while the arguments in a function call are always
+evaluated in strict left-to-right order, whether the function to
+be called is determined before or after argument evaluation
+is unspecified.  Programs are in error
+that rely on a particular order of evaluation
+of the first element of a function call relative to the
+argument forms.
+\end{newer}
+
+\section{Functions}
+
+There are two ways to indicate a function to be used in a function-call
+form.  One is to use a symbol that names the function.  This use of
+symbols to name functions is completely independent of their use in
+naming special and lexical variables.  The other way is to use a
+{\it lambda-expression}, which is a list whose first element is the symbol
+\cd{lambda}.  A lambda-expression is {\it not} a form; it cannot be
+meaningfully evaluated.  Lambda-expressions and symbols, when used in
+programs as names of functions, can appear only as the first element of a
+function-call form, or as the second element of the \cd{function}
+special form.  Note that symbols and lambda-expressions are treated as
+{\it names} of functions in these two contexts.  This should be
+distinguished from the treatment of symbols and lambda-expressions as
+{\it function objects}, that is,
+objects that satisfy the predicate \cd{functionp},
+as when giving such an object to \cd{apply} or \cd{funcall} to be
+invoked.
+
+\subsection{Named Functions}
+
+A name can be given to a function in one of two ways.
+A {\it global name} can be given to a function by using the
+\cd{defun} construct.
+A {\it local name} can be given to a function by using the
+\cd{flet} or
+\cd{labels} special form.
+When a function is named, a lambda-expression is effectively
+associated with that name
+along with information about the entities that are lexically apparent
+at that point.
+If a symbol appears as the first element of a function-call form, then it
+refers to the definition established by the innermost \cd{flet} or \cd{labels}
+construct that textually contains the reference, or to the global
+definition (if any) if there is no such containing construct.
+
+\subsection{Lambda-Expressions}
+\label{LAMBDA-EXPRESSIONS-SECTION}
+\indexterm{lambda-expression}
+
+A {\it lambda-expression} is a list with the following syntax:
+\begin{lisp}
+(lambda {\it lambda-list} . {\it body})
+\end{lisp}
+The first element must be the symbol \cd{lambda}.  The second element
+must be a list.  It is called the {\it lambda-list}, and specifies
+names for the {\it parameters} of the function.  When the function
+denoted by the lambda-expression is applied to arguments,
+the arguments are matched with the parameters specified by the
+lambda-list.  The {\it body} may then refer to the arguments by using
+the parameter names.  The {\it body} consists of any number of
+forms (possibly zero).  These forms are evaluated in sequence,
+and the results of the {\it last} form only are returned as the results
+of the application (the value {\false} is returned if there are zero
+forms in the body).
+The complete syntax of a lambda-expression is:
+\begingroup
+\def\GrossOptVars{\Mstar{{\it var} {\Mor} \cd{(}{\it var} \Mopt{{\it initform} \Mopt{{\it svar}}}\cd{)}}}
+\def\GrossKeyOptVars{\Mstar{{\it var} {\Mor} \cd{(}\Mgroup{{\it var} {\Mor} \cd{(}{\it keyword} {\it var}\cd{)}} \Mopt{{\it initform} \Mopt{{\it svar}}}\cd{)}}}
+\def\GrossAuxVars{\Mstar{{\it var} {\Mor} \cd{(}{\it var} \Mopt{{\it initform}}\cd{)}}}
+\begin{lisp}
+(lambda (\Mstar{{\it var}} \\
+~~~~~~~~~\Mopt{\cd{\&optional} \GrossOptVars} \\
+~~~~~~~~~\Mopt{\cd{\&rest} {\it var}} \\
+~~~~~~~~~\Mopt{\cd{\&key} \GrossKeyOptVars \\
+~~~~~~~~~~~~~~{\setbox0\hbox{\Mopt{}}\hskip0.5\wd0}\Mopt{\cd{\&allow-other-keys}}} \\
+~~~~~~~~~\Mopt{\cd{\&aux} \GrossAuxVars}) \\
+~~~\Mchoice{\Mstar{\it declaration} {\Mor} {\it documentation-string}} \\
+~~~\Mstar{{\it\,form}})
+\end{lisp}
+\endgroup
+Each element of a lambda-list is either a {\it parameter specifier}
+or a {\it lambda-list keyword}; lambda-list keywords begin with \cd{\&}.
+(Note that lambda-list keywords are not keywords in the usual sense;
+they do not belong to the keyword package.  They are ordinary symbols
+each of whose names begins with an ampersand.  This terminology
+is unfortunately confusing but is retained for historical reasons.)
+
+\begin{obsolete}
+In all cases a {\it var} or {\it svar} must be a symbol, the name of a variable;
+each {\it keyword} must be a keyword symbol, such as \cd{:start}.
+An {\it initform} may be any form.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{KEYWORD-ARGUMENT-NAME-PACKAGE}
+to allow a {\it keyword} in the preceding specification of a lambda-list
+to be any symbol whatsoever, not just a keyword symbol
+in the \cd{keyword} package.  See below.
+\end{newer}
+
+A lambda-list has five parts, any or all of which may be empty:
+\begin{itemize}
+\item
+Specifiers for the {\it required} parameters.  These are all the parameter
+specifiers up to the first lambda-list keyword; if there is no such
+lambda-list keyword, then all the specifiers are for required parameters.
+
+\item
+Specifiers for {\it optional} parameters.
+If the lambda-list keyword \cd{\&optional} is present,
+the {\it optional} parameter specifiers are those following the
+lambda-list keyword \cd{\&optional} up to the next lambda-list keyword or the end of the list.
+
+\item
+A specifier for a {\it rest} parameter.  The lambda-list keyword \cd{\&rest}, if present, must
+be followed by a single {\it rest} parameter specifier,
+which in turn must be followed by another lambda-list keyword or the end
+of the lambda-list.
+
+\item
+Specifiers for {\it keyword} parameters.
+If the lambda-list keyword \cd{\&key} is present, all specifiers up to the next lambda-list keyword
+or the end of the list are {\it keyword} parameter specifiers.
+The keyword parameter specifiers may optionally be followed by the
+lambda-list keyword \cd{\&allow-other-keys}.
+
+\item
+Specifiers for {\it aux} variables.  These are not really parameters.
+If the lambda-list keyword \cd{\&key} is present, all specifiers after it are
+{\it auxiliary variable} specifiers.
+\end{itemize}
+
+When the function represented by the lambda-expression is applied
+to arguments, the arguments and parameters are processed in order
+from left to right.
+In the simplest case, only required parameters are present
+in the lambda-list; each is specified simply by a name {\it var} for
+the parameter variable.
+When the function is applied,
+there must be exactly as many arguments as there are parameters,
+and each parameter is bound to one argument.  Here, and in general,
+the parameter is bound as a lexical variable unless a
+declaration has been made that it should be a special binding;
+see \cd{defvar}, \cd{proclaim}, and \cd{declare}.
+
+In the more general case, if there are {\it n} required parameters
+({\it n} may be zero), there must be at least {\it n} arguments,
+and the required parameters are bound to the first {\it n} arguments.
+The other parameters are then processed using any remaining arguments.
+
+If {\it optional} parameters are specified, then each one is processed as
+follows.  If any unprocessed arguments remain, then the parameter variable
+{\it var} is bound to the next remaining argument, just as for a required
+parameter.  If no arguments remain, however, then the {\it initform} part
+of the parameter specifier is evaluated, and the parameter variable
+is bound to the resulting value (or to {\false} if no {\it initform} appears
+in the parameter specifier).
+If another variable name {\it svar} appears in the specifier, it is bound
+to {\it true} if an argument was available, and to {\it false} if no
+argument remained (and therefore {\it initform} had to be evaluated).
+The variable {\it svar} is called a {\it supplied-p} parameter;
+it is bound not to an argument but to a value indicating whether or not
+an argument had been supplied for another parameter.
+
+After all {\it optional} parameter specifiers have been processed,
+then there may or may not be a {\it rest} parameter.
+If there is a {\it rest} parameter, it is bound to a list of all
+as-yet-unprocessed arguments.  (If no unprocessed arguments remain,
+the {\it rest} parameter is bound to the empty list.)
+If there is no {\it rest} parameter and there are no {\it keyword}
+parameters,
+then there should be no unprocessed arguments (it is an error if there are).
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{REST-LIST-ALLOCATION}
+to clarify that if a function has a {\it rest} parameter
+and is called using \cd{apply}, then the list to which the
+{\it rest} parameter is bound is permitted, but not required,
+to share top-level list structure with the list that was the last
+argument to \cd{apply}.  Programmers should be careful about performing
+side effects on the top-level list structure of a {\it rest} parameter.
+
+This was the result of a rather long discussion within X3J13 and the
+wider Lisp community.  To set it in its historical context, I must remark
+that in Lisp Machine Lisp the list to which a {\it rest} parameter was
+bound had only dynamic extent; this in conjunction with the
+technique of ``cdr-coding'' permitted a clever stack-allocation technique
+with very low overhead.  However, the early designers of
+Common Lisp, after a great deal of debate, concluded that it was dangerous
+for cons cells to have dynamic extent; as an example, the ``obvious''
+definition of the function \cd{list}
+\begin{lisp}
+(defun list (\&rest x) x)
+\end{lisp}
+could fail catastrophically.  Therefore the first edition simply implied
+that the list for a {\it rest} parameter, like all other lists, would
+have indefinite extent.  This still left open the flip side of the
+question, namely, Is the list for a {\it rest} parameter guaranteed fresh?
+This is the question addressed by the X3J13 vote.
+If it is always freshly consed, then it is permissible to destroy it,
+for example by giving it to \cd{nconc}.  However, the requirement always
+to cons fresh lists could impose an unacceptable overhead in many implementations.
+The clarification approved by X3J13 specifies that the programmer may
+not rely on the list being fresh; if the function was called using \cd{apply},
+there is no way to know where the list came from.
+\end{new}
+
+Next, any {\it keyword} parameters are processed.
+For this purpose the same arguments are processed that
+would be made into a list for a {\it rest} parameter.
+(Indeed, it is permitted to specify both \cd{\&rest} and \cd{\&key}.
+In this case the remaining arguments are used for both purposes;
+that is, all remaining arguments are made into a list for the
+\cd{\&rest} parameter and are also processed for the \cd{\&key} parameters.
+This is the only situation in which an argument is used
+in the processing of more than one parameter specifier.)
+If \cd{\&key} is specified, there must remain
+an even number of arguments; these are considered as pairs,
+the first argument in each pair being interpreted as a keyword name
+and the second as the corresponding value.
+\begin{obsolete}
+It is an error for the first object of each pair to be
+anything but a keyword.
+
+\beforenoterule
+\begin{rationale}
+This last restriction is imposed so that a compiler may
+issue warnings about certain malformed calls to functions
+that take keyword arguments.  It must be remembered that the
+arguments in a function call that evaluate to keywords are just
+like any other arguments and may be any evaluable forms.
+A compiler could not, without additional context, issue a warning
+about the call
+\begin{lisp}
+(fill seq item x y)
+\end{lisp}
+because in principle the variable \cd{x} might have as its value a keyword
+such as \cd{:start}.  However, a compiler would be justified in issuing
+a warning about the call
+\begin{lisp}
+(fill seq item 0 10)
+\end{lisp}
+because the constant \cd{0} is definitely not a keyword.  Similarly,
+if in the first case the variable \cd{x} had been declared to be
+of type \cd{integer}, then type analysis could enable the compiler
+to justify a warning.
+\end{rationale}
+\afternoterule
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{KEYWORD-ARGUMENT-NAME-PACKAGE}
+to allow a {\it keyword} in a lambda-list
+to be any symbol whatsoever, not just a keyword symbol
+in the \cd{keyword} package.  If, after \cd{\&key},
+a variable appears alone or within only one set of parentheses
+(possibly with an {\it initform} and a {\it svar}), then
+the behavior is as before: a keyword symbol with the same name as
+the variable is used as the keyword-name when matching arguments
+to parameter specifiers.  Only a parameter specifier of the form
+\cd{(({\it keyword} {\it var})~...)} can cause the keyword-name
+not to be a keyword symbol, by specifying a symbol not in the \cd{keyword}
+package as the {\it keyword}.
+For example:
+\begin{lisp}
+(defun wager (\&key ((secret password) nil) amount) \\*
+~~(format nil "You {\Xtilde}A \${\Xtilde}D" \\*
+~~~~~~~~~~(if (eq password 'joe-sent-me) "win" "lose") \\*
+~~~~~~~~~~amount)) \\
+\\
+(wager :amount 100) \EV\ "You lose \$100" \\*
+(wager :amount 100 'secret 'joe-sent-me) \EV\ "You win \$100"
+\end{lisp}
+The \cd{secret} word could be made even more secret in this example
+by placing it in some other \cd{obscure} package, so that one would
+have to write
+\begin{lisp}
+(wager :amount 100 'obscure:secret 'joe-sent-me) \EV\ "You win \$100"
+\end{lisp}
+to win anything.
+\end{newer}
+
+In each keyword parameter specifier must be a name {\it var} for the
+parameter variable.  If an explicit {\it keyword} is
+specified, then that is the keyword name for the parameter.  Otherwise
+the name {\it var} serves to indicate the keyword name,
+in that a keyword with the same name (in the \cd{keyword} package) is used
+as the keyword.  Thus
+\begin{lisp}
+(defun foo (\cd{\&key} radix (type 'integer)) ...)
+\end{lisp}
+means exactly the same as
+\begin{lisp}
+(defun foo (\cd{\&key} ((:radix radix)) ((:type type) 'integer)) ...)
+\end{lisp}
+The keyword parameter specifiers are, like all parameter specifiers,
+effectively processed from left to right.
+For each keyword parameter specifier, if there is an argument
+pair whose keyword name matches that specifier's keyword name
+(that is, the names are \cd{eq}),
+then the parameter variable for that specifier is bound to the
+second item (the value) of that argument pair.
+If more than one such argument pair matches, it is not an error;
+the leftmost argument pair is used.
+If no such argument pair exists, then
+the {\it initform} for that specifier is evaluated
+and the parameter variable is bound to that value (or to {\false} if
+no {\it initform} was specified).  The variable {\it svar} is treated
+as for ordinary {\it optional} parameters: it is bound to {\it true}
+if there was a matching argument pair, and to {\it false} otherwise.
+
+It is an error if an argument pair has a keyword name not matched
+by any parameter specifier, unless at least one of the following
+two conditions is met:
+\begin{itemize}
+\item
+\cd{\&allow-other-keys} was specified in the lambda-list.
+
+\item
+Somewhere among the keyword argument pairs is a pair whose keyword
+is \cd{:allow-other-keys} and whose value is not {\false}.
+\end{itemize}
+If either condition obtains, then it is not an error
+for an argument pair to match no parameter specified,
+and the argument pair is simply ignored (but such an
+argument pair is accessible through the \cd{\&rest} parameter if
+one was specified).  The purpose of these mechanisms is to
+allow sharing of argument lists among several functions
+and to allow either the caller or the called function
+to specify that such sharing may be taking place.
+
+After all parameter specifiers have been processed, the auxiliary
+variable specifiers (those following the lambda-list keyword \cd{\&aux}) are processed from
+left to right.  For each one, the {\it initform} is evaluated and the
+variable {\it var} bound to that value (or to {\false} if no {\it initform} was
+specified).  Nothing can be done with \cd{\&aux} variables that cannot be
+done with the special form \cd{let*}:
+\begin{lisp}
+(lambda (x y \&aux (a (car x)) (b 2) c) ...) \\
+~~~\EQ\ (lambda (x y) (let* ((a (car x)) (b 2) c) ...))
+\end{lisp}
+Which to use is purely a matter of style.
+
+Whenever any {\it initform} is evaluated for any parameter
+specifier, that form may refer to any parameter variable to the left of
+the specifier in which the {\it initform} appears, including any supplied-p
+variables, and may rely on the fact that no other parameter variable
+has yet been bound (including its own parameter variable).
+
+Once the lambda-list has been processed, the forms in the body of the
+lambda-expression are executed.  These forms may refer to the arguments
+to the function by using the names of the parameters.  On exit from the
+function, either by a normal return of the function's value(s) or by a
+non-local exit, the parameter bindings, whether lexical or special, are
+no longer in effect.  (The bindings are not necessarily permanently discarded,
+for a lexical binding can later be reinstated if a
+``closure'' over that binding was created,
+perhaps by using \cd{function}, and saved before the exit occurred.)
+
+\noindent
+Examples of \cd{\&optional} and \cd{\&rest} parameters:
+\begin{lisp}
+((lambda (a b) (+ a (* b 3))) 4 5) \EV\ 19 \\
+((lambda (a \cd{\&optional} (b 2)) (+ a (* b 3))) 4 5) \EV\ 19 \\
+((lambda (a \cd{\&optional} (b 2)) (+ a (* b 3))) 4) \EV\ 10 \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x))) \\*
+~~~\EV\ (2 {\false} 3 {\false} {\false}) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6) \\*
+~~~\EV\ (6 t 3 {\false} {\false}) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6 3) \\*
+~~~\EV\ (6 t 3 t {\false}) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6 3 8) \\*
+~~~\EV\ (6 t 3 t (8)) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6 3 8 9 10 11) \\*
+~~~\EV\ (6 t 3 t (8 9 10 11))
+\end{lisp}
+Examples of \cd{\&key} parameters:
+\begin{lisp}
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2) \\*
+~~~\EV\ (1 2 {\nil} {\nil}) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :c 6) \\*
+~~~\EV\ (1 2 6 {\nil}) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :d 8) \\*
+~~~\EV\ (1 2 {\nil} 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :c 6 :d 8) \\*
+~~~\EV\ (1 2 6 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :d 8 :c 6) \\*
+~~~\EV\ (1 2 6 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) :a 1 :d 8 :c 6) \\*
+~~~\EV\ (:a 1 6 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) :a :b :c :d) \\
+~~~\EV\ (:a :b :d {\nil})
+\end{lisp}
+Examples of mixtures:
+\begin{lisp}
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1)   \EV\ (1 3 {\nil} 1 ())
+\end{lisp}
+
+\newpage%manual
+
+\begin{lisp}
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 2)   \EV\ (1 2 {\nil} 1 ()) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~:c 7)   \EV\ (:c 7 {\nil} :c ()) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 6 :c 7)   \EV\ (1 6 7 1 (:c 7)) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 6 :d 8)   \EV\ (1 6 {\nil} 8 (:d 8)) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 6 :d 8 :c 9 :d 10)   \EV\ (1 6 9 8 (:d 8 :c 9 :d 10))
+\end{lisp}
+
+All lambda-list keywords are permitted, but not terribly useful, in
+lambda-expressions appearing explicitly as the first element of a
+function-call form.  They are extremely
+useful, however, in functions given global names by \cd{defun}.
+
+All symbols whose names begin with \cd{\&} are conventionally reserved
+for use as lambda-list keywords and should not be used as variable names.
+Implementations of Common Lisp are free to provide additional lambda-list
+keywords.
+
+\begin{defun}[Constant]
+lambda-list-keywords
+
+The value of \cd{lambda-list-keywords} is a list of all the lambda-list
+keywords used in the implementation, including the additional ones
+used only by \cd{defmacro}.  This list must contain at least the symbols
+\cd{\&optional}, \cd{\&rest}, \cd{\&key}, \cd{\&allow-other-keys}, \cd{\&aux}, \cd{\&body}, \cd{\&whole},
+and \cd{\&environment}.
+\end{defun}
+
+As an example of the use of \cd{\&allow-other-keys} and \cd{:allow-other-keys},
+consider a function that takes two keyword arguments of its own and also
+accepts additional keyword arguments to be passed to \cd{make-array}:
+\begin{lisp}
+(defun array-of-strings (str dims \cd{\&rest} keyword-pairs \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~\cd{\&key} (start 0) end \cd{\&allow-other-keys}) \\*
+~~(apply \#'make-array dims \\*
+~~~~~~~~~:initial-element (subseq str start end) \\
+~~~~~~~~~:allow-other-keys t \\*
+~~~~~~~~~keyword-pairs))
+\end{lisp}
+This function takes a string and dimensioning information and returns
+an array of the specified dimensions, each of whose elements is the
+specified string.  However, \cd{:start} and \cd{:end} keyword arguments
+may be used in the usual manner (see chapter~\ref{KSEQUE}) to specify
+that a substring of the given string should be used.  In addition,
+the presence of \cd{\&allow-other-keys} in the lambda-list indicates that the caller
+may specify additional keyword arguments; the \cd{\&rest} argument provides
+access to them.  These additional keyword arguments are fed to \cd{make-array}.
+Now, \cd{make-array} normally does not allow the keywords \cd{:start}
+and \cd{:end} to be used, and it would be an error to specify such
+keyword arguments to \cd{make-array}.  However, the presence in the
+call to \cd{make-array} of the keyword argument \cd{:allow-other-keys}
+with a non-{\false} value causes any extraneous keyword arguments,
+including \cd{:start} and \cd{:end}, to be acceptable and ignored.
+
+
+\begin{defun}[Constant]
+lambda-parameters-limit
+
+The value of \cd{lambda-parameters-limit} is a positive integer that is
+the upper exclusive bound on the number of distinct parameter names
+that may appear in a single lambda-list.
+This bound depends on the implementation
+but will not be smaller than 50.
+Implementors are encouraged to make this limit as large as practicable
+without sacrificing performance.
+See \cd{call-arguments-limit}.
+\end{defun}
+
+\section{Top-Level Forms}
+
+The standard way for the user to interact with a Common Lisp implementation is
+via a {\it read-eval-print loop}: the system repeatedly
+reads a form from some input source (such as a keyboard or a disk file),
+evaluates it, and then prints the value(s) to some output sink (such as a
+display screen or another disk file).  Any form (evaluable
+data object) is acceptable; however, certain special forms are specifically
+designed to be convenient for use as {\it top-level} forms,
+rather than as forms embedded within other forms in the way
+that \cd{(+ 3 4)}
+is embedded within \cd{(if p (+ 3 4) 6)}.
+These top-level special forms may be used to define globally named
+functions, to define macros, to make declarations,
+and to define global values for special variables.
+
+\begin{obsolete}
+It is not illegal to use these forms at other than top level,
+but whether it is meaningful to do so depends on context.
+Compilers, for example, may not recognize these forms properly
+in other than top-level contexts.  (As a special case, however,
+if a \cd{progn} form appears at top level, then all forms
+within that \cd{progn} are considered by the compiler to be top-level
+forms.)
+\end{obsolete}
+
+\newpage%manual
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
+to clarify that, while defining forms normally appear at top level,
+it is meaningful to place them in non-top-level contexts.
+All defining forms that create functional objects from code appearing
+as argument forms must ensure that
+such argument forms refer to the enclosing lexical environment.
+Compilers must handle defining forms properly in all situations,
+not just top-level contexts.  However, certain
+compile-time side effects of these defining forms are performed only
+when the defining forms occur at top level (see section~\ref{COMPILER-SECTION}).
+\end{newer}
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, a top-level \cd{progn} is considered to
+contain top-level forms only if the first form is \cd{(quote compile)}.
+This odd marker is unnecessary in Common Lisp.
+\end{incompatibility}
+\afternoterule
+
+Macros are usually defined by using the special form \cd{defmacro}.
+This facility is fairly complicated; it is described in chapter~\ref{MACROS}.
+
+\subsection{Defining Named Functions}
+
+The \cd{defun} special form is the usual means of defining named functions.
+
+\begin{defmac}
+defun name lambda-list <{declaration}* | doc-string> {\,form}*
+
+Evaluating a \cd{defun} form causes the symbol {\it name} to be a global name
+for the function specified by the lambda-expression
+\begin{lisp}
+(lambda {\it lambda-list} \Mstar{{\it declaration} {\Mor} {\it doc-string}} \Mstar{{\it \,form}})
+\end{lisp}
+defined in the lexical environment in which the \cd{defun} form was
+executed.  Because \cd{defun} forms normally appear at top level, this is
+normally the null lexical environment.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
+to clarify that, while defining forms normally appear at top level,
+it is meaningful to place them in non-top-level contexts;
+\cd{defun} must define the function
+within the enclosing lexical environment, not within the null lexical
+environment.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{defun}
+to accept any function-name (a symbol or a list
+whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION})
+as a {\it name}.
+Thus one may write
+\begin{lisp}
+(defun (setf cadr) ...)
+\end{lisp}
+to define a \cd{setf}
+expansion function for \cd{cadr} 
+(although it may be much more convenient to
+use \cd{defsetf} or \cd{define-modify-macro}).
+\end{newer}
+
+\newpage%manual
+
+If the optional documentation string {\it doc-string} is present,
+then it is attached to the {\it name}
+as a documentation string of type \cd{function}; see \cd{documentation}.
+If {\it doc-string} is not
+followed by a declaration, it may be
+present only if at least one {\it form} is also specified, as it is
+otherwise taken to be a {\it form}.
+It is an error if more than one {\it doc-string} is present.
+
+The {\it forms} constitute the body of the defined function; they are
+executed as an implicit \cd{progn}.
+
+The body of the defined function is implicitly enclosed
+in a \cd{block} construct whose name is the same as the {\it name}
+of the function.  Therefore \cd{return-from}
+may be used to exit from the function.
+
+Other implementation-dependent bookkeeping actions may be taken as well
+by \cd{defun}.  The {\it name} is returned as the value of the \cd{defun}
+form.
+For example:
+\begin{lisp}
+(defun discriminant (a b c) \\
+~~(declare (number a b c)) \\
+~~"Compute the discriminant for a quadratic equation. \\
+~~~Given a, b, and c, the value b{\Xcircumflex}2-4*a*c is calculated. \\
+~~~The quadratic equation a*x{\Xcircumflex}2+b*x+c=0 has real, multiple, \\
+~~~or complex roots depending on whether this calculated \\
+~~~value is positive, zero, or negative, respectively." \\
+~~(- (* b b) (* 4 a c))) \\
+~~~\EV\ discriminant \\
+~~~{\rm and now} (discriminant 1 2/3 -2) \EV\ 76/9
+\end{lisp}
+\begin{new}%CORR
+The documentation string in this example neglects to mention that the
+coefficients \cd{a}, \cd{b}, and \cd{c}
+must be real for the discrimination criterion to hold.
+Here is an improved version:
+\begin{lisp}
+~~"Compute the discriminant for a quadratic equation. \\
+~~~Given a, b, and c, the value b{\Xcircumflex}2-4*a*c is calculated. \\
+~~~If the coefficients a, b, and c are all real (that is, \\
+~~~not complex), then the quadratic equation a*x{\Xcircumflex}2+b*x+c=0 \\
+~~~has real, multiple, or complex roots depending on \\
+~~~whether this calculated value is positive, zero, or \\
+~~~negative, respectively."
+\end{lisp}
+\end{new}
+
+It is permissible to use \cd{defun} to redefine a function,
+to install a corrected version of an incorrect definition, for example.
+It is permissible to redefine a macro as a function.
+It is an error to attempt to redefine the name of a special
+form (see table~\ref{SPECIAL-FORM-TABLE}) as a function.
+\end{defmac}
+
+\subsection{Declaring Global Variables and Named Constants}
+
+The \cd{defvar} and \cd{defparameter} special forms are
+the usual means of specifying globally defined variables.
+The \cd{defconstant} special form is used for defining named constants.
+
+\begin{defmac}
+defvar name [initial-value [documentation]] \\
+defparameter name initial-value [documentation] \\
+defconstant name initial-value [documentation]
+
+\cd{defvar} is the recommended way to declare the use
+of a special variable in a program.
+\begin{lisp}
+(defvar {\it variable})
+\end{lisp}
+proclaims {\it variable} to be \cd{special} (see \cd{proclaim}),
+and may perform other system-dependent bookkeeping actions.
+\begin{newer}
+X3J13 voted in June 1987 \issue{DEFVAR-INITIALIZATION} to clarify
+that if no {\it initial-value} form is provided, \cd{defvar}
+does not change the value of the {\it variable};
+if no {\it initial-value} form is provided and the variable
+has no value, \cd{defvar} does not give it a value.
+\end{newer}
+If a second argument form is supplied,
+\begin{lisp}
+(defvar {\it variable} {\it initial-value})
+\end{lisp}
+then {\it variable} is initialized to the result of evaluating the form
+{\it initial-value} unless it already has a value.  The {\it initial-value} form
+is not evaluated unless it is used; this fact is useful if
+evaluation of the {\it initial-value} form does something
+expensive like creating a large data structure.
+\begin{newer}
+X3J13 voted in June 1987 \issue{DEFVAR-INIT-TIME} to clarify that
+evaluation of the {\it initial-value} and the initialization of the
+variable occur, if at all, at the time the \cd{defvar} form is executed,
+and that the {\it initial-value} form is evaluated
+if and only if the {\it variable} does not already have a value.
+\end{newer}
+The initialization is
+performed by assignment and thus assigns a global value to the variable
+unless there are currently special bindings of that variable.
+Normally there should not be any such special bindings.
+
+\cd{defvar} also provides a good place to put a comment describing the
+meaning of the variable, whereas an ordinary \cd{special} proclamation
+offers the
+temptation to declare several variables at once and not have room to
+describe them all.
+\begin{lisp}
+(defvar *visible-windows* 0 \\
+~~"Number of windows at least partially visible on the screen")
+\end{lisp}
+
+\cd{defparameter} is similar to \cd{defvar}, but \cd{defparameter} requires
+an {\it initial-value} form, always evaluates the form, and assigns the
+result to the variable.  The semantic distinction is that \cd{defvar}
+is intended to declare a variable changed by the program, whereas
+\cd{defparameter} is intended to declare a variable that is normally
+constant but can be changed (possibly at run time), where such a change
+is considered a
+change {\it to} the program.  \cd{defparameter} therefore does not indicate
+that the quantity {\it never} changes; in particular, it does not license
+the compiler to build assumptions about the value into programs being
+compiled.
+
+\cd{defconstant} is like \cd{defparameter} but {\it does} assert that
+the value of the variable {\it name} is fixed and does license
+the compiler to build assumptions about the value into programs being
+compiled.  (However, if the compiler chooses to replace references
+to the name of the constant by the value of the constant in code
+to be compiled, perhaps in order to allow further optimization,
+the compiler must take care that such ``copies'' appear to be \cd{eql}
+to the object that is the actual value of the constant.  For example,
+the compiler may freely make copies of numbers but must exercise
+care when the value is a list.)
+
+It is an error if there are any special bindings
+of the variable at the time the \cd{defconstant} form
+is executed (but implementations may or may not check for this).
+
+Once a name has been declared by \cd{defconstant} to be constant,
+any further assignment to or binding of that special variable is an error.
+This is the case for such system-supplied constants as \cd{t} and
+\cd{most-positive-fixnum}.
+A compiler may also choose to issue warnings about bindings of
+the lexical variable of the same name.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFCONSTANT-SPECIAL}
+to clarify the preceding paragraph by specifying
+that it is an error to rebind constant symbols
+as either lexical or special variables.
+Consequently, a valid reference to a symbol declared with \cd{defconstant}
+always refers to its global value.
+(Unfortunately, this violates the principle of referential transparency,
+for one cannot always choose names for lexical variables without regard
+to surrounding context.)
+\end{new}
+
+For any of these constructs,
+the documentation should be a string.  The string is attached
+to the name of the variable, parameter, or constant
+under the \cd{variable} documentation type; see the \cd{documentation}
+function.
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{DEFVAR-DOCUMENTATION}
+to clarify that the {\it documentation-string}
+is not evaluated but must appear as a literal string when the \cd{defvar},
+\cd{defparameter}, or \cd{defconstant} form is evaluated.
+
+For example,
+the form
+\begin{lisp}
+(defvar *avoid-registers* nil "Compilation control switch \#43")
+\end{lisp}
+is legitimate, but
+\begin{lisp}
+(defvar *avoid-registers* nil \\*
+~~(format nil "Compilation control switch \#{\Xtilde}D" \\*
+~~~~~~~~~~(incf *compiler-switch-number*)))
+\end{lisp}
+is erroneous because the call to \cd{format} is not a literal string.
+
+(On the other hand, the form
+\begin{lisp}
+(defvar *avoid-registers* nil \\*
+~~\#.(format nil "Compilation control switch \#{\Xtilde}D" \\*
+~~~~~~~~~~~~(incf *compiler-switch-number*)))
+\end{lisp}
+might be used to accomplish the same purpose, because the call to
+\cd{format} is evaluated at \cd{read} time; when the \cd{defvar} form
+is evaluated, only the result of the call to \cd{format}, a string,
+appears in the \cd{defvar} form.)
+\end{new}
+
+These constructs are normally used only as top-level forms.  The
+value returned by each of these constructs is the {\it name} declared.
+\end{defmac}
+
+\subsection{Control of Time of Evaluation}
+
+\begin{obsolete}
+The \cd{eval-when} special form allows pieces of code to
+be executed only at compile time, only at load time, or
+when interpreted but not compiled.  Its uses are relatively esoteric.
+
+\begin{defspec}
+eval-when ({situation}*) {\,form}*
+
+The body of an \cd{eval-when} form is processed as an implicit
+\cd{progn}, but only in the situations listed.  Each {\it situation}
+must be a symbol, either \cd{compile}, \cd{load}, or \cd{eval}.
+
+\cd{eval} specifies that the interpreter should process the body.
+\cd{compile} specifies that the compiler should evaluate the body
+at compile time in the compilation context.
+\cd{load} specifies that the compiler should arrange to evaluate
+the forms in the body when the compiled file containing the
+\cd{eval-when} form is loaded.
+
+The \cd{eval-when} construct may be more precisely understood in terms
+of a model of how the compiler processes forms in a file to
+be compiled.  Successive forms are read from the file using the
+function \cd{read}.
+These top-level forms are normally processed in what we shall call
+{\it not-compile-time} mode.  There is another mode called {\it compile-time-too}
+mode.  The \cd{eval-when} special form controls which of these two
+modes to use.
+
+Every form is processed as follows:
+\begin{itemize}
+\item
+If the form is an \cd{eval-when} form:
+\begin{itemize}
+\item
+If the situation \cd{load} is specified:
+\begin{itemize}
+\item
+If the situation \cd{compile} is specified, {\it or} if the
+current processing mode is {\it compile-time-too} and the situation \cd{eval}
+is specified, then process each of the forms in the body
+in {\it compile-time-too} mode.
+
+\item
+Otherwise, process each of the forms in the body in {\it not-compile-time} mode.
+\end{itemize}
+
+\item
+If the situation \cd{load} is not specified:
+\begin{itemize}
+\item
+If the situation \cd{compile} is specified, {\it or} if the
+current processing mode is {\it compile-time-too} and the situation \cd{eval}
+is specified, then evaluate each of the forms in the body
+in the compiler's executing environment.
+
+\item
+Otherwise, ignore the \cd{eval-when} form entirely.
+\end{itemize}
+\end{itemize}
+
+\item
+If the form is not an \cd{eval-when} form, then do two things.
+First, if the current processing mode is {\it compile-time-too} mode,
+evaluate the form in the compiler's executing environment.
+Second, perform normal compiler processing of the form
+(compiling functions defined by \cd{defun} forms, and so on).
+\end{itemize}
+
+One example of the use of \cd{eval-when} is that
+if the compiler is to be able to properly read a file
+that uses user-defined reader macro characters,
+it is necessary to write
+\begin{lisp}
+(eval-when (compile load eval) \\
+~~(set-macro-character \#{\Xbackslash}\$ \#'(lambda (stream char) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(declare (ignore char)) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(list 'dollar (read stream)))))
+\end{lisp}
+This causes the call to \cd{set-macro-character} to be executed
+in the compiler's execution environment, thereby modifying its
+reader syntax table.
+\end{defspec}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{EVAL-WHEN-NON-TOP-LEVEL} to
+completely redesign the \cd{eval-when} construct to solve some problems
+concerning its treatment in other than top-level contexts.
+The new definition is upward compatible with the old definition,
+but the old keywords are deprecated.
+
+\begin{defspec}
+eval-when ({situation}*) {\,form}*
+
+  The body of an \cd{eval-when} form is processed as an implicit \cd{progn}, but
+  only in the situations listed.  Each {\it situation} must be a symbol,
+  either \cd{:compile-toplevel},
+  \cd{:load-toplevel}, or \cd{:execute}.
+
+  The use of \cd{:compile-toplevel} and \cd{:load-toplevel}
+  controls whether and when processing
+  occurs for top-level forms. The use of \cd{:execute} controls whether
+  processing occurs for non-top-level forms.
+
+  The \cd{eval-when} construct may be more precisely understood in terms of
+  a model of how the file compiler, \cd{compile-file}, processes forms in a
+  file to be compiled.
+
+  Successive forms are read from the file by the file compiler using 
+  \cd{read}. These top-level forms are normally processed in what we call
+  ``not-compile-time'' mode. There is one other mode, called 
+  ``compile-time-too'' mode, which can come into play for top-level
+  forms. The \cd{eval-when} special form is used to annotate a program
+  in a way that allows the program doing the processing to select
+  the appropriate mode.
+
+  Processing of top-level forms in the file compiler works as follows:
+
+\begin{itemize}
+   \item If the form is a macro call, it is expanded and the result is
+     processed as a top-level form in the same processing mode
+     (compile-time-too or not-compile-time).
+
+   \item If the form is a \cd{progn} (or \cd{locally} \issue{LOCALLY-TOP-LEVEL})
+     form, each of its body forms is
+     sequentially processed as top-level forms in the same processing
+     mode.
+
+   \item If the form is a \cd{compiler-let}, \cd{macrolet},
+     or \cd{symbol-macrolet},
+     the file compiler makes the appropriate bindings and recursively
+     processes the body forms as an implicit top-level \cd{progn} with those 
+     bindings in effect, in the same processing mode.
+
+   \item If the form is an \cd{eval-when} form, it is handled according to
+     the following table:
+     \begin{flushleft}
+     \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}c@{}cccl@{}}
+     LT&CT&EX&CTTM&Action \\ \hlinesp
+       yes & yes &--   & --  &    process body in compile-time-too mode \\
+       yes & no  &yes  & yes &    process body in compile-time-too mode \\
+       yes & no  &--   & no  &    process body in not-compile-time mode \\
+       yes & no  &no   & --  &    process body in not-compile-time mode \\
+       no  & yes &--   & --  &    evaluate body \\
+       no  & no  &yes  & yes &    evaluate body \\
+       no  & no  &--   & no  &    do nothing \\
+       no  & no  &no   & --  &    do nothing \\
+       \hline
+     \end{tabular*}
+     \end{flushleft}
+     In the preceding table the column LT asks whether \cd{:load-toplevel}
+     is one of the situations specified in the \cd{eval-when} form;
+     CT similarly refers to \cd{:compile-toplevel} and EX to \cd{:execute}.
+     The column CTTM asks whether the \cd{eval-when} form was encountered
+     while in compile-time-too mode.  The phrase
+     ``process body'' means to process the body as an implicit top-level
+     \cd{progn} in the indicated mode, and  ``evaluate body'' means to
+     evaluate the body forms sequentially as an
+     implicit \cd{progn} in the dynamic execution context of the compiler and
+     in the lexical environment in which the \cd{eval-when} appears.
+
+   \item Otherwise, the form is a top-level form that is not one of the
+     special cases.  If in compile-time-too mode, the compiler first
+     evaluates the form and then performs normal compiler processing
+     on it.  If in not-compile-time mode, only normal compiler
+     processing is performed (see section~\ref{COMPILER-SECTION}).
+     Any subforms are treated as non-top-level forms.
+\end{itemize}
+
+  Note that top-level forms are guaranteed to be processed in the order
+  in which they textually appear in the file, and that each top-level
+  form read by the compiler is processed before the next is read.
+  However, the order of processing (including, in particular, macro
+  expansion) of subforms that are not top-level forms is unspecified.
+
+  For an \cd{eval-when} form that is not a top-level form in the file compiler
+  (that is, either in the interpreter, in \cd{compile}, or in the file
+  compiler but not at top level), if the \cd{:execute} situation is specified,
+  its body is treated as an implicit \cd{progn}.  Otherwise, the body
+  is ignored and the \cd{eval-when} form has the value \cd{nil}.
+
+  For the sake of backward compatibility,
+  a {\it situation} may also be \cd{compile}, \cd{load}, or \cd{eval}.
+  Within a top-level \cd{eval-when} form
+  these have the same meaning as \cd{:compile-toplevel}, \cd{:load-toplevel},
+  and \cd{:execute}, respectively; but their effect is undefined when used
+  in an \cd{eval-when} form that is not at top level.
+
+  The following effects are logical consequences of the preceding specification:
+  \begin{itemize}
+   \item It is never the case that the execution of a single \cd{eval-when}
+     expression will execute the body code more than once.
+
+   \item The old keyword \cd{eval} was a misnomer because execution of
+     the body need not be done by \cd{eval}.  For example, when the
+     function definition
+     \begin{lisp}
+     (defun foo () (eval-when (:execute) (print 'foo)))
+     \end{lisp}
+     is compiled
+     the call to \cd{print} should be compiled, not evaluated at compile time.
+
+   \item Macros intended for use in top-level forms should arrange for all
+     side-effects to be done by the forms in the macro expansion.
+     The macro-expander itself should not perform the side-effects.
+\begin{lisp}
+(defmacro foo () \\*
+~~(really-foo)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Wrong}\\*
+~~{\Xbq}(really-foo)) \\
+\\
+(defmacro foo () \\*
+~~{\Xbq}(eval-when (:compile-toplevel \\*
+~~~~~~~~~~~~~~~:load-toplevel :execute)~~~~~;{\rm Right} \\*
+~~~~(really-foo)))
+\end{lisp}
+     Adherence to this convention will mean that such macros will behave
+     intuitively when called in non-top-level positions.
+
+   \item Placing a variable binding around an \cd{eval-when}
+     reliably captures the
+     binding because the ``compile-time-too'' mode cannot occur (because 
+     the \cd{eval-when} could not be a top-level form).
+     For example,
+\begin{lisp}
+(let ((x 3)) \\*
+~~(eval-when (:compile-toplevel :load-toplevel :execute) \\*
+~~~~(print x)))
+\end{lisp}
+will print 3 at execution (that is, load) time
+     and will not print anything at
+     compile time.  This is important so that expansions of \cd{defun} and 
+     \cd{defmacro} can be done in terms of \cd{eval-when}
+     and can correctly capture the lexical environment.
+     For example, an implementation might expand a \cd{defun} form such as
+\begin{lisp}
+(defun bar (x) (defun foo () (+ x 3)))
+\end{lisp}
+into
+\begin{lisp}
+(progn (eval-when (:compile-toplevel) \\*
+~~~~~~~~~(compiler::notice-function 'bar '(x))) \\*
+~~~~~~~(eval-when (:load-toplevel :execute) \\*
+~~~~~~~~~(setf (symbol-function 'bar) \\*
+~~~~~~~~~~~~~~~\#'(lambda (x) \\*
+~~~~~~~~~~~~~~~~~~~(progn (eval-when (:compile-toplevel)  \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~(compiler::notice-function 'foo \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'())) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~(eval-when (:load-toplevel :execute) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~(setf (symbol-function 'foo) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\#'(lambda () (+ x 3)))))))))
+\end{lisp}
+     which by the preceding rules would be treated the same as
+\begin{lisp}
+(progn (eval-when (:compile-toplevel) \\*
+~~~~~~~~~(compiler::notice-function 'bar '(x))) \\*
+~~~~~~~(eval-when (:load-toplevel :execute) \\*
+~~~~~~~~~(setf (symbol-function 'bar) \\*
+~~~~~~~~~~~~~~~\#'(lambda (x) \\*
+~~~~~~~~~~~~~~~~~~~(progn (eval-when (:load-toplevel :execute) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~(setf (symbol-function 'foo) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\#'(lambda () (+ x 3)))))))))
+\end{lisp}
+\end{itemize}
+
+Here are some additional examples.
+\begin{lisp} 
+(let ((x 1)) \\*
+~~(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~~~(setf (symbol-function 'foo1) \#'(lambda () x))))
+\end{lisp}
+ The \cd{eval-when} in the preceding expression is not at top level,
+       so only the \cd{:execute}
+       keyword is considered.  At compile time, this has no effect.
+       At load time (if the \cd{let} is at top level), or at execution time
+       (if the \cd{let} is embedded in some other form which does not execute
+       until later), this sets \cd{(symbol-function 'foo1)} to a function that
+       returns \cd{1}.
+\begin{lisp}
+(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~(let ((x 2)) \\*
+~~~~(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~~~~~(setf (symbol-function 'foo2) \#'(lambda () x)))))
+\end{lisp}
+ If the preceding expression occurs at the top level of a file to be compiled,
+       it has {\it both} a compile time {\it and} a load-time effect of setting
+       \cd{(symbol-function 'foo2)} to a function that returns \cd{2}.
+\begin{lisp}
+(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~(setf (symbol-function 'foo3) \#'(lambda () 3)))
+\end{lisp}
+ If the preceding expression occurs at the top level of a file to be compiled,
+       it has {\it both} a compile time {\it and}
+       a load-time effect of setting the
+       function cell of \cd{foo3} to a function that returns \cd{3}.
+\begin{lisp}
+(eval-when (:compile-toplevel) \\*
+~~(eval-when (:compile-toplevel)  \\*
+~~~~(print 'foo4)))
+\end{lisp}
+  The preceding expression always does nothing; it simply returns \cd{nil}.
+\begin{lisp}
+(eval-when (:compile-toplevel)  \\*
+~~(eval-when (:execute) \\*
+~~~~(print 'foo5)))
+\end{lisp}
+  If the preceding form occurs at the top level of a file to be compiled,
+       \cd{foo5} is
+       printed at compile time. If this form occurs in a non-top-level
+       position, nothing is printed at compile time. Regardless of context,
+       nothing is ever printed at load time or execution time.
+
+\begin{lisp}
+(eval-when (:execute :load-toplevel) \\*
+~~(eval-when (:compile-toplevel) \\*
+~~~~(print 'foo6)))
+\end{lisp}
+
+    If the preceding form occurs at the top level of a file to be compiled,
+       \cd{foo6} is
+       printed at compile time.  If this form occurs in a non-top-level
+       position, nothing is printed at compile time. Regardless of context,
+       nothing is ever printed at load time or execution time.
+\end{defspec}
+\end{newer}

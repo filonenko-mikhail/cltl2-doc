@@ -1,0 +1,1197 @@
+%Part{Struct, Root = "CLM.MSS"}
+%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Structures}
+
+Common Lisp provides a facility for creating named record structures
+with named components.  In effect, the user can define a new data type;
+every data structure of that type has components with specified names.
+Constructor, access, and assignment constructs are automatically
+defined when the data type is defined.
+
+This chapter is divided into two parts.  The first part discusses
+the basics of the structure facility, which is very simple and allows
+the user to take advantage of the type-checking, modularity, and
+convenience of user-defined record data types.  The second part,
+beginning with section~\ref{Defstruct-Hairy-Stuff},
+discusses a number of specialized features of the facility that
+have advanced applications.  These features are completely optional,
+and you needn't even know they exist in order to take
+advantage of the basics.
+
+\section{Introduction to Structures}
+\label{DEFSTRUCT-INTRO-SECTION}
+
+The structure facility is embodied in the \cd{defstruct} macro,
+which allows the user to create and use
+aggregate data types with named elements.  These are like
+``structures'' in {PL/I}, or ``records'' in Pascal.
+
+As an example, assume you are writing a Lisp
+program that deals with space ships in a two-dimensional plane.
+In your program, you need to
+represent a space ship by a Lisp object of some kind.  The interesting
+things about a space ship, as far as your program is concerned, are
+its position (represented as {\it x} and {\it y} coordinates),
+velocity (represented as components along the {\it x} and {\it y} axes), and mass.
+
+A ship might therefore be represented as a record structure with five
+components: {\it x}-position, {\it y}-position, {\it x}-velocity, {\it y}-velocity, and mass.
+This structure could in turn be implemented as a Lisp object in a
+number of ways.  It could be a list of five elements; the {\it x}-position
+could be the {\it car}, the {\it y}-position the {\it cadr}, and so on.  Equally
+well it could be a vector of five elements: the {\it x}-position could be
+element 0, the {\it y}-position element 1, and so on.  The problem with either
+of these representations is that the components occupy places in the
+object that are quite arbitrary and hard to remember.  Someone looking at
+\cd{(cadddr~ship1)} or \cd{(aref~ship1~3)} in a piece of code might
+find it difficult to determine that this is accessing the {\it y}-velocity
+component of \cd{ship1}.  Moreover, if the representation of a ship should
+have to be changed, it would be very difficult to find all the places
+in the code to be changed to match (not all occurrences of \cd{cadddr}
+are intended to extract the {\it y}-velocity from a ship).
+
+Ideally components of record structures should have names.  One would
+like to write something like
+\cd{(ship-y-velocity ship1)} instead of \cd{(cadddr ship1)}.
+One would also like a more mnemonic way to create a ship than this:
+\begin{lisp}
+(list 0 0 0 0 0)
+\end{lisp}
+Indeed, one would like \cd{ship} to be a new data type, just like other
+Lisp data types, that one could test with \cd{typep}, for example.
+The \cd{defstruct} facility provides all of this.
+
+\cd{defstruct} itself is a macro that defines a structure.  For the
+space ship example, one might define the structure by saying:
+\begin{lisp}
+(defstruct ship \\
+~~x-position \\
+~~y-position \\
+~~x-velocity \\
+~~y-velocity \\
+~~mass)
+\end{lisp}
+This declares that every \cd{ship} is an object with five named components.
+The evaluation of this form does several things:
+\begin{itemize}
+\item
+It defines \cd{ship-x-position} to be a function
+of one argument, a ship, that returns the {\it x}-position
+of the ship; \cd{ship-y-position}
+and the other components are given similar function definitions.
+These functions are called the {\it access functions}, as they
+are used to access elements of the structure.
+
+\item
+The symbol \cd{ship} becomes the name of a data type of which instances
+of ships are elements.  This name becomes acceptable to \cd{typep},
+for example; \cd{(typep x 'ship)} is true if \cd{x} is a ship
+and false if \cd{x} is any object other than a ship.
+
+\item
+A function named \cd{ship-p} of one argument is defined; it is a predicate
+that is true if its argument is a ship and is false otherwise.
+
+\item
+A function called \cd{make-ship} is defined that, when invoked,
+will create a data structure with five components, suitable for use with
+the access functions.  Thus executing
+\begin{lisp}
+(setq ship2 (make-ship))
+\end{lisp}
+sets \cd{ship2} to a newly created \cd{ship} object.
+One can specify the initial values of any desired component in the call
+to \cd{make-ship} by using keyword arguments in this way:
+\begin{lisp}
+(setq ship2 (make-ship \cd{:mass} *default-ship-mass* \\
+~~~~~~~~~~~~~~~~~~~~~~~\cd{:x-position} 0 \\
+~~~~~~~~~~~~~~~~~~~~~~~\cd{:y-position} 0))
+\end{lisp}
+This constructs a new ship and initializes three of its components.
+This function is called the {\it constructor function}
+because it constructs a new structure.
+
+\item
+The \cd{\#S} syntax can be used to read instances of \cd{ship}
+structures, and a printer function is provided for printing
+out ship structures.  For example, the value of the
+variable \cd{ship2} shown above might be printed as
+\begin{lisp}
+\#S(ship  x-position 0  y-position 0  x-velocity nil \\
+~~~~~~~~~y-velocity nil  mass 170000.0)
+\end{lisp}
+
+\item
+A function called \cd{copy-ship} of one argument
+is defined that, when given a \cd{ship} object,
+will create a new \cd{ship} object that is a copy of the given one.
+This function is called the {\it copier function}.
+
+\item
+One may use \cd{setf} to alter the components of a \cd{ship}:
+\begin{lisp}
+(setf (ship-x-position ship2) 100)
+\end{lisp}
+This alters the {\it x}-position of {\it ship2} to be \cd{100}.
+This works because \cd{defstruct} behaves as if
+it generates an appropriate \cd{defsetf}
+form for each access function.
+\end{itemize}
+
+This simple example illustrates the power of \cd{defstruct} to provide
+abstract record structures in a convenient manner.
+\cd{defstruct} has many other features as well for specialized purposes.
+
+\section{How to Use Defstruct}
+
+All structures are defined through the \cd{defstruct} construct.
+A call to \cd{defstruct} defines a new data type whose instances
+have named slots.
+
+\begin{defmac}
+defstruct name-and-options [doc-string] {slot-description}+
+
+\begin{new}\noindent
+X3J13 voted in June 1988
+\issue{DEFSTRUCT-SLOTS-CONSTRAINTS-NUMBER}
+to allow a \cd{defstruct} definition
+to have no {\it slot-description} at all; in other words, the
+occurrence of \Mplus{{\it slot-description}} in the preceding
+header line would be replaced by \Mstar{{\it slot-description}}.
+
+Such structure definitions are particularly useful if the
+\cd{:include} option is used, perhaps with other options; for example,
+one can have two structures that are exactly alike except that they
+print differently (having different \cd{:print-function} options).
+
+Implementors are encouraged to permit this simple extension as soon as
+convenient.  Users, however, may wish to maximize portability of their
+code by avoiding the use of this extension unless and until it is
+adopted as part of the ANSI standard.
+\end{new}
+
+This defines a record-structure data type.
+A general call to \cd{defstruct} looks like the following example.
+\begin{lisp}
+(defstruct ({\it name} {\it option-1} {\it option-2} ... {\it option-m}) \\
+~~~~~~~~~~~{\it doc-string} \\
+~~~~~~~~~~~{\it slot-description-1} \\
+~~~~~~~~~~~{\it slot-description-2} \\
+~~~~~~~~~~~... \\
+~~~~~~~~~~~{\it slot-description-n}) \\
+\end{lisp}
+The {\it name} must be a symbol; it becomes the name of a new data type
+consisting of all instances of the structure.
+The function \cd{typep} will accept and use this name
+as appropriate.  The {\it name} is returned as the value of the {\it defstruct}
+form.
+
+Usually no options are needed at all.
+If no options are specified, then one may write simply {\it name} instead
+of \cd{({\it name})} after the word \cd{defstruct}.  The syntax of options
+and the options provided are discussed in section~\ref{DEFSTRUCT-OPTIONS}.
+
+If the optional documentation string {\it doc-string} is present,
+then it is attached to the {\it name}
+as a documentation string of type \cd{structure}; see \cd{documentation}.
+
+Each {\it slot-description-j} is of the form
+\begin{lisp}
+({\it slot-name} {\it default-init} \\
+~~~~~{\it slot-option-name-1} {\it slot-option-value-1} \\
+~~~~~{\it slot-option-name-2} {\it slot-option-value-2} \\
+~~~~~... \\
+~~~~~{\it slot-option-name-k${}_{\hbox{\scriptsize\it j}}$} {\it slot-option-value-k${}_{\hbox{\scriptsize\it j}}$})
+\end{lisp}
+Each {\it slot-name} must be a symbol; an access function is defined
+for each slot. If no options and no {\it default-init} are specified,
+then one may write simply {\it slot-name} instead of \cd{({\it slot-name})}
+as the slot description.
+
+\begin{obsolete}
+The {\it default-init} is a form that is
+evaluated {\it each time} a structure is to be constructed; the value
+is used as the initial value of the slot.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{DEFSTRUCT-DEFAULT-VALUE-EVALUATION}
+to clarify that a {\it default-init} form is evaluated only if the corresponding
+argument is not supplied to the constructor function.  The preceding
+sentence should therefore read as follows:
+
+The {\it default-init} is a form that is
+evaluated {\it each time} its value
+is to be used as the initial value of the slot.
+\end{newer}
+If no {\it default-init}
+is specified, then the initial contents of the slot are undefined
+and implementation-dependent.  The available slot-options are
+described in section~\ref{Defstruct-Slot-Options}.
+
+\beforenoterule
+\begin{incompatibility}
+Slot-options are not currently provided
+in Lisp Machine Lisp, but this is an upward-compatible extension.
+\end{incompatibility}
+\afternoterule
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFSTRUCT-SLOTS-CONSTRAINTS-NAME}
+to specify that it is an error for
+two slots to have the same name; more precisely, no two slots may
+have names for whose print names \cd{string=} would be true.
+Under this interpretation
+\begin{lisp}
+(defstruct lotsa-slots slot slot)
+\end{lisp}
+obviously is incorrect
+but the following one is also in error, even assuming that the symbols
+\cd{coin:slot} and \cd{blot:slot} really are distinct (non-\cd{eql}) symbols:
+\begin{lisp}
+(defstruct no-dice coin:slot blot:slot)
+\end{lisp}
+To illustrate another case, the first \cd{defstruct} form below is
+correct, but the second one is in error.
+\begin{lisp}
+(defstruct one-slot slot) \\*
+(defstruct (two-slots (:include one-slot)) slot)
+\end{lisp}
+
+\beforenoterule
+\begin{rationale}
+Print names are the criterion for slot-names being the same, rather
+than the symbols themselves, because \cd{defstruct} constructs names
+of accessor functions from the print names and interns the resulting
+new names in the current package.
+\end{rationale}
+\afternoterule
+
+
+X3J13 recommended that expanding
+a \cd{defstruct} form violating this
+restriction should signal an error and noted, with an eye to the Common Lisp
+Object System
+\issue{CLOS}, that the restriction applies only to the operation of the
+\cd{defstruct} macro as such and not to the \cd{structure-class} or
+structures defined with \cd{defclass}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
+to clarify that, while defining forms normally appear at top level,
+it is meaningful to place them in non-top-level contexts;
+\cd{defstruct} must treat slot {\it default-init} forms
+and any\vadjust{\penalty-10000}
+initialization forms within the specification of a by-position
+constructor function as occurring
+within the enclosing lexical environment, not within the global
+environment.
+\end{newer}
+
+\cd{defstruct} not only defines an access function for each slot, but also
+arranges for \cd{setf} to work properly on such access functions,
+defines a predicate named \cd{{\it name}-p},
+defines a constructor function named \cd{make-{\it name}},
+and defines a copier function named \cd{copy-{\it name}}.
+All names of automatically created functions are interned
+in whatever package is current at the time the \cd{defstruct}
+form is processed (see \cd{*package*}).
+Also, all such functions may be declared \cd{inline}
+at the discretion of the implementation to improve efficiency;
+if you do not want some function declared \cd{inline},
+follow the \cd{defstruct} form with a \cd{notinline} declaration
+to override any automatic \cd{inline} declaration.
+
+\begin{newer}
+X3J13 voted in January 1989 \issue{DEFSTRUCT-REDEFINITION}
+to specify that the results of redefining a \cd{defstruct} structure
+(that is, evaluating more than one \cd{defstruct} structure
+for the same name) are undefined.
+
+The problem is that if instances have been created under the old definition
+and then remain accessible after the new definition has been evaluated,
+the accessors and other functions for the new definition may be incompatible
+with the old instances.  Conversely, functions associated with the
+old definition may have been declared \cd{inline} and compiled
+into code that remains accessible after the new definition has been
+evaluated; such code may be incompatible with the new instances.
+
+In practice this restriction affects the development
+and debugging process rather than production runs of fully developed code.
+The \cd{defstruct} feature is intended to provide
+``the most efficient'' structure class.
+CLOS classes defined by \cd{defclass}
+allow much more flexible structures to be defined and redefined.
+
+Programming environments are allowed and encouraged to permit \cd{defstruct}
+redefinition, perhaps with warning messages about possible interactions
+with other parts of the programming environment or memory state.
+It is beyond the scope of the Common Lisp
+language standard to define those interactions except to note that they
+are not portable.
+\end{newer}
+\end{defmac}
+
+\section{Using the Automatically Defined Constructor Function}
+
+After you have defined a new structure with \cd{defstruct}, you can
+create instances of this structure by using the constructor function.
+By default, \cd{defstruct} defines this function automatically.
+For a structure named \cd{foo}, the constructor function is normally
+named \cd{make-foo};
+you can specify a different name
+by giving it as the argument to the
+\cd{:constructor} option, or specify that you don't
+want a normal
+constructor function at all by using {\false} as the argument
+(in which case one or more ``by-position'' constructors should be
+requested; see section~\ref{DEFSTRUCT-CONSTRUCTOR-SYNTAX}).
+
+A call to a constructor function, in general, has the form
+\begin{lisp}
+({\it name-of-constructor-function} \\*
+~~~~~~~~{\it slot-keyword-1} {\it form-1} \\*
+~~~~~~~~{\it slot-keyword-2} {\it form-2} \\*
+~~~~~~~~...)
+\end{lisp}
+All arguments are keyword arguments.  Each {\it slot-keyword} should be a
+keyword whose name matches the name of a slot of the structure
+(\cd{defstruct} determines the possible keywords simply by interning each
+slot-name in the keyword package).  All the {\it keywords} and {\it forms}
+are evaluated.  In short, it is just as if the constructor function
+took all its arguments as \cd{\&key} parameters.  For example, the
+\cd{ship} structure shown in section~\ref{DEFSTRUCT-INTRO-SECTION}
+has a constructor function that takes arguments roughly as if its definition
+were
+\begin{lisp}
+(defun make-ship (\&key x-position y-position \\
+~~~~~~~~~~~~~~~~~~~~~~~x-velocity y-velocity mass) \\
+~~...)
+\end{lisp}
+
+\label{defstruct-initialization}
+If {\it slot-keyword-j} names a slot, then that element of
+the created structure will be initialized to the value of {\it form-j}.
+If no pair {\it slot-keyword-j} and {\it form-j}
+is present for a given slot, then the slot will be
+initialized by evaluating the {\it default-init} form specified
+for that slot in the call to \cd{defstruct}.
+(In other words, the initialization specified in the \cd{defstruct}
+defers to any specified in a call to the constructor function.)
+If the default initialization form is used, it is evaluated
+at construction time, but
+in the lexical environment of the \cd{defstruct} form in which it appeared.
+If the \cd{defstruct} itself also did not
+specify any initialization, the element's initial value is undefined.
+You should always specify the initialization, either in the \cd{defstruct}
+or in the call to the constructor function,
+if you care about the initial value of the slot.
+
+Each initialization form specified for a \cd{defstruct} component,
+when used by the constructor function for an otherwise unspecified
+component, is re-evaluated on every call to the
+constructor function.  It is as if the initialization forms were
+used as {\it init} forms for the keyword parameters of the
+constructor function.
+For example, if the form \cd{(gensym)}
+were used as an initialization form,
+either in the constructor-function call or as the default initialization form
+in the \cd{defstruct} form,
+then every call to the constructor
+function would call \cd{gensym} once to generate a new symbol.
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{DEFSTRUCT-DEFAULT-VALUE-EVALUATION}
+to clarify that the default value in a defstruct slot is not evaluated 
+        unless it is needed in the creation of a particular structure
+        instance.  If it is never needed, there can be no type-mismatch
+        error, even if the type of the slot is specified, and no warning
+        should be issued.
+
+
+For example, in the following sequence only the last form is in error.
+\begin{lisp}
+(defstruct person (name .007 :type string)) \\*
+\\*
+(make-person :name "James") \\*
+\\*
+(make-person)~~~~~;{\rm Error to give \cd{name} the value \cd{.007}}
+\end{lisp}
+\end{newer}
+
+
+\section{Defstruct Slot-Options}
+\label{Defstruct-Slot-Options}
+
+Each {\it slot-description} in a \cd{defstruct} form may specify one or more
+slot-options.  A slot-option consists of a pair of a keyword and
+a value (which is not a form to be evaluated, but the value itself).
+For example:
+\begin{lisp}
+(defstruct ship \\
+~~(x-position 0.0 \cd{:type} short-float) \\
+~~(y-position 0.0 \cd{:type} short-float) \\
+~~(x-velocity 0.0 \cd{:type} short-float) \\
+~~(y-velocity 0.0 \cd{:type} short-float) \\
+~~(mass *default-ship-mass* \cd{:type} short-float \cd{:read-only} t))
+\end{lisp}
+This specifies that each slot will always contain a
+short-format floating-point number,
+and that the last slot may not be altered once a ship is constructed.
+
+The available slot-options are as follows.
+\begin{flushdesc}
+\item[\cd{:type}]
+The option \cd{\cd{:type} {\it type}} specifies that the contents of the
+slot will always be of the specified data type.  This is entirely
+analogous to the declaration of a variable or function; indeed, it
+effectively declares the result type of the access function.  An
+implementation may or may not choose to check the type of the new object
+when initializing or assigning to a slot.
+Note that the argument form {\it type} is not evaluated;
+it must be a valid type specifier.
+
+\item[\cd{:read-only}]
+The option \cd{\cd{:read-only} {\it x}}, where {\it x} is not {\false},
+specifies that this slot may not be
+altered; it will always contain the value specified at construction time.
+\cd{setf} will not accept the access function for this slot.
+If {\it x} is {\false}, this slot-option has no effect.
+Note that the argument form {\it x} is not evaluated.
+\end{flushdesc}
+
+Note that it is impossible to specify a slot-option unless
+a default value is specified first.
+
+\section{Defstruct Options}
+\label{DEFSTRUCT-OPTIONS}
+\label{Defstruct-Hairy-Stuff}
+
+The preceding description of \cd{defstruct} is all that the average
+user will need (or want) to know in order to use structures.
+The remainder of this chapter discusses more complex features of
+the \cd{defstruct} facility.
+
+This section explains each of the options that can be given to \cd{defstruct}.
+A \cd{defstruct} option may be either a keyword
+or a list of a keyword and arguments for that keyword.
+(Note that the syntax for \cd{defstruct} options differs from
+the pair syntax used for slot-options.  No part of any of these options
+is evaluated.)
+
+\begin{flushdesc}
+\item[\cd{:conc-name}]
+This provides for automatic prefixing of names of access functions.
+It is conventional to begin the names of all the access functions of
+a structure with a specific prefix,
+the name of the structure followed by a hyphen.
+This is the default behavior.
+
+The argument to the \cd{:conc-name} option specifies an alternative
+prefix to be used.  (If a hyphen is to be used as a separator,
+it must be specified as part of the prefix.)
+If {\false} is specified as an argument, then {\it no} prefix is used;
+then the names of the access functions
+are the same as the slot-names, and it is up to the user
+to name the slots reasonably.
+
+Note that no matter what is specified for \cd{:conc-name},
+with a constructor function one uses
+slot keywords that match the slot-names, with no prefix attached.
+On the other hand, one uses the access-function name
+when using \cd{setf}.  Here is an example:
+\begin{lisp}
+(defstruct door knob-color width material) \\
+(setq my-door \\
+~~~~~~(make-door :knob-color 'red :width 5.0)) \\
+(door-width my-door) \EV\ 5.0 \\
+(setf (door-width my-door) 43.7) \\
+(door-width my-door) \EV\ 43.7 \\
+(door-knob-color my-door) \EV\ red
+\end{lisp}
+
+\item[\cd{:constructor}]
+This option takes one argument, a symbol,
+which specifies the name of the constructor
+function.  If the argument is not provided or if the option itself is not
+provided, the name of the constructor is produced by concatenating the
+string \cd{"MAKE-"} and the name of the structure, putting the name
+in whatever package is current at the time the \cd{defstruct}
+form is processed (see \cd{*package*}).
+If the argument is
+provided and is {\false}, no constructor function is defined.
+
+This option actually has a more general syntax that is explained
+in section~\ref{DEFSTRUCT-CONSTRUCTOR-SYNTAX}.
+
+\item[\cd{:copier}]
+This option takes one argument, a symbol,
+which specifies the name of the copier
+function.  If the argument is not provided or if the option itself is not
+provided, the name of the copier is produced by concatenating the
+string \cd{"COPY-"} and the name of the structure, putting the name
+in whatever package is current at the time the \cd{defstruct}
+form is processed (see \cd{*package*}).
+If the argument is provided and is {\false}, no copier function is defined.
+
+The automatically defined copier function simply makes a new structure
+and transfers all components verbatim from the argument into the
+newly created structure.  No attempt is made to make copies
+of the components.  Corresponding components of the old and
+new structures will therefore be \cd{eql}.
+
+\item[\cd{:predicate}]
+This option takes one argument, which specifies the name of the type predicate.
+If the argument is not provided or if the option itself is not
+provided, the name of the predicate is made by concatenating the
+name of the structure to the string \cd{"-P"}, putting the name
+in whatever package is current at the time the \cd{defstruct}
+form is processed (see \cd{*package*}).
+If the argument is
+provided and is {\false}, no predicate is defined.  A predicate can be defined
+only if the structure is ``named'';
+if the \cd{:type} option is specified
+and the \cd{:named} option is
+not specified, then the \cd{:predicate} option must either be unspecified
+or have the value {\false}.
+
+\item[\cd{:include}]
+This option is used for building a new structure definition as
+an extension of an old structure definition.  As an example,
+suppose you have a structure called \cd{person} that looks like this:
+\begin{lisp}
+(defstruct person name age sex)
+\end{lisp}
+Now suppose you want to make a new structure to represent an astronaut.
+Since astronauts are people too, you would like them also to have the
+attributes of name, age, and sex, and you would like Lisp functions
+that operate on \cd{person} structures to operate just as well on
+\cd{astronaut} structures.  You can do this by defining \cd{astronaut}
+with the \cd{:include} option, as follows:
+
+\begin{lisp}
+(defstruct (astronaut (:include person) \\
+~~~~~~~~~~~~~~~~~~~~~~(:conc-name astro-)) \\
+~~~helmet-size \\
+~~~(favorite-beverage 'tang))
+\end{lisp}
+
+The \cd{:include} option causes the structure being defined
+to have the same slots as the included structure.
+This is done in such a way
+that the access functions for the included
+structure will also work on the structure being defined.
+In this example, an
+\cd{astronaut} will therefore have five slots: the three defined in
+\cd{person} and the two defined in \cd{astronaut}
+itself.  The access functions defined by the \cd{person} structure
+can be applied to instances of the \cd{astronaut} structure, and they
+will work correctly.
+Moreover, \cd{astronaut} will have its own access functions for
+components defined by the \cd{person} structure.
+The following examples illustrate how you can
+use \cd{astronaut} structures:
+
+\begin{lisp}
+(setq x (make-astronaut :name 'buzz \\
+~~~~~~~~~~~~~~~~~~~~~~~~:age 45 \\
+~~~~~~~~~~~~~~~~~~~~~~~~:sex t \\
+~~~~~~~~~~~~~~~~~~~~~~~~:helmet-size 17.5)) \\
+ \\
+(person-name x) \EV\ buzz \\
+(astro-name x) \EV\ buzz \\
+\\
+(astro-favorite-beverage x) \EV\ tang
+\end{lisp}
+The difference between the access functions \cd{person-name} and \cd{astro-name}
+is that \cd{person-name} may be correctly applied to any \cd{person},
+including an \cd{astronaut}, while \cd{astro-name} may be correctly
+applied only to an \cd{astronaut}.  (An implementation may or may not
+check for incorrect use of access functions.)
+
+At most one \cd{:include} option may be specified in a single
+\cd{defstruct} form.
+The argument to the \cd{:include} option is required and must be the
+name of some previously defined structure.  If the structure being
+defined has no \cd{:type} option, then the included structure must
+also have had no \cd{:type} option specified for it.
+If the structure being defined has a \cd{:type} option,
+then the included structure must have been declared with a \cd{:type}
+option specifying the same representation type.
+
+If no \cd{:type} option is involved, then
+the structure name of the including structure definition
+becomes the name of a data type, of course, and therefore
+a valid type specifier recognizable by \cd{typep}; moreover, it becomes
+a subtype of the included structure.  In the above example,
+\cd{astronaut} is a subtype of \cd{person}; hence
+\begin{lisp}
+(typep (make-astronaut) 'person)
+\end{lisp}
+is true, indicating that all operations on persons will also
+work on astronauts.
+
+The following is an advanced feature of the \cd{:include} option.
+Sometimes, when one structure includes another, the default values or
+slot-options for the slots that came from the included structure are not
+what you want.  The new structure can specify default values or
+slot-options for the included slots different from those the included
+structure specifies, by giving the \cd{:include} option as
+\begin{lisp}
+(:include {\it name} {\it slot-description-1} {\it slot-description-2} ...)
+\end{lisp}
+Each {\it slot-description-j} must have a {\it slot-name} or {\it slot-keyword} that is the same
+as that of some slot in the included structure.
+If {\it slot-description-j} has no {\it default-init},
+then in the new structure the slot will have no initial
+value.  Otherwise its initial value form will be replaced by
+the {\it default-init} in {\it slot-description-j}.
+A normally writable slot may be made read-only.
+If a slot is read-only in the included structure, then it
+must also be so in the including structure.
+If a type is specified for a slot, it must be the same as, or a subtype of, the
+type specified in the included structure.  If it is a strict subtype,
+the implementation may or may not choose to error-check assignments.
+
+For example, if we had wanted to define \cd{astronaut} so that the
+default age for an astronaut is \cd{45}, then we could have said:
+\begin{lisp}
+(defstruct (astronaut (:include person (age 45))) \\
+~~~helmet-size \\
+~~~(favorite-beverage 'tang))
+\end{lisp}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{DATA-TYPES-HIERARCHY-UNDERSPECIFIED}
+to require any structure type created by \cd{defstruct}
+(or \cd{defclass}) to be disjoint from any of the types
+\cd{cons}, \cd{symbol}, \cd{array}, \cd{number}, \cd{character},
+\cd{hash-table}, \cd{readtable}, \cd{package}, \cd{pathname},
+\cd{stream}, and \cd{random-state}.  A consequence of this requirement
+is that it is an error to specify any of these types, or any of their
+subtypes, to the \cd{defstruct} \cd{:include} option.
+(The first edition said nothing explicitly about this.
+Inasmuch as using such a type with the \cd{:include} option was
+not defined to work, one might argue that such use was an error
+in Common Lisp as defined by the first edition.)
+\end{new}
+
+\item[\cd{:print-function}]
+This option may be used only if the \cd{:type}
+option is not specified.
+The argument to the \cd{:print-function} option
+should be a function of three arguments,
+in a form acceptable to the \cd{function} special form,
+to be used to print structures of this type.
+When a structure of this type is to be printed, the function
+is called on three arguments:
+the structure to be printed, a stream to print to,
+and an integer indicating the current depth (to be compared against
+\cd{*print-level*}).
+The printing function should observe the values of
+such printer-control variables as \cd{*print-escape*}
+and \cd{*print-pretty*}.
+
+If the \cd{:print-function} option is not specified and the \cd{:type}
+option also not specified, then a default printing function is
+provided for the structure that will print out all its slots
+using \cd{\#S} syntax (see section~\ref{SHARP-SIGN-MACRO-CHARACTER-SECTION}).
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PRINT-CIRCLE-STRUCTURE}
+to specify that user-defined printing functions for the \cd{defstruct}
+\cd{:print-function} option may print objects to the
+supplied stream using \cd{write}, \cd{print1}, \cd{princ}, \cd{format},
+or \cd{print-object} and expect circularities to be detected and printed
+using \cd{\#{\it n\/}\#} syntax (when \cd{*print-circle*} is non-\cd{nil}, of course).
+See \cd{*print-circle*}.
+\end{new}
+
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFSTRUCT-PRINT-FUNCTION-INHERITANCE}
+to clarify that if the \cd{:print-function}
+option is not specified but the \cd{:include} option {\it is} specified,
+then the print function is inherited from the included structure type.
+Thus, for example, an \cd{astronaut} will be printed by the same
+printing function that is used for \cd{person}.
+
+X3J13 in the same vote extended the \cd{print-function} option
+as follows: If the \cd{print-function} option is specified but with
+no argument, then the standard default printing function (that uses
+\cd{\#S} syntax) will be used.  This provides a means of overriding the
+inheritance rule.  For example, if \cd{person} and \cd{astronaut}
+had been defined as
+\begin{lisp}
+(defstruct (person \\*
+~~~~~~~~~~~~~(:print-function~~~~~;{\rm Special print function}\\*
+~~~~~~~~~~~~~(lambda (p s k) \\*
+~~~~~~~~~~~~~~~(format s "<{\Xtilde}A, age {\Xtilde}D>" \\*
+~~~~~~~~~~~~~~~~~~~~~~~(person-name p) \\*
+~~~~~~~~~~~~~~~~~~~~~~~(person-age p))))) \\*
+~~name age sex) \\
+\\
+(defstruct (astronaut \\*
+~~~~~~~~~~~~~(:include person) \\*
+~~~~~~~~~~~~~(:conc-name astro-) \\*
+~~~~~~~~~~~~~(:print-function))~~~~~;{\rm Use default print function} \\*
+~~~helmet-size \\*
+~~~(favorite-beverage 'tang))
+\end{lisp}
+then an ordinary person would be printed as ``\cd{<Joe Schmoe, age 27>}''
+but an astronaut would be printed as, for example,
+\begin{lisp}
+\#S(ASTRONAUT NAME BUZZ AGE 45 SEX T \\*
+~~~HELMET-SIZE 17.5 FAVORITE-BEVERAGE TANG)
+\end{lisp}
+using the default \cd{\#S} syntax (yuk).
+
+These changes make the behavior of \cd{defstruct} with respect to the
+\cd{:include} option a bit more like the behavior of classes in CLOS.
+\end{new}
+
+\item[\cd{:type}]
+The \cd{:type} option explicitly specifies the representation to be used for
+the structure.  It takes one argument, which must
+be one of the types enumerated below.
+
+Specifying this option has the effect of forcing
+a specific representation and of forcing the components to be
+stored in the order specified in the \cd{defstruct} form
+in corresponding successive elements of the specified representation.
+It also {\it prevents} the structure name from becoming a valid
+type specifier recognizable by \cd{typep}
+(see section~\ref{EXPLICIT-TYPE-STRUCTURES}).
+
+Normally this option is not specified, in which case the structure
+is represented in an implementation-dependent manner.
+\begin{quotation}    % Merely to advance the left margin
+\begin{flushdesc}
+\item[\cd{vector}]
+This produces the same result as specifying \cd{(vector t)}.
+The structure is represented
+as a general vector, storing components as vector elements.
+The first component is vector
+element 1 if the structure is \cd{:named}, and element 0 otherwise.
+
+\item[\cd{(vector {\it element-type})}]
+The structure is represented as a (possibly specialized) vector, storing
+components as vector elements.  Every component must be of a type that can be
+stored in a vector of the type specified.  The first component is vector
+element 1 if the structure is \cd{:named}, and element 0 otherwise.
+The structure may be \cd{:named} only if the type \cd{symbol} is a subtype of
+the specified \cd{element-type}.
+
+\item[\cd{list}]
+The structure is represented as a list.
+The first component is the {\it cadr}
+if the structure is \cd{:named}, and the {\it car} if
+it is \cd{:unnamed}.
+\end{flushdesc}
+\end{quotation}
+
+\item[\cd{:named}]
+The \cd{:named} option specifies that the structure is ``named''; this
+option takes no argument.  If no \cd{:type} option is specified,
+then the structure is always named; so this option is useful only in
+conjunction with the \cd{:type} option.
+See section~\ref{EXPLICIT-TYPE-STRUCTURES} for a further description of this option.
+
+\item[\cd{:initial-offset}]
+This allows you to tell \cd{defstruct} to skip over a certain
+number of slots before it starts allocating the slots described in the
+body.  This option requires an argument,
+a non-negative integer,
+which is the number of slots you want \cd{defstruct} to skip.
+The \cd{:initial-offset} option may be used only if the
+\cd{:type} option is also specified.
+See section~\ref{DEFSTRUCT-INITIAL-OFFSET} for a further description
+of this option.
+\end{flushdesc}
+
+\section{By-Position Constructor Functions}
+\label{DEFSTRUCT-CONSTRUCTOR-SYNTAX}
+
+If the \cd{:constructor} option is given as
+\cd{(\cd{:constructor} {\it name} {\it arglist})},
+then instead of making a keyword-driven constructor function,
+\cd{defstruct} defines a ``positional'' constructor function,
+taking arguments whose meaning is determined by the argument's position
+rather than by a keyword.
+The {\it arglist} is used to describe what the arguments to the
+constructor will be.  In the simplest case something like
+\cd{(\cd{:constructor} make-foo (a b c))} defines \cd{make-foo} to be
+a three-argument constructor function whose arguments are used to initialize the
+slots named \cd{a}, \cd{b}, and \cd{c}.
+
+In addition, the keywords \cd{\&optional}, \cd{\&rest}, and \cd{\&aux} are
+recognized in the argument list.  They work in the way you might expect,
+but there are a few fine points worthy of explanation.
+Consider this example:
+\begin{lisp}
+(\cd{:constructor} create-foo \\
+~~~~~~~~(a \&optional b (c 'sea) \&rest d \&aux e (f 'eff)))
+\end{lisp}
+This defines \cd{create-foo} to be a constructor of one or more arguments.
+The first argument is used to initialize the \cd{a} slot.  The second
+argument is used to initialize the \cd{b} slot.  If there isn't any
+second argument, then the default value given in the body of the
+\cd{defstruct} (if given) is used instead.  The third argument is used to
+initialize the \cd{c} slot.  If there isn't any third argument, then the
+symbol \cd{sea} is used instead.  Any arguments following the third
+argument are collected into a list and used to initialize the \cd{d}
+slot.  If there are three or fewer arguments, then {\false} is placed in
+the \cd{d} slot.  The \cd{e} slot {\it is not initialized}; its initial
+value is undefined.  Finally, the \cd{f} slot is initialized to contain
+the symbol \cd{eff}.
+
+The actions taken in the \cd{b} and \cd{e} cases were carefully
+chosen to allow the user to specify all possible behaviors.  Note that
+the \cd{\&aux} ``variables'' can be used to completely override the default
+initializations given in the body.
+
+With this definition, one can write
+\begin{lisp}
+(create-foo 1 2)
+\end{lisp}
+instead of
+\begin{lisp}
+(make-foo \cd{:a} 1 \cd{:b} 2)
+\end{lisp}
+and of course \cd{create-foo} provides defaulting different
+from that of \cd{make-foo}.
+
+It is permissible to use the
+\cd{:constructor} option more than once, so that you can define several
+different constructor functions, each taking different parameters.
+
+Because a constructor of this type operates By Order of Arguments,
+it is sometimes known as a BOA constructor.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFSTRUCT-CONSTRUCTOR-KEY-MIXTURE}
+to allow \cd{\&key} and \cd{\&allow-other-keys}
+in the
+parameter list of a ``positional'' constructor.  The initialization of slots
+corresponding to keyword parameters
+is performed in the same manner as for \cd{\&optional} parameters.
+A variant of the example shown above illustrates this:
+\begin{lisp}
+(\cd{:constructor} create-foo \\*
+~~~~~~~~(a \&optional b (c 'sea) \\*
+~~~~~~~~~\&key p (q 'cue) ((:why y)) ((:you u) 'ewe) \\*
+~~~~~~~~~\&aux e (f 'eff)))
+\end{lisp}
+The treatment of slots \cd{a}, \cd{b}, \cd{c}, \cd{e}, and \cd{f}
+is the same as in the original example.  In addition,
+if there is a \cd{:p} keyword argument, it is
+used to initialize the \cd{p} slot;  if there isn't any
+\cd{:p} keyword argument, then the default value given in the body of the
+\cd{defstruct} (if given) is used instead.  Similarly,
+if there is a \cd{:q} keyword argument, it is
+used to initialize the \cd{q} slot;  if there isn't any
+\cd{:q} keyword argument, then
+the symbol \cd{cue} is used instead.
+
+In order thoroughly to flog this presumably already dead horse,
+we further observe that if there is a \cd{:why} keyword argument, it is
+used to initialize the \cd{y} slot; otherwise
+the default value for slot \cd{y} is used instead.  Similarly,
+if there is a \cd{:you} keyword argument, it is
+used to initialize the \cd{u} slot;  otherwise
+the symbol \cd{ewe} is used instead.
+
+If memory serves me correctly, \cd{defstruct} was included in the original
+design for Common Lisp some time before keyword arguments were approved.
+The failure of positional constructors to accept keyword arguments may well
+have been an oversight on my part; there is no logical reason to exclude
+them.  I am grateful to X3J13 for rectifying this.
+
+A remaining difficulty is that the possibility of keyword arguments
+renders the term ``positional constructor'' a misnomer.  Worse yet,
+it ruins the term ``BOA constructor.''  I suggest that
+they continue to be called BOA constructors, as I refuse to abandon
+a good pun.  (I regret appearing to have more compassion for puns than
+for horses.)
+
+As part of the same vote X3J13 also changed \cd{defstruct}
+to allow BOA constructors to have
+parameters (including supplied-p parameters)
+that do not correspond to any
+slot.  Such parameters may be used in subsequent initialization forms in the
+parameter list. Consider this example:
+\begin{lisp}
+(defstruct (ice-cream-factory \\*
+~~~~~~~~~~~~~(:constructor fabricate-factory \\*
+~~~~~~~~~~~~~~~(\&key (capacity 5) \\*
+~~~~~~~~~~~~~~~~~~~~~~location \\
+~~~~~~~~~~~~~~~~~~~~~~(local-flavors \\*
+~~~~~~~~~~~~~~~~~~~~~~~~(case location \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((hawaii) '(pineapple macadamia guava)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((massachusetts) '(lobster baked-bean)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((california) '(ginger lotus avocado \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bean-sprout garlic)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((texas) '(jalapeno barbecue)))) \\
+~~~~~~~~~~~~~~~~~~~~~~(flavors (subseq (append local-flavors \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'(vanilla \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~chocolate \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~strawberry \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~pistachio \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~maple-walnut \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~peppermint)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~0 capacity))))) \\*
+~~(capacity 3) \\*
+~~(flavors '(vanilla chocolate strawberry mango)))
+\end{lisp}
+
+The structure type \cd{ice-cream-factory} has two constructors.
+The standard constructor, \cd{make-ice-cream-factory},
+takes two keyword arguments named \cd{:capacity} and \cd{:flavors}.
+For this constructor, the default for the \cd{capacity} slot is \cd{3}
+and the default list of \cd{flavors} is America's favorite threesome
+and a dark horse (not a dead one).
+The BOA constructor \cd{fabricate-factory}
+accepts four different keyword arguments.  The \cd{:capacity}
+argument defaults to \cd{5}, and the \cd{:flavors} argument
+defaults in a complicated manner based on the other three.
+The \cd{:local-flavors} argument may be specified directly,
+or may be allowed to default based on the \cd{:location} of the factory.
+Here are examples of various factories:
+
+\vskip0pt plus 2pt%manual
+\begin{lisp}
+(setq houston (fabricate-factory :capacity 4 :location 'texas)) \\*
+(setq cambridge (fabricate-factory :location 'massachusetts)) \\
+(setq seattle (fabricate-factory :local-flavors '(salmon))) \\
+(setq wheaton (fabricate-factory :capacity 4 :location 'illinois)) \\*
+(setq pittsburgh (fabricate-factory :capacity 4)) \\*
+(setq cleveland (make-factory :capacity 4)) \\
+ \\
+(ice-cream-factory-flavors houston) \\*
+~\EV~(jalapeno barbecue vanilla chocolate)
+\end{lisp}
+\newpage%manual
+\begin{lisp}
+(ice-cream-factory-flavors cambridge) \\*
+~\EV~(lobster baked-bean vanilla chocolate strawberry) \\
+\\
+(ice-cream-factory-flavors seattle) \\*
+~\EV~(salmon vanilla chocolate strawberry pistachio) \\
+\\
+(ice-cream-factory-flavors wheaton) \\*
+~\EV~(vanilla chocolate strawberry pistachio) \\
+\\
+(ice-cream-factory-flavors pittsburgh) \\*
+~\EV~(vanilla chocolate strawberry pistachio) \\
+\\
+(ice-cream-factory-flavors cleveland) \\*
+~\EV~(vanilla chocolate strawberry mango)
+\end{lisp}
+\end{new}
+
+
+\section{Structures of Explicitly Specified Representational Type}
+\label{EXPLICIT-TYPE-STRUCTURES}
+
+Sometimes it is important to have explicit control
+over the representation of a structure.  The \cd{:type}
+option allows one to specify that a structure must be implemented
+in a particular way, using a list or a specific kind of vector,
+and to specify the exact allocation of structure slots to
+components of the representation.
+A structure may also be ``unnamed'' or ``named,'' according to whether
+the structure name is stored in (and thus recoverable from) the structure.
+
+\subsection{Unnamed Structures}
+
+Sometimes a particular data representation is imposed by external requirements,
+and yet it is desirable to document the data format as a \cd{defstruct}-style
+structure.  For example, consider expressions built up from numbers,
+symbols, and binary operations such as \cd{+} and \cd{*}.  An operation
+might be represented as it is in Lisp, as a list of the operator
+and the two operands.  This fact can be expressed succinctly with \cd{defstruct}
+in this manner:
+\begin{lisp}
+(defstruct (binop (:type list)) \\
+~~(operator '? :type symbol) \\
+~~operand-1 \\
+~~operand-2)
+\end{lisp}
+This will define a constructor function \cd{make-binop} and three
+selector functions, namely \cd{binop-operator}, \cd{binop-operand-1},
+and \cd{binop-operand-2}.  (It will {\it not}, however, define a predicate
+\cd{binop-p}, for reasons explained below.)
+
+The effect of \cd{make-binop} is simply to construct a list of length 3:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (+ x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (* {\nil} 4)
+\end{lisp}
+It is just like the function \cd{list} except that it takes
+keyword arguments and performs slot defaulting appropriate to the \cd{binop}
+conceptual data type.  Similarly, the selector functions
+\cd{binop-operator}, \cd{binop-operand-1},
+and \cd{binop-operand-2} are essentially equivalent to \cd{car},
+\cd{cadr}, and \cd{caddr}, respectively.  (They might not be
+completely equivalent because,
+for example, an implementation would be justified in adding error-checking
+code to ensure that the argument to each selector function is a length-3
+list.)
+
+We speak of \cd{binop} as being a ``conceptual'' data type because \cd{binop}
+is not made a part of the Common Lisp type system.  The predicate
+\cd{typep} will not recognize \cd{binop} as a type specifier, and \cd{type-of}
+will return \cd{list} when given a \cd{binop} structure.  Indeed, there is
+no way to distinguish a data structure constructed by \cd{make-binop}
+from any other list that happens to have the correct structure.
+
+There is not even any way to recover the structure name \cd{binop} from
+a structure created by \cd{make-binop}.  This can be done, however,
+if the structure is ``named.''
+
+\subsection{Named Structures}
+
+A ``named'' structure has the property that, given an instance of the
+structure, the structure name (that names the type) can be reliably
+recovered.  For structures defined
+with no \cd{:type} option, the structure name actually becomes part
+of the Common Lisp data-type system.  The function \cd{type-of},
+when applied to such a structure, will return the structure name
+as the type of the object; the predicate \cd{typep} will recognize
+the structure name as a valid type specifier.
+
+For structures defined with a \cd{:type} option, \cd{type-of} will
+return a type specifier such as \cd{list} or \cd{(vector t)},
+depending on the type specified to the \cd{:type} option.
+The structure name does not become a valid type specifier.
+However,
+if the \cd{:named} option is also specified, then the first component
+of the structure (as created by a \cd{defstruct} constructor function)
+will always contain the structure name.  This allows the structure name
+to be recovered from an instance of the structure and allows a reasonable
+predicate for the conceptual type to be defined:
+the automatically defined
+\cd{{\it name}-p} predicate for the structure operates by first
+checking that its argument is of the proper type (\cd{list}, \cd{(vector t)},
+or whatever) and then checking whether the first component contains
+the appropriate type name.
+
+Consider the \cd{binop} example shown above, modified only to
+include the \cd{:named} option:
+\begin{lisp}
+(defstruct (binop (:type list) :named) \\
+~~(operator '? :type symbol) \\
+~~operand-1 \\
+~~operand-2)
+\end{lisp}
+As before, this will define a constructor function \cd{make-binop} and three
+selector functions \cd{binop-operator}, \cd{binop-operand-1},
+and \cd{binop-operand-2}.  It will also define a predicate \cd{binop-p}.
+
+The effect of \cd{make-binop} is now to construct a list of length 4:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (binop + x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (binop * {\nil} 4)
+\end{lisp}
+The structure has the same layout as before except that the structure name
+\cd{binop} is included as the first list element.
+The selector functions
+\cd{binop-operator}, \cd{binop-operand-1},
+and \cd{binop-operand-2} are essentially equivalent to \cd{cadr},
+\cd{caddr}, and \cd{cadddr}, respectively.
+The predicate \cd{binop-p} is more or less equivalent to the following
+definition.
+\begin{lisp}
+(defun binop-p (x) \\
+~~(and (consp x) (eq (car x) 'binop)))
+\end{lisp}
+The name \cd{binop} is still not a valid type specifier recognizable
+to \cd{typep}, but at least there is a way of distinguishing \cd{binop}
+structures from other similarly defined structures.
+
+\subsection{Other Aspects of Explicitly Specified Structures}
+\label{DEFSTRUCT-INITIAL-OFFSET}
+
+The \cd{:initial-offset} option allows one
+to specify that slots be allocated beginning at a representational
+element other than the first.  For example, the form
+\begin{lisp}
+(defstruct (binop (:type list) (:initial-offset 2)) \\*
+~~(operator '? :type symbol) \\*
+~~operand-1 \\*
+~~operand-2)
+\end{lisp}
+would result in the following behavior for \cd{make-binop}:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (nil nil + x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (nil nil * {\nil} 4)
+\end{lisp}
+The selectors
+\cd{binop-operator}, \cd{binop-operand-1},
+and \cd{binop-operand-2} would be essentially equivalent to \cd{caddr},
+\cd{cadddr}, and \cd{car} of \cd{cddddr}, respectively.
+Similarly, the form
+\begin{lisp}
+(defstruct (binop (:type list) :named (:initial-offset 2)) \\*
+~~(operator '? :type symbol) \\*
+~~operand-1 \\*
+~~operand-2)
+\end{lisp}
+would result in the following behavior for \cd{make-binop}:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (nil nil binop + x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (nil nil binop * {\nil} 4)
+\end{lisp}
+
+If the \cd{:include} is used with the \cd{:type}
+option, then the effect is first to skip over as many representation
+elements as needed to represent the included structure, then to
+skip over any additional elements specified by the \cd{:initial-offset}
+option, and then to begin allocation of elements from that point.
+For example:
+\begin{lisp}
+(defstruct (binop (:type list) :named (:initial-offset 2)) \\
+~~(operator '? :type symbol) \\
+~~operand-1 \\
+~~operand-2) \\
+ \\
+(defstruct (annotated-binop (:type list) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~(:initial-offset 3) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~(:include binop)) \\
+~~commutative associative identity) \\
+ \\
+(make-annotated-binop :operator '* \\
+~~~~~~~~~~~~~~~~~~~~~~:operand-1 'x \\
+~~~~~~~~~~~~~~~~~~~~~~:operand-2 5 \\
+~~~~~~~~~~~~~~~~~~~~~~:commutative t \\
+~~~~~~~~~~~~~~~~~~~~~~:associative t \\
+~~~~~~~~~~~~~~~~~~~~~~:identity 1) \\
+~~~\EV\ (nil nil binop * x 5 nil nil nil t t 1)
+\end{lisp}
+The first two {\nil} elements stem from the \cd{:initial-offset} of \cd{2}
+in the definition of \cd{binop}.  The next four elements contain the
+structure name and three slots for \cd{binop}.  The next three {\nil} elements
+stem from the \cd{:initial-offset} of \cd{3} in the definition of
+\cd{annotated-binop}.  The last three list elements contain the additional
+slots for an \cd{annotated-binop}.

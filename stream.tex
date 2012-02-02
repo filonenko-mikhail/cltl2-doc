@@ -1,0 +1,753 @@
+%Part{Stream, Root = "CLM.MSS"}
+%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Streams}
+\label{STREAM}
+
+Streams are objects that serve as sources or sinks of data.
+Character streams produce or absorb characters;
+binary streams produce or absorb integers.
+The normal action of a Common Lisp system is to read characters from
+a character input stream, parse the characters as representations
+of Common Lisp data objects, evaluate each object (as a form) as it is read, and
+print representations of the results of
+evaluation to an output character stream.
+
+Typically streams are connected to files or to an interactive terminal.
+Streams, being Lisp objects, serve as the ambassadors of external
+devices by which input/output is accomplished.
+
+A stream, whether a character stream or a binary
+stream, may be input-only, output-only, or bidirectional.
+What operations may be performed on a stream depends on which of
+the six types of stream it is.
+
+\section {Standard Streams}
+
+There are several variables whose values are streams used by many
+functions in the Lisp system.  These variables and their uses are
+listed here.  By convention, variables that are expected to hold a
+stream capable of input have names ending with \cd{-input}, and
+variables that are expected to hold a
+stream capable of output have names ending with \cd{-output}.
+Variables expected to hold a
+bidirectional stream have names ending with \cd{-io}.
+
+\begin{defun}[Variable]
+*standard-input*
+
+In the normal Lisp top-level loop, input is read from
+\cd{*standard-input*} (that is, whatever stream is the value of the global
+variable \cd{*standard-input*}).  Many input functions, including
+\cd{read} and \cd{read-char}, take a stream argument that defaults to
+\cd{*standard-input*}.
+\end{defun}
+
+\begin{defun}[Variable]
+*standard-output*
+
+In the normal Lisp top-level loop, output is sent to
+\cd{*standard-output*} (that is, whatever stream is the value of the global
+variable \cd{*standard-output*}).  Many output functions, including
+\cd{print} and \cd{write-char}, take a stream argument that defaults
+to \cd{*standard-output*}.
+\end{defun}
+
+\begin{defun}[Variable]
+*error-output*
+
+The value of \cd{*error-output*} is a stream to which error messages
+should be sent.  Normally this is the same as \cd{*standard-output*},
+but \cd{*standard-output*} might be bound to a file and \cd{*error-output*}
+left going to the terminal or to a separate file of error messages.
+\end{defun}
+
+\begin{defun}[Variable]
+*query-io*
+
+The value of \cd{*query-io*} is a stream to be used when
+asking questions of the user.  The question should be output to this
+stream, and the answer read from it.  When
+the normal input to a program may be coming from a file, questions such
+as ``Do you really want to delete all of the files in your directory?'' should
+nevertheless
+be sent directly to the user; and the answer should come from the user,
+not from the data file.  For such purposes \cd{*query-io*} should be
+used instead of \cd{*standard-input*} and \cd{*standard-output*}.
+\cd{*query-io*} is used by such functions
+as \cd{yes-or-no-p}.
+\end{defun}
+
+\begin{defun}[Variable]
+*debug-io*
+
+The value of \cd{*debug-io*} is a stream to be used for interactive
+debugging purposes.  This is often the same as the value of \cd{*query-io*},
+but need not be.
+\end{defun}
+
+\begin{defun}[Variable]
+*terminal-io*
+
+The value of \cd{*terminal-io*} is ordinarily
+the stream that connects to the user's console.
+Typically, writing to this stream would cause the output to appear
+on a display screen, for example, and reading from the stream would
+accept input from a keyboard.
+
+It is intended
+that standard input functions such as \cd{read} and \cd{read-char},
+when used with this stream, would cause ``echoing'' of the input
+into the output side of the stream.  (The means by which this is
+accomplished are of course highly implementation-dependent.)
+\end{defun}
+
+\begin{defun}[Variable]
+*trace-output*
+
+The value of \cd{*trace-output*} is the stream on which the \cd{trace}
+function prints its output.
+\end{defun}
+
+The variables
+\cd{*standard-input*}, \cd{*standard-output*},
+\cd{*error-\discretionary{}{}{}output*},
+\cd{*trace-\discretionary{}{}{}output*},
+\cd{*query-io*}, and \cd{*debug-io*}
+are initially bound to synonym streams that pass all
+operations on to the stream that is the value of \cd{*terminal-io*}.
+(See \cd{make-synonym-stream}.)
+Thus any operations performed on those streams will go to the terminal.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STANDARD-INPUT-INITIAL-BINDING}
+to replace the requirements of the preceding
+paragraph with the following new requirements:
+
+The seven standard stream variables,
+\cd{*standard-input*}, \cd{*standard-output*}, \cd{*query-io*},
+\cd{*debug-io*}, \cd{*terminal-io*},
+\cd{*error-\discretionary{}{}{}output*}, and
+\cd{*trace-\discretionary{}{}{}output*},
+are initially bound to open streams.  (These will be called
+{\it the standard initial streams}.)
+
+The streams that are the initial values of
+\cd{*standard-input*}, \cd{*query-io*}, \cd{*debug-io*}, and \cd{*terminal-io*}
+must support input.
+
+The streams that are the initial values of
+\cd{*standard-\discretionary{}{}{}output*},
+\cd{*error-\discretionary{}{}{}output*},
+\cd{*trace-output*}, \cd{*query-io*}, \cd{*debug-io*}, and \cd{*terminal-io*}
+must support output.
+
+None of the standard initial streams (including the one to which
+\cd{*terminal-io*} is initially bound) may be a synonym, either directly
+or indirectly, for any of the standard stream variables
+except \cd{*terminal-io*}.  For example, the initial value of
+\cd{*trace-output*} may be a synonym stream for \cd{*terminal-io*}
+but not a synonym stream for \cd{*standard-output*} or \cd{*query-io*}.
+(These are examples of direct synonyms.)  As another example,
+\cd{*query-io*} may be a two-way stream or echo stream whose
+input component is a synonym for \cd{*terminal-io*},
+but its input component may not be a synonym for \cd{*standard-input*}
+or \cd{*debug-io*}.  (These are examples of indirect synonyms.)
+
+Any or all of the standard initial streams may be direct or indirect
+synonyms for one or more common implementation-dependent streams.
+For example, the standard initial streams might all be synonym streams
+(or two-way or echo streams whose components are synonym streams)
+to a pair of hidden terminal input and output streams maintained by
+the implementation.
+
+Part of the intent of these rules is to ensure that it is always safe
+to bind any standard stream variable to the value of any other
+standard stream variable (that is, unworkable circularities are
+avoided) without unduly restricting implementation flexibility.
+\end{new}
+
+No user program should ever change the value of \cd{*terminal-io*}.  A program
+that wants (for example) to divert output to a file should do so by binding
+the value of \cd{*standard-output*}; that way error messages sent to
+\cd{*error-output*} can still get to the user by going through \cd{*terminal-io*},
+which is usually what is desired.
+
+\section {Creating New Streams}
+
+Perhaps the most important constructs for creating new streams
+are those that open files; see \cd{with-open-file} and \cd{open}.
+The following functions construct streams without reference to a file system.
+
+\begin{defun}[Function]
+make-synonym-stream symbol
+
+\cd{make-synonym-stream} creates and returns
+a synonym stream.
+Any operations on the new stream will be performed on the stream
+that is then the value of the dynamic variable named by the {\it symbol}.
+If the value of the variable should change or be bound,
+then the synonym stream will operate on the new stream.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the result of
+\cd{make-\discretionary{}{}{}synonym-stream} is always a stream of type \cd{synonym-stream}.
+Note that the type of a synonym stream is {\it always} \cd{synonym-stream},
+regardless of the type of the stream for which it is a synonym.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+make-broadcast-stream &rest streams
+
+This returns a stream that works only in the output direction.  Any output
+sent to this stream will be sent to all of the {\it streams} given.
+The set of
+operations that may be performed on the new stream is the intersection
+of those for the given streams.  The results returned by a stream
+operation are the values resulting from
+performing the operation on the last stream in {\it streams}; the
+results of performing the operation on all preceding streams are
+discarded.
+If no {\it streams} are given as arguments, then the result
+is a ``bit sink''; all output to the resulting stream is discarded.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the result of
+\cd{make-\discretionary{}{}{}broadcast-stream} is always a stream of type \cd{broadcast-stream}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+make-concatenated-stream &rest streams
+
+This returns a stream that works only in the input direction.
+Input is taken from the first of the {\it streams} until it reaches
+end-of-file; then that stream is discarded, and input is taken
+from the next of the {\it streams}, and so on.  If no arguments
+are given, the result is a stream with no content; any input attempt
+will result in end-of-file.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the result of
+\cd{make-\discretionary{}{}{}concatenated-stream} is always a stream of type \cd{concatenated-stream}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+make-two-way-stream input-stream output-stream
+
+This returns a bidirectional stream that gets its input from {\it input-stream}
+and sends its output to {\it output-stream}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the result of
+\cd{make-\discretionary{}{}{}two-way-stream} is always a stream of type \cd{two-way-stream}.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+make-echo-stream input-stream output-stream
+
+This returns a bidirectional stream that gets its input from {\it input-stream}
+and sends its output to {\it output-stream}.  In addition, all
+input taken from {\it input-stream} is echoed to {\it output-stream}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the result of
+\cd{make-\discretionary{}{}{}echo-stream} is always a stream of type \cd{echo-stream}.
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PEEK-CHAR-READ-CHAR-ECHO}
+to clarify the interaction of
+\cd{read-char}, \cd{unread-char}, and \cd{peek-char} with echo streams.
+(See the descriptions of those functions for details.)
+
+X3J13 explicitly noted that the bidirectional streams that are the initial
+values of \cd{*query-io*}, \cd{*debug-io*}, and \cd{*terminal-io*},
+even though they may have some echoing behavior, conceptually
+are not necessarily the products of calls to \cd{make-echo-stream}
+and therefore are not subject to the new rules about echoing on echo
+streams.  Instead, these initial interactive streams may have
+implementation-dependent echoing behavior.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+make-string-input-stream string &optional start end
+
+This returns an input stream.
+The input stream will supply, in order, the characters in the substring
+of {\it string} delimited by {\it start} and {\it end}; after the last
+character has been supplied, the stream will then be at end-of-file.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the result of
+\cd{make-\discretionary{}{}{}string-input-stream} is always a stream of type \cd{string-stream}.
+\end{new}
+\end{defun}
+
+\begin{obsolete}
+\begin{defun}[Function]
+make-string-output-stream 
+
+This returns an output stream that will 
+accumulate all output given it for the benefit of the function
+\cd{get-output-stream-string}.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL}
+to let \cd{make-string-output-stream} take an \cd{:element-type} argument.
+
+\begin{defun}[Function]
+make-string-output-stream &key :element-type
+
+This returns an output stream that will 
+accumulate all output given it for the benefit of the function
+\cd{get-output-stream-string}.
+
+The \cd{:element-type} argument specifies what characters
+must be accepted by the created stream.  If the \cd{:element-type} argument
+is omitted, the created stream must accept all characters.
+
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the result of
+\cd{make-\discretionary{}{}{}string-output-stream} is always a stream of type \cd{string-stream}.
+\end{defun}
+\end{newer}
+
+
+\begin{defun}[Function]
+get-output-stream-string string-output-stream
+
+Given a stream produced by \cd{make-string-output-stream}, this
+returns a string containing all the characters output to the stream so far.
+The stream is then reset; thus each call to \cd{get-output-stream-string}
+gets only the characters since the last such call (or the creation
+of the stream, if no such previous call has been made).
+\end{defun}
+
+\begin{defmac}
+with-open-stream (var stream) {declaration}* {\,form}*
+
+The form {\it stream} is evaluated and must produce a stream.
+The variable {\it var} is bound with the stream as its value,
+and then the forms of the body are executed
+as an implicit \cd{progn}; the results of evaluating
+the last form are returned as the value of the \cd{with-open-stream} form.
+The stream
+is automatically closed on exit from the \cd{with-open-stream} form,
+no matter whether the exit is normal or abnormal;
+see \cd{close}.
+The stream should be regarded as having dynamic extent.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the stream created by
+\cd{with-open-stream} is always of type \cd{file-stream}.
+\end{new}
+\end{defmac}
+
+\begin{defmac}
+with-input-from-string (var string {keyword value}*)
+      {declaration}* {\,form}*
+
+The body is executed as an implicit \cd{progn} with the variable {\it var}
+bound to a character input stream that supplies successive characters from
+the value of the form {\it string}.  \cd{with-input-from-string}
+returns the results from the last {\it form} of the body.
+
+The input stream is automatically closed on exit from
+the \cd{with-\discretionary{}{}{}input-\discretionary{}{}{}from-string} form,
+no matter whether the exit is normal or abnormal.
+The stream should be regarded as having dynamic extent.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the stream created by
+\cd{with-input-from-string} is always of type \cd{string-stream}.
+\end{new}
+
+The following keyword options may be used:
+\begin{quotation}
+\begin{flushdesc}
+\item[\cd{:index}]
+The form after the \cd{:index} keyword should be a {\it place}
+acceptable to \cd{setf}.  If the \cd{with-input-from-string} form
+is exited normally, then the {\it place} will have stored into it the
+index into the {\it string} indicating the first character not read
+(the length of the string if all characters were used).
+The {\it place} is not updated as reading progresses, but only at the
+end of the operation. 
+
+\item[\cd{:start}]
+The \cd{:start} keyword takes an argument indicating, in the manner
+usual for sequence functions, the beginning of
+a substring of {\it string} to be used.
+
+\item[\cd{:end}]
+The \cd{:end} keyword takes an argument indicating, in the manner
+usual for sequence functions, the end of
+a substring of {\it string} to be used.
+\end{flushdesc}
+\end{quotation}
+
+Here is an example of the use of \cd{with-input-from-string}:
+\begin{lisp}
+(with-input-from-string (s "Animal Crackers" :index j :start 6) \\
+~~(read s)) \EV\ crackers
+\end{lisp}
+As a side effect, the variable \cd{j} is set to \cd{15}.
+
+The \cd{:start} and \cd{:index} keywords may both specify
+the same variable, which is a pointer within the string to be advanced,
+perhaps repeatedly by some containing loop.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section \ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+\end{defmac}
+
+\begin{obsolete}
+\begin{defmac}
+with-output-to-string (var [string]) {declaration}* {\,form}*
+
+The body is executed as an implicit \cd{progn} with the variable {\it var}
+bound to a character output stream.  All output to that stream
+is saved in a string.  This may be done in one of two ways.
+
+If no {\it string} argument is provided, then
+the value of
+\cd{with-output-from-string} is a string containing all the collected output.
+
+If {\it string} is specified, it must be a string with a fill pointer;
+the output is incrementally appended to the string,
+as if using \cd{vector-push-extend} if the string is adjustable,
+and otherwise as if using \cd{vector-push}.
+In this case \cd{with-output-to-string}
+returns the results from the last {\it form} of the body.
+
+In either case,
+the output stream is automatically closed on exit from
+the \cd{with-output-from-string} form,
+no matter whether the exit is normal or abnormal.
+The stream should be regarded as having dynamic extent.
+\end{defmac}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL}
+to let \cd{with-output-to-string} take an \cd{:element-type} argument.
+
+\begin{defmac}
+with-output-to-string (var [string [\!:element-type! type]])
+                      {declaration}* {\,form}*
+
+One may specify \cd{nil} instead of a string as the {\it string}
+and use the \cd{:element-type} argument to specify what characters
+must be accepted by the created stream.  If no {\it string} argument
+is provided, or if it is \cd{nil} and no \cd{:element-type} is specified,
+the created stream must accept all characters.
+
+X3J13 voted in October 1988
+\issue{WITH-OUTPUT-TO-STRING-APPEND-STYLE}
+to specify that
+if {\it string} is specified, it must be a string with a fill pointer;
+the output is incrementally appended to the string (as if by use of
+\cd{vector-push-extend}).
+
+In this way output cannot be accidentally lost.  This change makes
+\cd{with-\discretionary{}{}{}output-\discretionary{}{}{}to-string} behave in the same way that \cd{format} does
+when given a string as its first argument.
+
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to specify that the stream created by
+\cd{with-output-to-string} is always of type \cd{string-stream}.
+
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section \ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{defmac}
+\end{newer}
+
+\section {Operations on Streams}
+
+This section contains discussion of only those operations that
+are common to all streams.  Input and output is rather complicated
+and is discussed separately in chapter \ref{IO}.
+The interface between streams and the file system is discussed
+in chapter \ref{FILES}.
+
+\begin{defun}[Function]
+streamp object
+
+\cd{streamp} is true if its argument is a stream,
+and otherwise is false.
+\begin{lisp}
+(streamp x) \EQ\ (typep x 'stream)
+\end{lisp}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{CLOSED-STREAM-OPERATIONS}
+to specify that \cd{streamp} is unaffected
+by whether its argument, if a stream, is open or closed.  In either case
+it returns true.
+\end{new}
+\end{defun}
+
+\begin{newer}
+\begin{defun}[Function]
+open-stream-p stream
+
+X3J13 voted in January 1989 \issue{STREAM-ACCESS}
+to add the predicate \cd{open-stream-p}.
+It is true if its argument (which must be a stream)
+is open, and otherwise is false.
+
+A stream is always created open; it remains open until closed
+with the \cd{close} function.  The macros \cd{with-open-stream},
+\cd{with-input-from-string}, \cd{with-output-to-string},
+and \cd{with-open-file} automatically close the created stream
+as control leaves their bodies, in effect imposing dynamic extent
+on the openness of the stream.
+\end{defun}
+\end{newer}
+
+\begin{defun}[Function]
+input-stream-p stream
+
+This predicate is true if its argument (which must be a stream) can handle
+input operations, and otherwise is false.
+\end{defun}
+
+\begin{defun}[Function]
+output-stream-p stream
+
+This predicate is true if its argument (which must be a stream) can handle
+output operations, and otherwise is false.
+\end{defun}
+
+
+\begin{defun}[Function]
+stream-element-type stream
+
+A type specifier is returned to indicate what objects
+may be read from or written to the argument {\it stream}, which must be a stream.
+Streams created by \cd{open} will have an element type
+restricted to a subset of \cd{character} or \cd{integer},
+but in principle a stream may conduct transactions using any
+Lisp objects.
+\end{defun}
+
+\begin{defun}[Function]
+close stream &key :abort
+
+The argument must be a stream.
+The stream is closed.  No further input/output operations may be performed
+on it.  However, certain inquiry operations may still be performed,
+and it is permissible to close an already closed stream.
+
+\begin{newer}
+X3J13 voted in January 1989
+\issue{CLOSED-STREAM-OPERATIONS}
+and revised the vote in March 1989
+to specify that if \cd{close} is called
+on an open stream, the stream is closed and \cd{t} is returned;
+but if \cd{close} is called on a closed stream, it succeeds without
+error and returns an unspecified value.
+(The rationale for not specifying the value returned for a closed stream
+is that in some implementations closing certain streams does not really
+have an effect on them---for example, closing the \cd{*terminal-io*}
+stream might not ``really'' close it---and it is not desirable to force
+such implementations to keep otherwise unnecessary state.  Portable programs
+will of course not rely on such behavior.)
+
+
+X3J13 also voted in January 1989 to specify exactly which inquiry
+functions may be applied to closed streams:
+\begin{tabbing}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lll@{}}
+\cd{streamp} & \cd{pathname-host} & \cd{namestring} \\
+\cd{pathname} & \cd{pathname-device} & \cd{file-namestring} \\
+\cd{truename} & \cd{pathname-directory} & \cd{directory-namestring} \\
+\cd{merge-pathnames} & \cd{pathname-name} & \cd{host-namestring} \\
+\cd{open} & \cd{pathname-type} & \cd{enough-namestring} \\
+\cd{probe-file} & \cd{pathname-version} & \cd{directory} \\
+\end{tabular*}
+\end{tabbing}
+See the individual descriptions of these functions for more information
+on how they operate on closed streams.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{CLOSE-CONSTRUCTED-STREAM}
+to clarify the effect of closing various
+kinds of streams.  First some terminology:
+\begin{itemize}
+\item
+A {\it composite} stream is one that was returned by a call to
+\cd{make-\discretionary{}{}{}synonym-\discretionary{}{}{}stream},
+\cd{make-broadcast-stream},
+\cd{make-concatenated-stream},
+\cd{make-\discretionary{}{}{}two-\discretionary{}{}{}way-\discretionary{}{}{}stream},
+or \cd{make-\discretionary{}{}{}echo-stream}.
+
+\item
+The {\it constituents} of a composite stream are the streams that were given
+as arguments to the function that constructed it or, in the case of
+\cd{make-\discretionary{}{}{}synonym-stream}, the stream that is the \cd{symbol-value} of
+the symbol that was given as an argument.  (The constituent of
+a synonym stream may therefore vary over time.)
+
+\item
+A {\it constructed} stream is either a composite stream or one returned
+by a call to \cd{make-string-input-stream}, \cd{make-string-output-stream},
+\cd{with-\discretionary{}{}{}input-\discretionary{}{}{}from-\discretionary{}{}{}string}, or
+\cd{with-output-to-string}.
+\end{itemize}
+
+The effect of applying \cd{close} to a constructed stream is to close
+that stream only.  No input/output operations are permitted on the
+constructed stream once it has been closed (though certain inquiry
+functions are still permitted, as described above).
+
+Closing a composite stream has no effect on its constituents;
+any constituents that are open remain open.
+
+If a stream created by \cd{make-string-output-stream} is closed,
+the result of then applying \cd{get-output-stream-string} to the
+stream is unspecified.
+\end{new}
+
+If the \cd{:abort} parameter is not {\false} (it defaults to {\false}), it
+indicates an abnormal termination of the use of the stream.  An attempt
+is made to clean up any side effects of having created the stream in the
+first place.  For example, if the stream performs output to a file
+that was newly created when the stream was created, then if possible the
+file is deleted and any previously existing file is not superseded.
+\end{defun}
+
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to add the following accessor functions
+for obtaining information about streams.
+
+
+\begin{defun}[Function]
+broadcast-stream-streams broadcast-stream
+
+The argument must be of type \cd{broadcast-stream}.
+A list of the constituent output streams (whether open or not) is returned.
+\end{defun}
+
+
+\begin{defun}[Function]
+concatenated-stream-streams concatenated-stream
+
+The argument must be of type \cd{concatenated-stream}.
+A list of constituent streams (whether open or not) is returned.
+This list represents the ordered set of input streams from which
+the concatenated stream may yet read; the stream from which it is
+currently reading is first in the list.  The list may be empty
+if no more streams remain to be read.
+\end{defun}
+
+
+\begin{defun}[Function]
+echo-stream-input-stream echo-stream \\
+echo-stream-output-stream echo-stream
+
+The argument must be of type \cd{echo-stream}.
+The function \cd{echo-\discretionary{}{}{}stream-\discretionary{}{}{}input-\discretionary{}{}{}stream} returns the constituent
+input stream; \cd{echo-\discretionary{}{}{}stream-\discretionary{}{}{}output-\discretionary{}{}{}stream} returns the constituent
+output stream.
+\end{defun}
+
+
+\begin{defun}[Function]
+synonym-stream-symbol synonym-stream
+
+The argument must be of type \cd{synonym-stream}.  This function returns
+the symbol for whose value the {\it synonym-stream} is a synonym.
+\end{defun}
+
+
+\begin{defun}[Function]
+two-way-stream-input-stream two-way-stream \\
+two-way-stream-output-stream two-way-stream
+
+The argument must be of type \cd{two-way-stream}.
+The function \cd{two-way-\discretionary{}{}{}stream-\discretionary{}{}{}input-\discretionary{}{}{}stream} returns the constituent
+input stream; \cd{two-way-\discretionary{}{}{}stream-\discretionary{}{}{}output-\discretionary{}{}{}stream} returns the constituent
+output stream.
+\end{defun}
+\end{new}
+
+\begin{newer}
+\begin{defun}[Function]
+interactive-stream-p stream
+
+X3J13 voted in June 1989 \issue{STREAM-CAPABILITIES} to add the
+predicate \cd{interactive-stream-p}, which returns \cd{t}
+if the {\it stream\/} is interactive and otherwise returns \cd{nil}.
+A \cd{type-\discretionary{}{}{}error} error is signalled if the argument is not of type \cd{stream}.
+
+The precise meaning of \cd{interactive-stream-p} is implementation-dependent
+and may depend on the underlying operating system.
+The intent is to distinguish between interactive and batch (background,
+command-file) operations.  Some characteristics that might
+distinguish a stream as interactive:
+\begin{itemize}
+\item The stream is connected to a person (or the equivalent)
+in such a way that the program can prompt for information and
+expect to receive input that might depend on the prompt.
+\item The program is expected to prompt for input and to support
+``normal input editing protocol'' for that operating environment.
+\item A call to \cd{read-char} might hang waiting for the user to type something
+rather than quickly returning a character or an end-of-file
+indication.
+\end{itemize}
+The value of \cd{*terminal-io*} might or might not be interactive.
+\end{defun}
+\end{newer}
+
+\begin{newer}
+\begin{defun}[Function]
+stream-external-format stream
+
+X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL} to add the
+function \cd{stream-external-format}, which returns a
+specifier for the implementation-recognized scheme used for
+representing characters in the argument {\it stream}.
+See the \cd{:external-format} argument to \cd{open}.
+\end{defun}
+\end{newer}

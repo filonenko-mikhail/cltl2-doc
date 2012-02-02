@@ -1,0 +1,2014 @@
+%Part{Dtypes, Root = "CLM.MSS"}
+% Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Data Types Типы данных}
+\label{DTYPES}
+
+Common Lisp provides a variety of types of data objects.  It is important to
+note that in Lisp it is data objects that are typed, not variables.
+Any variable can have any Lisp object as its value.
+(It is possible to make an explicit declaration that a variable will
+in fact take on one of only a limited set of values.  However, such
+a declaration may always be omitted, and the program will still run correctly.
+Such a declaration merely constitutes advice from the user
+that may be useful in gaining efficiency.  See \cd{declare}.)
+
+Common Lisp предоставляет множество типов для объектов данных. Необходимо подчеркнуть, что в Lisp'е типизированы данные, а не переменные. Любая переменная может содержать данные любого типа. (Можно указать явно, что некоторая переменная фактически может содержать только один или конечное множество типов объектов. Однако, такая декларация может быть опущена, и программа будет выполняться корректно. Такая декларация содержит рекомендация от пользователя, и это может быть полезным при оптимизации. См. \cd{declare}.)
+
+In Common Lisp, a data type is a (possibly infinite) set of
+Lisp objects.  Many Lisp objects belong to more than one
+such set, and so it doesn't always make sense to ask what is {\it the} type
+of an object; instead, one usually asks only whether an object belongs
+to a given type.  The predicate \cd{typep} may be used to ask
+whether an object belongs to a given type,
+and the function \cd{type-of} returns {\it a} type
+to which a given object belongs.
+
+В Common Lisp'е тип данных является (возможно бесконечным) множеством Lisp объектов. Многие объекты Lisp'а принадлежат к более чем одному множеству типов, так что иногда не имеет смысла спрашивать тип объекта; вместо этого задается вопрос о принадлежности объекта к нужному типу. Предикат \cd{typep} может использоваться для определения принадлежности объекта к заданному типу, а функция \cd{type-of} возвращает тип, к которому принадлежит заданный объект.
+
+The data types defined in Common Lisp are arranged into a hierarchy (actually
+a partial order) defined by the subset relationship.
+Certain sets of objects, such as the set of numbers or the
+set of strings, are interesting enough to deserve labels.
+Symbols are used for most
+such labels (here, and throughout this book, the word ``symbol''
+refers to atomic symbols, one kind of Lisp object,
+elsewhere known as literal atoms).  See chapter~\ref{DTSPEC}
+for a complete description of type specifiers.
+
+Типы данных в Common Lisp сложены в иерархию (фактически в порядке убывания объема) определенную отношениями подмножеств. Несомненно множества объектов, такие как множество чисел и множество строк заслуживают идентификаторы. Для многих этих идентификаторов используются символы (здесь и далее, слово ``символ'' ссылается на тип Lisp объектов символ, известный также как literal atom). См. главу~\ref{DTSPEC} подробно описывающую определения типов.
+
+The set of all objects is specified
+by the symbol {\true}.  The empty data type, which contains no objects, is
+denoted by {\nil}.
+
+Множество все объектов определяется символом {\true}. Пустой тип данных, который не содержит объектов обозначается с помощью {\nil}.
+
+\begin{obsolete}
+A type called \cd{common} encompasses all the data
+objects required by the Common Lisp language.  A Common Lisp implementation
+is free to provide other data types that are not subtypes of \cd{common}.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989
+\issue{COMMON-TYPE}
+to remove the type \cd{common} (and the predicate \cd{commonp})
+from the language, on the grounds that it has
+not proved to be useful in practice and that it could be difficult to redefine in the
+face of other changes to the Common Lisp type system (such as the introduction
+of CLOS classes).
+\end{newer}
+
+The following categories of Common Lisp objects are of particular interest:
+numbers, characters, symbols, lists, arrays, structures, and functions.
+There are others as well.
+Some of these categories
+have many subdivisions.  There are also standard types defined to
+be the union
+of two or more of these categories.  The categories listed above, while they
+are data types, are neither more nor less ``real'' than other data types;
+they simply constitute a particularly useful slice across
+the type hierarchy for expository purposes.
+
+Следующие категории объектов Common Lisp'а в особенности интересны: числа (numbers), знаки (characters), символы (symbols), списки (lists), массивы (arrays), структуры (structures) и функции (functions). Другие типы тоже, конечно, интересны. Некоторые из этих категорий имеют много подразделов. Так же есть стандартные типы, которые определены, как объединение двух и более данных категорий. Вышеупомянутые категории, являясь типами объектов, are neither more nor less ``real'' than other data types; они просто составляют объединения типов для наглядности.
+
+Here are brief descriptions of various Common Lisp data types.
+The remaining sections of this chapter go into more detail
+and also describe notations for objects
+of each type.  Descriptions of Lisp functions that operate
+on data objects of each type appear in later chapters.
+
+Вот краткое изложение о различных Common Lisp'овых типах данных. Оставшиеся разделы данной главы рассматривают типы более детально, а также описывают нотации для объектов для каждого типа. Описание Lisp'овых функций, что оперируют объектами данных каждого типа будет даваться в следующих главах.
+
+\begin{itemize}
+\item
+{\it Numbers} are provided in various forms and representations.
+Common Lisp provides a true integer data type: any integer,
+positive or negative, has in principle a representation as a
+Common Lisp data object, subject only to total memory limitations (rather than
+machine word width).
+A true rational data type is provided: the quotient of two integers,
+if not an integer, is a ratio.
+Floating-point numbers of various ranges and precisions are also
+provided, as well as
+Cartesian complex numbers.
+
+\item
+{\it Числа} имеют различные формы и представления. Common Lisp предоставляет целочисленный (integer) тип данных: любое целое число, положительное или отрицательное ограничено размерами памяти (преимущественно равными ширине машинного слова). Также предоставляется рациональный или дробный (rational) тип данных: это отношение двух целых чисел, не являющееся целым числом. Также предоставляются числа с плавающей точкой различных интервалов и точностей. И наконец в языке также есть комплексные числа.
+
+\item
+{\it Characters} represent printed glyphs such as letters
+or text formatting operations.  Strings are one-dimensional
+arrays of characters.
+Common Lisp provides for a rich character set, including ways to
+represent characters of various type styles.
+
+\item
+{\it Строковые} символы представляют печатные символы такие, как буквы или управляющие форматированием символы. Строки являются одномерными массивами символов. Common Lisp предоставляет богатое множество символов, включая пути для представления различных стилей печати.
+
+\item
+{\it Symbols} (sometimes called {\it atomic symbols} for emphasis
+or clarity) are named data objects.  Lisp provides machinery
+for locating a symbol object, given its name (in the form
+of a string).  Symbols have {\it property lists}, which in effect
+allow symbols to be treated as record structures with an extensible
+set of named components, each of which may be any Lisp object.
+Symbols also serve to name functions and variables within programs.
+
+\item
+{\it Символы} (иногда называемые {\it atomic symbols} для ясности) являются именованными оpбъектами данных. Lisp предоставляет механизм определеющий местоположение объекта символа по заданному имени (в форме строки). У символов есть {\it списки свойств}, которые фактически позволяют использовать символы в качестве структур, с расширяемым множеством имен полей, каждое из которых может быть любым Lisp объектом. Символы также служат для именования функций и переменных в программе.
+
+\item
+{\it Lists} are sequences represented in the form of linked cells
+called {\it conses}.  There is a special object (the symbol {\nil})
+that is the empty list.  All other lists are built recursively by adding a new
+element to the front of an existing list.  This is done by
+creating a new {\it cons}, which is an object having two components
+called the {\it car} and the {\it cdr}.  The {\it car} may hold anything,
+and the {\it cdr} is made to point to the previously existing list.
+(Conses may actually be used completely generally as two-element
+record structures, but their most important use is to represent
+lists.)
+
+\item
+{\it Списки} (прим. автора: те самые, из которых и заварилась вся каша) это последовательности представленная в форме связанных ячеек, называемых {\it cons-ячейками}. Для обозначения пустого списка служит специальный объект (обозначаемые символом {\nil}). Все остальные списки создаются рекурсивно, с помощью добавления новых элементов в начало существующего списка. Это происходит так: создается новая cons-ячейка, которая является объектом, имеющим два компонента, называемых {\it car} и {\it cdr}. Car может хранить, что угодно, а cdr создан для хранения указателя на существующий ранее список. (Cons-ячейки могут использоваться для хранения храненеия записи структуры из двух элементов, но это не главное их предназначение.)
+
+\item
+{\it Arrays} are dimensioned collections of objects.
+An array can have any non-negative number of dimensions and is indexed
+by a sequence of integers.  A general array can have any Lisp object as
+a component; other types of arrays are specialized for efficiency
+and can hold only certain types of Lisp objects.
+It is possible for two arrays, possibly with differing dimension information,
+to share the same set of elements (such that modifying one array modifies
+the other also) by causing one to be {\it displaced} to the other.
+One-dimensional arrays of any kind are called {\it vectors}.
+One-dimensional arrays of characters are called {\it strings}.
+One-dimensional arrays of bits (that is, of integers whose values are 0 or 1)
+are called {\it bit-vectors}.
+
+\item
+{\it Массивы} - это n-мерные коллекции объектов. Массив может иметь любое неотрицательное количество измерений и индексироваться с помощью последовательности целых чисел. Общий тип массива может содержать любой Lisp объект; другие типы массивов специализируются для эффективности и могут содержать только определенные типы Lisp объектов. Также существует возможность того, что два массива, возможно с разным количеством измерений, указывают на одно и то же подмножество объектов (если изменить первый массив, изменится и второй). Это достигается с помощью указания для одного массива {\it быть относительным} для другого массива. Одномерные массивы любого типа называются {\it векторами (vectors)}. Одномерные массивы строковых символов называются {\it строки}. Одномерные массивы битов (это целое число, которое может содержать 0 или 1) называются {\it битовыми векторами (bit-vectors)}.
+
+\item
+{\it Hash tables} provide an efficient way of mapping any
+Lisp object (a {\it key}) to an associated object.
+
+\item
+{\it Хеш-таблицы} предоставляют эффективный путь для связывания любого Lisp объекта ({\it ключа}) с другим объектом (значением).
+
+\item
+{\it Readtables} are used to control the built-in expression parser
+\cd{read}.
+
+\item
+{\it Таблицы чтения (readtables)} используется для управления парсером выражений \cd{read}. (прим. автора: это та знаменитая штука для создания макроридеров для изменения синтаксиса языка)
+
+\item
+{\it Packages} are collections of symbols that serve as name spaces.
+The parser recognizes symbols by looking up character sequences
+in the current package.
+
+\item
+{\it Пакеты} являются коллекциями символов и служат для разделения пространств имен. Парсер распознает символы с помощью поиска последовательностей строковых символов в текущем пакете.
+
+\item
+{\it Pathnames} represent names of files in a fairly implementation-independent
+manner.  They are used to interface to the external file system.
+
+\item
+{\it Pathnames} представляют имена файлов на кроссплатформенный лад. Они используются для взаимодействия с внешней файловой системой.
+
+\item
+{\it Streams} represent sources or sinks of data, typically characters
+or bytes.  They are used to perform I/O, as well as for internal
+purposes such as parsing strings.
+
+\item
+{\it Потоки} представляют источники данных, обычно строковых символов или байт. Они используются для ввода/вывода, а также для внутренних нужд, например для парсинга строк.}
+
+\item
+{\it Random-states} are data structures used to encapsulate the state
+of the built-in random-number generator.
+
+\item
+{\it Random-states} - это структуры данных, используемые для хранения состояния встроенного генератора случайных чисел (ГСЧ).
+
+\item
+{\it Structures} are user-defined record structures, objects that
+have named components.  The \cd{defstruct} facility is used
+to define new structure types.  Some Common Lisp implementations may
+choose to implement certain system-supplied data types,
+such as {\it bignums}, {\it readtables}, {\it streams},
+{\it hash tables}, and {\it pathnames}, as structures,
+but this fact will be invisible to the user.
+
+\item
+{\it Структуры} - это определенные пользователем объекты, имеющие именованные поля. \cd{defstruct} используется для определения новых типов структур. Некоторые реализации Common Lisp могут реализовывать некоторые системные типы такие, как {\it bignums}, {\it readtables}, {\it streams}, {\it hash tables} и {\it pathnames} как структуры, но фактически это не будет видно пользователю.
+\end{itemize}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+{\it Functions} are objects that can be invoked as procedures;
+these may take arguments and return values.  (All Lisp procedures
+can be construed to return values and therefore every procedure is
+a function.)
+Such objects include {\it compiled-functions} (compiled code objects).
+Some functions are represented as a list whose {\it car} is a particular
+symbol such as \cd{lambda}.
+Symbols may also be used as functions.
+\end{itemize}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{FUNCTION-TYPE}
+to specify that symbols are not of type \cd{function},
+but are automatically coerced to functions
+in certain situations (see section~\ref{FUNCTION-TYPE-SECTION}).
+\end{newer}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CONDITION-SYSTEM}
+to adopt the Common Lisp Condition System,
+thereby introducing a new category of data objects:
+
+Для адаптации Системы Условий Common Lisp, вводятся следующие категории объектов данных:
+
+\begin{itemize}
+\item
+{\it Conditions} are objects used to affect control flow in certain
+conventional ways by means of signals and handlers that intercept those signals.
+In particular, errors are signaled by raising particular conditions,
+and errors may be trapped by establishing handlers for those conditions.
+
+\item
+{\it Условия (conditions)} - это объекты, используемые для управления ходом выполнения программы, с помощью сигналов и обработчиков этих самых сигналов. В частности, ошибки сигнализируются с помощью генерации условия, и эти ошибки могут быть обработаны с помощью установки обработчиков для генерируемых условий.
+\end{itemize}
+\end{new}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{CLOS}
+to adopt the Common Lisp Object System,
+thereby introducing additional categories of data objects:
+
+Для адаптации Объектной Системы Common Lisp, вводятся следующие категории объектов данных:
+
+\begin{itemize}
+\item
+{\it Classes} determine the structure and behavior of other
+objects, their {\it instances}.  Every Common Lisp data object
+belongs to some class.  (In some ways the CLOS class system is
+a generalization of the system of type specifiers of the first edition of this book,
+but the class system augments the type system rather than supplanting it.)
+
+\item
+{\it Классы} определяют структуру и поведение других объектов, являющихся {\it экземплярами} данных классов. Каждый объект данных принадлежит некоторому классу.
+
+\item
+{\it Methods} are chunks of code that operate on arguments
+satisfying a particular pattern of classes.  Methods are
+not functions; they are not invoked directly on arguments
+but instead are bundled into generic functions.
+
+\item
+{\it Методы} - это код, который оперирует аргументами, которые соотвествуют некоторому шаблону. Методы не являются функциями; они не вызваются напрямую, а объединяются в дженерик-функции (generic functions).
+
+\item
+{\it Generic functions} are functions that contain, among other
+information, a set of methods.  When invoked, a generic function
+executes a subset of its methods.  The subset chosen for execution
+depends in a specific way on the classes or identities of the arguments
+to which it is applied.
+
+\item
+{\it Generic функции} - это функции, которые содержат, кроме всего прочего, множество методов. При вызове generic функция вызывает подмножество ее методов. Подмножество для выполнения выделяется с помощью определения классов аргументов и выбора им соответстующих методов.
+\end{itemize}
+\end{new}
+
+These categories are not always mutually exclusive.
+The required relationships among the various data types are
+explained in more detail in section~\ref{DATA-TYPE-RELATIONSHIPS}.
+
+\section{Numbers}
+
+Several kinds of numbers are defined in Common Lisp.
+They are divided into {\it integers}; {\it ratios};
+{\it floating-point numbers}, with names provided for
+up to four different floating-point representations; and {\it complex numbers}.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REAL-NUMBER-TYPE} to add the type \cd{real}.
+
+The \cd{number} data type encompasses all kinds of
+             numbers.  For convenience, there are names for some
+             subclasses of numbers as well.  Integers and ratios are of
+             type \cd{rational}.  Rational numbers and floating-point
+             numbers are of type \cd{real}.  Real numbers and complex
+             numbers are of type \cd{number}.
+
+             Although the names of these types were chosen with the
+             terminology of mathematics in mind, the correspondences
+             are not always exact.  Integers and ratios model the
+             corresponding mathematical concepts directly.  Numbers
+             of type \cd{float} may be used to approximate real
+             numbers, both rational and irrational.  The \cd{real} type
+             includes all Common Lisp numbers that represent
+             mathematical real numbers, though there are
+             mathematical real numbers (irrational numbers)
+             that do not have an exact Common Lisp representation.
+             Only \cd{real} numbers may be ordered using the \cd{<}, \cd{>}, \cd{<=},
+             and \cd{>=} functions.
+
+\beforenoterule
+\begin{incompatibility}
+The Fortran 77 standard defines the term
+             {\it real datum} to mean ``a processor approximation to the value
+             of a real number.''  In practice the Fortran {\it basic real} type
+             is the floating-point data type that Common Lisp calls
+             \cd{single-float}.  The Fortran {\it double precision} type is
+             Common Lisp's \cd{double-float}.  The Pascal \cd{real} data type is
+             an ``implementation-defined subset of the real numbers.''  In
+             practice this is usually a floating-point type, often what
+             Common Lisp calls \cd{double-float}.
+
+             A translation of an algorithm written in Fortran or Pascal
+             that uses \cd{real} data usually will use some appropriate
+             precision of Common Lisp's \cd{float} type.  Some algorithms may
+             gain accuracy or flexibility by using Common Lisp's
+             \cd{rational} or \cd{real} type instead.
+\end{incompatibility}
+\afternoterule
+\end{newer}
+
+\subsection{Integers}
+\label{INTEGERS-SECTION}
+
+\indexterm{integer}
+The \cd{integer} data type is intended to represent mathematical integers.
+Unlike most programming languages, Common Lisp in principle imposes no limit on
+the magnitude of an integer; storage
+is automatically allocated as necessary to represent large integers.
+
+In every Common Lisp implementation there is a range of integers that are
+represented more efficiently than others; each such integer is called a
+{\it fixnum}, and an integer that is not a fixnum is called a
+{\it bignum}.
+Common Lisp is designed to hide this distinction as much as possible;
+the distinction between fixnums and bignums is visible to
+the user in only a few places where the efficiency of representation is
+important.  Exactly which integers are
+fixnums is implementation-dependent; typically they will be those
+integers in the range $-2^{\hbox{\scriptsize\it n}}$ to $2^{\hbox{\scriptsize\it n}}-1$,
+inclusive, for some {\it n} not less than 15.
+See \cd{most-positive-fixnum} and \cd{most-negative-fixnum}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FIXNUM-NON-PORTABLE}
+to specify that \cd{fixnum} must be a supertype
+of the type \cd{(signed-byte 16)}, and additionally that the value
+of \cd{array-dimension-limit} must be a fixnum (implying that the implementor
+should choose the range of fixnums to be large enough to accommodate the
+largest size of array to be supported).
+
+\beforenoterule
+\begin{rationale}
+This specification allows programmers to declare variables in portable code
+to be of type \cd{fixnum} for efficiency.  Fixnums are guaranteed to
+encompass at least the set of 16-bit signed integers
+(compare this to the data type \cd{short int} in the C programming language).
+In addition, any valid array index must be a fixnum, and therefore variables
+used to hold array indices (such as a \cd{dotimes} variable)
+may be declared \cd{fixnum} in portable code.
+\end{rationale}
+\afternoterule
+\end{new}
+
+Integers are ordinarily written in decimal notation, as a sequence
+of decimal digits, optionally preceded by a sign and optionally followed
+by a decimal point.
+For example:
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\=\kill
+\>0~~~~~\';{\rm Zero} \\*
+\>-0~~~~~\';{\rm This {\it always} means the same as \cd{0}} \\*
+\>+6~~~~~\';{\rm The first perfect number} \\
+\>28~~~~~\';{\rm The second perfect number} \\
+\>1024.~~~~~\';{\rm Two to the tenth power} \\*
+\>-1~~~~~\';{\rm \(e^{\pi i}\)} \\*
+\>15511210043330985984000000.~~~~~\';{\rm 25 factorial (25!), probably a bignum}
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+MacLisp and Lisp Machine Lisp normally assume that integers
+are written in octal (radix-8) notation unless a decimal
+point is present.
+Interlisp assumes integers are written in decimal notation and uses a
+trailing \cd{Q} to indicate octal radix; however, a decimal point,
+even in trailing position, {\it always} indicates a floating-point number.
+This is of course consistent with Fortran.  Ada does not permit
+trailing decimal points but instead requires them to be embedded.
+In Common Lisp, integers written as described
+above are always construed to be
+in decimal notation, whether or not the decimal point is present;
+allowing the decimal point to be present permits compatibility with
+MacLisp.
+\end{incompatibility}
+\afternoterule
+
+\vskip 0pt plus 8pt%manual
+
+Integers may be notated in radices other than ten.
+The notation
+\begin{lisp}
+\#{\it nn}r{\it ddddd}     {\rm or}     \#{\it nn}R{\it ddddd}
+\end{lisp}
+means the integer in radix-{\it nn} notation denoted by the digits
+{\it ddddd}.  More precisely, one may write \cd{\#}, a non-empty sequence
+of decimal digits representing an unsigned decimal integer {\it n},
+\cd{r} (or \cd{R}), an optional sign, and a sequence of radix-{\it n}
+digits, to indicate an integer written in radix {\it n} (which must be
+between 2 and 36, inclusive).  Only legal digits
+for the specified radix may be used; for example, an octal number may
+contain only the digits 0 through 7.  For digits above 9,
+letters of the alphabet of either
+case may be used in order.  Binary, octal, and
+hexadecimal radices are useful enough to warrant the special
+abbreviations \cd{\#b} for \cd{\#2r}, \cd{\#o} for \cd{\#8r}, and
+\cd{\#x} for \cd{\#16r}.
+For example:
+\begin{lisp}
+~~~~~~~~~~~~~~~~\=\kill
+\>\#2r11010101~~~~~\';{\rm Another way of writing \cd{213} decimal} \\
+\>\#b11010101~~~~~\';{\rm Ditto} \\
+\>\#b+11010101~~~~~\';{\rm Ditto} \\
+\>\#o325~~~~~\';{\rm Ditto, in octal radix} \\
+\>\#xD5~~~~~\';{\rm Ditto, in hexadecimal radix} \\
+\>\#16r+D5~~~~~\';{\rm Ditto} \\
+\>\#o-300~~~~~\';{\rm Decimal \(-192\), written in base 8} \\
+\>\#3r-21010~~~~~\';{\rm Same thing in base 3} \\
+\>\#25R-7H~~~~~\';{\rm Same thing in base 25} \\
+\>\#xACCEDED~~~~~\';{\rm 181202413, in hexadecimal radix}
+\end{lisp}
+
+\subsection{Ratios}
+
+\indexterm{ratio}
+\indexterm{rational}
+A {\it ratio} is a number representing the mathematical ratio
+of two integers.  Integers and ratios collectively constitute
+the type \cd{rational}.
+The canonical representation of a rational number is as an
+integer if its value is integral, and otherwise as the ratio of two
+integers, the {\it numerator} and {\it denominator}, whose greatest
+common divisor is 1, and of which the denominator is positive (and in
+fact greater than 1, or else the value would be integral).
+A ratio is notated with
+\cd{/} as a separator, thus: \cd{3/5}.  It is possible to notate
+ratios in non-canonical (unreduced) forms, such as \cd{4/6}, but the
+Lisp function \cd{prin1} always prints the canonical form for a
+ratio.
+
+If any computation produces a result that is a ratio of
+two integers such that the denominator evenly divides the
+numerator, then the result is immediately converted to the equivalent
+integer.  This is called the rule of {\it rational canonicalization}.
+
+Rational numbers may be written as the possibly signed quotient of
+decimal numerals: an optional sign followed by two non-empty sequences of
+digits separated by a \cd{/}.  This syntax may be described as
+follows:
+\begin{tabbing}
+{\it ratio} ::= \Mopt{{\it sign}} \Mplus{{\it digit}} \cd{/} \Mplus{{\it digit}}
+\end{tabbing}
+The second sequence may not consist
+entirely of zeros.
+For example:
+\begin{lisp}
+2/3~~~~~~~~~~~~~~~~~~~~;{\rm This is in canonical form} \\
+4/6~~~~~~~~~~~~~~~~~~~~;{\rm A non-canonical form for the same number} \\
+-17/23~~~~~~~~~~~~~~~~~;{\rm A not very interesting ratio} \\
+-30517578125/32768~~~~~;{\rm This is \((-5/2)^{15}\)} \\
+10/5~~~~~~~~~~~~~~~~~~~;{\rm The canonical form for this is \cd{2}}
+\end{lisp}
+
+To notate rational numbers in radices other than ten,
+one uses the same radix specifiers
+(one of \cd{\#{\it nn}R}, \cd{\#O}, \cd{\#B}, or \cd{\#X}) as for integers.
+For example:
+\begin{lisp}
+\#o-101/75~~~~~~~~~~;{\rm Octal notation for \cd{-65/61}} \\
+\#3r120/21~~~~~~~~~~;{\rm Ternary notation for \cd{15/7}} \\
+\#Xbc/ad~~~~~~~~~~~~;{\rm Hexadecimal notation for \cd{188/173}} \\
+\#xFADED/FACADE~~~~~;{\rm Hexadecimal notation for \cd{1027565/16435934}}
+\end{lisp}
+
+\subsection{Floating-Point Numbers}
+
+Common Lisp allows an implementation to provide one or more kinds of
+floating-point number, which collectively make up the type \cd{float}.
+Now a floating-point number is a (mathematical)
+rational number of the form
+${\it s} \cdot {\it f} \cdot {\it b}^{\hbox{\scriptsize\it e}-\hbox{\scriptsize\it p}}$,
+where {\it s} is $+1$ or $-1$, the {\it sign};
+{\it b} is an integer greater than 1,
+the {\it base} or {\it radix} of the representation;
+{\it p} is a positive integer,
+the {\it precision} (in base-{\it b} digits) of the floating-point number;
+{\it f} is a positive integer between
+${\it b}^{\,\hbox{\scriptsize\it p}-1}$ and ${\it b}^{\,\hbox{\scriptsize\it p}}-1$ (inclusive),
+the {\it significand};
+and {\it e} is an integer, the {\it exponent}.
+The value of {\it p} and the range of {\it e}
+depends on the implementation and on the type of floating-point number
+within that implementation.
+In addition, there is a floating-point zero;
+depending on the implementation, there may also be a ``minus zero.''
+If there is no minus zero, then \cd{0.0} and \cd{-0.0} are
+both interpreted as simply a floating-point zero.
+
+\beforenoterule
+\begin{implementation}
+The form of the above description should not be construed
+to require the internal representation to be in sign-magnitude form.
+Two's-complement and other representations are also acceptable.  Note
+that the radix of the internal representation may be other than 2, as on
+the IBM 360 and 370, which use radix 16; see
+\cd{float-radix}.
+\end{implementation}
+\afternoterule
+
+Floating-point numbers may be provided in a variety of precisions and sizes,
+depending on the implementation.  High-quality floating-point
+software tends to depend critically on the precise nature of the
+floating-point arithmetic and so may not always be completely portable.
+As an aid in writing programs that are
+moderately portable, however, certain definitions are made here:
+\begin{itemize}
+\item
+A {\it short} floating-point number (type \cd{short-float})
+is of the representation of smallest
+fixed precision provided by an implementation.
+
+\item
+A {\it long} floating-point number (type \cd{long-float})
+is of the representation of the largest fixed 
+precision provided by an implementation.
+
+\item
+Intermediate between short and long formats are two others, arbitrarily
+called {\it single} and {\it double} (types \cd{single-float} and \cd{double-float}).
+\end{itemize}
+The precise definition of these categories is implementation-dependent.
+However, the rough intent is that short floating-point numbers be
+precise to at least four decimal places (but also have
+a space-efficient representation);
+single floating-point numbers, to at least seven decimal places;
+and double floating-point numbers, to at least fourteen decimal places.
+It is suggested that
+the precision (measured in bits, computed as ${\it p} \log_2 {\it b}$)
+and the exponent size (also measured in bits, computed as the base-2
+logarithm of 1 plus the maximum exponent value) be at least as great
+as the values in table~\ref{Floating-Format-Requirements-Table}.
+
+\begin{table}[t]
+\caption{Recommended Minimum Floating-Point Precision and Exponent Size}
+\label{Floating-Format-Requirements-Table}
+\begin{tabular}{@{}lll@{}}
+{Format\quad\quad}&{Minimum Precision\quad\quad}&{Minimum Exponent Size} \\ \hlinesp
+Short&13 bits&5 bits \\
+Single&24 bits&8 bits \\
+Double&50 bits&8 bits \\
+Long&50 bits&8 bits
+\end{tabular}
+\end{table}
+
+Floating-point numbers are written in either decimal fraction
+or computerized scientific notation: an optional sign,
+then a non-empty sequence of digits with an embedded decimal point,
+then an optional decimal exponent specification.
+If there is no exponent specifier, then
+the decimal point is required, and there must be digits
+after it.
+The exponent specifier consists of an exponent marker,
+an optional sign, and a non-empty sequence of digits.
+For preciseness, here is a modified-BNF description of floating-point
+notation.
+\begin{tabbing}
+{\it floating-point-number} ::= \=\Mopt{{\it sign}} \Mstar{{\it digit}} {\it
+decimal-point} \Mplus{{\it digit}} \Mopt{{\it exponent}} \\*
+\>\hbox to 0pt{\hss\Mor~}\Mopt{{\it
+sign}} \Mplus{{\it digit}} \Mopt{{\it decimal-point} \Mstar{{\it digit}}} {\it
+exponent} \\
+{\it sign} ::= \cd{+} {\Mor} \cd{-} \\
+{\it decimal-point} ::= \cd{.} \\
+{\it digit} ::= \cd{0} {\Mor} \cd{1} {\Mor} \cd{2} {\Mor} \cd{3} {\Mor} \cd{4}
+         {\Mor} \cd{5} {\Mor} \cd{6} {\Mor} \cd{7} {\Mor} \cd{8} {\Mor} \cd{9}\\
+{\it exponent} ::= {\it exponent-marker} \Mopt{{\it sign}} \Mplus{{\it digit}}\\*
+{\it exponent-marker} ::= \cd{e} {\Mor} \cd{s} {\Mor} \cd{f}
+{\Mor} \cd{d} {\Mor} \cd{l} {\Mor} \cd{E} {\Mor} \cd{S} {\Mor} \cd{F} {\Mor}
+\cd{D} {\Mor} \cd{L}
+\end{tabbing}
+If no exponent specifier is present, or if the exponent marker \cd{e}
+(or \cd{E}) is used, then the precise format to be used is not
+specified.  When such a representation is read and
+converted to an internal floating-point data object, the format specified
+by the variable \cd{*read-default-float-format*} is used; the initial
+value of this variable is \cd{single-float}.
+
+The letters \cd{s}, \cd{f}, \cd{d}, and \cd{l} (or their
+respective uppercase equivalents) explicitly specify the
+use of {\it short}, {\it single}, {\it double}, and {\it long} format, respectively.
+
+Examples of floating-point numbers:
+\begin{lisp}
+0.0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Floating-point zero in default format} \\
+0E0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Also floating-point zero in default format} \\
+-.0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm This may be a zero or a minus zero,} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~; {\rm depending on the implementation} \\
+0.~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm The {\it integer} zero, not a floating-point zero!} \\
+0.0s0~~~~~~~~~~~~~~~~~~~~~~~;{\rm A floating-point zero in {\it short} format} \\
+0s0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Also a floating-point zero in {\it short} format} \\
+3.1415926535897932384d0~~~~~;{\rm A {\it double}-format approximation to \(\pi\)} \\
+6.02E+23~~~~~~~~~~~~~~~~~~~~;{\rm Avogadro's number, in default format} \\
+602E+21~~~~~~~~~~~~~~~~~~~~~;{\rm Also Avogadro's number, in default format} \\
+3.010299957f-1~~~~~~~~~~~~~~;{\rm \(\log_{10} 2\), in {\it single} format} \\
+-0.000000001s9~~~~~~~~~~~~~~;{\rm \(e^{\pi i}\) in {\it short} format, the hard way}
+\end{lisp}
+
+\begin{new}%CORR
+{\it Notice of correction.}
+The first edition unfortunately listed an incorrect value (\cd{3.1010299957f-1})
+for the base-10 logarithm of 2.
+\end{new}
+
+The internal format used for an external representation depends only
+on the exponent marker and not on the number of decimal digits
+in the external representation.
+
+While Common Lisp provides terminology and notation sufficient
+to accommodate four distinct floating-point formats,
+not all implementations will have the means to support
+that many distinct formats.
+An implementation is therefore permitted to provide
+fewer than four distinct internal floating-point formats,
+in which case at least one of them will be ``shared''
+by more than one of the external format names {\it short}, {\it single},
+{\it double}, and {\it long} according to the following rules:
+\begin{itemize}
+\item
+If one internal format is provided, then it is considered to be
+{\it single}, but serves also as {\it short}, {\it double}, and {\it long}.
+The data types \cd{short-float},
+\cd{single-float}, \cd{double-float}, and \cd{long-float} are
+considered to be identical.  An expression such as \cd{(eql 1.0s0 1.0d0)}
+will be true in such an implementation
+because the two numbers \cd{1.0s0} and \cd{1.0d0} will
+be converted into the same internal format and therefore be considered
+to have the same data type, despite the differing external syntax.
+Similarly, \cd{(typep 1.0L0 'short-float)} will be true in such
+an implementation.
+For output purposes all floating-point numbers are assumed to be
+of {\it single} format and thus will print using the
+exponent letter \cd{E} or \cd{F}.
+
+\item
+If two internal formats are provided, then either of two correspondences
+may be used, depending on which is the more appropriate:
+\begin{itemize}
+\item
+One format is {\it short}; the other is {\it single} and serves also
+as {\it double} and {\it long}.
+The data types
+\cd{single-float}, \cd{double-float}, and \cd{long-float} are
+considered to be identical, but \cd{short-float} is distinct.
+An expression such as \cd{(eql 1.0s0 1.0d0)}
+will be false, but \cd{(eql 1.0f0 1.0d0)} will be true.
+Similarly, \cd{(typep 1.0L0 'short-float)} will be false,
+but \cd{(typep 1.0L0 'single-float)} will be true.
+For output purposes all floating-point numbers are assumed to be
+of {\it short} or {\it single} format.
+
+\item
+One format is {\it single} and serves also as {\it short};
+the other is {\it double} and serves also as {\it long}.
+The data types \cd{short-float} and \cd{single-float} are considered to be
+identical, and the data types \cd{double-float} and \cd{long-float} are
+considered to be identical.
+An expression such as \cd{(eql 1.0s0 1.0d0)}
+will be false, as will \cd{(eql 1.0f0 1.0d0)};
+but \cd{(eql 1.0d0 1.0L0)} will be true.
+Similarly, \cd{(typep 1.0L0 'short-float)} will be false,
+but \cd{(typep 1.0L0 'double-float)} will be true.
+For output purposes all floating-point numbers are assumed to be
+of {\it single} or {\it double} format.
+\end{itemize}
+
+\item
+If three internal formats are provided, then either of two correspondences
+may be used, depending on which is the more appropriate:
+\begin{itemize}
+\item
+One format is {\it short}; another format is {\it single}; and the third format is
+{\it double} and serves also as {\it long}.  Similar constraints apply.
+
+\item
+One format is {\it single} and serves also as {\it short};
+another is {\it double}; and the third format is {\it long}.
+\end{itemize}
+\end{itemize}
+
+\beforenoterule
+\begin{implementation}
+It is recommended that an implementation
+provide as many distinct floating-point formats as feasible,
+using table~\ref{Floating-Format-Requirements-Table} as a guideline.
+Ideally, short-format floating-point numbers should have an
+``immediate'' representation that does not require heap allocation;
+single-format
+floating-point numbers should approximate IEEE proposed standard
+single-format floating-point numbers; and double-format floating-point
+numbers should approximate IEEE proposed standard double-format
+floating-point numbers
+\cite{IEEE-PROPOSED-FLOATING-POINT-STANDARD,IEEE-FLOATING-POINT-IMPL-GUIDE,IEEE-FLOATING-POINT-IMPL-GUIDE-ERRATA}.
+\end{implementation}
+\afternoterule
+
+
+\subsection{Complex Numbers}
+
+Complex numbers (type \cd{complex})
+are represented in Cartesian form, with a real part and an imaginary
+part, each of which is a non-complex number (integer, ratio, or floating-point
+number).  It should be emphasized that the parts of a complex
+number are not necessarily floating-point numbers; in this, Common Lisp
+is like PL/I and differs from Fortran.  However, both parts must
+be of the same type: either both are rational, or both are of the
+same floating-point format.
+
+Complex numbers may be notated by writing the characters \cd{\#C}
+followed by a list of the real and imaginary parts.
+If the two parts as notated are not of the same type, then
+they are converted according to the rules of floating-point contagion
+as described in chapter~\ref{NUMBER}.
+(Indeed, \cd{\#C({\it a} {\it b})} is equivalent to \cd{\#,(complex {\it a} {\it b})};
+see the description of the function \cd{complex}.)
+For example:
+\begin{lisp}
+\#C(3.0s1 2.0s-1)~~~~~;{\rm Real and imaginary parts are short format}\\
+\#C(5 -3)~~~~~~~~~~~~~;{\rm A Gaussian integer} \\
+\#C(5/3 7.0)~~~~~~~~~~;{\rm Will be converted internally to \cd{\#C(1.66666 7.0)}} \\
+\#C(0 1)~~~~~~~~~~~~~~;{\rm The imaginary unit, that is, {\it i}}
+\end{lisp}
+
+The type of a specific complex number is indicated by a list
+of the word \cd{complex} and the type of the components; for example,
+a specialized representation for complex numbers with short floating-point
+parts would be of type \cd{(complex short-float)}.  The type \cd{complex}
+encompasses all complex representations.
+
+A complex number of type \cd{(complex rational)}, that is, one whose
+components are rational, can never have a zero imaginary part.
+If the result of a computation would be a complex rational
+with a zero imaginary part, the result is immediately
+converted to a non-complex rational number by taking the
+real part.  This is called the rule of {\it complex canonicalization}.
+This rule does not apply to floating-point complex numbers;
+\cd{\#C(5.0 0.0)} and \cd{5.0} are different.
+
+\goodbreak
+
+\section{Characters}
+
+Characters are represented as data objects of type \cd{character}.
+\begin{obsolete}
+There are two subtypes of interest,
+called \cd{standard-char} and \cd{string-char}.
+\end{obsolete}
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL} to remove the type \cd{string-char}.
+\end{newer}
+
+A character object can be notated by writing \cd{\#{\Xbackslash}} followed
+by the character itself.  For example, \cd{\#{\Xbackslash}g} means the character
+object for a lowercase g.  This works well enough for printing
+characters.  Non-printing characters have names, and can be notated
+by writing \cd{\#{\Xbackslash}} and then the name; for example, \cd{\#{\Xbackslash}Space}
+(or \cd{\#{\Xbackslash}SPACE} or \cd{\#{\Xbackslash}space} or \cd{\#{\Xbackslash}sPaCE})
+means the space character.  The syntax for character names after \cd{\#{\Xbackslash}}
+is the same as that for symbols.  However, only character names
+that are known to the particular implementation may be used.
+
+\subsection{Standard Characters}
+
+Common Lisp defines a standard character set (subtype \cd{standard-char})
+for two purposes.
+Common Lisp programs that are {\it written} in the standard character set
+can be read by any Common Lisp implementation; and Common Lisp programs
+that {\it use} only standard characters as data objects are most likely
+to be portable.  The Common Lisp character set consists of a space character
+\cd{\#{\Xbackslash}Space}, a newline character \cd{\#{\Xbackslash}Newline}, and the
+following ninety-four
+non-blank printing characters or their equivalents:
+\begin{lisp}
+! " \# \$ \% \& ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? \\
+{\Xatsign} A B C D E F G H I J K L M N O P Q R S T U V W X Y Z {\Xlbracket} {\Xbackslash} {\Xrbracket} {\Xcircumflex} {\Xunderscore} \\
+{\Xbq} a b c d e f g h i j k l m n o p q r s t u v w x y z {\Xlbrace} | {\Xrbrace} {\Xtilde}
+\end{lisp}
+The Common Lisp standard character set is apparently equivalent to
+the ninety-five standard ASCII printing characters plus a newline character.
+Nevertheless, Common Lisp is designed to be relatively independent of
+the ASCII character encoding.  For example, the collating sequence
+is not specified except to say that digits must be properly ordered,
+the uppercase letters must be properly ordered, and
+the lowercase letters must be properly ordered
+(see \cd{char<} for a precise specification).
+Other character encodings, particularly EBCDIC, should be easily accommodated
+(with a suitable mapping of printing characters).
+
+Of the ninety-four non-blank printing characters, the following are
+used in only limited ways in the syntax of Common Lisp programs:
+\begin{lisp}
+{\Xlbracket}~~{\Xrbracket}~~{\Xlbrace}~~{\Xrbrace}~~?~~!~~{\Xcircumflex}~~{\Xunderscore}~~{\Xtilde}~~\$~~\% 
+\end{lisp}
+\begin{obsolete}
+\noindent
+All of these characters except \cd{!} and \cd{{\Xunderscore}} are used within
+\cd{format} strings as formatting directives.
+Except for this,
+\cd{{\Xlbracket}}, \cd{{\Xrbracket}}, \cd{{\Xlbrace}}, \cd{{\Xrbrace}},
+\cd{?}, and \cd{!} are not used in Common Lisp and are reserved to the user
+for syntactic extensions; \cd{{\Xcircumflex}} and \cd{{\Xunderscore}}
+are not yet used in Common Lisp
+but are part of the syntax of reserved tokens
+and are reserved to implementors;
+\cd{{\Xtilde}} is not yet used in Common Lisp and is reserved to implementors;
+and \cd{\$} and \cd{\%} are normally regarded as alphabetic characters
+but are not used in the names of any standard Common Lisp functions,
+variables, or other entities.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{PRETTY-PRINT-INTERFACE}
+to add a \cd{format} directive \cd{{\Xtilde}{\Xunderscore}} (see chapter~\ref{PPRINT}).
+\end{newer}
+
+The following characters are called {\it semi-standard}:
+\begin{lisp}
+\#{\Xbackslash}Backspace~~\#{\Xbackslash}Tab~~\#{\Xbackslash}Linefeed~~\#{\Xbackslash}Page~~\#{\Xbackslash}Return~~\#{\Xbackslash}Rubout
+\end{lisp}
+Not all implementations of Common Lisp need to support them; but those
+implementations that
+use the standard ASCII character set should support them, treating them as
+corresponding respectively to the ASCII characters BS (octal code 010),
+HT (011), LF (012), FF (014), CR (015), and DEL
+(177). These characters are not
+members of the subtype \cd{standard-char} unless synonymous with
+one of the standard characters specified above.
+For example, in a given implementation it might
+be sensible for the implementor to define
+\cd{\#{\Xbackslash}Linefeed} or \cd{\#{\Xbackslash}Return} to be synonymous with \cd{\#{\Xbackslash}Newline},
+or \cd{\#{\Xbackslash}Tab} to be synonymous with \cd{\#{\Xbackslash}Space}.
+
+\subsection{Line Divisions}
+
+The treatment of line divisions is one of the most difficult issues
+in designing portable software, simply because there is so little agreement
+among operating systems.  Some use a single character to delimit lines;
+the recommended ASCII character for this purpose is the line feed character
+LF (also called the new line character, NL),
+but some systems use the carriage
+return character CR.  Much more common is the two-character sequence
+CR followed by LF.  Frequently line divisions have no representation
+as a character but are implicit in the structuring of a file into records,
+each record containing a line of text.  A deck of punched cards has this
+structure, for example.
+
+Common Lisp provides an abstract interface by requiring that there be a single
+character, \cd{\#{\Xbackslash}Newline}, that within the language serves as a line
+delimiter.  (The language C has a similar requirement.)
+An implementation of Common Lisp must translate between this internal
+single-character representation and whatever external representation(s)
+may be used.
+
+\beforenoterule
+\begin{implementation}
+How the character called \cd{\#{\Xbackslash}Newline} is represented
+internally is not specified here, but it is strongly suggested that
+the ASCII LF character be used in Common Lisp implementations that use the
+ASCII character encoding.  The ASCII CR character is a workable,
+but in most cases inferior, alternative.
+\end{implementation}
+\afternoterule
+
+\begin{newer}
+When the first edition was written it was not yet clear that UNIX would
+become so widely accepted.  The decision to represent
+the line delimiter as a single character has proved to be a good one.
+\end{newer}
+
+The requirement that a line division be represented as a single character
+has certain consequences.  A character string
+written in the middle of a program in such a way as to span more than
+one line must contain exactly one character to represent each line division.
+Consider this code fragment:
+\begin{lisp}
+(setq a-string "This string \\
+contains \\
+forty-two characters.")
+\end{lisp}
+Between \cd{g} and \cd{c} there must be exactly one character,
+\cd{\#{\Xbackslash}Newline}; a two-character sequence, such as \cd{\#{\Xbackslash}Return} and then
+\cd{\#{\Xbackslash}Newline}, is not acceptable, nor is the absence of a character.
+The same is true between \cd{s} and \cd{f}.
+
+When the character \cd{\#{\Xbackslash}Newline} is written to an output file,
+the Common Lisp implementation must take the appropriate action
+to produce a line division.  This might involve writing out a
+record or translating \cd{\#{\Xbackslash}Newline} to a CR/LF sequence.
+
+\beforenoterule
+\begin{implementation}
+If an implementation uses the ASCII character encoding,
+uses the CR/LF sequence externally to delimit lines,
+uses LF to represent \cd{\#{\Xbackslash}Newline} internally, and supports \cd{\#{\Xbackslash}Return}
+as a data object corresponding to the ASCII character CR, the
+question arises as to what action to take when the program
+writes out \cd{\#{\Xbackslash}Return} followed by \cd{\#{\Xbackslash}Newline}.
+It should first be noted that \cd{\#{\Xbackslash}Return} is not a standard Common Lisp
+character, and the action to be taken when \cd{\#{\Xbackslash}Return} is written out
+is therefore not defined by the Common Lisp language.  A plausible approach
+is to buffer the \cd{\#{\Xbackslash}Return} character and suppress it if and only if the
+next character is \cd{\#{\Xbackslash}Newline} (the net effect is to generate a CR/LF
+sequence).
+Another plausible
+approach is simply to ignore
+the difficulty and declare that writing \cd{\#{\Xbackslash}Return} and then
+\cd{\#{\Xbackslash}Newline} results in the sequence CR/CR/LF in the output.
+\end{implementation}
+\afternoterule
+
+\subsection{Non-standard Characters}
+
+Any implementation may provide additional characters, whether printing
+characters or named characters.  Some plausible examples:
+
+\newpage%manual
+
+\begin{lisp}
+\#{\Xbackslash}\(\pi\)~~\#{\Xbackslash}\(\alpha\)~~\#{\Xbackslash}Break~~\#{\Xbackslash}Home-Up~~\#{\Xbackslash}Escape
+\end{lisp}
+The use of such characters may render Common Lisp programs non-portable.
+
+\begin{obsolete}
+\subsection{Character Attributes}
+
+Every object of type \cd{character}
+has three attributes: {\it code}, {\it bits}, and {\it font}.
+The code attribute is intended to distinguish among the printed glyphs
+and formatting functions for characters; it is a numerical encoding
+of the character proper.
+The bits attribute allows extra
+flags to be associated with a character.  The font attribute permits
+a specification of the style of the glyphs (such as italics).
+Each of these attributes may be understood to be a non-negative integer.
+
+The font attribute may be notated in unsigned decimal notation
+between the \cd{\#} and the \cd{{\Xbackslash}}.  For example,
+\cd{\#3{\Xbackslash}a} means the letter \cd{a} in font 3.
+This might mean the same thing as \cd{\#{\Xbackslash}$\alpha$} if font 3
+were used to represent Greek letters.
+Note that not all Common Lisp implementations provide for non-zero
+font attributes; see \cd{char-font-limit}.
+
+The bits attribute may be notated
+by preceding the name of the character by the names or initials
+of the bits,
+separated by hyphens.  The character itself may be written
+instead of the name, preceded if necessary by \cd{{\Xbackslash}}.  For example:
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+\#{\Xbackslash}Control-Meta-Return\>\#{\Xbackslash}Meta-Control-Q \\
+\#{\Xbackslash}Hyper-Space\>\#{\Xbackslash}Meta-{\Xbackslash}a \\
+\#{\Xbackslash}Control-A\>\#{\Xbackslash}Meta-Hyper-{\Xbackslash}: \\
+\#{\Xbackslash}C-M-Return\>\#{\Xbackslash}Hyper-{\Xbackslash}\(\pi\)
+\end{lisp}
+Note that not all Common Lisp implementations provide for non-zero
+bits attributes; see \cd{char-bits-limit}.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to replace the notion of bits and font attributes with
+that of implementation-defined attributes.
+\end{newer}
+
+\begin{obsolete}
+\subsection{String Characters}
+
+Any character whose bits and font attributes are zero may be contained
+in strings.  All such characters together constitute a subtype of
+the characters; this subtype is called \cd{string-char}.
+\end{obsolete}
+
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the type \cd{string-char}.
+Two new subtypes of \cd{character} are \cd{base-character},
+defined to be equivalent to the result of the function call
+\begin{lisp}
+(upgraded-array-element-type 'standard-char)
+\end{lisp}
+and \cd{extended-character}, defined to be equivalent to the type specifier
+\begin{lisp}
+(and character (not base-character))
+\end{lisp}
+An implementation may support additional subtypes of \cd{character}
+that may or may not be supertypes of \cd{base-character}.
+In addition, an implementation may define \cd{base-character}
+to be equivalent to \cd{character}.  The choice of any base characters
+that are not standard characters is implementation-defined.
+Only base characters can be elements of a base string.
+No upper bound is specified for the number of distinct characters
+of type \cd{base-character}---that is implementation-dependent---but the lower
+bound is 96, the number of standard Common Lisp characters.
+\end{newer}
+
+\section{Symbols}
+
+Symbols are Lisp data objects that serve several purposes
+and have several interesting characteristics.  Every object of
+type \cd{symbol} has a name,
+called its {\it print name}.  Given a symbol, one can
+obtain its name in the form of a string.  Conversely,
+given the name of a symbol as a string, one can obtain the
+symbol itself.  (More precisely, symbols are organized into
+{\it packages}, and all the symbols in a package are uniquely
+identified by name.  See chapter~\ref{XPACK}.)
+
+Symbols have a component called the {\it property list}, or {\it plist}.
+By convention this is always a list whose even-numbered
+components (calling the first component zero) are symbols,
+here functioning as property names, and whose odd-numbered components
+are associated property values.  Functions are provided for manipulating
+this property list; in effect, these allow a symbol to be treated as an
+extensible record structure.
+
+Symbols are also used to represent certain kinds of variables in Lisp
+programs, and there are functions for dealing with the values associated
+with symbols in this role.
+
+A symbol can be notated simply by writing its name.
+If its name is not empty, and if the name consists only of
+uppercase alphabetic, numeric, or certain pseudo-alphabetic
+special characters (but not
+delimiter characters such as parentheses or space), and if
+the name of the symbol cannot be mistaken for a number, then
+the symbol can be notated by the sequence of characters in its name.
+Any uppercase letters that appear in the (internal) name may
+be written in either case in the external notation (more on this below).
+For example:
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~\=\kill
+FROBBOZ\>;{\rm The symbol whose name is \cd{FROBBOZ}} \\
+frobboz\>;{\rm Another way to notate the same symbol} \\
+fRObBoz\>;{\rm Yet another way to notate it} \\
+unwind-protect\>;{\rm A symbol with a \cd{-} in its name} \\
++\$\>;{\rm The symbol named \cd{+\$}} \\
+1+\>;{\rm The symbol named \cd{1+}} \\
++1\>;{\rm This is the integer 1, not a symbol} \\
+pascal{\Xunderscore}style\>;{\rm This symbol has an underscore in its name} \\
+b{\Xcircumflex}2-4*a*c\>;{\rm This is a single symbol!} \\
+\>;~{\rm It has several special characters in its name} \\
+file.rel.43\>;{\rm This symbol has periods in its name} \\
+/usr/games/zork\>;{\rm This symbol has slashes in its name}
+\end{lisp}
+In addition to letters and numbers, the following characters are normally
+considered to be alphabetic for the purposes of notating
+symbols:
+\begin{lisp}
++~~-~~*~~/~~{\Xatsign}~~\$~~\%~~{\Xcircumflex}~~\&~~{\Xunderscore}~~=~~<~~>~~{\Xtilde}~~.
+\end{lisp}
+Some of these characters have conventional purposes for naming things;
+for example, symbols that name special variables
+generally have names beginning and ending with
+\cd{*}.  The last character listed above, the period, is considered alphabetic
+{\it provided} that a token does not consist entirely of periods.
+A single period standing by itself is used in the notation
+of conses and dotted lists; a token consisting of two or more periods
+is syntactically illegal.  (The period also serves as the decimal point
+in the notation of numbers.)
+
+The following characters are also alphabetic by default but are explicitly
+reserved to the user for definition as reader macro characters
+(see section~\ref{MACRO-CHARACTERS-SECTION}) or any other desired purpose
+and therefore should not be used routinely in names of symbols:
+\begin{lisp}
+?~~!~~{\Xlbracket}~~{\Xrbracket}~~{\Xlbrace}~~{\Xrbrace}
+\end{lisp}
+
+A symbol may have uppercase letters, lowercase letters, or both
+in its print name.
+However, the Lisp reader normally converts lowercase letters to
+the corresponding uppercase letters when reading symbols.
+The net effect is that most of the time case makes no
+difference when {\it notating} symbols.  Case {\it does} make
+a difference internally and when printing a symbol.
+Internally the symbols that name all standard Common Lisp functions,
+variables, and keywords have uppercase names; their names appear
+in lowercase in this book for readability.  Typing such names
+with lowercase letters works because the function \cd{read} will convert
+lowercase letters to the equivalent uppercase letters.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{READ-CASE-SENSITIVITY} to introduce
+\cd{readtable-case}, which controls whether \cd{read} will alter the case
+of letters read as part of the name of a symbol.
+\end{newer}
+
+If a symbol cannot be simply notated by the characters of its name
+because the (internal) name contains special characters or lowercase letters,
+then there are two ``escape'' conventions for notating them.
+Writing a \cd{{\Xbackslash}} character before any character causes the character
+to be treated itself as an ordinary character for use in a symbol name;
+in particular, it suppresses internal conversion of lowercase letters
+to their uppercase equivalents.
+If any character in a notation is preceded by \cd{{\Xbackslash}}, then that
+notation can never be interpreted as a number.
+For example:
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~~~~~\=\kill
+{\Xbackslash}(\>;{\rm The symbol whose name is \cd{(}} \\
+{\Xbackslash}+1\>;{\rm The symbol whose name is \cd{+1}} \\
++{\Xbackslash}1\>;{\rm Also the symbol whose name is \cd{+1}} \\
+{\Xbackslash}frobboz\>;{\rm The symbol whose name is \cd{fROBBOZ}} \\
+3.14159265{\Xbackslash}s0\>;{\rm The symbol whose name is \cd{3.14159265s0}} \\
+3.14159265{\Xbackslash}S0\>;{\rm A different symbol, whose name is \cd{3.14159265S0}} \\
+3.14159265s0\>;{\rm A short-format floating-point approximation to \(\pi\)} \\
+APL{\Xbackslash}{\Xbackslash}360\>;{\rm The symbol whose name is \cd{APL{\Xbackslash}360}} \\
+apl{\Xbackslash}{\Xbackslash}360\>;{\rm Also the symbol whose name is \cd{APL{\Xbackslash}360}} \\
+{\Xbackslash}(b{\Xcircumflex}2{\Xbackslash}){\Xbackslash} -{\Xbackslash} 4*a*c\>;{\rm The name is \cd{(B{\Xcircumflex}2) - 4*A*C};} \\
+\>;~{\rm it has parentheses and two spaces in it} \\
+{\Xbackslash}({\Xbackslash}b{\Xcircumflex}2{\Xbackslash}){\Xbackslash} -{\Xbackslash} 4*{\Xbackslash}a*{\Xbackslash}c\>;{\rm The name is \cd{(b{\Xcircumflex}2) - 4*a*c};} \\
+\>;~{\rm the letters are explicitly lowercase}
+\end{lisp}
+It may be tedious to insert a \cd{{\Xbackslash}} before {\it every} delimiter
+character in the name of a symbol if there are many of them.
+An alternative convention is to surround the name of a symbol
+with vertical bars; these cause every character between them to
+be taken as part of the symbol's name, as if \cd{{\Xbackslash}} had been written
+before each one, excepting only
+\cd{|} itself and \cd{{\Xbackslash}}, which must nevertheless be preceded by \cd{{\Xbackslash}}.
+For example:
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~\=\kill
+|"|\>;{\rm The same as writing \cd{{\Xbackslash}"}} \\
+|(b{\Xcircumflex}2) - 4*a*c|\>;{\rm The name is \cd{(b{\Xcircumflex}2) - 4*a*c}} \\
+|frobboz|\>;{\rm The name is \cd{frobboz}, not \cd{FROBBOZ}} \\
+|APL{\Xbackslash}360|\>;{\rm The name is \cd{APL360}, because the \cd{{\Xbackslash}} quotes the \cd{3}} \\
+|APL{\Xbackslash}{\Xbackslash}360|\>;{\rm The name is \cd{APL{\Xbackslash}360}} \\
+|apl{\Xbackslash}{\Xbackslash}360|\>;{\rm The name is \cd{apl{\Xbackslash}360}} \\
+|{\Xbackslash}|{\Xbackslash}||\>;{\rm Same as \cd{{\Xbackslash}|{\Xbackslash}|}: the name is \cd{||}} \\
+|(B{\Xcircumflex}2) - 4*A*C|\>;{\rm The name is \cd{(B{\Xcircumflex}2) - 4*A*C};} \\
+\>;~{\rm it has parentheses and two spaces in it} \\
+|(b{\Xcircumflex}2) - 4*a*c|\>;{\rm The name is \cd{(b{\Xcircumflex}2) - 4*a*c}}
+\end{lisp}
+
+%???
+%\begin{newer}
+%X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+%to clarify that the print name of a symbol may contain any character,
+%although it may be necessary to use an escape character in the notation.
+%However, some or all of the implementation-defined attributes may be removed
+%from the character, at the discretion of the implementation,
+%before inclusion in the print name.
+%\end{newer}
+
+\section{Lists and Conses}
+
+\indexterm{cons}
+A \cd{cons} is a record structure containing two components
+called the {\it car} and the {\it cdr}.  Conses are used primarily
+to represent lists.
+
+A {\it list} is recursively defined to be either the empty list
+or a cons whose {\it cdr} component is a list.
+A list is therefore a chain of conses linked by their {\it cdr} components
+and terminated by {\nil}, the empty list.  The {\it car} components of the conses
+are called the {\it elements} of the list.  For each element of the list
+there is a cons.  The empty list has no elements at all.
+
+A list is notated by writing the elements of the list in order,
+separated by blank space (space, tab, or return characters)
+and surrounded by parentheses.
+\begin{lisp}
+(a b c)~~~~~~~~~~~~~~~;{\rm A list of three symbols} \\
+(2.0s0 (a 1) \#{\Xbackslash}*)~~~~~;{\rm A list of three things: a short floating-point} \\
+~~~~~~~~~~~~~~~~~~~~~~;~{\rm number, another list, and a character object}
+\end{lisp}
+The empty list {\nil} therefore can be written as {\empty}, because it is a list
+with no elements.
+
+A {\it dotted list} is one whose last cons does not have {\nil} for
+its {\it cdr}, rather some other data object (which is also not a cons,
+or the first-mentioned cons would not be the last cons of the list).
+Such a list is called ``dotted'' because of the special notation
+used for it: the elements of the list are written between
+parentheses as before, but after the last element and before
+the right parenthesis are written a dot (surrounded by blank space)
+and then the {\it cdr} of the last cons.  As a special case,
+a single cons is notated by writing the {\it car} and the {\it cdr} between
+parentheses and separated by a space-surrounded dot.
+For example:
+\begin{lisp}
+(a . 4)~~~~~~~~~;{\rm A cons whose {\it car} is a symbol} \\
+~~~~~~~~~~~~~~~~;~{\rm and whose {\it cdr} is an integer} \\
+(a b c . d)~~~~~;{\rm A dotted list with three elements whose last cons} \\
+~~~~~~~~~~~~~~~~;~{\rm has the symbol \cd{d} in its {\it cdr}}
+\end{lisp}
+
+\beforenoterule
+\begin{incompatibility}
+In MacLisp, the dot in dotted-list notation
+need not be surrounded by white space or other delimiters.
+The dot is required to be delimited in Common Lisp, as in Lisp Machine Lisp.
+\end{incompatibility}
+\afternoterule
+
+It is legitimate to write something like \cd{(a b . (c d))};
+this means the same as \cd{(a b c d)}.  The standard Lisp
+output routines will never print a list in the first form, however;
+they will avoid dot notation wherever possible.
+
+Often the term {\it list} is used to refer either to true lists or to
+dotted lists.  When the distinction is important,
+the term ``true list'' will be used to refer to a list
+terminated by {\nil}.  Most functions
+advertised to operate on lists expect to be given true lists.  Throughout
+this book, unless otherwise specified, it is an error to pass a dotted
+list to a function that is specified to require a list as an argument.
+
+\beforenoterule
+\begin{implementation}
+Implementors are encouraged to use the equivalent
+of the predicate \cd{endp} wherever it is necessary to test
+for the end of a list.  Whenever feasible, this test should explicitly
+signal an error if a list is found to be terminated by a non-{\nil} atom.
+However, such an explicit error signal is not required, because
+some such tests occur in important loops where efficiency is important.
+In such cases, the predicate \cd{atom} may be used to test
+for the end of the list, quietly treating any non-{\nil} list-terminating
+atom as if it were {\nil}.
+\end{implementation}
+\afternoterule
+
+Sometimes the term {\it tree} is used to refer to some cons
+and all the other conses transitively accessible to it
+through {\it car} and {\it cdr} links until non-conses are reached;
+these non-conses are called the {\it leaves} of the tree.
+
+Lists, dotted lists, and trees are not mutually exclusive data types;
+they are simply useful points of view about structures of conses.
+There are yet other terms, such as {\it association list}.
+None of these are true Lisp data types.  Conses are a data type,
+and {\nil} is the sole object of type \cd{null}.
+The Lisp data type \cd{list} is taken to mean the union of the
+\cd{cons} and \cd{null} data types, and therefore encompasses both
+true lists and dotted lists.
+
+\section{Arrays}
+\label{ARRAY-TYPE-SECTION}
+
+\indexterm{array}
+An \cd{array} is an object with components arranged according
+to a Cartesian coordinate system.
+In general, these components may be any Lisp data objects.
+
+The number of dimensions of an array is called its {\it rank}
+(this terminology is borrowed from APL);
+the rank is a non-negative integer.
+Likewise, each dimension is itself a non-negative integer.
+The total number of elements in the array is the product of all the
+dimensions.
+
+An implementation of Common Lisp may impose a limit on the rank of an array,
+but this limit may not be smaller than 7.  Therefore, any Common Lisp
+program may assume the use of arrays of rank 7 or less.
+(A program may determine the actual limit on array ranks for
+a given implementation by examining the constant \cd{array-rank-limit}.)
+
+It is permissible for a dimension to be zero.  In this case,
+the array has no elements, and any attempt to access an element
+is in error.  However, other properties of the array, such as the
+dimensions themselves, may be used.
+If the rank is zero, then there are no dimensions, and the
+product of the dimensions is then by definition 1.
+A zero-rank array therefore has a single element.
+
+An array element is specified by a sequence of indices.
+The length of the sequence must equal the rank of the array.
+Each index must be a non-negative integer strictly less than
+the corresponding array dimension.  Array indexing is
+therefore zero-origin, not one-origin as in (the default case of)
+Fortran.
+
+As an example, suppose that the variable \cd{foo} names a 3-by-5 array.
+Then the first index may be 0, 1, or 2, and the second index
+may be 0, 1, 2, 3, or 4.  One may refer to array elements using
+the function \cd{aref}; for example, \cd{(aref foo 2 1)}
+refers to element (2, 1) of the array.  Note that \cd{aref} takes
+a variable number of arguments: an array, and as many indices
+as the array has dimensions.
+A zero-rank array has no dimensions, and therefore
+\cd{aref} would take such an array and no indices, and return the sole
+element of the array.
+
+In general, arrays can be multidimensional,
+can share their contents with other array objects, and can have their
+size altered dynamically (either enlarging or shrinking) after creation.
+A one-dimensional array may also have a {\it fill pointer}.
+
+Multidimensional arrays store their components in row-major order;
+that is, internally a multidimensional array is stored as a one-dimensional
+array, with the multidimensional index sets ordered lexicographically,
+last index varying fastest.  This is important in two situations:
+(1) when arrays with different dimensions share their contents, and
+(2) when accessing very large arrays in a virtual-memory implementation.
+(The first situation is a matter of semantics; the second, a matter
+of efficiency.)
+
+An array that is not displaced to another array, has no fill pointer, and
+is not to have its size adjusted dynamically after creation is called a
+{\it simple} array.  The user may provide declarations that certain arrays
+will be simple.  Some implementations can handle simple arrays in an
+especially efficient manner; for example, simple arrays may have a more
+compact representation than non-simple arrays.
+
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that if one or more of the \cd{:adjustable}, \cd{:fill-pointer},
+and \cd{:displaced-to} arguments is true when \cd{make-array}
+is called, then whether the resulting
+array is simple is unspecified; but if all three arguments are false,
+then the resulting array is guaranteed to be simple.
+\end{newer}
+
+\subsection{Vectors}
+
+One-dimensional arrays are called {\it vectors} in Common Lisp
+and constitute the type \cd{vector} (which is therefore a subtype of \cd{array}).
+Vectors and lists are collectively considered to be
+{\it sequences}.  They differ in that any component of a one-dimensional array
+can be accessed in constant time,
+whereas the average component access time for a
+list is linear in the length of the list; on the other hand, adding a new
+element to the front of a list takes constant time, whereas the same
+operation on an array takes time linear in the length of the array.
+
+A general vector (a one-dimensional array
+that can have any data object as an element but that has
+no additional paraphernalia) can be notated by notating the
+components in order, separated by whitespace and surrounded by \cd{\#(}
+and \cd{)}.
+For example:
+\begin{lisp}
+\#(a b c)~~~~~~~~~~~~~~~~~~~~;{\rm A vector of length 3} \\*
+\#()~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm An empty vector} \\
+\#(2 3 5 7 11 13 17 19 23 29 31 37 41 43 47) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm A vector containing the primes below 50}
+\end{lisp}
+Note that when the function \cd{read} parses this syntax, it always constructs
+a {\it simple} general vector.
+
+\beforenoterule
+\begin{rationale}
+Many people have suggested that brackets be used
+to notate vectors, as \cd{{\Xlbracket}a b c{\Xrbracket}}
+instead of \cd{\#(a b c)}.  This notation
+would be shorter, perhaps more readable, and certainly in accord with
+cultural conventions in other parts of computer science and mathematics.
+However, to preserve the usefulness of the user-definable macro-character
+feature of the function \cd{read}, it is necessary to leave some
+characters to the user for this purpose.  Experience in MacLisp has
+shown that users, especially implementors of languages for use
+in artificial intelligence research, often want
+to define special kinds of brackets.  Therefore Common Lisp avoids using
+brackets and braces for any syntactic purpose.
+\end{rationale}
+\afternoterule
+
+Implementations may provide certain specialized representations of
+arrays for efficiency in the case where all the components are of
+the same specialized (typically numeric) type.  All implementations
+provide specialized arrays for the cases when the components
+are characters (or rather, a special subset of the characters);
+the one-dimensional instances of
+this specialization are called {\it strings}.
+All implementations are also required to provide specialized arrays
+of bits, that is, arrays of type \cd{(array bit)};
+the one-dimensional instances of
+this specialization are called {\it bit-vectors}.
+
+\subsection{Strings}
+\label{STRING-TYPE-SECTION}
+
+\begin{obsolete}
+A string is simply a vector of characters.
+More precisely, a string is a specialized vector whose elements
+are of type \cd{string-char}.
+\end{obsolete}
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
+to eliminate the type \cd{string-char} and to redefine the type
+\cd{string} to be the union of one or more specialized vector
+types, the types of whose elements are subtypes of the type \cd{character}.
+Subtypes of \cd{string} include \cd{simple-string}, \cd{base-string},
+and \cd{simple-base-string}.
+
+\vskip 3pt
+\begin{lisp}
+base-string \EQ\ (vector base-character) \\*
+simple-base-string \EQ\ (simple-array base-character (*))
+\end{lisp}
+An implementation may support
+other string subtypes as well.  All Common Lisp functions that operate
+on strings treat all strings uniformly; note, however,
+that it is an error to attempt to insert
+an extended character into a base string.
+\end{newer}
+
+\newpage%manual
+
+The type \cd{string} is therefore a subtype of the type \cd{vector}.
+
+A string can be written as the sequence of characters contained in the
+string, preceded and followed by a \cd{"} (double quote) character.
+Any \cd{"} or \cd{{\Xbackslash}} character in the sequence must additionally
+have a \cd{{\Xbackslash}} character before it.
+
+For example:
+
+\begin{lisp}
+"Foo"~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm A string with three characters in it} \\*
+""~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm An empty string} \\
+"{\Xbackslash}"APL{\Xbackslash}{\Xbackslash}360?{\Xbackslash}" he cried."~~~~~;{\rm A string with twenty characters} \\*
+"|x| = |-x|"~~~~~~~~~~~~~~~~~~;{\rm A ten-character string}
+\end{lisp}
+Notice that any vertical bar \cd{|} in a string need not be
+preceded by a \cd{{\Xbackslash}}.  Similarly, any double quote in the name
+of a symbol written using vertical-bar notation need not be
+preceded by a \cd{{\Xbackslash}}.  The double-quote and vertical-bar notations
+are similar but distinct: double quotes indicate a character string
+containing the sequence of characters,
+whereas vertical bars indicate a symbol whose name is the contained
+sequence of characters.
+
+The characters contained by the double quotes, taken from left to right,
+occupy locations within the string with increasing indices.
+The leftmost character is string element number 0, the next one
+is element number 1, the next one is element number 2, and so on.
+
+Note that the function \cd{prin1} will print any character vector
+(not just a simple one)
+using this syntax, but the function \cd{read} will always construct
+a simple string when it reads this syntax.
+
+\subsection{Bit-Vectors}
+
+A bit-vector can be written as the sequence of bits contained in the
+string, preceded by \cd{\#*}; any delimiter character, such as whitespace,
+will terminate the bit-vector syntax.
+For example:
+\begin{lisp}
+\#*10110~~~~~;{\rm A five-bit bit-vector; bit 0 is a 1} \\
+\#*~~~~~~~~~~;{\rm An empty bit-vector}
+\end{lisp}
+The bits notated following the \cd{\#*}, taken from left to right,
+occupy locations within the bit-vector with increasing indices.
+The leftmost notated bit is bit-vector element number 0, the next one
+is element number 1, and so on.
+
+The function \cd{prin1} will print any bit-vector (not just a simple one)
+using this syntax, but the function \cd{read} will always construct
+a simple bit-vector when it reads this syntax.
+
+\section{Hash Tables}
+
+Hash tables provide an efficient way of mapping any
+Lisp object (a {\it key}) to an associated object.
+They are provided as primitives of Common Lisp because
+some implementations may need to use internal storage
+management strategies that would make it very difficult
+for the user to implement hash tables in a portable fashion.
+Hash tables are described in chapter~\ref{HASH}.
+
+\section{Readtables}
+
+A readtable is a data structure that maps characters into syntax
+types for the Lisp expression parser.
+In particular, a readtable indicates for
+each character with syntax {\it macro character} what its macro
+definition is.  This is a mechanism by which the user may reprogram
+the parser to a limited but useful extent.
+See section~\ref{READTABLE-SECTION}.
+
+\section{Packages}
+
+Packages are collections of symbols that serve as name spaces.
+The parser recognizes symbols by looking up character sequences
+in the current package.  Packages can be used to hide
+names internal to a module from other code.  Mechanisms are provided
+for exporting symbols from a given package to the primary ``user'' package.
+See chapter~\ref{XPACK}.
+
+\section{Pathnames}
+Pathnames are the means by which a Common Lisp program can
+interface to an external file system in a reasonably implementation-independent
+manner.  See section~\ref{PATHNAME}.
+
+\section{Streams}
+
+A stream is a source or sink of data, typically characters or bytes.
+Nearly all functions that perform I/O do so with respect to a specified
+stream.  The function \cd{open} takes a pathname and returns a stream
+connected to the file specified by the pathname.
+There are a number of standard streams that are used by default for
+various purposes.  See chapter~\ref{STREAM}.
+
+\begin{newer}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to introduce subtypes of type \cd{stream}:
+\cd{broadcast-stream}, \cd{concatenated-stream},
+\cd{echo-stream}, \cd{synonym-stream}, \cd{string-stream}, \cd{file-stream},
+and \cd{two-way-stream} are disjoint subtypes of \cd{stream}.
+Note particularly that a synonym stream is always and only of type
+\cd{synonym-stream}, regardless of the type of the stream for which it is a synonym.
+\end{newer}
+
+\section{Random-States}
+
+An object of type \cd{random-state} is used to encapsulate
+state information used by the pseudo-random number generator.
+For more information about \cd{random-state} objects,
+see section~\ref{RANDOM}.
+
+\section{Structures}
+
+Structures are instances of user-defined data types that have
+a fixed number of named components.  They are analogous to
+records in Pascal.
+Structures are declared using the \cd{defstruct} construct;
+\cd{defstruct} automatically defines access and constructor functions for
+the new data type.
+
+Different structures may print out in different ways;
+the definition of a structure type may specify a print procedure
+to use for objects of that type (see the
+\cd{:print-function} option to \cd{defstruct}).
+The default notation for structures is
+\begin{lisp}
+\#S({\it structure-name} \\
+~~~~~~~~{\it slot-name-1} {\it slot-value-1} \\
+~~~~~~~~{\it slot-name-2} {\it slot-value-2} \\
+~~~~~~~~~~~~~~~~~~~~~~...)
+\end{lisp}
+where \cd{\#S} indicates structure syntax, {\it structure-name} is
+the name (a symbol) of the structure type, each {\it slot-name} is the name
+(also a symbol) of a component, and each corresponding {\it slot-value}
+is the representation of the Lisp object in that slot.
+
+\section{Functions}
+\label{FUNCTION-TYPE-SECTION}
+
+\begin{obsolete}
+A {\it function} is anything that may be correctly given to the \cd{funcall}
+or \cd{apply} function, and is
+to be executed as code when arguments are supplied.
+
+A {\it compiled-function} is a compiled code object.
+
+A lambda-expression
+(a list whose {\it car} is the symbol \cd{lambda}) may serve as a function.
+Depending on the implementation, it may be possible for other lists to
+serve as functions.  For example, an implementation might choose to
+represent a ``lexical closure'' as a list whose {\it car} contains some
+special marker.
+
+A symbol may serve as a function; an attempt to invoke a symbol as a function
+causes the contents of the symbol's function cell to be used.
+See \cd{symbol-function} and \cd{defun}.
+
+The result of evaluating a \cd{function} special form
+will always be a function.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{FUNCTION-TYPE}
+to revise these specifications.  The type \cd{function} is to be disjoint
+from \cd{cons} and \cd{symbol}, and so a list whose {\it car} is \cd{lambda}
+is not, properly speaking, of type \cd{function}, nor is any symbol.
+However,
+standard Common Lisp functions that accept functional arguments
+will accept a symbol or a list whose {\it car} is \cd{lambda}
+and automatically coerce it to be a function; such standard
+functions include \cd{funcall}, \cd{apply}, and \cd{mapcar}.
+Such functions do not, however, accept a lambda-expression as a functional
+argument; therefore one may not write
+
+\vskip 3pt
+\begin{lisp}
+(mapcar '(lambda (x y) (sqrt (* x y))) p q)
+\end{lisp}
+but instead one must write something like
+\begin{lisp}
+(mapcar \#'(lambda (x y) (sqrt (* x y))) p q)
+\end{lisp}
+
+This change makes it impermissible to represent a lexical closure
+as a list whose {\it car} is some special marker.
+
+The value of a \cd{function} special form
+will always be of type \cd{function}.
+\end{newer}
+
+\section{Unreadable Data Objects}
+
+Some objects may print in implementation-dependent ways.
+Such objects cannot necessarily be reliably reconstructed from
+a printed representation, and so they are usually printed in
+a format informative to the user but not acceptable to the \cd{read} function:
+\cd{\#<{\it useful information}>}.
+The Lisp reader will signal an error on encountering \cd{\#<}.
+
+As a hypothetical example, an implementation might print
+\begin{lisp}
+\#<stack-pointer si:rename-within-new-definition-maybe \#o311037552>
+\end{lisp}
+for an implementation-specific ``internal stack pointer'' data type
+whose printed representation includes the name of the type,
+some information about the stack slot pointed to, and the machine address
+(in octal) of the stack slot.
+
+\begin{newer}
+See \cd{print-unreadable-object}, a macro that prints an object using \cd{\#<}
+syntax.
+\end{newer}
+
+\section{Overlap, Inclusion, and Disjointness of Types}
+\label{DATA-TYPE-RELATIONSHIPS}
+
+The Common Lisp data type hierarchy is tangled and purposely left somewhat
+open-ended so that implementors may experiment with new data types
+as extensions to the language.  This section explicitly states all
+the defined relationships between types, including subtype/supertype
+relationships,
+disjointness, and exhaustive partitioning.  The user of Common Lisp
+should not depend on any relationships not explicitly stated here.
+For example, it is not valid to assume that because a number
+is not complex and not rational that it must be a \cd{float}, because
+implementations are permitted to provide yet other kinds of numbers.
+
+First we need some terminology.
+If {\it x} is a supertype of {\it y}, then any object of type {\it y} is also
+of type {\it x}, and {\it y} is said to be a subtype of {\it x}.  If types
+{\it x} and {\it y} are disjoint, then no object (in any implementation) may
+be both of type {\it x} and of type {\it y}.  Types ${\it a}_1$ through
+${\it a}_{\hbox{\scriptsize\it n}}$ are an {\it exhaustive union}
+of type {\it x} if each ${\it a}_j$
+is a subtype of {\it x}, and any object of type {\it x} is
+necessarily of at least one of the types ${\it a}_{\hbox{\scriptsize\it j}}$;
+${\it a}_1$ through ${\it a}_{\hbox{\scriptsize\it n}}$ are furthermore an {\it exhaustive partition}
+if they are also pairwise disjoint.
+
+\begin{itemize}
+\item
+The type \cd{t} is a supertype of every type whatsoever.
+Every object is of type \cd{t}.
+
+\item
+The type {\nil} is a subtype of every type whatsoever.
+No object is of type {\nil}.
+\end{itemize}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+The types \cd{cons}, \cd{symbol}, \cd{array}, \cd{number}, and \cd{character}
+are pairwise disjoint.
+\end{itemize}
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{DATA-TYPES-HIERARCHY-UNDERSPECIFIED}
+to extend the preceding paragraph as follows.
+
+\begin{itemize}
+\item
+The types \cd{cons}, \cd{symbol}, \cd{array}, \cd{number}, \cd{character},
+\cd{hash-table}, \cd{readtable}, \cd{package}, \cd{pathname},
+\cd{stream}, \cd{random-state}, and any single other type created by
+\cd{defstruct} or \cd{defclass}
+are pairwise disjoint.
+\end{itemize}
+
+The wording of the first edition was intended to allow implementors to use
+the \cd{defstruct} facility to define the built-in types \cd{hash-table},
+\cd{readtable}, \cd{package}, \cd{pathname}, \cd{stream}, \cd{random-state}.
+The change still permits this implementation strategy but
+forbids these built-in types from including, or being included in,
+other types (in the sense of the \cd{defstruct} \cd{:include} option).
+\end{new}
+
+\begin{new}
+X3J13 voted in June 1988 \issue{FUNCTION-TYPE}
+to specify that the type \cd{function}
+is disjoint from the types \cd{cons}, \cd{symbol}, \cd{array}, \cd{number}, and \cd{character}.
+The type \cd{compiled-function} is a subtype of \cd{function};
+implementations are free to define other subtypes of \cd{function}.
+\end{new}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+The types \cd{rational}, \cd{float}, and \cd{complex} are pairwise disjoint
+subtypes of \cd{number}.
+\end{itemize}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{REAL-NUMBER-TYPE} to rewrite the preceding item
+as follows.
+\begin{itemize}
+\item
+The types \cd{real} and \cd{complex} are pairwise disjoint
+subtypes of \cd{number}.
+\end{itemize}
+
+\beforenoterule
+\begin{rationale}
+It might be thought that \cd{real} and \cd{complex} should
+form an exhaustive partition of the type \cd{number}.  This is purposely
+avoided here in order to permit compatible experimentation with extensions
+to the Common Lisp number system.
+\end{rationale}
+\afternoterule
+
+\begin{itemize}
+\item
+The types \cd{rational} and \cd{float} are pairwise disjoint
+subtypes of \cd{real}.
+\end{itemize}
+
+\beforenoterule
+\begin{rationale}
+It might be thought that \cd{rational} and \cd{float} should
+form an exhaustive partition of the type \cd{real}.  This is purposely
+avoided here in order to permit compatible experimentation with extensions
+to the Common Lisp number system.
+\end{rationale}
+\afternoterule
+\end{newer}
+
+\begin{itemize}
+\item
+The types \cd{integer} and \cd{ratio} are disjoint subtypes of \cd{rational}.
+\end{itemize}
+
+\beforenoterule
+\begin{rationale}
+It might be thought that \cd{integer} and \cd{ratio} should
+form an exhaustive partition of the type \cd{rational}.  This is purposely
+avoided here in order to permit compatible experimentation with extensions
+to the Common Lisp rational number system.
+\end{rationale}
+\afternoterule
+
+\begin{obsolete}
+\begin{itemize}
+\item
+The types \cd{fixnum} and \cd{bignum} are disjoint subtypes of \cd{integer}.
+\end{itemize}
+
+\beforenoterule
+\begin{rationale}
+It might be thought that \cd{fixnum} and \cd{bignum} should
+form an exhaustive partition of the type \cd{integer}.  This is purposely
+avoided here in order to permit compatible experimentation with
+extensions to the Common Lisp integer number system, such as the idea of
+adding explicit representations of infinity or of positive and negative
+infinity.
+\end{rationale}
+\afternoterule
+\end{obsolete}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FIXNUM-NON-PORTABLE}
+to specify that the types \cd{fixnum} and \cd{bignum}
+do in fact form an exhaustive partition of the type \cd{integer}; more precisely,
+they voted to specify that the type \cd{bignum} is by definition equivalent
+to \cd{(and~integer (not~fixnum))}.  This is consistent with the
+first edition text in section~\ref{INTEGERS-SECTION}.
+
+I interpret this to mean that implementators could still experiment with
+such extensions as adding explicit representations of infinity, but such infinities
+would necessarily be of type \cd{bignum}.
+\end{new}
+
+\begin{itemize}
+\item
+The types \cd{short-float}, \cd{single-float}, \cd{double-float}, and
+\cd{long-float} are subtypes of \cd{float}.  Any two of them must be
+either disjoint or identical; if identical, then any other types between
+them in the above ordering must also be identical to them
+(for example, if \cd{single-float} and \cd{long-float} are identical types,
+then \cd{double-float} must be identical to them also).
+
+\item
+The type \cd{null} is a subtype of \cd{symbol}; the only object of type
+\cd{null} is {\nil}.
+
+\item
+The types \cd{cons} and \cd{null} form an exhaustive partition of the type
+\cd{list}.
+\end{itemize}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+The type \cd{standard-char} is a subtype of \cd{string-char};
+\cd{string-char} is a subtype of \cd{character}.
+\end{itemize}
+\end{obsolete}
+
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL} to remove the type \cd{string-char}.
+The preceding item is replaced by the following.
+\begin{itemize}
+\item
+The type \cd{standard-char} is a subtype of \cd{base-character}.
+The types \cd{base-character} and \cd{extended-character}
+form an exhaustive partition of \cd{character}.
+\end{itemize}
+\end{newer}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+The type \cd{string} is a subtype of \cd{vector}, for \cd{string}
+means \cd{(vector string-char)}.
+\end{itemize}
+\end{obsolete}
+
+\newpage%manual
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL} to remove the type \cd{string-char}.
+The preceding item is replaced by the following.
+\begin{itemize}
+\item
+The type \cd{string} is a subtype of \cd{vector}; it is the union of
+all types \cd{(vector~{\it c})} such that {\it c} is a subtype of \cd{character}.
+\end{itemize}
+\end{newer}
+
+\begin{itemize}
+\item
+The type \cd{bit-vector} is a subtype of \cd{vector}, for \cd{bit-vector}
+means \cd{(vector bit)}.
+
+\item
+The types \cd{(vector t)}, \cd{string}, and \cd{bit-vector} are disjoint.
+
+\item
+The type \cd{vector} is a subtype of \cd{array}; for all types {\it x},
+the type \cd{(vector {\it x})} is the same as the type \cd{(array {\it x} (*))}.
+
+\item
+The type \cd{simple-array} is a subtype of \cd{array}.
+\end{itemize}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+The types \cd{simple-vector}, \cd{simple-string}, and
+\cd{simple-bit-vector} are disjoint subtypes of \cd{simple-array}, for they
+respectively mean \cd{(simple-array t (*))}, \cd{(simple-array string-char (*))},
+and \cd{(simple-array bit (*))}.
+\end{itemize}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL} to remove the type \cd{string-char}.
+The preceding item is replaced by the following.
+\begin{itemize}
+\item
+The types \cd{simple-vector}, \cd{simple-string}, and
+\cd{simple-bit-vector} are disjoint subtypes of \cd{simple-array}, for they
+mean \cd{(simple-array t (*))}, the union of all types
+\cd{(simple-array {\it c} (*))} such that {\it c} is a subtype of \cd{character},
+and \cd{(simple-array bit (*))}, respectively.
+\end{itemize}
+\end{newer}
+
+\begin{itemize}
+\item
+The type \cd{simple-vector} is a subtype of \cd{vector} and indeed
+is a subtype of \cd{(vector t)}.
+
+\item
+The type \cd{simple-string} is a subtype of \cd{string}.
+(Note that although \cd{string} is a subtype of \cd{vector},
+\cd{simple-string} is not a subtype of \cd{simple-vector}.)
+\end{itemize}
+
+\beforenoterule
+\begin{rationale}
+The hypothetical name \cd{simple-general-vector} would have been more accurate than
+\cd{simple-vector}, but in this instance euphony and
+user convenience were deemed more important to the design
+of Common Lisp than a rigid symmetry.
+\end{rationale}
+\afternoterule
+
+\begin{itemize}
+\item
+The type \cd{simple-bit-vector} is a subtype of \cd{bit-vector}.
+(Note that although \cd{bit-vector} is a subtype of \cd{vector},
+\cd{simple-bit-vector} is not a subtype of \cd{simple-vector}.)
+
+\item
+The types \cd{vector} and \cd{list} are disjoint subtypes of \cd{sequence}.
+
+\item
+The types \cd{random-state}, \cd{readtable}, \cd{package}, \cd{pathname},
+\cd{stream}, and \cd{hash-table} are pairwise disjoint.
+\end{itemize}
+
+\begin{new}
+X3J13 voted in June 1988
+\issue{DATA-TYPES-HIERARCHY-UNDERSPECIFIED}
+to make \cd{random-state}, \cd{readtable}, \cd{package}, \cd{pathname},
+\cd{stream}, and \cd{hash-table}
+pairwise disjoint from a number of other types as well;
+see note above.
+\end{new}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STREAM-ACCESS}
+to introduce subtypes of type \cd{stream}.
+
+\begin{itemize}
+\item
+The types \cd{two-way-stream}, \cd{echo-stream},
+\cd{broadcast-stream}, \cd{file-stream}, \cd{synonym-stream}, \cd{string-stream}, and
+\cd{concatenated-stream} are disjoint subtypes of \cd{stream}.
+\end{itemize}
+\end{new}
+
+\begin{itemize}
+\item
+Any two types created by \cd{defstruct} are disjoint unless
+one is a supertype of the other by virtue of
+the \cd{:include} option.
+\end{itemize}
+
+\begin{obsolete}
+\begin{itemize}
+\item
+An exhaustive union for the type \cd{common} is formed by the types
+\cd{cons}, \cd{symbol}, \cd{(array {\it x})} where {\it x} is either {\true} or 
+a subtype
+of \cd{common}, \cd{string}, \cd{fixnum}, \cd{bignum}, \cd{ratio},
+\cd{short-float}, \cd{single-float}, \cd{double-float}, \cd{long-float},
+\cd{(complex {\it x})} where {\it x} is a
+subtype of \cd{common},
+\cd{standard-char}, \cd{hash-table}, \cd{readtable}, \cd{package}, \cd{pathname},
+\cd{stream}, \cd{random-state}, and all types created by the user
+via \cd{defstruct}.
+An implementation may not unilaterally add subtypes to
+\cd{common}; however, future revisions to the Common Lisp standard may
+extend the definition of the \cd{common} data type.
+Note that a type such as \cd{number} or \cd{array} may or may
+not be a subtype of \cd{common}, depending on whether or not the given
+implementation has extended the set of objects of that type.
+\end{itemize}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989
+\issue{COMMON-TYPE}
+to remove the type \cd{common} from the language.
+\end{newer}

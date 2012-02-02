@@ -1,0 +1,2023 @@
+%Part{MISC, Root = "CLM.MSS"}
+%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+
+\clearpage\def\pagestatus{FINAL PROOF}
+
+\chapter{Miscellaneous Features}
+
+In this chapter are described various things that don't
+seem to fit neatly anywhere else in this book:
+the compiler, the \cd{documentation}
+function, debugging aids, environment inquiries (including facilities
+for calculating and measuring time), and the \cd{identity} function.
+
+\section{The Compiler}
+\label{COMPILER-SECTION}
+
+\begin{obsolete}\noindent
+The compiler is a program that may make code run faster by translating
+programs into an implementation-dependent form that can
+be executed more efficiently by the computer.  Most of the time
+you can write programs without worrying about the compiler;
+compiling a file of code should produce an equivalent but more
+efficient program.  When doing more esoteric things, you may need to
+think carefully about what happens at ``compile time'' and what happens
+at ``load time.''  Then the difference between the syntaxes \cd{\#.}
+and \cd{\#,} becomes important, and the \cd{eval-when} construct
+becomes particularly useful.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in January 1989
+\issue{SHARP-COMMA-CONFUSION} to remove \cd{\#,} from the language.
+\end{newer}
+
+\everypar{}
+Most declarations are not used by the Common Lisp interpreter;
+they may be used to give advice to the compiler.  The compiler may attempt
+to check your advice and warn you if it is inconsistent.
+
+Unlike most other Lisp dialects, Common Lisp recognizes \cd{special}
+declarations in interpreted code as well as compiled code.
+This potential source of incompatibility between interpreted and compiled
+code is thereby {\it eliminated} in Common Lisp.
+
+The internal workings of a compiler will of course be highly
+implementation-dependent.  The following functions provide a standard
+interface to the compiler, however.
+
+
+\begin{defun}[Function]
+compile name &optional definition
+
+\begin{obsolete}\noindent
+If {\it definition} is supplied, it should be a lambda-expression,
+the interpreted function to be compiled.  If it is not supplied,
+then {\it name} should be a symbol with a definition that is a
+lambda-expression; that definition is compiled
+and the resulting compiled code is put back into the symbol
+as its function definition.
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{COMPILE-ARGUMENT-PROBLEMS}
+to restate the preceding paragraph more precisely and to extend the
+capabilities of \cd{compile}.
+If the optional {\it definition} argument is supplied,
+it may be either a lambda-expression (which is coerced to a function)
+or a function to be compiled; if no {\it definition} is supplied,
+the \cd{symbol-function} of the symbol is extracted and compiled.
+It is permissible for the symbol to have a macro definition rather than
+a function definition; both macros and functions may be compiled.
+
+It is an error if the function to be compiled was defined interpretively
+in a non-null lexical environment.  (An implementation is free to extend
+the behavior of \cd{compile} to compile such functions properly, but
+portable programs may not depend on this capability.)  The consequences
+of calling \cd{compile} on a function that is already compiled
+are unspecified.
+\end{newer}
+
+\begin{obsolete}
+The definition is compiled and a compiled-function object produced.
+If {\it name} is a non-{\nil}
+symbol, then the compiled-function object is installed as the
+global function definition of the symbol and the symbol is returned.
+If {\it name} is {\false}, then the compiled-function object itself is returned.
+For example:
+\begin{lisp}
+\\
+(defun foo ...) \EV\ foo~~~~~~~~\=;{\rm A function definition} \\
+(compile 'foo) \EV\ foo\>;{\rm Compile it} \\
+\>;{\rm Now \cd{foo} runs faster (maybe)} \\[4pt]
+(compile {\false} \\
+~~~~~~~~~'(lambda (a b c) (- (* b b) (* 4 a c)))) \\
+~~~\EV\ {\rm a compiled function of three arguments that computes ${\it b}^2-4{\it a}{\it c}$}
+\end{lisp}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{COMPILER-DIAGNOSTICS} to specify that
+\cd{compile} returns two additional values
+indicating whether the compiler issued any diagnostics
+(see section~\ref{COMPILER-DIAGNOSTICS-SECTION}).
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{compile}
+to accept as a {\it name} any function-name (a symbol or a list
+whose car is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+One may write \cd{(compile '(setf cadr))} to compile the \cd{setf}
+expansion function for \cd{cadr}.
+\end{newer}
+\end{defun}
+
+\begin{obsolete}
+\begin{defun}[Function]
+compile-file input-pathname &key :output-file
+
+The {\it input-pathname} must be a valid file specifier, such as a pathname.
+The defaults for {\it input-filename} are taken from the variable
+\cd{*default-pathname-defaults*}.
+The file should be a Lisp source file;
+its contents are compiled and written as a binary object file.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{COMPILER-VERBOSITY} to add two new
+keyword arguments \cd{:verbose} and \cd{:print}
+to \cd{compile-file} by analogy with \cd{load}.
+The new function definition is as follows.
+
+\begin{defun}[Function]
+compile-file input-pathname &key :output-file :verbose :print
+
+The \cd{:verbose} argument (which defaults to the value of
+\cd{*compile-verbose*}), if true, permits \cd{compile-file} to print a message
+in the form of a comment to \cd{*standard-output*} indicating what file is
+being compiled and other useful information.
+
+The \cd{:print} argument (which defaults to the value of \cd{*compile-print*}),
+if true, causes information about top-level forms in the file being
+compiled to be printed to \cd{*standard-output*}.  Exactly what is printed
+is implementation-dependent; nevertheless something will be printed.
+\end{defun}
+\end{newer}
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{PATHNAME-STREAM}
+to specify exactly which streams may be used as pathnames
+(see section~\ref{PATHNAME-FUNCTIONS}).
+\end{new}
+\begin{newer}
+X3J13 voted in June 1989 \issue{PATHNAME-WILD}
+to clarify that supplying a wild pathname
+as the {\it input-pathname} argument to \cd{compile-file} has implementation-dependent consequences;
+\cd{compile-file} might signal an error, for example,
+or might compile all files that match the wild pathname.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL} to require \cd{compile-file}
+to accept logical pathnames (see section~\ref{LOGICAL-PATHNAMES-SECTION}).
+\end{newer}
+
+The \cd{:output-file} argument may be used to specify an output pathname;
+it defaults in a manner
+appropriate to the implementation's file system conventions.
+
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{COMPILER-DIAGNOSTICS} to specify that
+\cd{compile-file} returns three values: the \cd{truename} of the output
+file (or \cd{nil} if the file could not be created) and two values
+indicating whether the compiler issued any diagnostics
+(see section~\ref{COMPILER-DIAGNOSTICS-SECTION}).
+\end{newer}
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{COMPILE-FILE-PACKAGE} to specify that
+\cd{compile-file}, like \cd{load}, rebinds \cd{*package*} to its current value.  If
+some form in the file changes the value of \cd{*package*},
+the old value will be restored when compilation is completed.
+\end{newer}
+
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{COMPILE-FILE-SYMBOL-HANDLING} to specify
+restrictions on conforming programs to ensure consistent handling of symbols
+and packages.
+
+  In order to guarantee that compiled files can be loaded correctly,
+  the user must ensure that the packages referenced in the file are defined
+  consistently at compile and load time.  Conforming Common Lisp programs
+  must satisfy the following requirements.
+\begin{itemize}
+\item The value of \cd{*package*} when a top-level form in the file is processed
+      by \cd{compile-file} must be the same as the value of \cd{*package*} when the
+      code corresponding to that top-level form in the compiled file is
+      executed by the loader.  In particular,
+      any top-level form in a file that alters the value of \cd{*package*}
+          must change it to a package of the same name at both compile and
+          load time; moreover, if the first non-atomic top-level form
+          in the file is not a call to
+          \cd{in-package}, then the value of \cd{*package*} at the time \cd{load} is
+          called must be a package with the same name as the package that
+          was the value of \cd{*package*} at the time \cd{compile-file} was called.
+
+\item For every symbol appearing lexically within a top-level form that
+      was accessible in the package that was the value of \cd{*package*}
+      during processing of that top-level form at compile time, but
+      whose home package was another package, at load time there must
+      be a symbol with the same name that is accessible in both the
+      load-time \cd{*package*} and in the package with the same name as the
+      compile-time home package. 
+  
+\item For every symbol in the compiled file that was an external symbol in
+      its home package at compile time, there must be a symbol with the
+      same name that is an external symbol in the package with the same name
+      at load time.
+\end{itemize}
+  If any of these conditions do not hold, the package in which \cd{load} looks
+  for the affected symbols is unspecified.  Implementations are permitted 
+  to signal an error or otherwise define this behavior.
+
+    These requirements are merely an explicit statement of the status quo,
+    namely that users cannot depend on any particular behavior if the
+    package environment at load time is inconsistent with what existed
+    at compile time. 
+\end{newer}
+
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{IN-SYNTAX}
+to specify that \cd{compile-file} must bind \cd{*readtable*} to its current value
+at the time \cd{compile-file} is called; the dynamic extent of the binding
+should encompass all of the file-loading activity.
+This allows a portable program to include forms such as
+\begin{lisp}
+(in-package "FOO") \\*
+\\*
+(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~(setq *readtable* foo:my-readtable))
+\end{lisp}
+without performing a net global side effect on the loading environment.
+Such statements allow the remainder of such a file to be read either as
+interpreted code or by \cd{compile-file} in a syntax determined by
+an alternative readtable.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{LOAD-TRUENAME}
+to require that \cd{compile-file} bind two new variables
+\cd{*compile-file-pathname*} and \cd{*compile-file-truename*}; the dynamic extent of the bindings
+should encompass all of the file-compiling activity.
+\end{newer}
+
+\begin{newer}
+\begin{defun}[Variable]
+*compile-verbose*
+
+X3J13 voted in March 1989 \issue{COMPILER-VERBOSITY}
+to add \cd{*compile-verbose*}.
+This variable provides the default for the \cd{:verbose} argument
+to \cd{compile-file}.  Its initial value is implementation-dependent.
+
+A proposal was submitted to X3J13 in October 1989
+to rename this \cd{*compile-\discretionary{}{}{}file-\discretionary{}{}{}verbose*} for consistency.
+\end{defun}
+\end{newer}
+
+\begin{newer}
+\begin{defun}[Variable]
+*compile-print*
+
+X3J13 voted in March 1989 \issue{COMPILER-VERBOSITY}
+to add \cd{*compile-print*}.
+This variable provides the default for the \cd{:print} argument
+to \cd{compile-file}.  Its initial value is implementation-dependent.
+
+A proposal was submitted to X3J13 in October 1989
+to rename this  \cd{*compile-\discretionary{}{}{}file-\discretionary{}{}{}print*} for consistency.
+\end{defun}
+\end{newer}
+
+
+\begin{newer}
+\begin{defun}[Variable]
+*compile-file-pathname*
+
+X3J13 voted in June 1989 \issue{LOAD-TRUENAME} to introduce \cd{*compile-file-pathname*};
+it is initially \cd{nil} but \cd{compile-file} binds it to a pathname that
+represents the file name given as the first argument to \cd{compile-file} merged
+with the defaults (see \cd{merge-pathname}).
+\end{defun}
+
+\begin{defun}[Variable]
+*compile-file-truename*
+
+X3J13 voted in June 1989 \issue{LOAD-TRUENAME} to introduce \cd{*compile-file-truename*};
+it is initially \cd{nil} but \cd{compile-file} binds it to the ``true name'' of
+the pathname of the file being compiled.  See \cd{truename}.
+\end{defun}
+\end{newer}
+
+\begin{newer}
+\begin{defspec}
+load-time-value form [read-only-p]
+
+X3J13 voted in March 1989 \issue{LOAD-TIME-EVAL} to add
+   a mechanism for delaying evaluation of a {\it form}
+   until it can be done in the run-time environment.  
+
+   If a \cd{load-time-value} expression is seen by \cd{compile-file}, the compiler
+   performs its normal semantic processing (such as macro expansion and
+   translation into machine code) on the form, but arranges for the
+   execution of the {\it form} to occur at load time in a null
+   lexical environment, with the result of this evaluation then being
+   treated as an immediate quantity (that is, as if originally quoted)
+   at run time.  It is guaranteed that 
+   the evaluation of the {\it form} will take place only once when the file is 
+   loaded, but the order of evaluation with respect to the execution
+   of top-level forms in the file is unspecified.
+
+   If a \cd{load-time-value} expression appears within a function compiled
+   with \cd{compile}, the {\it form} is evaluated at compile time in a null lexical
+   environment.  The result of this compile-time evaluation is treated as 
+   an immediate quantity in the compiled code.  
+
+   In interpreted code, {\it form} is evaluated (by \cd{eval}) in a null
+   lexical environment and one value is returned.  Implementations that
+   implicitly compile (or partially compile) expressions passed to
+   \cd{eval} may evaluate the {\it form} only once, at the time this
+   compilation is performed.  This is intentionally similar to the
+   freedom that implementations are given for the time of expanding
+   macros in interpreted code.
+
+  If the same (as determined by \cd{eq}) list \cd{(load-time-value {\it form})} is
+  evaluated or compiled more than once, it is unspecified whether the {\it form}
+  is evaluated only once or is evaluated more than once.  This can
+  happen both when an expression being evaluated or compiled shares
+  substructure and when the same expression is passed to \cd{eval} or to
+  \cd{compile} multiple times.  Since a \cd{load-time-value} expression may be
+  referenced in more than one place and may be evaluated multiple times
+  by the interpreter, it is unspecified whether each execution returns
+  a ``fresh'' object or returns the same object as some other execution.
+  Users must use caution when destructively modifying the resulting
+  object.
+
+  If two lists \cd{(load-time-value {\it form})} are \cd{equal} but not \cd{eq}, their
+  values always come from distinct evaluations of {\it form}.  Coalescing
+  of these forms is not permitted.
+
+   The optional {\it read-only-p} argument designates whether the result
+   may be considered a
+   read-only constant. If \cd{nil} (the default), the result must be considered
+   ordinary, modifiable data. If \cd{t}, the result is a read-only quantity
+   that may, as appropriate, be copied into read-only space and may,
+   as appropriate, be shared
+   with other programs.  The {\it read-only-p} argument is
+   not evaluated and only the literal symbols \cd{t} and \cd{nil} are permitted.
+
+   This new feature addresses the same set of needs as the now-defunct
+   \cd{\#,} reader syntax but in a cleaner and more general manner.
+   Note that \cd{\#,} syntax was reliably useful only inside quoted structure
+   (though this was not explicitly mentioned in the first edition),
+   whereas a \cd{load-time-value} form must appear outside quoted structure in a
+   for-evaluation position.
+
+   See \cd{make-load-form}.
+\end{defspec}
+\end{newer}
+
+\begin{defun}[Function]
+disassemble name-or-compiled-function
+
+The argument should be a function object,\vadjust{\penalty-8000} a lambda-expression, or
+a symbol with a function definition.  If the relevant function is not a
+compiled function, it is first compiled.  In any case, the compiled code
+is then ``reverse-assembled'' and printed out in a symbolic format.  This
+is primarily useful for debugging the compiler, but also often of use to
+the novice who wishes to understand the workings of compiled code.
+
+\beforenoterule
+\begin{implementation}
+Implementors are encouraged to make the output
+readable, preferably with helpful comments.
+\end{implementation}
+\afternoterule
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{DISASSEMBLE-SIDE-EFFECT}
+to clarify that when \cd{disassemble} compiles a function, it never
+installs the resulting compiled-function object in the
+\cd{symbol-function} of a symbol.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{disassemble}
+to accept as a {\it name} any function-name (a symbol or a list
+whose car is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(disassemble '(setf cadr))} to disassemble the \cd{setf}
+expansion function for \cd{cadr}.
+\end{newer}
+\end{defun}
+
+\begin{new}
+\begin{defun}[Function]
+function-lambda-expression fn
+
+X3J13 voted in January 1989
+\issue{FUNCTION-DEFINITION}
+to add a new function to allow the
+source code for a defined function to be recovered.
+(The committee noted that the first edition provided no
+portable way to recover a lambda-expression once it had
+been compiled or evaluated to produce a function.)
+
+This function takes one argument, which must be a function, and returns
+three values.
+
+The first value is the defining lambda-expression for the
+function, or {\false} if that information is not available.
+The lambda-expression may have been preprocessed in some ways
+but should nevertheless be of a form suitable as an argument
+to the function \cd{compile} or for use in the \cd{function} special form.
+
+The second value is {\false} if the function was definitely
+produced by closing
+a lambda-expression in the null lexical environment; it is some
+non-{\false} value if the function might have been closed in some
+non-null lexical environment.
+
+The third value is the ``name'' of the function; this is {\false} if the
+name is not available or if the function had no name.
+The name is intended for debugging purposes only and may be
+any Lisp object (not necessarily one that would be valid for use as a name
+in a \cd{defun} or \cd{function} special form, for example).
+
+\beforenoterule
+\begin{implementation}
+An implementation is always free to return the values
+{\false}, \cd{t}, {\false} from this function but is encouraged to
+make more useful information available as appropriate.
+For example, it may not be desirable for files of compiled code
+to retain the source lambda-expressions for use after the file is loaded,
+but it is probably desirable for
+functions produced by ``in-core'' calls to \cd{eval},
+\cd{compile}, or \cd{defun} to retain the defining lambda-expression
+for debugging purposes.  The function \cd{function-lambda-expression}
+makes this information, if retained, accessible in a standard and portable
+manner.
+\end{implementation}
+\afternoterule
+\end{defun}
+\end{new}
+
+
+\begin{newer}
+\begin{defmac}
+with-compilation-unit ({option-name option-value}*) {\,form}*
+
+X3J13 voted in March 1989 \issue{WITH-COMPILATION-UNIT}
+to add \cd{with-compilation-unit}, which
+   executes the body forms as an implicit \cd{progn}. Within the dynamic context
+   of this form, warnings deferred by the compiler until ``the end of
+   compilation'' will be deferred until the end of the outermost call
+   to \cd{with-compilation-unit}. The results are the same as those of
+   the last of the forms (or \cd{nil} if there is no {\it form}).
+
+   Each {\it option-name} is an unevaluated keyword; each {\it option-value}
+   is evaluated. The set of keywords permitted may be extended by the
+   implementation, but the only standard option keyword is \cd{:override};
+   the default value for this option is \cd{nil}.
+   If \cd{with-compilation-unit} forms are nested dynamically, only the outermost
+   such call has any effect unless the \cd{:override} value of an
+   inner call is true.
+
+  The function \cd{compile-file} should
+  provide the effect of
+  \begin{lisp}
+  (with-compilation-unit (:override nil) ...)
+  \end{lisp}
+  around its code.
+
+  Any implementation-dependent extensions to this behavior may be provided only
+  as the result of an explicit programmer request by use of 
+  an implementation-dependent keyword.  It is forbidden for an implementation
+  to attach additional meaning to a conforming use of this
+  macro.
+
+  Note that not all compiler warnings are deferred. In some implementations,
+  it may be that none are deferred. This macro only creates an
+  interface to the capability where it exists, it does not require the
+  creation of the capability. An implementation that does not 
+  defer any compiler warnings may correctly implement this macro
+  as an expansion into a simple \cd{progn}.
+\end{defmac}
+\end{newer}
+
+\begin{newer}
+\subsection{Compiler Diagnostics}
+\label{COMPILER-DIAGNOSTICS-SECTION}
+
+X3J13 voted in June 1987 \issue{COMPILER-WARNING-STREAM} to specify
+that \cd{compile} and \cd{compile-file}
+may output warning messages; any such messages should
+go to the stream that is the value of \cd{*error-output*}.
+
+X3J13 voted in June 1989 \issue{COMPILER-DIAGNOSTICS}
+to specify the use of conditions to signal various erroneous situations
+during compilation.
+First, note that
+\cd{error} and \cd{warning} conditions may be signaled either by the compiler itself
+or by code being processed by the compiler (for example, arbitrary errors may 
+    occur during compile-time macro expansion or processing of \cd{eval-when}
+    forms).
+Considering only those conditions signaled {\it by the compiler} (as
+    opposed to {\it during compilation}):
+\begin{itemize}
+
+\item   Conditions of type \cd{error} may be signaled by the compiler in
+        situations where the compilation cannot proceed without
+        intervention.  Examples of such situations may include errors when opening
+        a file or syntax errors.
+
+\item  Conditions of type \cd{warning} may be signaled by the compiler in 
+        situations where the standard explicitly states that a warning must,
+        should, or may be signaled.  They may also be signaled
+        when the compiler can determine 
+        that a situation would result at runtime that would have
+        undefined consequences or would cause
+        an error to be signaled.
+        Examples of such situations may include
+            violations of type declarations,
+            altering or rebinding a constant defined with \cd{defconstant},
+            calls to built-in Lisp functions with too few or too many arguments
+                or with malformed keyword argument lists,
+            referring to a variable declared \cd{ignore}, or
+            unrecognized declaration specifiers.
+
+\item  The compiler is permitted to signal diagnostics about matters of
+        programming style as conditions of type \cd{style-warning}, a subtype
+    of \cd{warning}.  Although 
+        a \cd{style-warning} condition {\it may} be signaled in these situations, no 
+        implementation is {\it required} to do so.  However, if an 
+        implementation does choose to signal a condition, that condition 
+        will be of type \cd{style-warning} and will be signaled by a call to 
+        the function \cd{warn}.
+        Examples of such situations may include
+            redefinition of a function with an incompatible argument list,
+            calls to functions (other than built-in functions)
+                with too few or too many arguments
+                or with malformed keyword argument lists,
+            unreferenced local variables not declared \cd{ignore}, or
+            standard declaration specifiers that are ignored by 
+                the particular compiler in question.
+\end{itemize}
+
+Both \cd{compile} and \cd{compile-file} are permitted (but not
+    required) to establish a handler for conditions of type \cd{error}.
+    Such a handler
+    might, for example, issue a warning and restart compilation from some
+    implementation-dependent point in order to let the compilation
+    proceed without manual intervention.
+
+The functions \cd{compile} and \cd{compile-file} each return three values.
+See the definitions of these functions for descriptions of the first value.
+    The second value is \cd{nil} if no compiler diagnostics were issued, and
+    true otherwise.
+    The third value is \cd{nil} if no compiler diagnostics other than style
+    warnings were issued; a non-\cd{nil} value indicates that there were 
+    ``serious'' compiler diagnostics issued or that other conditions of
+    type \cd{error} or \cd{warning} (but not \cd{style-warning}) were signaled during
+    compilation.
+\end{newer}
+
+\begin{newer}
+\subsection{Compiled Functions}
+
+X3J13 voted in June 1989 \issue{COMPILED-FUNCTION-REQUIREMENTS}
+to impose certain requirements on the functions produced by the compilation
+process.
+
+
+If a function is of type \cd{compiled-function}, then
+all macro calls appearing lexically within the function have 
+        already been expanded and will not be expanded again when the
+        function is called.  The process of
+        compilation effectively turns every \cd{macrolet} or \cd{symbol-macrolet}
+        construct into a \cd{progn} (or a \cd{locally}) with all
+        instances of the local macros in the body fully expanded.
+
+If a function is of type \cd{compiled-function}, then
+all \cd{load-time-value} forms appearing lexically within the function have
+        already been pre-evaluated and will not be evaluated
+        again when the function is called.
+  
+Implementations are free to classify every function as 
+   a \cd{compiled-function} provided that all functions
+satisfy the preceding requirements.
+Conversely, it is permissible for a function that is
+      not a \cd{compiled-function} to satisfy the preceding requirements.
+  
+If one or more functions are defined in a file that is compiled
+      with \cd{compile-file} and the compiled file is subsequently loaded
+by the function \cd{load},
+the resulting loaded function definitions must be of
+    type \cd{compiled-function}.
+  
+The function \cd{compile} must produce an object of type
+      \cd{compiled-function} as the value that is either returned
+or stored into the \cd{symbol-function} of a symbol argument.
+
+Note that none of these restrictions addresses questions of the compilation technology or
+target instruction set.  For example, a compiled function does not necessarily consist of
+native machine instructions.  These requirements merely specify the behavior of the type
+system with respect to certain actions taken by \cd{compile}, \cd{compile-file}, and
+\cd{load}.
+\end{newer}
+
+\begin{newer}
+\subsection{Compilation Environment}
+
+X3J13 voted in June 1989 \issue{COMPILE-ENVIRONMENT-CONSISTENCY}
+to specify what information must be available at compile time
+for correct compilation
+and what need not be available until run time.
+
+The following information must be present in the compile-time
+environment for a program to be compiled correctly.  This
+information need not also be present in the run-time environment.
+\begin{itemize}
+\item In conforming code, macros referenced in the code being compiled
+        must have been previously defined in the compile-time environment.
+	The compiler must treat as a function call any form that is a list whose {\it car} is
+	a symbol that does not name a macro or special form.
+  (This implies that \cd{setf} methods must also be available at
+	compile time.)
+
+\item In conforming code, proclamations for \cd{special} variables must
+        be made in the compile-time environment before any bindings of
+        those variables are processed by the compiler.  The compiler
+        must treat any binding of an undeclared variable as a lexical
+        binding.
+\end{itemize}
+
+
+The compiler may incorporate the following kinds of information
+into the code it produces, if the information is present in the
+compile-time environment and is referenced within the code being
+compiled; however, the compiler is not required to do so.
+When compile-time and run-time definitions differ, it is
+unspecified which will prevail within the compiled code
+(unless some other behavior is explicitly specified below).  It is also
+permissible for an implementation to signal an error at run time on
+detecting such a discrepancy.  In all cases, the absence of the
+information at compile time is not an error, but its presence may
+enable the compiler to generate more efficient code.
+\begin{itemize}
+\item The compiler may assume that functions that are defined and
+	declared \cd{inline} in the compile-time environment will retain the
+        same definitions at run time.
+
+\item The compiler may assume that, within a named function, a
+	recursive call to a function of the same name refers to the
+	same function, unless that function has been declared \cd{notinline}.
+(This permits tail-recursive calls of a function to itself
+to be compiled as jumps, for example, thereby turning certain recursive
+schemas into efficient loops.)
+
+\item In the absence of \cd{notinline}
+	declarations to the contrary,
+ \cd{compile-file} may assume that a call within the file being compiled to a named
+	function that is defined in that file refers to that function.
+	(This rule permits {\it block compilation} of files.)  The behavior of
+	the program is unspecified if functions are redefined individually 
+	at run time.
+
+\item The compiler may assume that the signature (or ``interface contract'') of
+	all built-in Common Lisp functions will not change.  In addition,
+	the compiler may treat all built-in Common Lisp functions as if
+	they had been proclaimed \cd{inline}.
+
+\item The compiler may assume that the signature (or ``interface contract'') of
+	functions with \cd{ftype} information available will not change.
+
+\item The compiler may ``wire in'' (that is, open-code or inline)
+the values of symbolic constants
+	that have been defined with \cd{defconstant} in the compile-time
+	environment.
+
+\item The compiler may assume that any type definition made with \cd{defstruct} 
+        or \cd{deftype} in the compile-time environment will retain the same 
+        definition in the run-time environment.  It may also assume that
+        a class defined by \cd{defclass} in the compile-time environment will
+        be defined in the run-time environment in such a way as to have
+        the same superclasses and metaclass.  This implies that
+        subtype/supertype relationships of type specifiers will not 
+        change between compile time and run time.  (Note that it is not 
+        an error for an	unknown type to appear in a declaration at
+        compile time, although it is reasonable for the compiler to 
+        emit a warning in such a case.)
+
+\item The compiler may assume that if type declarations are present
+	in the compile-time environment, the corresponding variables and 
+	functions present in the run-time environment will actually be of
+	those types.  If this assumption is violated, the run-time behavior of the program is 
+	undefined.
+\end{itemize}
+
+The compiler must not make any additional assumptions about
+consistency between the compile-time and run-time environments.  In 
+particular, the compiler may not assume that functions that are defined
+	in the compile-time environment will retain either the
+	same definition or the same signature at run time, except
+as described above.
+Similarly,
+the compiler may not signal an error if it sees a call to a
+	function that is not defined at compile time, since that function
+	may be provided at run time.
+
+X3J13 voted in January 1989 \issue{COMPILE-FILE-HANDLING-OF-TOP-LEVEL-FORMS}
+to specify the compile-time side effects of processing various macro forms.
+
+Calls to defining macros such as \cd{defmacro} or \cd{defvar} appearing
+    within a file being processed by \cd{compile-file} normally have
+    compile-time side effects that affect how subsequent forms in the
+    same file are compiled.  A convenient model for explaining how these
+    side effects happen is that each defining macro expands into one or
+    more \cd{eval-when} forms and that compile-time
+    side effects are caused by calls occurring in the body of an
+    \cd{(eval-when (:compile-toplevel) ...)} form.
+
+The affected defining macros and their specific side effects are
+    as follows.  In each case, it is identified what a user must do to
+    ensure that a program is conforming, and what a compiler must do
+    in order to correctly process a conforming program.
+
+\begin{flushdesc}
+\item[\cd{deftype}]
+The user must ensure that the body of a \cd{deftype} form is
+    evaluable at compile time if the type is referenced in subsequent type
+    declarations.  The compiler must ensure that a type
+    specifier defined by \cd{deftype}
+    is recognized in subsequent type declarations.  If the
+    expansion of a type specifier is not defined fully at compile time
+    (perhaps because it expands into an unknown type specifier or a
+    \cd{satisfies} of a named function that isn't defined in the compile-time
+    environment), an implementation may ignore any references to this type
+    in declarations and may signal a warning.
+
+\item[\cd{defmacro} and \cd{define-modify-macro}]   
+The compiler must store macro
+    definitions at compile time, so that occurrences of the macro later on
+    in the file can be expanded correctly.  The user must ensure that the
+    body of the macro is evaluable at compile time if it is referenced
+    within the file being compiled.
+
+\item[\cd{defun}]
+No required compile-time side effects are associated with \cd{defun} forms.
+    In particular, \cd{defun} does not make the function definition available
+    at compile time.  An implementation may choose to store information
+    about the function for the purposes of compile-time error checking
+    (such as checking the number of arguments on calls) or to permit later
+    \cd{inline} expansion of the function.
+
+\item[\cd{defvar} and \cd{defparameter}]
+The compiler must recognize that the variables
+    named by these forms have been proclaimed \cd{special}.  However, it must
+    not evaluate the {\it initial-value} form or \cd{set} the variable at compile
+    time.
+
+\item[\cd{defconstant}]
+The compiler must recognize that the symbol names a
+    constant.  An implementation may choose to evaluate the {\it value-form} at
+    compile time, load time, or both.  Therefore the user must ensure that
+    the {\it value-form} is evaluable at compile time (regardless of whether or
+    not references to the constant appear in the file) and that it always
+    evaluates to the same value.  
+    (There has been considerable
+variance among implementations on this point.  The effect of this specification is
+to legitimize all of the implementation variants by requiring care of the user.)
+
+\item[\cd{defsetf} and \cd{define-setf-method}]
+The compiler must make \cd{setf} methods
+    available so that they may be used to expand calls to \cd{setf} later on in
+    the file.  Users must ensure that the body of a call
+    to \cd{define-setf-method} or
+    the complex form of \cd{defsetf} is evaluable at compile time if the
+    corresponding place is referred to in a subsequent \cd{setf} in the same
+    file.  The compiler must make these \cd{setf} methods available to 
+    compile-time calls to \cd{get-setf-method} when its environment argument is
+    a value received as the \cd{\&environment} parameter of a macro.
+     
+\item[\cd{defstruct}]
+The compiler must make the structure type name recognized
+    as a valid type name in subsequent declarations (as described above
+    for \cd{deftype}) and
+    make the structure slot accessors known to \cd{setf}.
+    In addition, the
+    compiler must save enough information so that
+    further \cd{defstruct} definitions can include (with the \cd{:include}
+    option) a structure type defined
+    earlier in the file being compiled.  The functions that \cd{defstruct}
+    generates are not defined in the compile-time environment, although
+    the compiler may save enough information about the functions to allow
+    \cd{inline} expansion of
+    subsequent calls to these functions.  The \cd{\#S} reader syntax may or may not be 
+    available for that structure type at compile time.
+
+\item[\cd{define-condition}]
+The rules are essentially the same as those for
+    \cd{defstruct}. The compiler must make the condition type recognizable as a
+    valid type name, and it must be possible to reference the condition
+    type as the {\it parent-type} of another condition type in a subsequent
+    \cd{define-condition} form in the file being compiled.
+
+\item[\cd{defpackage}]
+ All of the actions normally performed by the \cd{defpackage} macro at load
+    time must also be performed at compile time.
+\end{flushdesc}
+
+Compile-time side effects may cause information about a
+    definition to be stored in a different manner from
+information about definitions
+    processed either interpretively or by loading
+    a compiled file.
+    In particular, the information stored by a defining macro at
+    compile time may or may not be available to the interpreter (either
+    during or after compilation) or during subsequent calls to \cd{compile} or
+    \cd{compile-file}.  For example, the following code is not portable because
+    it assumes that the compiler stores the macro definition of \cd{foo} where
+    it is available to the interpreter.
+\begin{lisp}
+(defmacro foo (x) {\Xbq}(car ,x)) \\
+\\
+(eval-when (:execute :compile-toplevel :load-toplevel) \\*
+~~(print (foo '(a b c))))~~~~~;{\rm Wrong}
+\end{lisp}
+    The goal may be accomplished portably by including the macro
+    definition within the \cd{eval-when} form:
+\begin{lisp}  
+(eval-when (eval compile load) \\*
+~~(defmacro foo (x) {\Xbq}(car ,x)) \\*
+~~(print (foo '(a b c))))~~~~~;{\rm Right}
+\end{lisp}
+
+\begin{flushdesc}
+\item[\cd{declaim}]
+
+X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
+to add a new macro \cd{declaim} for making proclamations recognizable
+at compile time.  The declaration specifiers in the \cd{declaim} form
+are effectively proclaimed at compile time so as to affect
+compilation of subsequent forms.  (Note that compiler processing
+of a call to \cd{proclaim}
+does not have any compile-time side effects, for \cd{proclaim}
+is a function.)
+\end{flushdesc}
+
+\begin{flushdesc}
+\item[\cd{in-package}]
+
+X3J13 voted in March 1989 \issue{IN-PACKAGE-FUNCTIONALITY} to specify that
+all of the actions normally performed by the \cd{in-package} macro at load
+time must also be performed at compile time.
+\end{flushdesc}
+
+X3J13 voted in June 1989 \issue{CLOS-MACRO-COMPILATION}
+to specify the compile-time side effects of processing various CLOS-related
+macro forms.  Top-level calls to the CLOS defining macros have the
+ following compile-time side effects; any other compile-time behavior
+ is explicitly left unspecified.
+
+\begin{flushdesc}
+\item[\cd{defclass}]
+The class name may appear in subsequent type declarations and
+can be used as a specializer in subsequent \cd{defmethod} forms.
+Thus the compile-time behavior of \cd{defclass} is similar to that of
+\cd{deftype} or \cd{defstruct}.
+
+\item[\cd{defgeneric}]
+The generic function can be referenced in subsequent \cd{defmethod} forms,
+but the compiler does not arrange for the generic function to be callable
+    at compile time.
+
+\item[\cd{defmethod}]  
+The compiler does not arrange for the method to be callable at compile
+    time.  If there is a generic function with the same name defined at
+    compile time, compiling a \cd{defmethod} form does not add the method to that 
+    generic function; the method is added to the generic
+    function only when the \cd{defmethod} form is actually executed.
+
+    The error-signaling behavior described in the specification of
+    \cd{defmethod} in chapter~\ref{CLOS} (if the function isn't a generic function
+    or if the lambda-list is not congruent) occurs only when the defining
+    form is executed, not at compile time.
+
+    The forms in \cd{eql} parameter specializers are evaluated when the \cd{defmethod}
+    form is executed.  The compiler is permitted to build in knowledge
+    about what the form in an \cd{eql} specializer will evaluate to in cases
+    where the ultimate result can be syntactically inferred without
+    actually evaluating it.
+
+\item[\cd{define-method-combination}]
+The method combination can be used in subsequent \cd{defgeneric} forms.  
+
+    The body of a \cd{define-method-combination} form is evaluated no earlier 
+    than when the defining macro is executed and possibly as late as 
+    generic function invocation time.  The compiler may attempt to
+    evaluate these forms at compile time but must not depend on being able
+    to do so.
+\end{flushdesc}
+\end{newer}
+
+
+
+\begin{newer}
+\subsection{Similarity of Constants}
+\label{SIMILAR-AS-A-CONSTANT-SECTION}
+
+X3J13 voted in March 1989 \issue{CONSTANT-COMPILABLE-TYPES}
+to specify what objects can be in compiled constants and
+what relationship there must be between a constant
+passed to the compiler and the one that is established by compiling it
+and then loading its file.
+
+The key is a definition of an equivalence relationship called
+``similarity as constants''
+between Lisp
+objects.  Code passed through the file
+compiler and then loaded must behave as though quoted constants in it
+are similar in this sense to quoted constants in the corresponding source code.
+An object may be used as a quoted constant processed by \cd{compile-file}
+if and only if the compiler can guarantee that the resulting constant established
+by loading the compiled file is ``similar as a constant'' to the
+original.  Specific requirements are spelled out below.
+
+Some types of objects, such as streams, are not supported in constants
+processed by the file compiler.  Such objects may not portably appear
+as constants in code processed with \cd{compile-file}.  Conforming
+implementations are required to handle such objects either by having
+the compiler or loader reconstruct an equivalent copy of the
+object in some implementation-specific manner or by having the
+compiler signal an error.
+
+Of the types supported in constants, some are treated as aggregate
+objects.  For these types, being similar as constants is defined
+recursively.  We say that an object of such a type has certain ``basic
+attributes''; to be similar as a constant to another object, the
+values of the corresponding attributes of the two objects must also be
+similar as constants.
+
+A definition of this recursive form has problems with any circular or infinitely
+recursive object such as a list that is an element of itself.  We use
+the idea of depth-limited comparison and say that two objects are
+similar as constants if they are similar at all finite levels.  This
+idea is implicit in the definitions below, and it applies in all the
+places where attributes of two objects are required to be similar as
+constants.  The question of handling circular constants is the subject
+of a separate vote by X3J13 (see below).
+
+The following terms are used throughout this section.
+  The term {\it constant} refers to a quoted or self-evaluating constant,
+  not a named constant defined by \cd{defconstant}.
+  The term {\it source code} is used to refer to the objects constructed
+  when \cd{compile-file} calls \cd{read} (or the equivalent) and to
+  additional objects constructed by
+  macro expansion during file compilation.
+  The term {\it compiled code} is used to refer to objects constructed by 
+  \cd{load}.
+
+Two objects are {\it similar as a constant} if and only if
+they are both of one of the types listed below and satisfy the
+additional requirements listed for that type.
+
+\begin{flushdesc}
+\item[\cd{number}]
+
+  Two numbers are similar as constants if they are of the same type
+  and represent the same mathematical value.
+  
+\item[\cd{character}]
+
+  Two characters are similar as constants if they both represent
+  the same character.  (The intent is that this be compatible with
+  how \cd{eql} is defined on characters.)
+
+\item[\cd{symbol}]
+  X3J13 voted in June 1989 \issue{COMPILE-FILE-SYMBOL-HANDLING}
+  to define similarity as a constant for interned symbols.
+  A symbol ${\it S}$ appearing in the source code is similar as a constant to 
+  a symbol ${\it S}'$ in the compiled code if their print names are similar as constants
+   and either of the following conditions holds:
+\begin{itemize}
+\item  ${\it S}$ is accessible in \cd{*package*} at compile time and ${\it S}'$ is accessible in
+       \cd{*package*} at load time.
+\item  ${\it S}'$ is accessible in the package that is similar as a constant to the
+       home package of symbol {\it S}.
+\end{itemize}
+  The ``similar as constants'' relationship for interned symbols has nothing
+  to do with \cd{*readtable*} or how the function \cd{read} would parse the 
+  characters in the print name of the symbol.
+
+  An uninterned symbol in the source code is similar as a constant
+  to an uninterned symbol in the compiled code if their print names
+  are similar as constants.
+
+\item[\cd{package}]
+
+  A package in the source code is similar as a constant to a package in
+  the compiled code if their names are similar as constants.  Note that
+  the loader finds the corresponding package object as if by calling
+  \cd{find-package} with the package name as an argument.  An error is
+  signaled if no package of that name exists at load time.
+
+\item[\cd{random-state}]
+
+ We say that two \cd{random-state} objects are {\it functionally equivalent} if 
+  applying \cd{random} to them repeatedly always produces the same 
+  pseudo-random numbers in the same order.  
+  
+  Two random-states are similar as constants if and only if copies of
+  them made via \cd{make-random-state} are functionally equivalent.
+  (Note that a constant \cd{random-state} object cannot be used as the {\it state}
+  argument to the function \cd{random} because \cd{random} performs
+  a side effect on that argument.)
+
+\item[\cd{cons}]
+
+  Two conses are similar as constants if the values of their respective
+  {\it car} and {\it cdr} attributes are similar as constants.
+
+\item[\cd{array}]
+
+  Two arrays are similar as constants if the corresponding values of each
+  of the following attributes are similar as constants:
+  for vectors (one-dimensional arrays), the \cd{length} and \cd{element-type}
+  and the result of \cd{elt} for all valid indices;
+  for all other arrays, the \cd{array-rank}, the result of \cd{array-dimension}
+  for all valid axis numbers, the \cd{array-element-type},
+  and the result of \cd{aref} for all valid indices.  (The point of
+distinguishing vectors is to take any fill pointers into account.)
+
+  If the array in the source code is a \cd{simple-array}, then
+  the corresponding array in the compiled code must also be a
+  \cd{simple-array}, but if the array in the source code is displaced, has a
+  fill pointer, or is adjustable, the corresponding array in the
+  compiled code is permitted to lack any or all of these qualities.
+
+\item[\cd{hash-table}]
+
+  Two hash tables are similar as constants if they meet
+  three requirements.
+  First, they must have the same test (for example, both are \cd{eql} hash tables
+  or both are \cd{equal} hash tables).
+  Second, there must be a unique bijective correspondence between the keys of
+      the two tables, such that the corresponding keys are similar as
+      constants.
+  Third, for all keys, the values associated with two corresponding keys
+      must be similar as constants.
+
+  If there is more than one possible one-to-one correspondence between
+  the keys of the two tables, it is unspecified whether the two
+  tables are similar as constants.  A conforming
+  program cannot use such a table as a constant.
+
+\item[\cd{pathname}]
+
+  Two pathnames are similar as constants if all corresponding pathname
+  components are similar as constants.
+
+\item[\cd{stream}, \cd{readtable}, and \cd{method}]
+
+  Objects of these types are not supported in compiled constants.
+
+\item[\cd{function}]
+
+
+   X3J13 voted in June 1989 \issue{CONSTANT-FUNCTION-COMPILATION}
+   to specify that objects of type \cd{function}
+   are not supported in compiled constants.
+
+\item[\cd{structure} and \cd{standard-object}]
+
+   X3J13 voted in March 1989 \issue{LOAD-OBJECTS} to introduce a facility
+based on the Common Lisp Object System
+whereby a user can specify how \cd{compile-file} and \cd{load}
+must cooperate to reconstruct compile-time constant objects at load time
+(see \cd{make-load-form}).
+\end{flushdesc}
+
+   X3J13 voted in March 1989 \issue{CONSTANT-COLLAPSING} to specify
+the circumstances under which constants may be coalesced in compiled code.
+
+Suppose ${\it A}$ and ${\it B}$ are two
+objects used as quoted constants in the source code, and that ${\it A}'$ and
+${\it B}'$ are the corresponding objects in the compiled code.  If ${\it A}'$ and ${\it B}'$
+are \cd{eql} but ${\it A}$ and ${\it B}$ were not \cd{eql}, then we say that ${\it A}$ and ${\it B}$ have been
+{\it coalesced} by the compiler.
+
+An implementation is permitted to coalesce constants
+appearing in code to be compiled if and only if they are similar as
+constants, except that objects of type \cd{symbol}, \cd{package},
+\cd{structure}, or \cd{standard-object} obey their own rules
+and may not be coalesced by a separate mechanism.
+
+\beforenoterule
+\begin{rationale}
+Objects of type \cd{symbol} and \cd{package} cannot be coalesced because the fact
+that they are named, interned objects means they are already as
+coalesced as it is useful for them to be.  Uninterned symbols could
+perhaps be coalesced, but that was thought to be more dangerous than
+useful.  Structures and objects could be
+coalesced if a ``similar as a constant'' predicate were defined for them;
+it would be a generic function.  However, at present there is no such
+predicate.  Currently \cd{make-load-form} provides a protocol by which
+\cd{compile-file} and \cd{load} work together to construct an object in the
+compiled code that is equivalent to the object in the source code;
+a different mechanism would have to be added to permit coalescing.
+\end{rationale}
+\afternoterule
+
+Note that coalescing is possible only because it is forbidden to
+destructively modify constants \issue{CONSTANT-MODIFICATION} (see \cd{quote}).
+
+   X3J13 voted in March 1989 \issue{CONSTANT-CIRCULAR-COMPILATION} to specify
+that objects containing circular or infinitely recursive references may legitimately
+appear as constants to be compiled.  The compiler is
+required to preserve \cd{eql}-ness of substructures within a file compiled
+by \cd{compile-file}.
+\end{newer}
+
+\begin{obsolete}
+\section{Documentation}
+\label{DOCUMENTATION-SECTION}
+
+A simple facility is provided for attaching strings to
+symbols for the purpose of on-line documentation.
+Rather than using the property list of the symbol,
+a separate function \cd{documentation} is provided
+so that implementations can optimize the storage of
+documentation strings.
+
+\begin{defun}[Function]
+documentation symbol doc-type
+
+This function returns the documentation string of type {\it doc-type}
+for the {\it symbol}, or {\false} if none exists.  Both arguments must be symbols.
+Some kinds of documentation are provided automatically by certain
+Common Lisp constructs if the user writes an optional documentation string within
+them:
+\begin{flushleft}
+\begin{tabular}{@{}l@{\hskip 2pc}l@{}}
+Construct&Documentation Type \\
+\hlinesp
+\cd{defvar}&\cd{variable} \\
+\cd{defparameter}&\cd{variable} \\
+\cd{defconstant}&\cd{variable} \\
+\cd{defun}&\cd{function} \\
+\cd{defmacro}&\cd{function} \\
+\cd{defstruct}&\cd{structure} \\
+\cd{deftype}&\cd{type} \\
+\cd{defsetf}&\cd{setf} \\
+\hline
+\end{tabular}
+\end{flushleft}
+In addition, names of special forms may also have \cd{function} documentation.
+(Macros and special forms are not really functions, of course, but it is
+convenient to group them with functions for documentation purposes.)
+
+\cd{setf} may be used with \cd{documentation} to update
+documentation information.
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{CLOS} to make \cd{documentation}
+a CLOS generic function (see chapter~\ref{CLOS}).
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{documentation}
+to accept any function-name (a symbol or a list
+whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(documentation '(setf cadr) 'function)}
+to determine whether there is any documentation for a \cd{setf}
+expansion function for \cd{cadr}.
+\end{newer}
+
+\section{Debugging Tools}
+
+The utilities described in this section are sufficiently complex
+and sufficiently dependent on the host environment that their
+complete definition is beyond the scope of this book.
+However, they are also sufficiently
+useful to warrant mention here.  It is expected that
+every implementation will
+provide some version of these utilities, however clever or however simple.
+
+\begin{defmac}
+trace {\,function-name}* \\
+untrace {\,function-name}*
+
+\begin{obsolete}\noindent
+Invoking \cd{trace} with one or more function-names (symbols) causes
+the functions named to be traced.  Henceforth, whenever such
+a function is invoked, information about the call, the arguments
+passed, and the eventually returned values, if any, will be printed
+to the stream that is the value of \cd{*trace-output*}.
+For example:
+\end{obsolete}
+\begin{lisp}
+(trace fft gcd string-upcase)
+\end{lisp}
+If a function call is open-coded (possibly as a result of an \cd{inline}
+declaration), then such a call may not produce trace output.
+
+Invoking \cd{untrace} with one or more function names will cause those
+functions not to be traced any more.
+
+Tracing an already traced function, or untracing a function not
+currently being traced, should produce no harmful effects but may
+produce a warning message.
+
+Calling \cd{trace} with no argument forms will return a list of functions
+currently being traced.
+
+Calling \cd{untrace} with no argument forms will cause all currently
+traced functions to be no longer traced.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{trace}
+and \cd{untrace}
+to accept any function-name (a symbol or a list
+whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(trace (setf cadr))} to trace the \cd{setf}
+expansion function for \cd{cadr}.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{RETURN-VALUES-UNSPECIFIED}
+to specify that the values returned by \cd{trace} and \cd{untrace} when
+given argument forms are implementation-dependent.
+\end{new}
+
+\cd{trace} and \cd{untrace} may also accept additional
+implementation-dependent argument formats.  The format of the trace
+output is implementation-dependent.
+\end{defmac}
+
+
+\begin{defmac}
+step form
+
+This evaluates {\it form} and returns what {\it form} returns.
+However, the user is allowed to interactively
+``single-step'' through the evaluation of {\it form}, at least
+through those evaluation steps that are performed interpretively.
+The nature of the interaction is implementation-dependent.
+However, implementations are encouraged to respond to the typing
+of the character \cd{?} by providing help, including a list
+of commands.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STEP-ENVIRONMENT}
+to clarify that \cd{step} evaluates its argument {\it form}
+in the current lexical environment (not simply a null environment),
+and that calls to \cd{step} may be compiled, in which case
+an implementation may step through only those parts of the
+evaluation that are interpreted.  (In other words, the {\it form}
+itself is unlikely to be stepped, but if executing it happens to
+invoke interpreted code, then that code may be stepped.)
+\end{new}
+\end{defmac}
+
+\begin{defmac}
+time form
+
+This evaluates {\it form} and returns what {\it form} returns.  However, as
+a side effect, various timing data and other information are printed to
+the stream that is the value of \cd{*trace-output*}.  The nature and
+format of the printed information is implementation-dependent.  However,
+implementations are encouraged to provide such information as elapsed
+real time, machine run time, storage management statistics, and so on.
+
+\beforenoterule
+\begin{incompatibility}
+This facility is inspired by the Interlisp
+facility of the same name.  Note that the MacLisp/Lisp Machine Lisp function \cd{time}
+does something else entirely, namely return a quantity indicating
+relative elapsed real time.
+\end{incompatibility}
+\afternoterule
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{STEP-ENVIRONMENT}
+to clarify that \cd{time} evaluates its argument {\it form}
+in the current lexical environment (not simply a null environment),
+and that calls to \cd{time} may be compiled.
+\end{new}
+\end{defmac}
+
+\begin{obsolete}
+\begin{defun}[Function]
+describe object
+
+\cd{describe} prints, to the stream in the variable \cd{*standard-output*},
+information about the {\it object}.  Sometimes
+it will describe something that it finds inside something else;
+such recursive descriptions are indented appropriately.  For instance,
+\cd{describe} of a symbol will exhibit the symbol's value,
+its definition, and each of its properties.  \cd{describe} of a
+floating-point number will exhibit its internal representation in a way
+that is useful for tracking down round-off errors and the like.
+The nature and format of the output is implementation-dependent.
+
+\cd{describe} returns no values (that is, it returns what the expression
+\cd{(values)} returns: zero values).
+\end{defun}
+\end{obsolete}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DESCRIBE-UNDERSPECIFIED}
+to let \cd{describe} take an optional second argument:
+
+\begin{defun}[Function]
+describe object &optional stream
+
+The output is sent to the specified {\it stream}, which
+ defaults to the value of \cd{*standard-output*};
+ the {\it stream} may also be \cd{nil} (meaning \cd{*standard-output*})
+ or \cd{t} (meaning \cd{*terminal-io*}).
+
+The behavior of \cd{describe} depends on the generic function
+\cd{describe-object} (see below).
+\end{defun}
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DESCRIBE-INTERACTIVE}
+to specify that \cd{describe} is forbidden
+to prompt for or require user input when given exactly one argument;
+it also voted to permit implementations
+to extend \cd{describe} to accept keyword arguments that may cause
+it to prompt for or to require user input.
+\end{new}
+
+\begin{newer}
+\begin{defun}[Generic function][Primary method]
+describe-object object stream \\
+describe-object (object standard-object) stream
+
+X3J13 voted in March 1989 \issue{DESCRIBE-UNDERSPECIFIED} to add
+  the generic function \cd{describe-object}, which writes a description of an object to a
+  stream.  The function \cd{describe-object} is called by the \cd{describe} function; it
+  should not be called by the user.
+
+  Each implementation must provide a method on the class
+  \cd{standard-object} and methods on enough other classes to ensure that
+  there is always an applicable method.  Implementations are free to add
+  methods for other classes.  Users can write methods for \cd{describe-object} for
+  their own classes if they do not wish to inherit an implementation-supplied
+  method.
+
+   The first argument may be any Lisp object.  The second argument is a stream; it
+   cannot be \cd{t} or \cd{nil}.
+   The values returned by \cd{describe-object} are unspecified.
+
+   Methods on \cd{describe-object} may recursively call \cd{describe}.  Indentation,
+   depth limits, and circularity detection are all taken care of automatically,
+   provided that each method handles exactly one level of structure and calls
+   \cd{describe} recursively if there are more structural levels.
+   If this rule is not obeyed, the results are undefined.
+
+   In some implementations the {\it stream} argument passed to a \cd{describe-object}
+   method is not the original stream but is an intermediate stream that
+   implements parts of \cd{describe}.  Methods should therefore not depend on the
+   identity of this stream.
+
+\beforenoterule
+\begin{rationale}
+ This proposal was closely modeled on the CLOS description of \cd{print-object},
+ which was well thought out and provides a great deal of functionality and
+ implementation freedom.  Implementation techniques for
+ \cd{print-object} are applicable to \cd{describe-object}.
+
+ The reason for making the return values for \cd{describe-object} unspecified is to
+ avoid forcing users to write \cd{(values)} explicitly in all their methods;
+ \cd{describe} should take care of that.
+\end{rationale}
+\afternoterule
+\end{defun}
+\end{newer}
+
+
+\begin{defun}[Function]
+inspect object
+
+\cd{inspect} is an interactive version of \cd{describe}.
+The nature of the interaction is implementation-dependent,
+but the purpose of \cd{inspect} is to make it easy to wander
+through a data structure, examining and modifying parts of it.
+Implementations are encouraged to respond to the typing
+of the character \cd{?} by providing help, including a list
+of commands.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{RETURN-VALUES-UNSPECIFIED}
+to specify that the values returned by \cd{inspect}
+are implementation-dependent.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+room &optional x
+
+\cd{room} prints, to the stream in the variable \cd{*standard-output*},
+information about the state of internal storage and its management.  This
+might include descriptions of the amount of memory in use and the degree
+of memory compaction, possibly broken down by internal data type if that
+is appropriate.  The nature and format of the printed information is
+implementation-dependent.  The intent is to provide information that may
+help a user to tune a program to a particular implementation.
+
+\cd{(room nil)} prints out a minimal amount of information.
+\cd{(room t)} prints out a maximal amount of information.
+Simply \cd{(room)} prints out an intermediate amount
+of information that is likely to be useful.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ROOM-DEFAULT-ARGUMENT}
+to specify that the argument {\it x} may also be the keyword \cd{:default},
+which has the same effect as passing no argument at all.
+\end{new}
+\end{defun}
+
+
+\begin{defun}[Function]
+ed &optional x
+
+If the implementation provides a resident editor, this function
+should invoke it.
+
+\cd{(ed)} or \cd{(ed nil)} simply enters the editor, leaving you in the same
+state as the last time you were in the editor.
+
+\cd{(ed {\it pathname})} edits the contents of the file specified
+by {\it pathname}.  The {\it pathname} may be an actual pathname
+or a string.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL} to require \cd{ed}
+to accept logical pathnames (see section~\ref{LOGICAL-PATHNAMES-SECTION}).
+\end{newer}
+
+\cd{(ed {\it symbol})} tries to let you edit the text for the function
+named {\it symbol}.  The means by which the function text is obtained
+is implementation-dependent; it might involve searching the file system,
+or pretty printing resident interpreted code, for example.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{compile}
+to accept as a {\it name} any function-name (a symbol or a list
+whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(ed '(setf cadr))} to edit the \cd{setf}
+expansion function for \cd{cadr}.
+\end{newer}
+\end{defun}
+
+
+\begin{defun}[Function]
+dribble &optional pathname
+
+\cd{(dribble {\it pathname})} may rebind \cd{*standard-input*}
+and \cd{*standard-output*}, and may take other appropriate
+action, so as to send a record of the
+input/output interaction to a file named by {\it pathname}.
+The primary purpose of this is to create a readable record of an interactive
+session.
+
+\cd{(dribble)} terminates the recording of input and output and
+closes the dribble file.
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL} to require \cd{dribble}
+to accept logical pathnames (see section~\ref{LOGICAL-PATHNAMES-SECTION}).
+\end{newer}
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{DRIBBLE-TECHNIQUE}
+to clarify that \cd{dribble} is intended primarily
+for interactive debugging and that its effect cannot be
+relied upon for use in portable
+programs.
+
+Different implementations of Common Lisp have used radically different
+techniques for implementing \cd{dribble}.  All are reasonable interpretations
+of the original specification, and all behave in approximately the same
+way if \cd{dribble} is called only from the interactive top level.
+However, they may have quite different behaviors if \cd{dribble} is
+called from within compound forms.
+
+Consider two models of the operation of \cd{dribble}.  In the ``redirecting''
+model, a call to \cd{dribble} with a pathname argument
+alters certain global variables such as \cd{*standard-output*},
+perhaps by constructing a broadcast stream directed to both the original
+value of \cd{*standard-output*} and to the dribble file; other streams
+may be affected as well.  A call to \cd{dribble} with no arguments
+undoes these side effects.
+
+In the ``recursive'' model, by contrast, a call to \cd{dribble} with a
+pathname argument creates a new interactive command loop and calls it
+recursively.  This new command loop is just like an ordinary
+read-eval-print loop except that it also echoes the interaction to
+the dribble file.  A call to \cd{dribble} with no arguments
+does a \cd{throw} that exits the recursive command loop and returns
+to the original caller of \cd{dribble} with an argument.
+
+The two models may be distinguished by this test case:
+\begin{lisp}
+(progn (dribble "basketball") \\
+~~~~~~~(print "Larry") \\
+~~~~~~~(dribble) \\
+~~~~~~~(princ "Bird"))
+\end{lisp}
+If this form is input to the Lisp top level, in either model
+a newline (provided by the function \cd{print}) and the words
+\cd{Larry Bird} will be printed to the standard output.
+The redirecting dribble model will additionally print all but the word
+\cd{Bird} to a file named \cd{basketball}.
+
+By contrast, the recursive dribble model will enter a recursive command
+loop and not print anything until \cd{(dribble)} is executed from within
+the new interactive command loop.  At that time the file named
+\cd{basketball} will be closed, and then execution of the
+\cd{progn} form will be resumed.  A newline and ``\cd{Larry~}'' (note the trailing space)
+will be printed to the standard output, and then the call
+\cd{(dribble)} may complain that there is no active dribble file.
+Once this error is resolved, the word \cd{Bird} may be printed
+to the standard output.
+
+Here is a slightly different test case:
+\begin{lisp}
+(dribble "baby-food")
+\end{lisp}
+\begin{lisp}
+(progn (print "Mashed banana") \\*
+~~~~~~~(dribble) \\*
+~~~~~~~(princ "and cream of rice"))
+\end{lisp}
+If this form is input to the Lisp top level, in the redirecting model
+a newline and the words
+\cd{Mashed banana and cream of rice} will be printed to the standard output
+and all but the words
+\cd{and cream of rice} will be sent to a file named \cd{baby-food}.
+
+The recursive model will direct exactly the same output to the file
+named \cd{baby-food} but will never print the words
+\cd{and cream of rice} to the standard output because the call
+\cd{(dribble)} does not return normally; it throws.
+
+The redirecting model may be intuitively more appealing to some.
+The recursive model, however, may be more robust; it carefully limits
+the extent of the dribble operation and disables dribbling if a
+throw of any kind occurs.  The vote by X3J13 was an explicit decision
+not to decide which model to use.  Users are advised to call \cd{dribble}
+only interactively, at top level.
+\end{new}
+\end{defun}
+
+
+\begin{defun}[Function]
+apropos string &optional package \\
+apropos-list string &optional package
+
+\cd{(apropos {\it string})} tries to find all available symbols whose print names
+contain {\it string} as a substring.  (A symbol may be supplied for
+the {\it string}, in which case the print name of the symbol is used.)
+Whenever \cd{apropos} finds a symbol, it prints
+out the symbol's name; in addition,
+information about the function definition and dynamic value of the symbol,
+if any, is printed.
+If {\it package} is specified and not {\nil}, then only symbols
+available in that package are examined;
+otherwise ``all'' packages are searched, as if by \cd{do-all-symbols}.
+Because a symbol may be available by way of more than one inheritance
+path, \cd{apropos} may print information about the same symbol more than once.
+The information is printed to the stream that is the value
+of \cd{*standard-output*}.
+\cd{apropos} returns no values (that is, it returns what the expression
+\cd{(values)} returns: zero values).
+
+\cd{apropos-list} performs the same search that \cd{apropos} does but
+prints nothing.  It returns a list of the symbols whose print names
+contain {\it string} as a substring.
+\end{defun}
+
+\section{Environment Inquiries}
+
+Environment inquiry functions provide information about the
+environment in which a Common Lisp program is being executed.
+They are described here in two categories: first, those dealing with
+determination and measurement of time, and second, all the others,
+most of which deal with identification of the computer hardware
+and software.
+
+\subsection{Time Functions}
+\label{TIME-SECTION}
+
+Time is represented in three different ways in Common Lisp:
+Decoded Time, Universal Time, and Internal Time.
+The first two representations
+are used primarily to represent calendar time and are
+precise only to one second.
+Internal Time is used primarily to represent measurements of computer
+time (such as run time) and is precise to some implementation-dependent
+fraction of a second, as specified by \cd{internal-time-units-per-second}.
+Decoded Time format is used only for absolute time indications.
+Universal Time and Internal Time formats are used for both absolute
+and relative times.
+
+Decoded Time format represents calendar time as a number of components:
+\begin{itemize}
+\item
+{\it Second}: an integer between 0 and 59, inclusive.
+
+\item
+{\it Minute}: an integer between 0 and 59, inclusive.
+
+\item
+{\it Hour}: an integer between 0 and 23, inclusive.
+
+\item
+{\it Date}: an integer between 1 and 31, inclusive (the upper limit actually
+depends on the month and year, of course).
+
+\item
+{\it Month}: an integer between 1 and 12, inclusive; 1 means January,
+12 means December.
+
+\item
+{\it Year}: an integer indicating the year A.D.  However, if this integer
+is between 0 and 99, the ``obvious'' year is used; more precisely,
+that year is assumed that is equal to the integer modulo 100 and
+within fifty years of the current year (inclusive backwards
+and exclusive forwards).  Thus, in the year 1978, year 28 is 1928
+but year 27 is 2027.  (Functions that return time in this format always return
+a full year number.)
+\end{itemize}
+
+\beforenoterule
+\begin{incompatibility}
+This is incompatible with the Lisp Machine Lisp definition
+in two ways.  First, in Lisp Machine Lisp a year between 0 and 99 always has 1900
+added to it.  Second, in Lisp Machine Lisp time functions return the abbreviated
+year number between 0 and 99 rather than the full year number.  The
+incompatibility is prompted by the imminent arrival of the twenty-first
+century.  Note that \cd{(mod {\it year} 100)} always reliably converts a
+year number to the abbreviated form, while the inverse conversion can be
+very difficult.
+\end{incompatibility}
+\afternoterule
+
+\begin{itemize}
+\item
+{\it Day-of-week}: an integer between 0 and 6, inclusive;
+0 means Monday, 1 means Tuesday, and so on; 6 means Sunday.
+
+\item
+{\it Daylight-saving-time-p}: a flag that, if not {\false}, indicates that
+daylight saving time is in effect.
+
+\item
+{\it Time-zone}: an integer specified as the number of hours west of GMT
+(Greenwich Mean Time).  For example, in Massachusetts the time zone is 5,
+and in California it is 8.  Any adjustment for daylight saving time is
+separate from this.
+\end{itemize}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{TIME-ZONE-NON-INTEGER}
+to specify that the time zone part of Decoded Time need not be an integer,
+but may be any rational number (either an integer or a ratio)
+in the range -24 to 24 (inclusive on both ends)
+that is an integral multiple of \cd{1/3600}.
+
+\beforenoterule
+\begin{rationale}
+For all possible time designations to be accommodated, it is
+    necessary to allow the time zone to be non-integral, for some places
+    in the world have time standards offset from Greenwich Mean Time
+    by a non-integral number of hours.
+
+    There appears to be no user demand for floating-point time zones.  Since such
+    zones would introduce inexact arithmetic, X3J13 did not consider
+    adding them at this time.
+
+This specification does require time zones to be represented as integral multiples
+    of 1 second (rather than 1 hour).  This prevents problems that could otherwise
+occur in converting Decoded Time to Universal Time.
+\end{rationale}
+\afternoterule
+\end{newer}
+
+Universal Time represents time as a single non-negative integer.
+For relative time
+purposes, this is a number of seconds.  For absolute time, this is the
+number of seconds since midnight, January 1, 1900 {GMT}.  Thus the time 1
+is 00:00:01 (that is, 12:00:01 A.M.) on January 1, 1900 {GMT}.
+Similarly, the time 2398291201 corresponds to time 00:00:01 on January 1,
+1976 {GMT}.
+Recall that the year 1900 was {\it not} a leap year; for the purposes of
+Common Lisp, a year is a leap year if and only if its number is divisible by 4, except
+that years divisible by 100 are {\it not} leap years, except that years
+divisible by 400 {\it are} leap years.  Therefore the year 2000 will
+be a leap year.
+(Note that the ``leap seconds'' that
+are sporadically inserted by the world's official timekeepers as an additional
+correction are ignored; Common Lisp assumes that every day is exactly 86400
+seconds long.)
+Universal Time format is used as a standard time
+representation within the {ARPANET}; see reference \cite{KLH-TIME-SERVER}.
+Because the Common Lisp Universal Time representation uses only
+non-negative integers, times before the base time of midnight,
+January 1, 1900 {GMT} cannot be processed by Common Lisp.
+
+Internal Time also represents time as a single integer, but
+in terms of an implementation-dependent unit.
+Relative time is measured as a number of these units.
+Absolute time is relative to an arbitrary time base, typically
+the time at which the system began running.
+
+\begin{defun}[Function]
+get-decoded-time 
+
+The current time is returned in Decoded Time format.  Nine values
+are returned: {\it second}, {\it minute}, {\it hour}, {\it date}, {\it month},
+{\it year}, {\it day-of-week}, {\it daylight-saving-time-p}, and {\it time-zone}.
+
+\beforenoterule
+\begin{incompatibility}
+In Lisp Machine Lisp {\it time-zone} is not currently returned.
+Consider, however, the use of Common Lisp in some mobile vehicle.
+It is entirely plausible that the time zone might change from time to time.
+\end{incompatibility}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+get-universal-time 
+
+The current time of day is returned as a single integer
+in Universal Time format.
+\end{defun}
+
+\begin{defun}[Function]
+decode-universal-time universal-time &optional time-zone
+
+The time specified by {\it universal-time} in Universal Time format
+is converted to Decoded Time format.  Nine values
+are returned: {\it second}, {\it minute}, {\it hour}, {\it date}, {\it month},
+{\it year}, {\it day-of-week}, {\it daylight-saving-time-p}, and {\it time-zone}.
+
+\beforenoterule
+\begin{incompatibility}
+In Lisp Machine Lisp {\it time-zone} is not currently returned.
+Consider, however, the use of Common Lisp in some mobile vehicle.
+It is entirely plausible that the time zone might change from time to time.
+\end{incompatibility}
+\afternoterule
+
+The {\it time-zone} argument defaults to the current time zone.
+\begin{new}
+X3J13 voted in January 1989
+\issue{DECODE-UNIVERSAL-TIME-DAYLIGHT}
+to specify that \cd{decode-universal-time},
+like \cd{encode-universal-time}, ignores daylight saving time information
+if a {\it time-zone} is explicitly specified; in this case
+the returned {\it daylight-saving-time-p} value will necessarily be
+\cd{nil} even if daylight saving time happens to be in effect in that
+time zone at the specified time.
+\end{new}
+\end{defun}
+
+\begin{defun}[Function]
+encode-universal-time second minute hour date month year &optional time-zone
+
+The time specified by the given components of Decoded Time format is
+encoded into Universal Time format and returned.  If you do not specify
+{\it time-zone}, it defaults to the current time zone adjusted for daylight
+saving time.  If you provide {\it time-zone} explicitly, no adjustment for
+daylight saving time is performed.
+\end{defun}
+
+\begin{defun}[Constant]
+internal-time-units-per-second
+
+This value is an integer, the implementation-dependent
+number of internal time units in a second.  (The internal time unit must
+be chosen so that one second is an integral multiple of it.)
+
+\beforenoterule
+\begin{rationale}
+The reason for allowing the internal time
+units to be implementation-dependent is so that
+\cd{get-internal-run-time} and \cd{get-internal-real-time}
+can execute with minimum overhead.
+The idea is that it should be very likely that a fixnum will suffice as the
+returned value from these functions.  This probability can be
+tuned to the implementation by trading off the speed of the machine
+against the word size.  Any particular unit will
+be inappropriate for some implementations: a microsecond is too long
+for a very fast machine, while a much smaller unit would
+force many implementations to return bignums for most calls
+to \cd{get-internal-time}, rendering that function less useful for accurate
+timing measurements.
+\end{rationale}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Function]
+get-internal-run-time 
+
+The current run time is returned as a single integer in Internal Time
+format.
+The precise meaning of this quantity is implementation-dependent;
+it may measure real time, run time, CPU cycles, or some other quantity.
+The intent is that the difference between the values of two calls
+to this function be the amount of time between the two calls
+during which computational effort was expended on behalf of the
+executing program.
+\end{defun}
+
+\begin{defun}[Function]
+get-internal-real-time 
+
+The current time is returned as a single integer in Internal Time
+format.  This time is relative to an arbitrary time base,
+but the difference between the values of two calls
+to this function will be the amount of elapsed real time between the two calls,
+measured in the units defined by \cd{internal-time-units-per-second}.
+\end{defun}
+
+\begin{defun}[Function]
+sleep seconds
+
+\cd{(sleep {\it n})} causes execution to cease and become dormant for
+approximately {\it n} seconds of real time, whereupon execution is resumed.
+The argument may be any non-negative non-complex number.
+\cd{sleep} returns {\nil}.
+\end{defun}
+
+\subsection{Other Environment Inquiries}
+
+For any of the following functions, if no appropriate
+and relevant result can be produced, {\nil} is returned instead
+of a string.
+
+\beforenoterule
+\begin{rationale}
+These inquiry facilities are functions rather than variables
+against the possibility that a Common Lisp process might migrate from
+machine to machine.  This need not happen in a distributed
+environment; consider, for example, dumping a core image file
+containing a compiler and then shipping it to another site.
+\end{rationale}
+\afternoterule
+
+\begin{defun}[Function]
+lisp-implementation-type 
+
+A string is returned that identifies the generic name of
+the particular Common Lisp implementation.
+Examples: \cd{"Spice LISP"}, \cd{"Zetalisp"}.
+\end{defun}
+
+\begin{defun}[Function]
+lisp-implementation-version 
+
+A string is returned that identifies the version of
+the particular Common Lisp implementation; this information
+should be of use to maintainers of the implementation.
+Examples: \cd{"1192"}, \cd{"53.7 with complex numbers"},
+\cd{"1746.9A, NEWIO 53, ETHER 5.3"}.
+\end{defun}
+
+\begin{defun}[Function]
+machine-type 
+
+A string is returned that identifies the generic name of
+the computer hardware on which Common Lisp is running.
+Examples: \cd{"IMLAC"}, \cd{"DEC PDP-10"}, \cd{"DEC VAX-11/780"}.
+\end{defun}
+
+\begin{defun}[Function]
+machine-version 
+
+A string is returned that identifies the version of
+the computer hardware on which Common Lisp is running.
+Example: \cd{"KL10, microcode 9"}.
+\end{defun}
+
+\begin{defun}[Function]
+machine-instance 
+
+A string is returned that identifies the particular
+instance of the computer hardware on which Common Lisp is running;
+this might be a local nickname, for example, or a serial number.
+Examples: \cd{"MIT-MC"}, \cd{"CMU GP-VAX"}.
+\end{defun}
+
+\begin{defun}[Function]
+software-type 
+
+A string is returned that identifies the generic name of
+any relevant supporting software.
+Examples: \cd{"Spice"}, \cd{"TOPS-20"}, \cd{"ITS"}.
+\end{defun}
+
+\begin{defun}[Function]
+software-version 
+
+A string is returned that identifies the version of
+any relevant supporting software; this information
+should be of use to maintainers of the implementation.
+\end{defun}
+
+\begin{defun}[Function]
+short-site-name  \\
+long-site-name 
+
+A string is returned that identifies the physical location
+of the computer hardware.
+Examples of short names: \cd{"MIT AI Lab"}, \cd{"CMU-CSD"}.
+Examples of long names:
+\begin{lisp}
+"MIT Artificial Intelligence Laboratory" \\
+"Massachusetts Institute of Technology \\
+Artificial Intelligence Laboratory" \\
+"Carnegie-Mellon University Computer Science Department"
+\end{lisp}
+\end{defun}
+
+\noindent
+See also \cd{user-homedir-pathname}.
+
+
+\begin{defun}[Variable]
+*features*
+
+The value of the variable \cd{*features*} should be a list of symbols
+that name ``features'' provided by the implementation.
+Most such names will be implementation-specific; typically
+a name for the implementation will be included.
+
+\begin{obsolete}
+One standard feature name is \cd{ieee-floating-point}, which should
+be present if and only if full {IEEE} proposed floating-point
+arithmetic \cite{IEEE-PROPOSED-FLOATING-POINT-STANDARD} is supported.
+\end{obsolete}
+
+The value of this variable is used by the \cd{\#+} and \cd{\#-}
+reader syntax.
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{SHARPSIGN-PLUS-MINUS-PACKAGE}
+to specify that feature names used with \cd{\#+} and \cd{\#-}
+are read in the \cd{keyword} package unless an explicit prefix
+designating some other package appears.  The standard
+feature name \cd{ieee-floating-point} is therefore actually the
+keyword \cd{:ieee-floating-point}, though one need not write the colon
+when using it with \cd{\#+} or \cd{\#-}; thus \cd{\#+ieee-floating-point}
+and \cd{\#+:ieee-floating-point} mean the same thing.
+\end{newer}
+\end{defun}
+
+
+\section{Identity Function}
+
+This function is occasionally useful as an argument to
+other functions that require functions as arguments.  (Got that?)
+
+\begin{defun}[Function]
+identity object
+
+The {\it object} is returned as the value of \cd{identity}.
+
+\begin{new}
+The \cd{identity} function is the default value for the \cd{:key}
+argument to many sequence functions (see chapter~\ref{KSEQUE}).
+
+Table~\ref{IDENTITY-PLOT} illustrates the behavior in the complex plane
+of the
+\cd{identity} function regarded as a function of a complex numerical argument.
+
+Many other constructs in Common Lisp have the behavior of \cd{identity}
+when given a single argument.  For example, one might well use \cd{values}
+in place of \cd{identity}.  However, writing \cd{values} of a single
+argument conventionally indicates that the argument form might deliver
+multiple values and that the intent is to pass on only the first of
+those values.
+
+\beforenoterule
+\begin{incompatibility}
+In Maclisp, \cd{progn} was a function of any number of arguments that
+returned its last argument,
+so \cd{progn} could be used as an identity function.
+In Common Lisp, \cd{progn} is a special form and therefore cannot be used for
+that purpose.
+\end{incompatibility}
+\afternoterule
+\end{new}
+\end{defun}
