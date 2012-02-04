@@ -41,7 +41,7 @@ to which a given object belongs.
 принадлежности объекта к нужному типу. Предикат \cd{typep} может
 использоваться для определения принадлежности объекта к заданному
 типу, а функция \cd{type-of} возвращает тип, к которому
-принадлежит заданный объект. 
+принадлежит заданный объект.
 
 The data types defined in Common Lisp are arranged into a hierarchy (actually
 a partial order) defined by the subset relationship.
@@ -806,6 +806,22 @@ depending on the implementation, there may also be a ``minus zero.''
 If there is no minus zero, then \cd{0.0} and \cd{-0.0} are
 both interpreted as simply a floating-point zero.
 
+Common Lisp позволяет реализации предоставлять один и более типов чисел с
+плавающе точкой, которые все вместе составляют тип \cd{float}.
+Число с плавающей точкой является (математически) рациональным числом формы
+${\it s} \cdot {\it f} \cdot {\it b}^{\hbox{\scriptsize\it e}-\hbox{\scriptsize\it p}}$,
+где {\it s} $+1$ или $-1$, является {\it знаком};
+{\it b} целое число большее 1,
+является {\it основанием} для представления;
+{\it p} положительное целое, является {\it точностью} (количество цифр по
+основанию {\it b}) числа с плавающей точкой;
+{\it f} положительное целое между ${\it b}^{\,\hbox{\scriptsize\it p}-1}$ и
+${\it b}^{\,\hbox{\scriptsize\it p}}-1$ (включительно), является мантиссой;
+и {\it e} целое число, является экспонентой.
+Значение {\it p} и интервал {\it e} зависит от реализации, также может быть
+``минус ноль.'' Если ``минус ноль'' отсутствует, тогда \cd{0.0} и \cd{-0.0} оба
+интепретируются, как ноль с плавающей точкой.
+
 \beforenoterule
 \begin{implementation}
 The form of the above description should not be construed
@@ -823,6 +839,12 @@ software tends to depend critically on the precise nature of the
 floating-point arithmetic and so may not always be completely portable.
 As an aid in writing programs that are
 moderately portable, however, certain definitions are made here:
+
+Числа с плавающей точкой могут предоставляться с различными точностями и
+размерами, в зависимости от реализации. Высококачественные программы с
+вычислениями с плавающей точкой зависят от того, какая точность предоставляется,
+и не всегда могут быть полностью перенесимы. Для содействия по умеренной
+переносимости программ, сделаны следующие определения:
 \begin{itemize}
 \item
 A {\it short} floating-point number (type \cd{short-float})
@@ -830,18 +852,30 @@ is of the representation of smallest
 fixed precision provided by an implementation.
 
 \item
+{\it Короткий} тип числа с плавающей точкой (тип \cd{short-float}) является
+представлением числа с наименьшей фиксированной точностью, предоставляемого реализацией.
+
+\item
 A {\it long} floating-point number (type \cd{long-float})
 is of the representation of the largest fixed 
 precision provided by an implementation.
 
 \item
+{\it Длинный} тип числа с плавающей точкой (тип \cd{long-float}) является
+представлением числа с наибольшей фиксированной точностью, предоставляемого реализацией.
+
+\item
 Intermediate between short and long formats are two others, arbitrarily
 called {\it single} and {\it double} (types \cd{single-float} and \cd{double-float}).
+
+\item
+Промежуточными форматами между коротким и длинным форматами является два других
+формата, называемых {\it одинарный} и {\it двойной} (типы \cd{single-float} и \cd{double-float}).
 \end{itemize}
 The precise definition of these categories is implementation-dependent.
 However, the rough intent is that short floating-point numbers be
 precise to at least four decimal places (but also have
-a space-efficient representation);
+a space- efficient representation);
 single floating-point numbers, to at least seven decimal places;
 and double floating-point numbers, to at least fourteen decimal places.
 It is suggested that
@@ -849,6 +883,18 @@ the precision (measured in bits, computed as ${\it p} \log_2 {\it b}$)
 and the exponent size (also measured in bits, computed as the base-2
 logarithm of 1 plus the maximum exponent value) be at least as great
 as the values in table~\ref{Floating-Format-Requirements-Table}.
+
+Определение точности для этих категорий зависит от реализации. Однако, примерная
+цель, что короткий тип с плавающий точкой должен содержать точность, как минимум
+4 позиции после запятой (и также должен иметь эффективное представление в
+памяти);
+одинарный тип с плавающей точкой -- как минимум 7 знаков после запятой;
+двойной тип с плавающей точкой -- как минимум 14 знаков после запятой.
+Предполагается, что размер точности (измеряется в битах и рассчитывается как ${\it
+p} \log_2 {\it b}$) и экспоненты (измеряется в битах и рассчитывается как логарифм
+с основанием 2 от (1 плюс максимальное значение экспоненты) должен быть как
+минимум таким же большим как значения из таблицы~\ref{Floating-Format-Requirements-Table-ru}.
+
 
 \begin{table}[t]
 \caption{Recommended Minimum Floating-Point Precision and Exponent Size}
@@ -859,6 +905,18 @@ Short&13 bits&5 bits \\
 Single&24 bits&8 bits \\
 Double&50 bits&8 bits \\
 Long&50 bits&8 bits
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Рекомендуемый размер для точности и экспоненты для типа с плавающей точкой}
+\label{Floating-Format-Requirements-Table-ru}
+\begin{tabular}{@{}lll@{}}
+{Формат\quad\quad}&{Минимальная точность\quad\quad}&{Минимальный размер экспоненты} \\ \hlinesp
+Короткое&13 бит&5 бит \\
+Одинарное&24 бит&8 бит \\
+Двойное&50 бит&8 бит \\
+Длинное&50 бит&8 бит
 \end{tabular}
 \end{table}
 
@@ -873,6 +931,16 @@ The exponent specifier consists of an exponent marker,
 an optional sign, and a non-empty sequence of digits.
 For preciseness, here is a modified-BNF description of floating-point
 notation.
+
+Числа с плавающей точкой записываются в двух формах десятичной дробью и
+компьютеризированной научной записью: необязательный знак, затем непустая
+последовательность цифр с встроенной точкой, затем необязательная
+часть определения экспоненты.
+Если определения экспоненты нет, тогда требуется точка, и после нее должны быть
+цифры.
+Определение экспоненты составляется из маркера экспоненты, необязательного знака
+и непустой последовательности цифр.
+Для ясности приведена БНФ для записи чисел с плавающей точкой.
 \begin{tabbing}
 {\it floating-point-number} ::= \=\Mopt{{\it sign}} \Mstar{{\it digit}} {\it
 decimal-point} \Mplus{{\it digit}} \Mopt{{\it exponent}} \\*
@@ -888,6 +956,22 @@ exponent} \\
 {\Mor} \cd{d} {\Mor} \cd{l} {\Mor} \cd{E} {\Mor} \cd{S} {\Mor} \cd{F} {\Mor}
 \cd{D} {\Mor} \cd{L}
 \end{tabbing}
+
+\begin{tabbing}
+{\it число-с-плавающей-точкой} ::= \=\Mopt{{\it знак}} \Mstar{{\it цифра}} {\it
+точка} \Mplus{{\it цифра}} \Mopt{{\it экспонента}} \\*
+\>\hbox to 0pt{\hss\Mor~}\Mopt{{\it
+знак}} \Mplus{{\it цифра}} \Mopt{{\it точка} \Mstar{{\it цифра}}} {\it
+экспонента} \\
+{\it знак} ::= \cd{+} {\Mor} \cd{-} \\
+{\it точка} ::= \cd{.} \\
+{\it цифра} ::= \cd{0} {\Mor} \cd{1} {\Mor} \cd{2} {\Mor} \cd{3} {\Mor} \cd{4}
+         {\Mor} \cd{5} {\Mor} \cd{6} {\Mor} \cd{7} {\Mor} \cd{8} {\Mor} \cd{9}\\
+{\it экспонента} ::= {\it маркер-экспоненты} \Mopt{{\it знак}} \Mplus{{\it цифра}}\\*
+{\it маркер-экспоненты} ::= \cd{e} {\Mor} \cd{s} {\Mor} \cd{f}
+{\Mor} \cd{d} {\Mor} \cd{l} {\Mor} \cd{E} {\Mor} \cd{S} {\Mor} \cd{F} {\Mor}
+\cd{D} {\Mor} \cd{L}
+\end{tabbing}
 If no exponent specifier is present, or if the exponent marker \cd{e}
 (or \cd{E}) is used, then the precise format to be used is not
 specified.  When such a representation is read and
@@ -895,9 +979,20 @@ converted to an internal floating-point data object, the format specified
 by the variable \cd{*read-default-float-format*} is used; the initial
 value of this variable is \cd{single-float}.
 
+Если определение экспоненты отсутствует или если используется маркер
+экспоненты \cd{e} (или \cd{E}), тогда используемые формат точности не
+задан. Когда такое представление считывается и конвертируется во внутренний
+формат объекта числа с плавающей точкой, формат задается с помощью
+переменной \cd{*read-default-float-format*}; первоначальное значение данной
+переменной \cd{single-float}.
+
 The letters \cd{s}, \cd{f}, \cd{d}, and \cd{l} (or their
 respective uppercase equivalents) explicitly specify the
 use of {\it short}, {\it single}, {\it double}, and {\it long} format, respectively.
+
+Буквы  \cd{s}, \cd{f}, \cd{d} и \cd{l} (или их эквиваленты в верхнем регистре)
+явно задают использование типа: {\it короткий}, {\it одинарный}, {\it двойной} и
+{\it длинный}, соответственно.
 
 Examples of floating-point numbers:
 \begin{lisp}
@@ -915,6 +1010,22 @@ Examples of floating-point numbers:
 -0.000000001s9~~~~~~~~~~~~~~;{\rm \(e^{\pi i}\) in {\it short} format, the hard way}
 \end{lisp}
 
+Examples of floating-point numbers:
+\begin{lisp}
+0.0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Ноль с плавающей точкой в формате по умолчанию} \\
+0E0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Также ноль с плавающей точкой в формате по умолчанию} \\
+-.0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Это может быть нулем или минус нулем} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~; {\rm в зависимости от реализации} \\
+0.~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm {\it Целый} ноль, не с плавающей точкой!} \\
+0.0s0~~~~~~~~~~~~~~~~~~~~~~~;{\rm Ноль с плавающей точкой в {\it коротком} формате} \\
+0s0~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Также ноль с плавающей точкой в {\it коротком} формате} \\
+3.1415926535897932384d0~~~~~;{\rm Аппроксиммация числе пи в {\it двойном} формате} \\
+6.02E+23~~~~~~~~~~~~~~~~~~~~;{\rm Число Авогадро в формате по умолчанию} \\
+602E+21~~~~~~~~~~~~~~~~~~~~~;{\rm Также число Авогадро в формате по умолчанию} \\
+3.010299957f-1~~~~~~~~~~~~~~;{\rm \(\log_{10} 2\), в {\it одинарном} формате} \\
+-0.000000001s9~~~~~~~~~~~~~~;{\rm \(e^{\pi i}\) в коротком формате}
+\end{lisp}
+
 \begin{new}%CORR
 {\it Notice of correction.}
 The first edition unfortunately listed an incorrect value (\cd{3.1010299957f-1})
@@ -925,6 +1036,10 @@ The internal format used for an external representation depends only
 on the exponent marker and not on the number of decimal digits
 in the external representation.
 
+Внутренний формат использует для внешнего представления в только от
+маркера экспоненты и не учитывает количество знаков после запятой во внешнем
+представлении. 
+
 While Common Lisp provides terminology and notation sufficient
 to accommodate four distinct floating-point formats,
 not all implementations will have the means to support
@@ -934,6 +1049,14 @@ fewer than four distinct internal floating-point formats,
 in which case at least one of them will be ``shared''
 by more than one of the external format names {\it short}, {\it single},
 {\it double}, and {\it long} according to the following rules:
+
+Тогда как Common Lisp предоставляет терминологию и систему обозначений для
+включения 4 различных типов чисел с плавающей точкой, не все реализации будет
+иметь намерения для поддержки такого большого количества типов.
+Реализация разрешается предоставлять меньшее, чем 4, количество внутренних
+форматов чисел с плавающей точкой, в таком случае как минимум один из этих типов
+будет ``общим'' для более одного внешнего имени {\it короткого}, {\it одинарного},
+{\it двойного}, and {\it длинного} в соответствии со следующими правилами:
 \begin{itemize}
 \item
 If one internal format is provided, then it is considered to be
@@ -1014,7 +1137,7 @@ floating-point numbers
 \afternoterule
 
 
-\subsection{Complex Numbers}
+\subsection{Complex Numbers Комплексные числа}
 
 Complex numbers (type \cd{complex})
 are represented in Cartesian form, with a real part and an imaginary
@@ -1023,7 +1146,15 @@ number).  It should be emphasized that the parts of a complex
 number are not necessarily floating-point numbers; in this, Common Lisp
 is like PL/I and differs from Fortran.  However, both parts must
 be of the same type: either both are rational, or both are of the
-same floating-point format.
+same floating-point format. 
+
+Комплексные числа (тип \cd{complex})
+представляются в алгебраической форме, с действительной и мнимой частями, каждая
+из которых является некомплексным числом (целым, дробным, или с плавающей
+точкой). Следует отметить, что части комплексного числа не
+обязательно числа с плавающей точкой; в это Common Lisp похож на PL/I и
+отличается от Fortran'а. Однако обе части должны быть одного типа: обе
+рациональные, или обе какого-либо формата с плавающей точкой.
 
 Complex numbers may be notated by writing the characters \cd{\#C}
 followed by a list of the real and imaginary parts.
@@ -1033,6 +1164,12 @@ as described in chapter~\ref{NUMBER}.
 (Indeed, \cd{\#C({\it a} {\it b})} is equivalent to \cd{\#,(complex {\it a} {\it b})};
 see the description of the function \cd{complex}.)
 For example:
+
+Комплексные числа могут быть обозначены с помощью записи символа \cd{\#C} с
+последующим списком действительной и мнимой частей.
+Если две части, как было отмечено, не принадлежат одному типу, тогда они будут
+преобразованы в соотвествии с правилами преобразования чисел с плавающей точкой
+описанными в главе~\ref{NUMBER}.
 \begin{lisp}
 \#C(3.0s1 2.0s-1)~~~~~;{\rm Real and imaginary parts are short format}\\
 \#C(5 -3)~~~~~~~~~~~~~;{\rm A Gaussian integer} \\
@@ -1040,11 +1177,24 @@ For example:
 \#C(0 1)~~~~~~~~~~~~~~;{\rm The imaginary unit, that is, {\it i}}
 \end{lisp}
 
+\begin{lisp}
+\#C(3.0s1 2.0s-1)~~~~~;{\rm Действительная и мнимая части в коротком формате}\\
+\#C(5 -3)~~~~~~~~~~~~~;{\rm Целое Гаусса} \\
+\#C(5/3 7.0)~~~~~~~~~~;{\rm Будет преобразовано в \cd{\#C(1.66666 7.0)}} \\
+\#C(0 1)~~~~~~~~~~~~~~;{\rm Мнимая единица, {\it i}}
+\end{lisp}
+
 The type of a specific complex number is indicated by a list
 of the word \cd{complex} and the type of the components; for example,
 a specialized representation for complex numbers with short floating-point
 parts would be of type \cd{(complex short-float)}.  The type \cd{complex}
 encompasses all complex representations.
+
+Тип заданного комплексного числа определяется с помощью списка: слова
+\cd{complex} и типа компонентов; например, специализированное представление для
+комплексных чисел с частями принадлежащими типу короткое с плавающей точкой,
+будет выглядеть так \cd{(complex short-float)}. Тип \cd{complex} включает все
+представления комплексных типов.
 
 A complex number of type \cd{(complex rational)}, that is, one whose
 components are rational, can never have a zero imaginary part.
@@ -1055,11 +1205,21 @@ real part.  This is called the rule of {\it complex canonicalization}.
 This rule does not apply to floating-point complex numbers;
 \cd{\#C(5.0 0.0)} and \cd{5.0} are different.
 
+Комплексное число типа \cd{(complex rational)}, в котором части принадлежат
+дробному типу, никогда не можем содержать нулевую мнимую часть. Если в
+результате вычислений получится комплексное число с нулевой мнимой частью, то
+данное число будет автоматически сконвертировано в некомплексное дробное число,
+равное действительной часть исходного числа. Это называется правилом {\it
+ канонизации комплексного числа}. Данное правило не применяется для комплексных
+чисел с плавающими точками; \cd{\#C(5.0 0.0)} и \cd{5.0} различные числа.
+
 \goodbreak
 
-\section{Characters}
+\section{Characters Строковые символы}
 
 Characters are represented as data objects of type \cd{character}.
+Строковые символы представляют собой объекты данных, принадлежащих типу
+\cd{строковый символ (character)}.
 \begin{obsolete}
 There are two subtypes of interest,
 called \cd{standard-char} and \cd{string-char}.
@@ -1078,6 +1238,17 @@ means the space character.  The syntax for character names after \cd{\#{\Xbacksl
 is the same as that for symbols.  However, only character names
 that are known to the particular implementation may be used.
 
+Объект строкового символа может быть записан \cd{\#{\Xbackslash}} с
+непосредственно последующим строковым символом. Например:  \cd{\#{\Xbackslash}g}
+обозначает строковый символ g в нижнем регистре. Это работает достаточно хорошо
+для вывода символов. Невыводимые строковые символы имеют имена, и могут быть
+записаны с помощью \cd{\#{\Xbackslash}} и последующего имени; например,
+\cd{\#{\Xbackslash}Space} (или \cd{\#{\Xbackslash}SPACE} или
+\cd{\#{\Xbackslash}space} или \cd{\#{\Xbackslash}sPaCE}) обозначает символ пробела.
+Синтаксис для записи имени строкового символа после \cd{\#{\Xbackslash}}, такой
+же как и для Lisp символов. Однако в работе могут использоваться только те
+имена, которые известны данной реализации.
+
 \subsection{Standard Characters}
 
 Common Lisp defines a standard character set (subtype \cd{standard-char})
@@ -1089,6 +1260,16 @@ to be portable.  The Common Lisp character set consists of a space character
 \cd{\#{\Xbackslash}Space}, a newline character \cd{\#{\Xbackslash}Newline}, and the
 following ninety-four
 non-blank printing characters or their equivalents:
+
+Common Lisp определяет множество стандартных символов (подтип
+\cd{standard-char}) для двух целей.
+Common Lisp программы, которые {\it записаны} используя множество стандартных
+символов, могут быть прочитаны любой реализацией Common Lisp; и Common Lisp
+программы, которые {\it используют} только стандартные символы в качестве
+объектов данных, скорее всего будут портируемыми. Множество строковых символов
+Common Lisp состоит из символа пробела, \cd{\#{\Xbackslash}Space}, символа
+новой строки \cd{\#{\Xbackslash}Newline}, и следующих сорока четырех печатаемых
+символов и их эквивалентов:
 \begin{lisp}
 ! " \# \$ \% \& ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? \\
 {\Xatsign} A B C D E F G H I J K L M N O P Q R S T U V W X Y Z {\Xlbracket} {\Xbackslash} {\Xrbracket} {\Xcircumflex} {\Xunderscore} \\
@@ -1105,11 +1286,26 @@ the lowercase letters must be properly ordered
 Other character encodings, particularly EBCDIC, should be easily accommodated
 (with a suitable mapping of printing characters).
 
+Множество стандартных строковых символов Common Lisp'а явно соответствует
+множеству из сорока пяти стандартных ASCII печатаемых символов и символа новой
+строки. Как бы то ни было, Common Lisp спроектирован так, чтобы быть независимым
+от ASCII кодировки символов. Например, сортировка последовательности не
+определена, кроме того, что можно сказать, что цифры могут быть корректно
+отсортированы, буквы в верхнем регистре могут быть корректно отсортрованы и
+буквы в нижнем регистре могут быть корректно отсортированы (смотрите
+спецификацию функции \cd{char<}). Другие реализация кодировка строковых
+символов, в частности EBCDIC, должна быть легко приспособлена (с необходимым
+соотвествием выводимых символов).
+
 Of the ninety-four non-blank printing characters, the following are
 used in only limited ways in the syntax of Common Lisp programs:
+
+Из сорока четырех печатаемых символов, следующие испльзуются с ограничениями
+связанными с синтаксисом Common Lisp програм:
 \begin{lisp}
 {\Xlbracket}~~{\Xrbracket}~~{\Xlbrace}~~{\Xrbrace}~~?~~!~~{\Xcircumflex}~~{\Xunderscore}~~{\Xtilde}~~\$~~\% 
 \end{lisp}
+
 \begin{obsolete}
 \noindent
 All of these characters except \cd{!} and \cd{{\Xunderscore}} are used within
@@ -1133,6 +1329,8 @@ to add a \cd{format} directive \cd{{\Xtilde}{\Xunderscore}} (see chapter~\ref{PP
 \end{newer}
 
 The following characters are called {\it semi-standard}:
+
+Следующие строковые символы называются {\it слегка стандартизированными}:
 \begin{lisp}
 \#{\Xbackslash}Backspace~~\#{\Xbackslash}Tab~~\#{\Xbackslash}Linefeed~~\#{\Xbackslash}Page~~\#{\Xbackslash}Return~~\#{\Xbackslash}Rubout
 \end{lisp}
@@ -1149,7 +1347,17 @@ be sensible for the implementor to define
 \cd{\#{\Xbackslash}Linefeed} or \cd{\#{\Xbackslash}Return} to be synonymous with \cd{\#{\Xbackslash}Newline},
 or \cd{\#{\Xbackslash}Tab} to be synonymous with \cd{\#{\Xbackslash}Space}.
 
-\subsection{Line Divisions}
+Не все реализации Common Lisp'а нуждаются в поддержке этих символов; но те
+реализации, что используют ASCII кодировку должны их поддерживать,
+соответственно BS (восьмеричный код 010), HT (011), LF (012), FF (014), CR
+(015) и DEL (177). Эти строковые символы не являются членами подтипа
+\cd{standard-char}, если не будут созданы синонимы для них.
+Например, разработчик реализации может 
+определить \cd{\#{\Xbackslash}Linefeed} или \cd{\#{\Xbackslash}Return} как
+синоним для \cd{\#{\Xbackslash}Newline},
+или \cd{\#{\Xbackslash}Tab} как синоним для \cd{\#{\Xbackslash}Space}.
+
+\subsection{Line Divisions Разделители строк}
 
 The treatment of line divisions is one of the most difficult issues
 in designing portable software, simply because there is so little agreement
@@ -1163,12 +1371,29 @@ as a character but are implicit in the structuring of a file into records,
 each record containing a line of text.  A deck of punched cards has this
 structure, for example.
 
+Обработки разделителей строк является одним из самых сложных моментов в
+проектировании переносимой программы, преимущественно потому, что между
+операционными системами очень мало соглашений по этому поводу. Некоторые
+используют только один символ; рекомендуемый для этого ASCII символ является
+символом перевода строки LF (также называемый символом новой строки, NL),
+но некоторые системы используют символ перевода каретки CR. Более
+широко используется последовательность из двух символов CR и последующем
+LF. Часто разделители строк не имеют выводимого представления, но неявно влияют
+на структурирование файла в записи, каждая запись содержит строку
+текста. Наприимер, дека перфокарт имеет такию структуру.
+
 Common Lisp provides an abstract interface by requiring that there be a single
 character, \cd{\#{\Xbackslash}Newline}, that within the language serves as a line
 delimiter.  (The language C has a similar requirement.)
 An implementation of Common Lisp must translate between this internal
 single-character representation and whatever external representation(s)
 may be used.
+
+Common Lisp предоставляет абстрактный интерфейс, требуя наличия одного символа
+\cd{\#{\Xbackslash}Newline}, который являет разделителем строк. (Язык C имеет
+подобное требование.)
+Реализация Common Lisp'а должна транслировать это односимвольное представление
+разделители в то, что требуется во внешних системах в данной операционной системе.
 
 \beforenoterule
 \begin{implementation}
@@ -1191,6 +1416,11 @@ has certain consequences.  A character string
 written in the middle of a program in such a way as to span more than
 one line must contain exactly one character to represent each line division.
 Consider this code fragment:
+
+Требование того, что разделитель строк должен быть представлен одним символом,
+имеет следующие последствия. Строковый объект, записанный в середине программы и
+содержащий несколько строк, должен содержать только один символ для каждого
+разделителя. Рассмотрим фрагмент следующего кода:
 \begin{lisp}
 (setq a-string "This string \\
 contains \\
@@ -1201,10 +1431,21 @@ Between \cd{g} and \cd{c} there must be exactly one character,
 \cd{\#{\Xbackslash}Newline}, is not acceptable, nor is the absence of a character.
 The same is true between \cd{s} and \cd{f}.
 
+Между \cd{g} and \cd{c} должен быть только один символ,
+\cd{\#{\Xbackslash}Newline}; последовательность из двух строковых символов
+такая, как \cd{\#{\Xbackslash}Return} и\cd{\#{\Xbackslash}Newline}, не
+корректна.
+Такя же ситуация и между \cd{s} и \cd{f}.
+
 When the character \cd{\#{\Xbackslash}Newline} is written to an output file,
 the Common Lisp implementation must take the appropriate action
 to produce a line division.  This might involve writing out a
 record or translating \cd{\#{\Xbackslash}Newline} to a CR/LF sequence.
+
+Когда строковый символ \cd{\#{\Xbackslash}Newline} записывается в выходной файл,
+реализация Common Lisp'а должна предпринять соотвествующие действия для
+разделения строк. Это может трансляцию \cd{\#{\Xbackslash}Newline} в
+последовательность CR/LF.
 
 \beforenoterule
 \begin{implementation}
@@ -1227,10 +1468,13 @@ the difficulty and declare that writing \cd{\#{\Xbackslash}Return} and then
 \end{implementation}
 \afternoterule
 
-\subsection{Non-standard Characters}
+\subsection{Non-standard Characters Нестандартные символы}
 
 Any implementation may provide additional characters, whether printing
 characters or named characters.  Some plausible examples:
+
+Любая реализация может предоставлять дополнительные строковые символы, и
+печатаемые и именовынные. Некоторые вероятные примеры:
 
 \newpage%manual
 
@@ -1238,6 +1482,9 @@ characters or named characters.  Some plausible examples:
 \#{\Xbackslash}\(\pi\)~~\#{\Xbackslash}\(\alpha\)~~\#{\Xbackslash}Break~~\#{\Xbackslash}Home-Up~~\#{\Xbackslash}Escape
 \end{lisp}
 The use of such characters may render Common Lisp programs non-portable.
+
+Использование таких символов, может создавать проблемы для портируемости Common
+Lisp программы.
 
 \begin{obsolete}
 \subsection{Character Attributes}
@@ -1314,7 +1561,7 @@ of type \cd{base-character}---that is implementation-dependent---but the lower
 bound is 96, the number of standard Common Lisp characters.
 \end{newer}
 
-\section{Symbols}
+\section{Symbols Символы}
 
 Symbols are Lisp data objects that serve several purposes
 and have several interesting characteristics.  Every object of
@@ -1326,6 +1573,14 @@ symbol itself.  (More precisely, symbols are organized into
 {\it packages}, and all the symbols in a package are uniquely
 identified by name.  See chapter~\ref{XPACK}.)
 
+Символы (прим. переводчика: не строковые) являются Lisp'овыми объектами данных и
+созданы для нескольких целей и имеют несколько интересных характеристик. Каждый
+объект типа \cd{symbol} имеет имя, называемое его {\it выводимым именем (print
+  name)}. Существует возможность получить имя символа в виде строки. Также
+возможно обратное действие, получение имени символа из строки. (Более подробно:
+символы могут быть организованы в {\it пакеты}, и все символы в пакете имеют
+уникальные имена. Смотрите главу~\ref{XPACK}.)
+
 Symbols have a component called the {\it property list}, or {\it plist}.
 By convention this is always a list whose even-numbered
 components (calling the first component zero) are symbols,
@@ -1334,9 +1589,19 @@ are associated property values.  Functions are provided for manipulating
 this property list; in effect, these allow a symbol to be treated as an
 extensible record structure.
 
+У символов есть компонент, называемый {\it список свойств}, или {\it иplist}.
+Список свойств всегда является списком, у которого четные элементы (начиная с
+нулевого) являеются символами, они выступают в качестве имен свойств, и нечетные
+элементы являются связанными со свойствами значениями. Для манипуляций с этим
+списком свойств предоставляются функции, это позволяет символу выступать в роли расширяемой структуры.
+
 Symbols are also used to represent certain kinds of variables in Lisp
 programs, and there are functions for dealing with the values associated
-with symbols in this role.
+with symbols in this role. 
+
+Символы также используются для представления определенных видов переменных в
+Lisp программах, и для манипуляции значениями связанными с символами в такой
+роли также предоставляются функции.
 
 A symbol can be notated simply by writing its name.
 If its name is not empty, and if the name consists only of
@@ -1348,6 +1613,16 @@ the symbol can be notated by the sequence of characters in its name.
 Any uppercase letters that appear in the (internal) name may
 be written in either case in the external notation (more on this below).
 For example:
+
+Символ может быть обозначен просто записью его имени.
+Если его имя непустое, и если его имя содержит только алфавитные буквы в верхнем
+регистре, цифры или некоторые псевдо-алфавитные строковые символы (но не
+разделители, как круглые скобки и пробелы), и если имя символа не может быть
+интерпретировано как число, тогда имя символа задается последовательностью букв
+его имени.
+Все буквы записанные в имени символа переводятся в верхний регистр во внутреннем
+представлении.
+Например:
 \begin{lisp}
 ~~~~~~~~~~~~~~~~~~~~\=\kill
 FROBBOZ\>;{\rm The symbol whose name is \cd{FROBBOZ}} \\
@@ -1363,9 +1638,29 @@ b{\Xcircumflex}2-4*a*c\>;{\rm This is a single symbol!} \\
 file.rel.43\>;{\rm This symbol has periods in its name} \\
 /usr/games/zork\>;{\rm This symbol has slashes in its name}
 \end{lisp}
+
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~\=\kill
+FROBBOZ\>;{\rm Символ, имя которого \cd{FROBBOZ}} \\
+frobboz\>;{\rm Другой путь записи того же символа} \\
+fRObBoz\>;{\rm Еще один путь записи полюбившегося символа} \\
+unwind-protect\>;{\rm Символ с дефисом в имени} \\
++\$\>;{\rm Символ с именем \cd{+\$}} \\
+1+\>;{\rm Символ с именем \cd{1+}} \\
++1\>;{\rm Это число 1, а не символ} \\
+pascal{\Xunderscore}style\>;{\rm Этот символ содержит знак подчеркивания в своем
+  имени} \\
+b{\Xcircumflex}2-4*a*c\>;{\rm Это один символ} \\
+\>;~{\rm Этот символ содержит некоторые специальные знаки в своем имени} \\
+file.rel.43\>;{\rm Символ содержит точки в своем имени} \\
+/usr/games/zork\>;{\rm Символ содержит наклонные черты в своем имени}
+\end{lisp}
+
 In addition to letters and numbers, the following characters are normally
 considered to be alphabetic for the purposes of notating
 symbols:
+В дополнение к буквам и числам, следующие строковые символы допускаются в
+использовании в написании имени символа:
 \begin{lisp}
 +~~-~~*~~/~~{\Xatsign}~~\$~~\%~~{\Xcircumflex}~~\&~~{\Xunderscore}~~=~~<~~>~~{\Xtilde}~~.
 \end{lisp}
@@ -1379,10 +1674,20 @@ of conses and dotted lists; a token consisting of two or more periods
 is syntactically illegal.  (The period also serves as the decimal point
 in the notation of numbers.)
 
+Некоторые из этих строковых символов имеют специальные общеприянтые значения
+для имен;
+например, символы, которые задают специальные переменные, обычно имеют имена
+начинающиеся и заканчивающиеся зведочкой \d{*}.
+Одиночная точка используется для задания cons-ячеек или списков с точкой. Точка
+также является разделителем дробной части.
+
 The following characters are also alphabetic by default but are explicitly
 reserved to the user for definition as reader macro characters
 (see section~\ref{MACRO-CHARACTERS-SECTION}) or any other desired purpose
 and therefore should not be used routinely in names of symbols:
+
+Следующие строковые символы предназначены для использования в качестве
+макросимволов для изменения и расширения синтаксиса языка:
 \begin{lisp}
 ?~~!~~{\Xlbracket}~~{\Xrbracket}~~{\Xlbrace}~~{\Xrbrace}
 \end{lisp}
@@ -1400,10 +1705,22 @@ in lowercase in this book for readability.  Typing such names
 with lowercase letters works because the function \cd{read} will convert
 lowercase letters to the equivalent uppercase letters.
 
+Выводимое имя символ может содержать буквы в верхнем и нижнем регистрах.
+Однако, при чтении Lisp reader обычно ковертирует буквы нижнего регистра в
+верхний.
+В реализации все символы, которые именуют все стандартные Common Lisp переменные
+и функции хранятся в верхнем регистре. Однако в книге все эти символы для
+удобства приводятся в нижнем регистре. Использование имен символов в нижнем
+регистре при написании программы возможно потому, что \cd{read} конвертирует все
+читываемые символы в верхний регистр.
+
 \begin{newer}
 X3J13 voted in June 1989 \issue{READ-CASE-SENSITIVITY} to introduce
 \cd{readtable-case}, which controls whether \cd{read} will alter the case
 of letters read as part of the name of a symbol.
+
+Переменная \cd{readtable-case} тепер контролирует поведение функции \cd{read}
+касаемо преобразования регистров букв в именах символов.
 \end{newer}
 
 If a symbol cannot be simply notated by the characters of its name
@@ -1416,21 +1733,25 @@ to their uppercase equivalents.
 If any character in a notation is preceded by \cd{{\Xbackslash}}, then that
 notation can never be interpreted as a number.
 For example:
+
+Если не может быть задан, потому что в его имени используются недопустимые
+буквы и знаки, их можно ``экранировать'' двумя способами. Один из них
+заключается в употреблении обратной наклонной черты перед каждым экранируемым знаком.
 \begin{lisp}
 ~~~~~~~~~~~~~~~~~~~~~~~~\=\kill
-{\Xbackslash}(\>;{\rm The symbol whose name is \cd{(}} \\
-{\Xbackslash}+1\>;{\rm The symbol whose name is \cd{+1}} \\
-+{\Xbackslash}1\>;{\rm Also the symbol whose name is \cd{+1}} \\
-{\Xbackslash}frobboz\>;{\rm The symbol whose name is \cd{fROBBOZ}} \\
-3.14159265{\Xbackslash}s0\>;{\rm The symbol whose name is \cd{3.14159265s0}} \\
-3.14159265{\Xbackslash}S0\>;{\rm A different symbol, whose name is \cd{3.14159265S0}} \\
-3.14159265s0\>;{\rm A short-format floating-point approximation to \(\pi\)} \\
-APL{\Xbackslash}{\Xbackslash}360\>;{\rm The symbol whose name is \cd{APL{\Xbackslash}360}} \\
-apl{\Xbackslash}{\Xbackslash}360\>;{\rm Also the symbol whose name is \cd{APL{\Xbackslash}360}} \\
-{\Xbackslash}(b{\Xcircumflex}2{\Xbackslash}){\Xbackslash} -{\Xbackslash} 4*a*c\>;{\rm The name is \cd{(B{\Xcircumflex}2) - 4*A*C};} \\
-\>;~{\rm it has parentheses and two spaces in it} \\
-{\Xbackslash}({\Xbackslash}b{\Xcircumflex}2{\Xbackslash}){\Xbackslash} -{\Xbackslash} 4*{\Xbackslash}a*{\Xbackslash}c\>;{\rm The name is \cd{(b{\Xcircumflex}2) - 4*a*c};} \\
-\>;~{\rm the letters are explicitly lowercase}
+{\Xbackslash}(\>;{\rm Символ с именем \cd{(}} \\
+{\Xbackslash}+1\>;{\rm Символ с именем \cd{+1}} \\
++{\Xbackslash}1\>;{\rm Также симол с именем \cd{+1}} \\
+{\Xbackslash}frobboz\>;{\rm Символ с именем \cd{fROBBOZ}} \\
+3.14159265{\Xbackslash}s0\>;{\rm Символ с именем \cd{3.14159265s0}} \\
+3.14159265{\Xbackslash}S0\>;{\rm Другой символ с именем \cd{3.14159265S0}} \\
+3.14159265s0\>;{\rm short-format с плавающей точкой для аппроксимации числа \(\pi\)} \\
+APL{\Xbackslash}{\Xbackslash}360\>;{\rm Символ с именем \cd{APL{\Xbackslash}360}} \\
+apl{\Xbackslash}{\Xbackslash}360\>;{\rm Также символ с именем \cd{APL{\Xbackslash}360}} \\
+{\Xbackslash}(b{\Xcircumflex}2{\Xbackslash}){\Xbackslash} -{\Xbackslash} 4*a*c\>;{\rm Имя \cd{(B{\Xcircumflex}2) - 4*A*C};} \\
+\>;~{\rm содержит скобки и два пробела} \\
+{\Xbackslash}({\Xbackslash}b{\Xcircumflex}2{\Xbackslash}){\Xbackslash} -{\Xbackslash} 4*{\Xbackslash}a*{\Xbackslash}c\>;{\rm Имя \cd{(b{\Xcircumflex}2) - 4*a*c};} \\
+\>;~{\rm буквы явно указаны в нижнем регистре}
 \end{lisp}
 It may be tedious to insert a \cd{{\Xbackslash}} before {\it every} delimiter
 character in the name of a symbol if there are many of them.
@@ -1440,18 +1761,24 @@ be taken as part of the symbol's name, as if \cd{{\Xbackslash}} had been written
 before each one, excepting only
 \cd{|} itself and \cd{{\Xbackslash}}, which must nevertheless be preceded by \cd{{\Xbackslash}}.
 For example:
+
+Использование \cd{{\Xbackslash}} перед {\it каждой} буквой утомительно, если
+таких букв в имени много. Алтернативным методом экранирования знаков в имени
+символа является заключение всего имени или только его части в скобки из
+вертикальных черт. Это эквивалентно тому, что каждая буква была бы экранирована
+обратной косой чертой.
 \begin{lisp}
 ~~~~~~~~~~~~~~~~~~~~\=\kill
-|"|\>;{\rm The same as writing \cd{{\Xbackslash}"}} \\
-|(b{\Xcircumflex}2) - 4*a*c|\>;{\rm The name is \cd{(b{\Xcircumflex}2) - 4*a*c}} \\
-|frobboz|\>;{\rm The name is \cd{frobboz}, not \cd{FROBBOZ}} \\
-|APL{\Xbackslash}360|\>;{\rm The name is \cd{APL360}, because the \cd{{\Xbackslash}} quotes the \cd{3}} \\
-|APL{\Xbackslash}{\Xbackslash}360|\>;{\rm The name is \cd{APL{\Xbackslash}360}} \\
-|apl{\Xbackslash}{\Xbackslash}360|\>;{\rm The name is \cd{apl{\Xbackslash}360}} \\
-|{\Xbackslash}|{\Xbackslash}||\>;{\rm Same as \cd{{\Xbackslash}|{\Xbackslash}|}: the name is \cd{||}} \\
-|(B{\Xcircumflex}2) - 4*A*C|\>;{\rm The name is \cd{(B{\Xcircumflex}2) - 4*A*C};} \\
-\>;~{\rm it has parentheses and two spaces in it} \\
-|(b{\Xcircumflex}2) - 4*a*c|\>;{\rm The name is \cd{(b{\Xcircumflex}2) - 4*a*c}}
+|"|\>;{\rm То же что и \cd{{\Xbackslash}"}} \\
+|(b{\Xcircumflex}2) - 4*a*c|\>;{\rm Имя \cd{(b{\Xcircumflex}2) - 4*a*c}} \\
+|frobboz|\>;{\rm Имя \cd{frobboz}, а не \cd{FROBBOZ}} \\
+|APL{\Xbackslash}360|\>;{\rm Имя \cd{APL360}, потому что \cd{{\Xbackslash}} экранирует the \cd{3}} \\
+|APL{\Xbackslash}{\Xbackslash}360|\>;{\rm Имя \cd{APL{\Xbackslash}360}} \\
+|apl{\Xbackslash}{\Xbackslash}360|\>;{\rm Имя \cd{apl{\Xbackslash}360}} \\
+|{\Xbackslash}|{\Xbackslash}||\>;{\rm То же, что и \cd{{\Xbackslash}|{\Xbackslash}|}: имя \cd{||}} \\
+|(B{\Xcircumflex}2) - 4*A*C|\>;{\rm Имя \cd{(B{\Xcircumflex}2) - 4*A*C};} \\
+\>;~{\rm содержит скобки и два пробела} \\
+|(b{\Xcircumflex}2) - 4*a*c|\>;{\rm Имя \cd{(b{\Xcircumflex}2) - 4*a*c}}
 \end{lisp}
 
 %???
@@ -1464,12 +1791,15 @@ For example:
 %before inclusion in the print name.
 %\end{newer}
 
-\section{Lists and Conses}
+\section{Lists and Conses Списки и Cons-ячейки}
 
 \indexterm{cons}
 A \cd{cons} is a record structure containing two components
 called the {\it car} and the {\it cdr}.  Conses are used primarily
 to represent lists.
+
+\cd{cons-ячейка} является записью структура содержащей два элемента, называемых
+{\it car} и {\it cdr}. Cons-ячейки преимущественно используются для отображения списков.
 
 A {\it list} is recursively defined to be either the empty list
 or a cons whose {\it cdr} component is a list.
@@ -1478,16 +1808,36 @@ and terminated by {\nil}, the empty list.  The {\it car} components of the conse
 are called the {\it elements} of the list.  For each element of the list
 there is a cons.  The empty list has no elements at all.
 
+{\it Список} рекурсивно определяется пустым списком или cons-ячейкой, у
+которой {\it cdr} элемент является списком.
+Таким образом, список является цепочкой cons-ячеек связанных с помощью их {\it
+  cdr} элементов, заканчивающейся пустым списком с помощью {\nil}. {\it car}
+элементы cons-ячейки называются {\it элементами} списка. Для каждого элемента
+список существует cons-ячейка. Пустой список не имеет элементов вообще.
+
 A list is notated by writing the elements of the list in order,
 separated by blank space (space, tab, or return characters)
 and surrounded by parentheses.
+
+Список записывается с помощью элементов в необходимом порядке, разделяемых
+пробелом (пробел, таб, возврат каретки:) и окруженных круглыми скобками.
 \begin{lisp}
 (a b c)~~~~~~~~~~~~~~~;{\rm A list of three symbols} \\
 (2.0s0 (a 1) \#{\Xbackslash}*)~~~~~;{\rm A list of three things: a short floating-point} \\
 ~~~~~~~~~~~~~~~~~~~~~~;~{\rm number, another list, and a character object}
 \end{lisp}
+
+\begin{lisp}
+(a b c)~~~~~~~~~~~~~~~;{\rm Список трех элементов} \\
+(2.0s0 (a 1) \#{\Xbackslash}*)~~~~~;{\rm Список трех элементов: короткого с
+  плавающей точкой} \\
+~~~~~~~~~~~~~~~~~~~~~~;~{\rm числа, другого списка, и строкового символа}
+\end{lisp}
 The empty list {\nil} therefore can be written as {\empty}, because it is a list
 with no elements.
+
+Таким образом, пустой список {\nil} может быть записан, как {\empty}, потому что
+является списком без элементов.
 
 A {\it dotted list} is one whose last cons does not have {\nil} for
 its {\it cdr}, rather some other data object (which is also not a cons,
@@ -1500,11 +1850,30 @@ and then the {\it cdr} of the last cons.  As a special case,
 a single cons is notated by writing the {\it car} and the {\it cdr} between
 parentheses and separated by a space-surrounded dot.
 For example:
+
+{\it Список с точкой} является списком, последняя cons-ячейка которого содержит
+объект данных, вместо {\nil} в {\it cdr} элементе (который не является
+cons-ячейкой, иначе исходная cons-ячейка не была бы последней).
+Такой список называется ``список с точкой'' по причине используемой для него
+специальной записи: элементы списка записанные в двух последних поизициях списка
+перед закрывающей круглое скобкой разделяются точкой (обрамленной с двух сторон
+пробелами). Тогда последнее значение будет содержаться в {\it cdr} элементе
+последней cons-ячейки. В особых случаях, одиночная cons-ячейка может быть
+записана с помощью {\it car} и {\it cdr} элементов, обрамленных в круглые скобки
+и разделенных с помощью точки, окруженной пробелами. 
+Например:
 \begin{lisp}
 (a . 4)~~~~~~~~~;{\rm A cons whose {\it car} is a symbol} \\
 ~~~~~~~~~~~~~~~~;~{\rm and whose {\it cdr} is an integer} \\
 (a b c . d)~~~~~;{\rm A dotted list with three elements whose last cons} \\
 ~~~~~~~~~~~~~~~~;~{\rm has the symbol \cd{d} in its {\it cdr}}
+\end{lisp}
+
+\begin{lisp}
+(a . 4)~~~~~~~~~;{\rm const-ячейка, {\it car} которой является символом} \\
+~~~~~~~~~~~~~~~~;~{\rm и {\it cdr} которой равен целому числу} \\
+(a b c . d)~~~~~;{\rm Список с точкой с тремя элементами, у последней} \\
+~~~~~~~~~~~~~~~~;~{\rm cons-ячейки {\it cdr} равен символу \cd{d}}
 \end{lisp}
 
 \beforenoterule
@@ -1520,13 +1889,24 @@ this means the same as \cd{(a b c d)}.  The standard Lisp
 output routines will never print a list in the first form, however;
 they will avoid dot notation wherever possible.
 
+Правильной записью также является что-то наподобие \cd{(a b . (c d))};
+она означает то же, что и \cd{(a b c d)}. Стандартный Lisp вывод никогда не
+распечатает список в первом виде, таким образом, он старается избавиться от
+записи с точкой, когда это возможно.
+
 Often the term {\it list} is used to refer either to true lists or to
 dotted lists.  When the distinction is important,
 the term ``true list'' will be used to refer to a list
 terminated by {\nil}.  Most functions
-advertised to operate on lists expect to be given true lists.  Throughout
+advertised to operate on lists expect to be given true lists. Throughout
 this book, unless otherwise specified, it is an error to pass a dotted
 list to a function that is specified to require a list as an argument.
+
+Часто термин {\it список} употребляется и для обычных списков и для списков с
+точкой. Когда разница важна, для списка, заканчивающегося с помощью {\nil},
+будет употребляться термин ``Ъ список''. Большинство функций указывают, что
+оперируют списками, ожидая что они Ъ. Везде в этой книге, если не указано иное,
+передача списка с точкой в такие функции является ошибкой.
 
 \beforenoterule
 \begin{implementation}
@@ -1547,6 +1927,12 @@ and all the other conses transitively accessible to it
 through {\it car} and {\it cdr} links until non-conses are reached;
 these non-conses are called the {\it leaves} of the tree.
 
+Иногда используется термин {\it дерево} для ссылки на некоторую cons-ячейку,
+которая содержит другие cons-ячейки в своих {\it car} и {\it cdr} элементах,
+которые также содержат cons-ячейки в своих элементах и так далее, пока не будут
+достингуты элементы, не являющиеся cons-ячейками.
+Такие элементы, не являющиеся cons-ячейками называются {\it листьями} дерева.
+
 Lists, dotted lists, and trees are not mutually exclusive data types;
 they are simply useful points of view about structures of conses.
 There are yet other terms, such as {\it association list}.
@@ -1556,13 +1942,26 @@ The Lisp data type \cd{list} is taken to mean the union of the
 \cd{cons} and \cd{null} data types, and therefore encompasses both
 true lists and dotted lists.
 
-\section{Arrays}
+Списки, списки с точкой, и деревья вместе не завершают список типов данных;
+они просто являются удобной точкой для рассмотрения таки структур, как
+cons-ячейки.
+Существуют также другие термины, такие как, например, {\it ассоциативный
+  список}. Ни один из этих типов данных не является Lisp'овым типом
+данных. Cons-ячейки являются таким типом данных, и {\nil} является объектом типа
+\cd{null}. Lisp'овый тип данных \cd{список} подразумаевает объединение типов
+\cd{cons-ячеек} и \cd{null}, и по этой причине содержит в себе оба типа Ъ
+список и список с точкой.
+
+\section{Arrays Массивы}
 \label{ARRAY-TYPE-SECTION}
 
 \indexterm{array}
 An \cd{array} is an object with components arranged according
 to a Cartesian coordinate system.
 In general, these components may be any Lisp data objects.
+
+\cd{Массив} является объектом с элементами расположенными в соответсвии с
+Декартовой системой координат.
 
 The number of dimensions of an array is called its {\it rank}
 (this terminology is borrowed from APL);
@@ -1571,11 +1970,22 @@ Likewise, each dimension is itself a non-negative integer.
 The total number of elements in the array is the product of all the
 dimensions.
 
+Количество измерений массива называется {\it ранг} (это терминология взята из
+APL); ранг является неотрицательных целым.
+Также каждое измерение само по себе является неотрицательным целым.
+Общее количество элементов в массиве является произведением всех измерений.
+
 An implementation of Common Lisp may impose a limit on the rank of an array,
 but this limit may not be smaller than 7.  Therefore, any Common Lisp
 program may assume the use of arrays of rank 7 or less.
 (A program may determine the actual limit on array ranks for
 a given implementation by examining the constant \cd{array-rank-limit}.)
+
+Реализация Common Lisp'а может налагать ограничение на ранг массива, но данное
+ограничение не может быть менее 7. Таким образом, любая Common Lisp программа
+может использователь массивы с семью и менее измеренеиями.
+(Программа может получить текущее ограничение для ранга для заданной реализации
+с помощью константы \cd{array-rank-limit}.)
 
 It is permissible for a dimension to be zero.  In this case,
 the array has no elements, and any attempt to access an element
@@ -1585,12 +1995,24 @@ If the rank is zero, then there are no dimensions, and the
 product of the dimensions is then by definition 1.
 A zero-rank array therefore has a single element.
 
+Существование нулевого ранга допускается. В этом случае, массив не содержит
+элементов, и любой доступ к элементам является ошибкой. Тогда как другие
+свойства массива могут использоваться. Если ранг равен нулю, тогда массив не
+имеет измерений, и их произведение приравнивается к 1 (FIXME).
+Таким образом массив с нулевым рангом содержит один элемент.
+
 An array element is specified by a sequence of indices.
 The length of the sequence must equal the rank of the array.
 Each index must be a non-negative integer strictly less than
 the corresponding array dimension.  Array indexing is
 therefore zero-origin, not one-origin as in (the default case of)
 Fortran.
+
+Элемент массива задается последовательностью индексов.
+Длина данной последовательности должна равнятся рангу массива.
+Каждый индекс должен быть неотрицательным целым строго меньшим размеру
+соотвествующего измерения. Также индексация массива начинается с нуля, а не с
+единицы, как в по умолчанию Fortran'е.
 
 As an example, suppose that the variable \cd{foo} names a 3-by-5 array.
 Then the first index may be 0, 1, or 2, and the second index
@@ -1603,10 +2025,26 @@ A zero-rank array has no dimensions, and therefore
 \cd{aref} would take such an array and no indices, and return the sole
 element of the array.
 
+В качестве примера, предположим, что переменная \cd{foo} обозначает двумерный
+массив с размерами измерений 3 и 5. Первый индекс может быть 0, 1 или 2, и второй
+индекс может быть 0, 1, 2, 3 или 4. Обращение к элементам массива может быть
+осуществлено с помощью функции \cd{aref}; например, \cd{(aref foo 2 1)}
+ссылается на элемент массива (2, 1). Следует отметить, что \cd{aref} принимает
+переменное число аргументов: массив, и столько индексов, сколько измерений у
+массива.
+Массив с нулевым рангом не имеет измерений, и в таком случае \cd{aref} принимает
+только один параметр -- массив, и не принимает индексы, и возвращает одиночный
+элемент массива.
+
 In general, arrays can be multidimensional,
 can share their contents with other array objects, and can have their
 size altered dynamically (either enlarging or shrinking) after creation.
 A one-dimensional array may also have a {\it fill pointer}.
+
+В общем случае, Массивы могут быть многомерными, могут иметь общее содержимое с
+другими массивами. и могут динамически менять свой размер после создания (и
+увеличивать, и уменьшать).
+Одномерный массив может также иметь {\it указатель заполнения}.
 
 Multidimensional arrays store their components in row-major order;
 that is, internally a multidimensional array is stored as a one-dimensional
@@ -1617,12 +2055,27 @@ last index varying fastest.  This is important in two situations:
 (The first situation is a matter of semantics; the second, a matter
 of efficiency.)
 
+Многомерные массивы сохраняют элементы построчно;
+это значит, что внутренне многомерный массив хранится как одномерный массив с
+порядком элементов, соответствующим лексикографическому порядку их индексов. Это
+важно в двух ситуациях:
+(1) когда массивы с разными измерениями имеют общее содержимое, и 
+(2) когда осуществляется доступ к очень большому массиву в виртуальной памяти.
+(Первая ситуация касается семантики; вторая -- эффективности)
+
 An array that is not displaced to another array, has no fill pointer, and
 is not to have its size adjusted dynamically after creation is called a
 {\it simple} array.  The user may provide declarations that certain arrays
 will be simple.  Some implementations can handle simple arrays in an
 especially efficient manner; for example, simple arrays may have a more
 compact representation than non-simple arrays.
+
+Массив, что не указывает на другой массив, не имеет указателя заполнения и не
+имеет динамически расширяемого размера после создания называется {\it простым}
+массивом. Пользователи могут декларировать то, что конкретный массив будет
+простым. Некоторые реализации могут обрабатывать простые массивы более
+эффективным способом; например, простые массивы могут храниться более компактно,
+что непростые массивы. 
 
 \begin{newer}
 X3J13 voted in June 1989
@@ -1632,9 +2085,14 @@ and \cd{:displaced-to} arguments is true when \cd{make-array}
 is called, then whether the resulting
 array is simple is unspecified; but if all three arguments are false,
 then the resulting array is guaranteed to be simple.
+
+Есоои один или более из \cd{:adjustable}, \cd{:fill-pointer} и
+\cd{:displaced-to} аргументов равен true, когда вызывается \cd{make-array},
+тогда является ли результат простым массивом не определено; однако если все три
+аргумента равны false, тогда результат гарантированно будет простым массивом.
 \end{newer}
 
-\subsection{Vectors}
+\subsection{Vectors Векторы}
 
 One-dimensional arrays are called {\it vectors} in Common Lisp
 and constitute the type \cd{vector} (which is therefore a subtype of \cd{array}).
@@ -1646,20 +2104,44 @@ list is linear in the length of the list; on the other hand, adding a new
 element to the front of a list takes constant time, whereas the same
 operation on an array takes time linear in the length of the array.
 
+В Common Lisp'е одномерные массивы называется {\it векторами}, и составляют тип
+\cd{вектор} (который в свою очередь является подтипом \cd{массива}).
+Вектора и списки вместе являются {\it последовательностями}. Они отличаются тем,
+что любой элемент одномерного массива может быть получен за константное время,
+тогда как среднее время доступа к компоненту для списка линейно зависит от длины
+списка, с другой стороны, добавление нового элемента в начала списка занимает
+константное время, тогда как эта же операция для массива занимает время линейно
+зависящее от длины массива.
+
 A general vector (a one-dimensional array
 that can have any data object as an element but that has
 no additional paraphernalia) can be notated by notating the
 components in order, separated by whitespace and surrounded by \cd{\#(}
 and \cd{)}.
 For example:
+
+Обычный вектор (одномерный массив, который может содержать любой тип объектов,
+но не имеющий дополнительных атрибутов) может быть записан с помощью
+перечисления элементов разделенных пробелом и окруженных \cd{\#(} и \cd{\)}.
+Например:
 \begin{lisp}
 \#(a b c)~~~~~~~~~~~~~~~~~~~~;{\rm A vector of length 3} \\*
 \#()~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm An empty vector} \\
 \#(2 3 5 7 11 13 17 19 23 29 31 37 41 43 47) \\*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm A vector containing the primes below 50}
 \end{lisp}
+
+\begin{lisp}
+\#(a b c)~~~~~~~~~~~~~~~~~~~~;{\rm Вектор из трех элементов} \\*
+\#()~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Путой вектор} \\
+\#(2 3 5 7 11 13 17 19 23 29 31 37 41 43 47) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Вектор содержит простые числа меньшие пятидесяти}
+\end{lisp}
 Note that when the function \cd{read} parses this syntax, it always constructs
 a {\it simple} general vector.
+
+Следует отметить, что когда функция \cd{read} парсит данный синтаксис, она
+всегда создает {\it простой} массив.
 
 \beforenoterule
 \begin{rationale}
@@ -1675,6 +2157,18 @@ shown that users, especially implementors of languages for use
 in artificial intelligence research, often want
 to define special kinds of brackets.  Therefore Common Lisp avoids using
 brackets and braces for any syntactic purpose.
+
+Многие люди рекомендовали использовать квадратные скобки для задания векторов
+так: \cd{{\Xlbracket}a b c{\Xrbracket}} вместо \cd{\#(a b c)}. Данная запись
+короче, возможно более читаема, и безусловно совпадает с культурными традициями
+в других частях компьютерных наук и математики. Однако, для достижения
+предельной полезности от пользовательских макросимволов, что расширяют
+возможности функции \cd{read}, необходимо было оставить некоторые строковые
+символы для этих пользовательских целей. Опыт использования MacLisp'а
+показывает, что пользователи, особенно разработчики языков для использования в
+исследованиях искусственного интеллекта, часто хотят определять специальные
+значения для квадратных скобос. Таким образом Common Lisp не использует
+квадратных и фигурных скобок в своем синтаксисе.
 \end{rationale}
 \afternoterule
 
@@ -1690,7 +2184,17 @@ of bits, that is, arrays of type \cd{(array bit)};
 the one-dimensional instances of
 this specialization are called {\it bit-vectors}.
 
-\subsection{Strings}
+Реализации могут предоставлять специализированные представления массивов для
+достижения эффективности в случаях, когда все элементы принадлежат одному
+определенному типу (например, числовому). Все реализации предоставляют
+специальные массивы в случаях, когда все элементы являются строковыми символами
+(или специализированное подмножество строковых символов);
+такие одномерные массивы называются {\it строки}.
+Все реализации также должны предоставлять специализированные битовые массивы,
+которые принадлежат типу \cd{(array bit)};
+такие одномерные массивы назваются {\it битовые векторы}.
+
+\subsection{Strings Строки}
 \label{STRING-TYPE-SECTION}
 
 \begin{obsolete}
@@ -1722,18 +2226,34 @@ an extended character into a base string.
 
 The type \cd{string} is therefore a subtype of the type \cd{vector}.
 
+\cd{Строковый} тип является подтипом \cd{векторного} тип.
+
 A string can be written as the sequence of characters contained in the
 string, preceded and followed by a \cd{"} (double quote) character.
 Any \cd{"} or \cd{{\Xbackslash}} character in the sequence must additionally
 have a \cd{{\Xbackslash}} character before it.
 
+Строка может быть записана как последовательность символов содержащихся в
+строке, с предшествующим и последующим символом двойной кавычки \cd{"}.
+Любой символ \cd{"} или \cd{{\Xbackslash}} в данной последовательности должен
+иметь предшествующий символ \cd{{\Xbackslash}}.
+
 For example:
 
+Например:
 \begin{lisp}
 "Foo"~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm A string with three characters in it} \\*
 ""~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm An empty string} \\
 "{\Xbackslash}"APL{\Xbackslash}{\Xbackslash}360?{\Xbackslash}" he cried."~~~~~;{\rm A string with twenty characters} \\*
 "|x| = |-x|"~~~~~~~~~~~~~~~~~~;{\rm A ten-character string}
+\end{lisp}
+
+\begin{lisp}
+"Foo"~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Строка из трех символов} \\*
+""~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Пустая строка} \\
+"{\Xbackslash}"APL{\Xbackslash}{\Xbackslash}360?{\Xbackslash}" he
+cried."~~~~~;{\rm Строка из двенадцати символов} \\*
+"|x| = |-x|"~~~~~~~~~~~~~~~~~~;{\rm Строка из десяти символов}
 \end{lisp}
 Notice that any vertical bar \cd{|} in a string need not be
 preceded by a \cd{{\Xbackslash}}.  Similarly, any double quote in the name
@@ -1744,15 +2264,31 @@ containing the sequence of characters,
 whereas vertical bars indicate a symbol whose name is the contained
 sequence of characters.
 
+Необходимо отметить, что символ вертикальной черты \cd{|} в строке не должен быть
+экранирован с помощью \cd{{\Xbackslash}}. Также как и любая двойная кавычка в имени
+символа, записанного с использованием вертикальных черт, не нуждается в
+экранировании. Записи с помощью двойной кавычки и вертикальной черты похожи, но
+используются для разных целей: двойная кавычка указывает на строку, содержающую
+строковые символы, тогда как вертикальная черта указывает на символ, имя
+которого содержит последовательность строковых символов.
+
 The characters contained by the double quotes, taken from left to right,
 occupy locations within the string with increasing indices.
 The leftmost character is string element number 0, the next one
 is element number 1, the next one is element number 2, and so on.
 
+Строковые символы обрамленные двойными кавычками, считываются слева
+направо. Индекс символа больше индекса предыдущего символа на 1. Самый левый
+символ строки имеет индекс 0, следующий 1, следующий 2, и т.д.
+
 Note that the function \cd{prin1} will print any character vector
 (not just a simple one)
 using this syntax, but the function \cd{read} will always construct
 a simple string when it reads this syntax.
+
+Следует отметить, что функция \cd{prin1} будет выводить на печать любой вектор
+строковых символов (не только простой), используя данный синтаксис, но функция
+\cd{read} будет всегда создавать простую строку, при разборе данного синтаксиса.
 
 \subsection{Bit-Vectors}
 
@@ -1760,21 +2296,39 @@ A bit-vector can be written as the sequence of bits contained in the
 string, preceded by \cd{\#*}; any delimiter character, such as whitespace,
 will terminate the bit-vector syntax.
 For example:
+
+Битовый вектор может быть записан в виде последовательности битов заключенных в
+строку с предшествующей \cd{\#*}; любой разделитится, например, как пробел
+завершает синаксис битового вектора.
+Например:
 \begin{lisp}
 \#*10110~~~~~;{\rm A five-bit bit-vector; bit 0 is a 1} \\
 \#*~~~~~~~~~~;{\rm An empty bit-vector}
 \end{lisp}
+
+\begin{lisp}
+\#*10110~~~~~;{\rm Пятибитный битовый вектор; нулевой бит 1} \\
+\#*~~~~~~~~~~;{\rm Пустой битовый вектор}
+\end{lisp}
+
 The bits notated following the \cd{\#*}, taken from left to right,
 occupy locations within the bit-vector with increasing indices.
 The leftmost notated bit is bit-vector element number 0, the next one
 is element number 1, and so on.
 
+Биты записанные после \cd{\#*}, читаются слева направо. Индекс каждого бита
+больше индекса предыдущего бита на 1. Индекс самого левого бита 0, следующего 1
+и т.д.
+
 The function \cd{prin1} will print any bit-vector (not just a simple one)
 using this syntax, but the function \cd{read} will always construct
 a simple bit-vector when it reads this syntax.
 
-\section{Hash Tables}
+Функция \cd{prin1} распечатывают любой битовый вектор (не только простой)
+используя этот синтаксис, однако функция \cd{read} будет всегда создавать простой
+битовый веткор, когда разбирает данный синтаксис.
 
+\section{Hash Tables Хеш-таблицы}
 Hash tables provide an efficient way of mapping any
 Lisp object (a {\it key}) to an associated object.
 They are provided as primitives of Common Lisp because
@@ -1783,7 +2337,14 @@ management strategies that would make it very difficult
 for the user to implement hash tables in a portable fashion.
 Hash tables are described in chapter~\ref{HASH}.
 
-\section{Readtables}
+Хеш-таблицы предоставляют эффективный путь для связи любого Lisp объекта ({\it
+ ключа}) с другим объектом. Они предоставляются как примитивы Common Lisp'а,
+потому что некоторые реализации могут нуждаться в использовании стратегий
+управления внутренними хранилищами, что создало бы сложности для пользователя в
+реализации портируемых хеш-таблиц.
+Хеш-таблицы описаны в главе~\ref{HASH}.
+
+\section{Readtables Readtables}
 
 A readtable is a data structure that maps characters into syntax
 types for the Lisp expression parser.
@@ -1793,7 +2354,15 @@ definition is.  This is a mechanism by which the user may reprogram
 the parser to a limited but useful extent.
 See section~\ref{READTABLE-SECTION}.
 
-\section{Packages}
+Readtable является структурой данных, которая отображает символы в
+синтаксические типы для парсера Lisp выражений.
+В частности, readtable указывает для каждого строкового символа с синтаксисом
+{\it макросимвола}, какой макрос ему соотвествует. Это механизм, с помощью
+которого пользователь может запрограммировать парсер для выполнения
+ограниченных, но полезных расширений.
+Смотрите раздел~\ref{READTABLE-SECTION}.
+
+\section{Packages Пакеты}
 
 Packages are collections of symbols that serve as name spaces.
 The parser recognizes symbols by looking up character sequences
@@ -1802,12 +2371,23 @@ names internal to a module from other code.  Mechanisms are provided
 for exporting symbols from a given package to the primary ``user'' package.
 See chapter~\ref{XPACK}.
 
-\section{Pathnames}
+Пакеты являются коллекциями символов, которые предоставлены в качестве
+пространства имен. Парсер распознает символы с помощью поиска строки в текущем
+пакете. Пакеты могут использоваться для скрытия имен внутрь модуля от другого
+кода. Также предоставляются механизмы для экспортирования символов из заданного
+пакета в главный ``user'' пакет.
+Смотрите главу~\ref{XPACK}.
+
+\section{Pathnames Имена файлов}
 Pathnames are the means by which a Common Lisp program can
 interface to an external file system in a reasonably implementation-independent
 manner.  See section~\ref{PATHNAME}.
 
-\section{Streams}
+Имена файлов являеются сущностями, с помощью которых Common Lisp программа может
+взаимодействовать с внешней файловой системой в приемлемой платформонезависимой
+форме. Смотрите раздел~\ref{PATHNAME}.
+
+\section{Streams Потоки}
 
 A stream is a source or sink of data, typically characters or bytes.
 Nearly all functions that perform I/O do so with respect to a specified
@@ -1815,6 +2395,13 @@ stream.  The function \cd{open} takes a pathname and returns a stream
 connected to the file specified by the pathname.
 There are a number of standard streams that are used by default for
 various purposes.  See chapter~\ref{STREAM}.
+
+Поток является источником или набором данных, обычно строковых символов или
+байтов. Почти все функции, что выполняют ввод/вывод, делают это в отношении
+заданного потока. Функция \cd{open} принимает путь к файлу и возвращается поток
+подключенный к файлу заданному в параметре.
+Существует несколько стандартных потоков, которые используются по умолчанию для
+различных целей. Смотрите главу~\ref{STREAM}.
 
 \begin{newer}
 X3J13 voted in January 1989
@@ -1827,14 +2414,18 @@ Note particularly that a synonym stream is always and only of type
 \cd{synonym-stream}, regardless of the type of the stream for which it is a synonym.
 \end{newer}
 
-\section{Random-States}
+\section{Random-States Random-States}
 
 An object of type \cd{random-state} is used to encapsulate
 state information used by the pseudo-random number generator.
 For more information about \cd{random-state} objects,
 see section~\ref{RANDOM}.
 
-\section{Structures}
+Объект типа \cd{random-state} используется для инкапсулирования информации о
+состоянии, используемом генератором случайных чисел (ГСЧ). Для боле подробной
+информации об объектах \cd{random-state} смотрите главу~\ref{RANDOM}.
+
+\section{Structures Структуры}
 
 Structures are instances of user-defined data types that have
 a fixed number of named components.  They are analogous to
@@ -1843,11 +2434,23 @@ Structures are declared using the \cd{defstruct} construct;
 \cd{defstruct} automatically defines access and constructor functions for
 the new data type.
 
+Структуры являются экземплярами определенных пользователем типов данных, которые
+имеют ограниченное количество именованных полей (свойств). Они являются
+аналогами записей в Pascal'е.
+Структуры декларируются используя конструкцию \cd{defsctruct};
+\cd{defstruct} автоматически определяет конструктор и функции доступа для нового
+типа данных.
+
 Different structures may print out in different ways;
 the definition of a structure type may specify a print procedure
 to use for objects of that type (see the
 \cd{:print-function} option to \cd{defstruct}).
 The default notation for structures is
+
+Различные структуры могут выводится на печать различными способами;
+определение типа структуры может задавать процедуру вывода на печать для
+объектов данного типа (смотрите опцию \cd{:print-function} для \cd{defstruct}).
+Нотация по умолчанию для структур является:
 \begin{lisp}
 \#S({\it structure-name} \\
 ~~~~~~~~{\it slot-name-1} {\it slot-value-1} \\
@@ -1859,7 +2462,18 @@ the name (a symbol) of the structure type, each {\it slot-name} is the name
 (also a symbol) of a component, and each corresponding {\it slot-value}
 is the representation of the Lisp object in that slot.
 
-\section{Functions}
+\begin{lisp}
+\#S({\it имя-структуры} \\
+~~~~~~~~{\it имя-слота-1} {\it значение-слота-1} \\
+~~~~~~~~{\it имя-слота-2} {\it значение-слота-2} \\
+~~~~~~~~~~~~~~~~~~~~~~...)
+\end{lisp}
+где \cd{\#S} указывает на синтаксис структуры, {\it имя-структуры} является
+именем (символ) типа данной структуры, каждый {\it имя-слота} является именем
+слота (также символ), и каждое соответствующее {\it значение-слота} -
+отображением Lisp объекта в данном слоте.
+
+\section{Functions Функции}
 \label{FUNCTION-TYPE-SECTION}
 
 \begin{obsolete}
@@ -1913,7 +2527,7 @@ The value of a \cd{function} special form
 will always be of type \cd{function}.
 \end{newer}
 
-\section{Unreadable Data Objects}
+\section{Unreadable Data Objects Нечитаемые объекты данных}
 
 Some objects may print in implementation-dependent ways.
 Such objects cannot necessarily be reliably reconstructed from
@@ -1921,6 +2535,13 @@ a printed representation, and so they are usually printed in
 a format informative to the user but not acceptable to the \cd{read} function:
 \cd{\#<{\it useful information}>}.
 The Lisp reader will signal an error on encountering \cd{\#<}.
+
+Некоторые объекты могут быть выведены на печать в виде, который зависит от
+реализации.
+Такие объекты не могут быть полностью реконструированы из распечатанной формы,
+так как они обычно распечатываются в форме информативной для пользователя, но не
+подходящей для функции \cd{read}:
+\cd{\#<{\it полезная информация}}.
 
 As a hypothetical example, an implementation might print
 \begin{lisp}
