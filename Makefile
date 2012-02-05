@@ -10,6 +10,7 @@ clean:
 	rm -f *.4ct
 	rm -f *.4tc
 	rm -f *.html
+	rm -f *.css
 	rm -f *.dvi
 	rm -f *.idv
 	rm -f *.idx
@@ -51,6 +52,7 @@ html/clm.html : *.tex
 	rm -f *.4ct
 	rm -f *.4tc
 	rm -f *.html
+	rm -f *.css
 	rm -f *.dvi
 	rm -f *.idv
 	rm -f *.idx
