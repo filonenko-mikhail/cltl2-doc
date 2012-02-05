@@ -5,12 +5,11 @@ all: cltl2.pdf
 clean:
 	rm -f cltl2.pdf
 	rm -rf output
-	rm -f index.html
 	rm -f *.aux
 	rm -f *.4ct
 	rm -f *.4tc
-	rm -f *.html
-	rm -f *.css
+	rm -f clm*.html
+	rm -f clm*.css
 	rm -f *.dvi
 	rm -f *.idv
 	rm -f *.idx
@@ -18,7 +17,8 @@ clean:
 	rm -f *.lg
 	rm -f *.tmp
 	rm -f *.xref
-	rm -f *.png
+	rm -f clm.pdf
+	rm -f clm*.png
 	rm -rf html
 
 cltl2.pdf : output/clm.pdf
@@ -51,8 +51,8 @@ html/clm.html : *.tex
 	rm -f *.aux
 	rm -f *.4ct
 	rm -f *.4tc
-	rm -f *.html
-	rm -f *.css
+	rm -f clm*.html
+	rm -f clm*.css
 	rm -f *.dvi
 	rm -f *.idv
 	rm -f *.idx
@@ -60,4 +60,5 @@ html/clm.html : *.tex
 	rm -f *.lg
 	rm -f *.tmp
 	rm -f *.xref
-	rm -f *.png
+	rm -f clm.pdf
+	rm -f clm*.png
