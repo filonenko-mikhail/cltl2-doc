@@ -3,17 +3,27 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Scope and Extent}
+\chapter{Scope and Extent Область и продолжительность видимости}
 \label{SCOPE}
 
 In describing various features of the Common Lisp language, the notions of
-{\it scope} and {\it extent} are frequently useful.  These notions arise when
+{\it scope} and {\it extent} are frequently useful.  These notion arise when
 some object or construct must be referred to from some distant part of a
 program.  {\it Scope} refers to the spatial or textual region of the
 program within which references may occur.  {\it Extent} refers to the
 interval of time during which references may occur.
 
+При описании различных возможностей Common Lisp'а очень важными понятиями
+являются {\it области и продолжительности видимости}. Эти понятия возникают,
+когда к некоторому объекту или конструкции необходимо обратиться где-то далеко в
+коде. {\it Область видимости} отмечает пространственный или текстовый регион, в
+котором находящаяся внутри программа может ссылатся на эти 
+объекты. {\it Продолжительность видимости} обозначает временной интервал, в течении
+которого программа может ссылаться к данным.
+
 As a simple example, consider this program:
+
+Вот простой пример такой программы:
 \begin{lisp}
 (defun copy-cell (x) (cons (car x) (cdr x)))
 \end{lisp}
@@ -25,6 +35,14 @@ the function is invoked to the time it is exited.  (In the general case,
 the extent of a parameter may last beyond the time of function exit,
 but that cannot occur in this simple case.)
 
+Областью видимости параметра с именем \cd{x} является тело формы \cd{defun}.
+Способа сослатся на этот параметр из какого-либо другого места программы
+нет. Продолжительностью видимости параметра \cd{x} (для какого-нибудь вызова
+\cd{copy-cell}) является интервал времени, начиная с вызова функции и заканчивая
+выходом из нее. (В общем случае продолжительность видимости параметра может
+продлиться и после завершения функции, но в данном простом случае такого не
+может быть.) 
+
 Within Common Lisp, a referenceable entity is {\it established} by the execution
 of some language construct, and the scope and extent of the entity are
 described relative to the construct and the time (during execution of the
@@ -35,9 +53,21 @@ variable bindings (both ordinary and special), catchers,
 and \cd{go} targets.  It is important to distinguish between
 an entity and a name for the entity.  In a function definition
 such as
+
+В Common Lisp сущность, на которую можно сослаться из кода, {\it создается} с
+помощью специальных языковых конструкций, и область и продолжительность
+видимости описывются в зависимости от этой конструкции и времени (выполнения
+конструкции) в которое эта сущносность была создана.
+Для предмета данного описания, термин <<сущность>> указывает не только на
+объекты Common Lisp'а, такие как символы и cons-ячейки, но и также на связывания
+переменных (обычных и специальных), ловушки, и \cd{метки переходов}. Важно
+отметить различие между сущностью и именем для этой сущности. В определение
+функции, такой как:
+
 \begin{lisp}
 (defun foo (x y) (* x (+ y 1)))
 \end{lisp}
+
 there is a single name, \cd{x}, used to refer to the first parameter
 of the procedure whenever it is invoked; however, a new binding
 is established on every invocation.  A {\it binding} is a particular
@@ -50,8 +80,21 @@ invocation during which
 the reference is made).  More complicated examples
 appear at the end of this chapter.
 
+существует только одно имя, \cd{x}, используемое для ссылки на первый параметр
+процедуры, когда бы они не была вызвана. {\it Связывание} --- это, в частности,
+экземпляр параметра. Значение связанное с именем \cd{x} зависит не только от
+области видимости, в которой данная связь возникла (в данном примере в теле
+функции \cd{foo} связь возникла в области видимости определения параметров
+функции), но также, в частности, от механизма связывания. (В данном случае,
+значение зависит от вызова функции, в течение которого создается ссылка). Более
+сложный пример приводится в конце данной главы. 
+
 There are a few kinds of scope and extent that are particularly useful
 in describing Common Lisp:
+
+Вот некоторые виды областей и продолжительностей видимости, которые, в частности,
+полезны при описании Common Lisp'а:
+
 \begin{itemize}
 \item
 {\it Lexical scope}.  Here references to the established
@@ -62,8 +105,22 @@ and the scope of all entities established will be (or include) the body.
 
 Example: the names of parameters to a function normally are lexically scoped.
 
+\item 
+{\it Лексическая область видимости}. В ней связи к установленным сущностям могут
+использоваться только в той части программы, которая лексически (т.е. текст
+программы) находится в конструкции устанавливающей данные связи. Обычно эта
+конструкция будет содержать часть, определенную как {\it тело (body)}, и область
+видимости всех сущностей будет установлена только в этом теле.
+
+Например: имена параметров в функции обычно ограничиваются лексической областью
+видимости.
+
 \item
 {\it Indefinite scope}.  References may occur anywhere, in any program.
+
+\item
+{\it Неограниченная область видимости}. Ссылка на сущность может производится в
+любом месте программы.
 
 \item
 {\it Dynamic extent}.  References may occur at any time in the interval
@@ -80,6 +137,23 @@ when control exits the \cd{with-open-file} construct, either normally
 or abnormally, the stream is automatically closed.
 
 Example: the binding of a ``special'' variable has dynamic extent.
+
+\item
+{\it Динамическая продолжительность видимости}. Ссылки на сущности могут
+производится в любое время на интервале между установкой сущности и явного
+упразднения сущности. Как правило, сущность упраздняется, когда выполнение конструкции
+завершается или как-либо прерывается. Таким образом, сущности с динамической
+продолжительностью видимости подчиняются механизму типа стек, они распараллеливают
+выполнение кода, вложенного в их конструкции.
+
+Например: \cd{with-open-file} открывает соединение с файлом и создает объект
+потока для отображения этого соединения. Объект потока имеет неограниченную область
+видимости, но соединение с открытым файлом имеет динамическую продолжительность
+видимости: когда выполнение в любом, нормальном или аварийном случае, выйдет за
+рамки конструкции \cd{with-open-file}, поток будет автоматически закрыт.
+
+Например: связывание <<специальной (special)>> переменной имеет динамическую
+продолжительность видимости.
 
 \item
 {\it Indefinite extent}.  The entity continues to exist as long as the
@@ -108,6 +182,35 @@ Therefore
 produces the value \cd{3.0}.  (An analogous procedure would not necessarily work
 correctly in typical Algol implementations or, for that matter,
 in most Lisp dialects.)
+
+\item
+{\it Неограниченная продолжительности видимости}. Сущность продолжает существовать
+пока существует возможность ссылаться на нее. (Реализации разрешается удалить
+сущность, если она может доказать, что ссылка на нее более невозможна. Стратегии
+сборщика мусора неявно используют такие доказательства.)
+
+Например: большинство Common Lisp объектов имеют неограниченную продолжительность
+видимости.
+
+Например: связывание лексически замкнутых параметров функции имеет неограниченную
+продолжительность видимости. (В отличие от Algol'а, где связывание лексически
+замкнутых параметров процедуры имеют динамическую продолжительность видимости.)
+Определение функции
+\begin{lisp}
+(defun compose (f g) \\*
+~~\#'(lambda (x) \\*
+~~~~~~(funcall f (funcall g x))))
+\end{lisp}
+при получении двух параметров, немедленно возвращает функции в качестве
+результата.
+Связи параметров для \cd{f} и \cd{g} не теряются, потому что возвращенная
+функция, когда будет вызвана, будет продолжать ссылаться на эти связи.
+Таким образом
+\begin{lisp}
+(funcall (compose \#'sqrt \#'abs) -9.0)
+\end{lisp}
+вернет значение \cd{3.0}. (Аналогичная процедура не захочет корректно работать в
+типичной реализации Algol'а или, даже, в большинстве диалектов Lisp'а.)
 \end{itemize}
 
 In addition to the above terms, it is convenient to define {\it dynamic scope}
@@ -117,9 +220,21 @@ because they have indefinite scope and dynamic extent: a special variable
 can be referred to anywhere as long as its binding is currently
 in effect.
 
+В дополение к вышеназванным терминам, удобно определить {\it динамическую
+  область видимости}, которая означает {\it неограниченную область видимости и
+  динамическую продолжительность видимости}. Следовательно мы говорим о
+<<специальных (special)>> переменных, как об имеющих динамическую область
+видимости или будучи динамически замкнутых FIXME, потому что они имеют
+неограниченную область видимости и динамическую продолжительность видимости:
+к специальным переменным можно сослаться из любой точки программы на протяжении
+существования их связываний.
+
 \begin{newer}
 The term ``dynamic scope'' is a misnomer.  Nevertheless
 it is both traditional and useful.
+
+Термин <<динамическая область видимости>> некорректен. Как бы то ни было это и
+устоялось, и удобно.
 \end{newer}
 
 The above definitions do not take into account the possibility of
@@ -128,6 +243,13 @@ The above definitions do not take into account the possibility of
 then the second may shadow the first, in which case an occurrence
 of the name will refer to the second and cannot refer to the first.
 
+Сказанное выше не рассматривает возможность {\it скрытия
+  (shadowing)}. Далекие (FIXME) ссылки на сущности осуществляются с
+использованием {\it имен} того или иного типа. Если две сущности имеют
+одинаковое имя, тогда второе имя может скрыть первое, в таком случае ссылка с
+помощью этого имени будет осуществлена на вторую сущность и не может быть
+осуществлена на первую.
+
 In the case of lexical scope,
 if two constructs that establish entities
 with the same name are textually nested, then references within the inner
@@ -135,20 +257,38 @@ construct refer to the entity established by the inner one; the inner one
 shadows the outer one.  Outside the inner construct but inside the outer one,
 references refer to the entity established by the outer construct.
 For example:
+
+В случае лексической области видимости,
+если две конструкции, что устанавливают сущности с одинаковыми именами,
+расположены в тексте одна внутри другой, тогда ссылки внутри внутренней
+конструкции указывают на сущности внутренней конструкции; внутренние сущности
+скрывают внешние. Вне внутренней конструкции, но внутри внешней конструкции
+ссылки указывают на сущности, установленные внешней конструкцией.
+
 \begin{lisp}
 (defun test (x z) \\
 ~~(let ((z (* x 2))) (print z)) \\
 ~~z)
 \end{lisp}
+
 The binding of the variable \cd{z} by the \cd{let} construct shadows
 the parameter binding for the function \cd{test}.  The reference to the
 variable \cd{z} in the \cd{print} form refers to the \cd{let} binding.
 The reference to \cd{z} at the end of the function refers to the parameter
 named \cd{z}.
 
+Связывание переменной \cd{z} с помощью конструкции \cd{let} скрывает связывание
+одноименного параметра функции \cd{test}. Ссылка на переменную \cd{z} в форме
+\cd{print} указывает на \cd{let} связывание. Ссылка на \cd{z} в конце функции
+указывает на параметр с именем \cd{z}.
+
 In the case of dynamic extent, if the time intervals of two entities
 overlap, then one interval will necessarily be nested within the
 other one.  This is a property of the design of Common Lisp.
+
+В случае динамической продолжительности видимости, если временные интервалы двух
+сущностей перекрываются, тогда они будут обязательно вложенными один в другого. Это
+свойство Common Lisp дизайна.
 
 \beforenoterule
 \begin{implementation}
@@ -175,6 +315,11 @@ will always refer to the entity of that name
 that has been most recently established
 that has not yet been disestablished.
 For example:
+
+Ссылка по имени на сущность с динамической продолжительностью жизни всегда
+указывает на сущность с этим именем, что была установлена наипозднейшей и еще не
+была упразднена.
+Например:
 \begin{lisp}
 (defun fun1 (x) \\
 ~~(catch 'trap (+ 3 (fun2 x)))) \\
@@ -193,6 +338,14 @@ value \cd{7} is returned from the \cd{catch} form in \cd{fun2}.
 Viewed from within \cd{fun3}, the \cd{catch} in \cd{fun2} shadows the one in \cd{fun1}.
 Had \cd{fun2}
 been defined as
+
+Рассмотрим вызов \cd{(fun1 7)}. Результатом будет \cd{10}. Во время выполнения
+\cd{throw}, существует две ловушки с именем \cd{trap}: одна установлена в
+процедуре \cd{fun1}, и другая --- в \cd{fun2}. Более поздняя в \cd{fun2}, и
+тогда, из формы \cd{catch}, что в \cd{fun2}, возвращается значение \cd{7}.
+Рассматриваемая из \cd{fun3}, \cd{catch} в \cd{fun2} скрывает одноименную в
+\cd{fun1}.
+Если бы \cd{fun2} была определена как
 \begin{lisp}
 (defun fun2 (y) \\
 ~~(catch 'snare (* 5 (fun3 y))))
@@ -200,13 +353,24 @@ been defined as
 then the two catchers would have different names, and therefore the one
 in \cd{fun1} would not be shadowed.  The result would then have been \cd{7}.
 
+тогда бы две ловушки имели разные имена, и в таком случае одна из них из
+\cd{fun1} не была бы скрыта. Результатом бы стало \cd{7}.
+
 As a rule, this book simply speaks of the scope or extent of an entity;
 the possibility of shadowing is left implicit.
 
+Как правило, данная книга по простому рассказывает об областях видимости и
+продолжительности сущности, возможность скрытия оставляется без рассмотрения.
+
 The important scope and extent rules in Common Lisp follow:
+Далее важные правила области и продолжительности видимости в Common Lisp'е:
 \begin{itemize}
 \item
 Variable bindings normally have lexical scope and indefinite extent.
+
+\item
+Связывания переменных обычно имеют лексическую область видимости и неограниченную
+продолжительность видимости.
 \end{itemize}
 
 \begin{newer}
@@ -219,8 +383,21 @@ dynamic extent.
 the program will behave correctly even if certain of the data objects have only
 dynamic extent rather than the usual indefinite extent.)
 
+\item Связывания переменных, для которых декларировано \cd{dynamic-extent} также
+ имеют лексическую область видимости и неограниченную продолжительность, но
+ объекты, которые являются значениями этих связываний могут иметь динамическую
+ продолжительность видимости.
+(Декларация является программистской гарантией того, что программа будет вести
+себя корректно, даже если уверенность, что объекты данных имеют только
+динамическую продолжительность, предпочтительнее, чем обычная неограниченную
+продолжительность видимости. FIXME)
+
 \item Bindings of variable names to symbol macros by
 \cd{symbol-macrolet} have lexical scope and indefinite extent.
+
+\item Связывания имен переменных с символом макроса с помощью
+  \cd{symbol-macrolet} имеют лексическую область видимости и неограниченную
+  продолжительность видимости.
 \end{itemize}
 \end{newer}
 
@@ -228,6 +405,11 @@ dynamic extent rather than the usual indefinite extent.)
 \item
 Variable bindings that are declared to be \cd{special} have dynamic scope
 (indefinite scope and dynamic extent).
+
+\item 
+Связывания переменных, что задекларированы быть \cd{специальными (special)},
+имеют динамическую область видимости (неограниченную область видимости и
+динамическую продолжительность).
 \end{itemize}
 
 \begin{newer}
@@ -235,16 +417,31 @@ Variable bindings that are declared to be \cd{special} have dynamic scope
 \item Bindings of function names established, for example, by \cd{flet} and
 \cd{labels} have lexical scope and indefinite extent.
 
+\item Связывания имен функций устанавливаются, например, формами \cd{flet} и
+  \cd{labels} и имеют лексическую область видимости и неограниченную продолжительность.
+
 \item Bindings of function names for which there is a \cd{dynamic-extent}
 declaration also have lexical scope and indefinite extent,
 but function objects that are the values of such bindings may have
 dynamic extent.
 
+\item Связывания имен функций, для которых задекларировано \cd{dynamic-extent},
+  также имеют лексическую область видимости и неограниченную продолжительность,
+  но объекты функции, которые являются значениями для данных связываний могут
+  иметь динамическую продолжительность видимости.
+
 \item Bindings of function names to macros as established by
 \cd{macrolet} have lexical scope and indefinite extent.
 
+\item Связывания имен функций с макросами, установленными с помощью
+  \cd{macrolet} имеют лексическую область видимости и неограниченную
+  продолжительность.
+
 \item Condition handlers and restarts have dynamic scope
 (see chapter~\ref{CONDITION}).
+
+\item Обработчики условий и перезапусков (condition and restarts) имеют
+  динамическую область видимости (смотрите главу~\ref{CONDITION}).
 \end{itemize}
 \end{newer}
 
@@ -254,10 +451,18 @@ A catcher established by a \cd{catch}
 or \cd{unwind-protect} special form has dynamic
 scope.
 
+\item Ловушка установленная с помощью специальных форм \cd{catch} или
+  \cd{unwind-protect} имеет динамическую область видимости.
+
 \item
 An exit point established by a \cd{block} construct has lexical
 scope and dynamic extent.  (Such exit points are also established
 by \cd{do}, \cd{prog}, and other iteration constructs.)
+
+\item
+Точка выхода установленная с помощью конструкции \cd{block} имеет лексическую
+область видимости и динамическую продолжительность. (Такие точки выхода, также
+устанавливаются с помощью \cd{do}, \cd{prog} и другими конструкциями для итераций.)
 
 \item
 The \cd{go} targets
@@ -268,8 +473,18 @@ may also appear as tags in the bodies of
 \cd{do}, \cd{prog}, and other iteration constructs.)
 
 \item
+Цели для \cd{go}, устанавливающиеся с помощью \cd{tagbody}, именующияся с
+помощью тегов в \cd{tagbody}, на которые указывает \cd{go}, имеют лексическую
+область видимости и динамическую продолжительность. (Такие \cd{go} цели могут
+также появлятся как теги в телах \cd{do}, \cd{prog} и других конструкций для итераций.)
+
+\item
 Named constants such as \cd{nil} and \cd{pi} have indefinite
 scope and indefinite extent.
+
+\item
+Именованные константы, такие как \cd{nil} и \cd{pi} имеют неограниченную область
+видимости и неограниченную продолжительность.
 \end{itemize}
 
 The rules of lexical scoping imply that lambda-expressions
@@ -285,11 +500,33 @@ provides one illustration of this.
 The rules also imply that special variable bindings are not
 ``closed over'' as they may be in certain other dialects of Lisp.
 
+Правила для лексической области видимости подразумевают, что лямбда-выражения
+(анонимные функции), появляющиеся в \cd{function}, будут, в общем случае,
+являться <<замыканиями>> над этими неспециальными (non-special) переменными,
+которые видимы для лямбда-выражения.
+Это значит, что функция предоставленная лямбда-выражением может ссылаться на
+любую лексически доступную неспециальную (non-special) переменную и получать
+корректное значение, даже если выполнение уже вышло из конструкции, которая
+устанавливала связи.
+Пример \cd{compose}, рассмотренный в данной главе ранее, предоставлял
+изображение такого механизма.
+Правила также пдразумевают, что связывания специальных переменных не
+<<замыкаются>>, как может быть в некоторых других диалектах Lisp'а.
+
 Constructs that use lexical scope effectively
 generate a new name for each established entity on each execution.
 Therefore dynamic shadowing cannot occur (though lexical shadowing may).
 This is of particular importance when dynamic extent is involved.
 For example:
+
+Конструкции, что используют лексическую область видимости генерируют новое имя
+для каждой устанавливаемой сущности при каждом исполнении.
+Таким образом, динамическое скрытие не может произойти (тогда как лексическое
+может).
+Это, в частности, важно, когда используется динамическая продолжительность
+видимости.
+Например:
+
 \begin{lisp}
 (defun contorted-example (f g x) \\
 ~~(if (= x 0) \\
@@ -304,6 +541,11 @@ Consider the call \cd{(contorted-example nil nil 2)}.  This produces
 the result \cd{4}.  During the course of execution, there are three
 calls on \cd{contorted-example}, interleaved with two establishments
 of blocks:
+
+Рассмотрим вызов \cd{(contorted-example nil nil 2)}. Он вернет результат
+\cd{4}. Во время исполнения, \cd{contorted-example} будет вызывана три раза,
+чередуюясь с двумя блоками:
+
 \begin{lisp}
 (contorted-example nil nil 2) \\
  \\
@@ -321,6 +563,7 @@ of blocks:
  \\
 ~~~~~~~~~~~~(return-from here\({}_1\) 4)
 \end{lisp}
+
 At the time the \cd{funcall} is executed
 there are two \cd{block} exit points outstanding, each apparently
 named \cd{here}.  In the trace above, these exit points are distinguished
@@ -335,6 +578,16 @@ refers to that exit point textually visible at the point of
 execution of the \cd{function}
 construct (here abbreviated by the \cd{\#'} syntax) that resulted
 in creation of the function object actually invoked by the \cd{funcall}.
+
+В время выполнения \cd{funcall} существует две невыполненные точки выхода
+\cd{block}, каждая с именем \cd{here}. В стеке вызовов выше, эти две точки
+для наглядности проиндексированы.
+Форма \cd{return-from}, выполненная как результат операции \cd{funcall},
+ссылается на {\it внешнюю} невыполненную точку выхода (\cd{here\({}_1\)}), но не
+на (\cd{here\({}_2\)}).
+Это следствие правил лексических областей видимости: форма ссылается на ту точку
+выхода, что видима по тексту в точке вызова создания функции
+(здесь отмеченной с помощью синтаксиса \cd{\#'}). (FIXME)
 
 If, in this example, one were to change the form \cd{(funcall f)} to
 \cd{(funcall g)}, then the value of the call \cd{(contorted-example nil nil 2)}
@@ -351,17 +604,39 @@ it depends on the lexical scoping information
 that is effectively packaged up with a lambda-expression when the
 \cd{function} construct is executed.
 
+Если в данном примере, изменить форму \cd{(funcall f)} на \cd{(funcall g)},
+тогда значение вызова \cd{(contorted-example nil nil 2)} будет \cd{9}. Значение
+измениться по сравнению с предыдущим разом, потому что \cd{funcall} вызовет
+выполнение \cd{(return-from here\({}_2\) 4)}, и это в свою очередь вызовет выход
+из внутренней точки выхода (\cd{here\({}_2\)}).
+Когда это случиться, значение \cd{4} будет возвращено из середины вызова
+\cd{contorted-example}, к нему добавится \cd{5} и резульата окажется \cd{9}, и это
+значение вернется из внешнего блока и вообще из вызова
+\cd{contorted-example}. Цель данного примера, показать что выбор точки выхода
+зависит от лексической области, которая была 
+захвачена лямбда-выражением, когда вызывался код создания этой анонимной функции.
+
 This function \cd{contorted-example} works only because the
 function named by \cd{f} is invoked during the extent of the exit point.
 Block exit points are like non-special variable bindings in having
 lexical scope, but they differ in having dynamic extent rather than indefinite
 extent.  Once the flow of execution has left the block construct,
 the exit point is disestablished.  For example:
+
+Эта функция \cd{contorted-example} работает только потому, что функция с именем
+\cd{f} вызывается в процессе продолжительности действия точки выхода.
+Точки выхода из блока ведут себя, как связывания неспециальных (non-special)
+переменных в имеющимся лексическом окружении, но отличаются тем, что имеют
+динамическую продолжительность видимости, а не неограниченную. Как только
+выполнение покинет блок с этой точкой выхода, она перестанет
+существовать. Например: 
+
 \begin{lisp}
 (defun illegal-example () \\
 ~~(let ((y (block here \#'(lambda (z) (return-from here z))))) \\
 ~~~~(if (numberp y) y (funcall y 5))))
 \end{lisp}
+
 One might expect the call \cd{(illegal-example)} to produce \cd{5}
 by the following incorrect reasoning:
 the \cd{let} statement binds the variable \cd{y} to the
@@ -373,9 +648,24 @@ exiting from the block {\it again} and giving \cd{y} the value \cd{5}
 which, being a number, is then returned as the value of the call
 to \cd{illegal-example}.
 
+Можно предположить, что вызов \cd{(illegal-example)} вернет \cd{5}:
+Форма \cd{let} связывает переменную \cd{y} со значением выполнения конструкции
+\cd{block}; ее значение получится равным анонимной функции. Так как \cd{y} не
+является числом, она вызывается с параметром \cd{5}. \cd{return-from} тогда
+должны вернуть данное значение с помощью точки выхода \cd{here}, тогда
+осуществляется выход из блока {\it еще раз} и \cd{y} получает значение \cd{5},
+которое будучи числом, возвращается в качестве значения для \cd{illegal-example}.
+
 The argument fails only because exit points are defined in Common Lisp
 to have dynamic extent.  The argument is correct up to the execution
 of the \cd{return-from}.  The execution of the \cd{return-from} is
 an error, however, {\it not} because it cannot refer to the exit point,
 but because it does correctly refer to an exit point {\it and}
 that exit point has been disestablished.
+
+Рассуждения выше неверны, потому что точки выхода определяемые в
+Common Lisp'е имеют динамическую продолжительность видимости. Аргументация верна
+только до вызова \cd{return-from}. Вызов формы \cd{return-from} является
+ошибкой, {\it не потому что} она не может сослаться на точку выхода, но потому
+что они корректно ссылается на точку выхода {\it и} эта точка выхода уже была
+упразднена.
