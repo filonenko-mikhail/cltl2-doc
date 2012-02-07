@@ -3,7 +3,7 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Type Specif{\kern0pt}iers}    % Avoid ligature
+\chapter{Type Specif{\kern0pt}iers Спецификаторы типов}    % Avoid ligature
 \label{DTSPEC}
 
 In Common Lisp, types are named by Lisp objects, specifically symbols and lists,
@@ -13,18 +13,33 @@ specializations of simpler types.
 Symbols or lists may also be abbreviations for types that could
 be specified in other ways.
 
-\section{Type Specifier Symbols}
+В Common Lisp'е, типы указываются с помощью Lisp объектов, преимущественно
+символами и списками, называемых {\it спецификаторами типов}. Символы задают
+предопределенные классы объектов, тогда как списки обычно указывают на
+комбинации или специализации простых типов.
+Символы и списки могут быть также аббревиатурами для типов, которые в свою
+очередь могут быть указаны в других типах. FIXME. 
+
+\section{Type Specifier Symbols Символы как спецификаторы типов}
 
 The type symbols defined by the system include those shown in
 table~\ref{TYPE-SYMBOLS-TABLE}.
 In addition, when a structure type is defined using \cd{defstruct},
 the name of the structure type becomes a valid type symbol.
 
+Символы определяющие типа определены системой, включая те, что перечислены в
+таблице~\ref{TYPE-SYMBOLS-TABLE}.
+В дополнение, когда определяется структура с использованием \cd{defstruct}, имя
+структуры автоматически становиться корректным символом типа.
+
 \begin{new}%CORR
 {\it Notice of correction.}
 In the first edition, the type specifiers \cd{signed-byte} and
 \cd{unsigned-byte} were inadvertently omitted from
 table~\ref{TYPE-SYMBOLS-TABLE}.
+
+В первой редактции спецификаторы типов \cd{signed-byte} и \cd{unsigned-byte}
+были неумышленно забыты в таблице~\ref{TYPE-SYMBOLS-TABLE}.
 \end{new}
 
 \begin{newer}
@@ -48,7 +63,7 @@ many other type specifiers as names of classes (see chapter~\ref{CLOS})
 or of conditions (see chapter~\ref{CONDITION}).
 \end{newer}
 
-\section{Type Specifier Lists}
+\section{Type Specifier Lists Списки как спецификаторы типов}
 
 If a type specifier is a list, the {\it car}
 of the list is a symbol, and the rest of the list is subsidiary
@@ -57,20 +72,35 @@ type information.  In many cases a subsidiary item may be
 by writing \cd{*}.  For example, to completely specify
 a vector type, one must mention the type of the elements
 and the length of the vector, as for example
+
+Если спецификатор типа является списком, {\it car} данного списка является
+символом, и остаток списка --- вспомогательная информация. В большинстве случаев
+вспомогательная информация может быть {\it неопределена}. Неопределенная
+дополнительная информация указывается с помощью \cd{*}. Например, для полного
+описания векторного типа, должны быть укзаны тип элементов векторы и его длина
+этого вектора:
 \begin{lisp}
 (vector double-float 100)
 \end{lisp}
 To leave the length unspecified, one would write
+
+Для указания неопределенной длины, можно записать:
+
 \begin{lisp}
 (vector double-float *)
 \end{lisp}
+
 To leave the element type unspecified, one would write
+
+Для указания неопределенного тип элемента, можно записать:
 \begin{lisp}
 (vector * 100)
 \end{lisp}
 \begin{newer}
 \noindent
 One may also leave both length and element type unspecified:
+
+Можно также оставить неопределенными и тип элемента и длину:
 \begin{lisp}
 (vector * *)
 \end{lisp}
@@ -78,9 +108,12 @@ One may also leave both length and element type unspecified:
 Suppose that two type specifiers are the same except that the first
 has a \cd{*} where the second has a more explicit specification.
 Then the second denotes a subtype of the type denoted by the first.
+Допустим, что два спецификатора типов являются одинаковыми за исключением того,
+что первый содержить \cd{*}, тогда как второй содержит более явную спецификацию.
+Тогда второй тип является подтипом первого типа.
 
 \begin{table}[t]
-\caption{Standard Type Specifier Symbols}
+\caption{Standard Type Specifier Symbols Стандартные символы для обозначения типов}
 \label{TYPE-SYMBOLS-TABLE}
 \divide\tabcolsep by 2\relax
 \begin{flushleft}
@@ -122,7 +155,14 @@ by the symbol in its {\it car}).  For example,
 and \cd{(vector * *)} may be abbreviated to \cd{(vector)} and then to
 simply \cd{vector}.
 
-\section{Predicating Type Specifiers}
+Для удобства существует следующее правило: если список в конце содержит
+незаданные элементы (\cd{*}), то они могут быть опущены.
+Если все, за исключением первого, элементы не специфированы, то данный список
+может быть упрощен вплоть до упразднения скобок и превращения его в простой
+символ, который был в {\it car}. Например, \cd{(vector * *)} может быть записан
+как \cd{(vector)} и затем до \cd{vector}.
+
+\section{Predicating Type Specifiers Предикаты как спецификаторы типов}
 \label{PREDICATING-TYPE-SPECIFIERS-SECTION}
 
 A type specifier list \cd{(satisfies {\it predicate-name})} denotes
@@ -134,6 +174,16 @@ scoping problems.)  For example, the type \cd{(satisfies numberp)} is the
 same as the type \cd{number}.
 The call \cd{(typep x '(satisfies p))} results in applying \cd{p} to \cd{x}
 and returning \cd{t} if the result is true and {\nil} if the result is false.
+
+Такой список, как \cd{(satisfies {\it имя-предиката})}, задает тип, которому
+принадлежит множество объектов, удовлетворяющие предикату {\it
+  имя-предиката}. {\it имя-предиката} должен быть символом, указывающим на
+глобальную функцию с одним аргументов.
+(Требуется именно имя, так как лямбда-выражение недопустимо в связи с проблемами
+видимости.) Например, тип \cd{(satisfies numberp)} является тем же, что и
+\cd{number}.
+Вызов \cd{(typep x '(satisfies p))} применяет \cd{p} к \cd{x} и возвращает
+\cd{t}, если результат true, и {\nil} в противном случае.
 
 \begin{obsolete}
 As an example, the type \cd{string-char} could be defined as
@@ -153,16 +203,26 @@ It is not a good idea for
 a predicate appearing in a \cd{satisfies} type specifier to
 cause any side effects when invoked.
 
-\section{Type Specifiers That Combine}
+Это не очень хорошая идея для предиката, что указан в \cd{satisfies}, порождать
+побочные эффекты.
+
+\section{Type Specifiers That Combine Комбинированные спецификаторы типов}
 
 The following type specifier lists define a type in terms of
 other types or objects.
+
+Следущие списки специфкаторы типов, определяют новый тип в терминах других типов
+или объектов.
 
 \begin{flushdesc}
 \item[\cd{(member {\it object1} {\it object2} ...)}]
 This denotes the set
 containing precisely those objects named.  An object is of
 this type if and only if it is \cd{eql} to one of the specified objects.
+
+Такая запись обозначает тип, как множество содержащее определенный набор объектов. Объект
+принадлежит данному типу тогда и только тогда, когда он равен \cd{eql} одному из
+заданных объектов. FIXME.
 
 \beforenoterule
 \begin{incompatibility}
@@ -183,6 +243,14 @@ It denotes the set of the one object named;  an object is of
 this type if and only if it is \cd{eql} to {\it object}.  While
 \cd{(eql {\it object})} denotes the same type as \cd{(member {\it object})},
 only \cd{(eql {\it object})} may be used as a CLOS parameter specializer.
+
+Такой специализатор может быть использован для определения CLOS
+методов. Смотрите раздел~\ref{Introduction-to-Methods-SECTION} и
+\cd{find-method}.
+Он задает множество из одного объекта. Объект принадлежит такому типу тогда и
+только тогда, когда он \cd{eql} для первого {\it объекта}. Несмотря на то, что
+\cd{(eql {\it объект})} обозначает то же, что и \cd{(member {\it объект})},
+только \cd{(eql {\it объект})} может быть использован для определения CLOS метода.
 \end{flushdesc}
 \end{newer}
 
@@ -191,9 +259,14 @@ only \cd{(eql {\it object})} may be used as a CLOS parameter specializer.
 This denotes the set of all those objects that
 are {\it not} of the specified type.
 
+Такая запись задает тип множества объектов, которые {\it не} являются типом {\it
+  type}.
+
 \item[\cd{(and {\it type1} {\it type2} ...)}]
 This denotes the intersection of
 the specified types.
+
+Такая запись задает пересечение указанных типов.
 
 \beforenoterule
 \begin{incompatibility}
@@ -213,6 +286,17 @@ type specifiers.  For example, suppose there were a function \cd{primep}
 that takes an integer and says whether it is prime.  Suppose also that
 it is an error to give any object other than an integer to \cd{primep}.
 Then the type specifier
+
+Когда \cd{typep} обрабатывает спецификатор типа \cd{and}, она производит
+проверку на принадлежность к каждому подтипу слева направо и моментально
+останавливает проверку, в случае первого случившегося отрицательного
+результата. Таким образом, спецификатор \cd{and} ведет себя подобно форме
+\cd{and}. Цель такого сходства --- позволить спецификатору типа \cd{satisfies}
+зависеть от фильтрации предыдущим спецификатором типа. Например, предположим,
+что есть функция \cd{primep}, что принимает целое и возвращает {\true}, если оно
+простое. Также предположим, что является ошибочным передавать любой объект, не
+являющийся целым, в \cd{primep}. Тогда спецификатор будет выглядеть так:
+
 \begin{lisp}
 (and integer (satisfies primep))
 \end{lisp}
@@ -220,12 +304,19 @@ is guaranteed never to result in an error because the function \cd{primep}
 will not be invoked unless the object in question has already been
 determined to be an integer.
 
+никогда не вызовет ошибку, так как функция \cd{primep} никогда не будет вызвана
+с объектом, который не удовлетворяет предыдущему типу integer.
+
 \item[\cd{(or {\it type1} {\it type2} ...)}]
 This denotes the union of the
 specified types.  For example, the type \cd{list} by definition is the same as
 \cd{(or null cons)}.  Also, the value returned by the function
 \cd{position} is always of type \cd{(or null (integer 0 *))}
 (either {\nil} or a non-negative integer).
+
+Такая запись обозначает объединение типов. Например, тип \cd{list} совпадает с
+\cd{(or null cons)}. Также, значение, возвращаемое функцией \cd{position} всегда
+принадлежит типу \cd{(or null (integer 0 *))} (или {\nil} или неотрицательное число).
 
 \beforenoterule
 \begin{incompatibility}
@@ -239,9 +330,13 @@ when \cd{typep} processes an \cd{or} type specifier, it always
 tests each of the component types in order from left to right
 and stops processing as soon as one component of the union has
 been found to which the object in question belongs.
+
+Также как и для \cd{and}, когда \cd{typep} обрабатывает спецификатор типа
+\cd{or}, она поочередно проверяет каждый подтип объедиения слева направо и
+завершает обработку, как только принадлежность подтипу установлена.
 \end{flushdesc}
 
-\section{Type Specifiers That Specialize}
+\section{Type Specifiers That Specialize Уточняющие спецификаторы типов}
 \label{SPECIALIZED-TYPE-SPECIFIER-SECTION}
 
 Some type specifier lists denote {\it specializations} of
@@ -251,6 +346,12 @@ implementation.  As an example, consider the type \cd{(array short-float)}.
 Implementation A may choose to provide a specialized representation
 for arrays of short floating-point numbers, and implementation B
 may choose not to.
+
+Некоторые списки, представляющие типы, с помощью символов могут быть более
+специализированы. Такие подробности могут быть отражены, как более эффективная
+реализация. Например, предположим что \cd{(array short-float)}. Реализация A,
+может выбрать специализированное представление для массива коротких с плавающей
+точкой, а реализация B может выбрать более общее представление.
 
 If you should want to create an array for the
 express purpose of holding only short-float objects, you may
@@ -263,10 +364,23 @@ can provide.''  Implementation A will then produce a specialized
 array of type \cd{(array short-float)}, and implementation B
 will produce an ordinary array of type \cd{(array t)}.
 
+Если вы хотите создать массива в целях хранения только коротких с плавающей
+точкой, вы можете опционально указать для \cd{make-array} тип элементов
+\cd{short-float}. Это {\it не потребует} от \cd{make-array} создать объект типа
+\cd{(array short-float)}; это просто позволит ей выбрать такой тип. Запрос
+можно объяснить так: <<Предоставь наиболее специализированный массив, который
+может хранить короткие с плавающей точкой, который только может предоставить
+реализация>>. Реализация A тогда предоставит специализированный массив типа
+\cd{(array short-float)}, а реализация B --- простой массив типа \cd{(array t)}.
+
 If one were then to ask whether the array were actually of type
 \cd{(array short-float)}, implementation A would say ``yes,'' but
 implementation B would say ``no.''  This is a property of \cd{make-array}
-and similar functions: what you ask for is not necessarily what you get.
+and similar functions: what you ask for is not necessarily what you get. 
+На вопрос, действительно ли тип созданного массива \cd{(array short-float)},
+реализация A ответит <<да>>, но реализация B ответит <<нет>>. Это свойство
+\cd{make-array} и подобных ей функций: то, что вы просите, необязательно
+является тем, что вы получите.
 
 \begin{obsolete}
 Types can therefore be used for two different purposes:
@@ -280,6 +394,17 @@ On the other hand, if the predicate \cd{typep} is used to test
 whether an object is of type \cd{(array short-float)},
 only objects actually of that specialized type can satisfy the test;
 in implementation B no object can pass that test.
+
+Таким образом, типы могут быть использованы для двух различных целей: {\it
+  декларации} и {\it распознавания} FIXME. Декларация в \cd{make-array}, что
+элементы могут быть только короткие с плавающей точкой допускает
+оптимизацию. Так же, дакларация того, что переменная принимает только значения
+типа \cd{(array short-float)} означает, что переменная может принимать только
+значения, которые могут быть возвращены функцией \cd{make-array} с указанным
+типом \cd{short-float}. С другой стороны, если для проверки, принадлежит ли
+объект типу \cd{(array short-float)}, используется предикат \cd{typep}, только
+объекты удовлетворяющие данному условию могут пройти проверку; в реализации B ни
+один объект не пройдет проверки. 
 \end{obsolete}
 
 \begin{new}
@@ -313,6 +438,9 @@ may be used only for declaration, the symbol form (simply the name
 \end{new}
 
 The valid list-format names for data types are as follows:
+
+Далее перечисленны возможные имена типов, что задаются списком:
+
 \begin{flushdesc}
 \item[\cd{(array {\it element-type} {\it dimensions})}]
 This denotes the set
@@ -416,6 +544,121 @@ If~such upgrading does occur, then values outside that range may in fact
 be stored in \cd{the-array}, as long as the code in \cd{snarf-hex-digits}
 never sees them.
 
+As a general rule, a compiler would be justified in transforming
+\begin{lisp}
+(aref (the (array {\it elt-type} ...) {\it a}) ...)
+\end{lisp}
+into
+\begin{lisp}
+(the {\it elt-type} (aref (the (array {\it elt-type} ...) {\it a}) ...)
+\end{lisp}
+It may also make inferences involving more complex functions,
+such as \cd{position} or \cd{find}.
+For example, \cd{find} applied to an array always returns either \cd{nil}
+or an object whose type is the element type of the array.
+\end{new}
+
+\item[\cd{(array {\it тип-элемента} {\it размерность})}]
+Такая запись обозначает множество специализированных массивов, элементы которых
+приндлежат типу {\it тип-элемента} и размерность которых равна {\it размерность}.
+For declaration purposes, this type encompasses those arrays
+that can result by specifying {\it element-type} as the element type
+to the function \cd{make-array}; this may be different
+from what the type means for discrimination purposes.
+{\it тип-элемента} должен быть корректным спецификатором типа или не уточнен с
+помощью \cd{*}.
+{\it размерность} может быть неотрицительным целым определяющим размер массива,
+может быть списком неотрицательных целых, определяющих размер каждого измерения
+(размер какого-либо измерения может быть не указан \cd{*}), может быть не
+указана \cd{*}.
+Например,
+\begin{lisp}
+(array integer 3)~~~~~~~~~~~;{\rm Трехэлементный массив целых} \\
+(array integer (* * *))~~~~~;{\rm Трехмерный массив целых} \\
+(array * (4 5 6))~~~~~~~~~~~;{\rm Трехмерный 4-5-6 массив} \\
+(array character (3 *))~~~~~;{\rm Двумерный массив символов} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~{\rm у которого только три строки} \\
+(array short-float {\emptylist})~~~~~~;{\rm Ранг массива равен нулю, массив содержит} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~{\rm короткие с плавающие точкой}
+\end{lisp}
+Следует отметить, что \cd{(array~t)} является правильным подмножеством
+\cd{(array~*)}.
+Причиной тому является то. что \cd{(array~t)} это можество массивов, которые
+могут содержать любой Common Lisp объект (элементы типа \cd{t}, которые включают
+все элементы). С другой стороны, \cd{(array~*)} является множеством всех
+массивов, включая, например, массивы, которые могут хранить только строковые
+символы. Сейчас \cd{(array character)} не является подмножеством \cd{(array~t)};
+два множества фактически непересекаются, потому что \cd{(array character)} не
+является множеством всех массивов, которые могут хранить строковые символы, а
+является множеством массивов, которые специализированы хранить именно символы и
+никакие другие объекты. FIXME. Поэтому проверка, может ли массив \cd{foo} хранить
+строковые символы, не может быть такой:
+\begin{lisp}
+(typep foo '(array character))
+\end{lisp}
+, а должна быть такой:
+\begin{lisp}
+(subtypep 'character (array-element-type foo))
+\end{lisp}
+Смотрите \cd{array-element-type}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
+to change \cd{typep} and \cd{subtypep}
+so that the specialized \cd{array} type specifier
+means the same thing for discrimination
+as for declaration: it encompasses those arrays
+that can result by specifying {\it element-type} as the element type
+to the function \cd{make-array}.
+Under this interpretation \cd{(array character)} might be
+the same type as \cd{(array t)}
+(although it also might not be the same).
+See \cd{upgraded-array-element-type}.
+However,
+\begin{lisp}
+(typep foo '(array character))
+\end{lisp}
+is still not a legitimate test of whether the array
+\cd{foo} can hold a character; one must still say
+\begin{lisp}
+(subtypep 'character (array-element-type foo))
+\end{lisp}
+to determine that question.
+
+X3J13 also voted in January 1989
+\issue{DECLARE-ARRAY-TYPE-ELEMENT-REFERENCES}
+to specify that within the lexical scope of an array type declaration,
+it is an error for an array element, when referenced, not to be
+of the exact declared element type.  A compiler may, for example,
+treat every reference to an element of a declared array as if
+the reference were surrounded by a \cd{the} form mentioning the
+declared array element type ({\it not} the upgraded array element type).  Thus
+\begin{lisp}
+(defun snarf-hex-digits (the-array) \\*
+~~(declare (type (array (unsigned-byte 4) 1) the-array)) \\*
+~~(do ((j (- (length array) 1) (- j 1)) \\*
+~~~~~~~(val 0 (logior (ash val 4) \\*
+~~~~~~~~~~~~~~~~~~~~~~(aref the-array j)))) \\*
+~~~~~~((< j 0) val)))
+\end{lisp}
+may be treated as
+\begin{lisp}
+(defun snarf-hex-digits (the-array) \\*
+~~(declare (type (array (unsigned-byte 4) 1) the-array)) \\*
+~~(do ((j (- (length array) 1) (- j 1)) \\*
+~~~~~~~(val 0 (logior (ash val 4) \\*
+~~~~~~~~~~~~~~~~~~~~~~(the (unsigned-byte 4) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~(aref the-array j))))) \\*
+~~~~~~((< j 0) val)))
+\end{lisp}
+The declaration amounts to a promise by the user that the \cd{aref}
+will never produce a value outside the interval 0 to 15, even if
+in that particular implementation the array element type
+\cd{(unsigned-byte 4)} is upgraded to, say, \cd{(unsigned-byte 8)}.
+If~such upgrading does occur, then values outside that range may in fact
+be stored in \cd{the-array}, as long as the code in \cd{snarf-hex-digits}
+never sees them.
 
 As a general rule, a compiler would be justified in transforming
 \begin{lisp}
@@ -431,11 +674,17 @@ For example, \cd{find} applied to an array always returns either \cd{nil}
 or an object whose type is the element type of the array.
 \end{new}
 
+
 \item[\cd{(simple-array {\it element-type} {\it dimensions})}]
 This is equivalent
 to \cd{(array {\it element-type} {\it dimensions})} except that it additionally
 specifies that objects of the type are {\it simple} arrays
 (see section~\ref{ARRAY-TYPE-SECTION}).
+
+\item[\cd{(simple-array {\it тип-элемента} {\it размерности})}]
+Данная запись эквивалентна \cd{(array {\it тип-элемента} {\it размерности})} за
+исключением того, что дополнительно определяет, что объекты будут {\it простыми}
+массивами (смотрите раздел~\ref{ARRAY-TYPE-SECTION}).
 
 \item[\cd{(vector {\it element-type} {\it size})}]
 This denotes the set of
