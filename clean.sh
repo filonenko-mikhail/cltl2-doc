@@ -1,7 +1,5 @@
 #!/bin/sh
 
-rm -f cltl2.pdf
-rm -rf output
 rm -f *.aux
 rm -f *.4ct
 rm -f *.4tc
@@ -22,4 +20,3 @@ rm -f *.toc
 rm -f *.ind
 rm -f *.4dx
 rm -f *.4ix
-rm -rf html
