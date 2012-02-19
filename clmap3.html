@@ -1,0 +1,2159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>C Backquote</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 11--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmli5.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse164.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse164.html#tailclmse164.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmap3.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clm.html#clmap3.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h2 class="appendixHead"><span class="titlemark">Appendix C</span><br /><a 
+ id="x201-367000C"></a>Backquote</h2>
+<div class=new>
+<!--l. 15--><p class="noindent" >Here is the code for an implementation of backquote syntax (see section <a 
+href="clmse115.html#x142-19000022.1.3">22.1.3<!--tex4ht:ref: BACKQUOTE --></a>)
+that I have found quite useful in explaining to myself the behavior of nested
+backquotes. It implements the formal rules for backquote processing and
+optionally applies a code simpliﬁer to the result. One must be very careful in
+choosing the simpliﬁcation rules; the rules given here work, but some Common
+Lisp implementations have run into trouble at one time or another by using a
+simpliﬁcation rule that does not work in all cases. Code transformations that are
+plausible when single forms are involved are likely to fail in the presence of
+splicing.
+<!--l. 27--><p class="indent" >   At the end of this appendix are some samples of nested backquote syntax with
+commentary.
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Common Lisp backquote implementation, written in Common Lisp.
+</td></tr></table>
+<!--l. 31--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Author: Guy L. Steele Jr.     Date: 27 December 1985</td></tr></table>
+<!--l. 32--><p class="indent" >        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Tested under Symbolics Common Lisp and Lucid Common Lisp.</td></tr></table>
+<!--l. 33--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; This software is in the public domain.</td></tr></table>
+<!--l. 35--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; $ is pseudo-backquote and % is pseudo-comma.  This makes it
+</td></tr></table>
+<!--l. 37--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; possible to test this code without interfering with normal</td></tr></table>
+<!--l. 38--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Common Lisp syntax.</td></tr></table>
+<!--l. 40--><p class="indent" >
+</div>
+                                                                          
+
+                                                                          
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; The following are unique tokens used during processing.
+</td></tr></table>
+<!--l. 42--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; They need not be symbols; they need not even be atoms.</td></tr></table>
+<!--l. 44--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *comma* (make-symbol &#x0022;COMMA&#x0022;))
+</td></tr></table>
+<!--l. 46--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *comma-atsign* (make-symbol &#x0022;COMMA-ATSIGN&#x0022;))</td></tr></table>
+<!--l. 47--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *comma-dot* (make-symbol &#x0022;COMMA-DOT&#x0022;))</td></tr></table>
+<!--l. 48--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *bq-list* (make-symbol &#x0022;BQ-LIST&#x0022;))</td></tr></table>
+<!--l. 49--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *bq-append* (make-symbol &#x0022;BQ-APPEND&#x0022;))</td></tr></table>
+<!--l. 50--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *bq-list** (make-symbol &#x0022;BQ-LIST*&#x0022;))</td></tr></table>
+<!--l. 51--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *bq-nconc* (make-symbol &#x0022;BQ-NCONC&#x0022;))</td></tr></table>
+<!--l. 52--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *bq-clobberable* (make-symbol &#x0022;BQ-CLOBBERABLE&#x0022;))</td></tr></table>
+<!--l. 53--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *bq-quote* (make-symbol &#x0022;BQ-QUOTE&#x0022;))</td></tr></table>
+<!--l. 54--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defvar *bq-quote-nil* (list *bq-quote* nil))</td></tr></table>
+<!--l. 56--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Reader macro characters:
+</td></tr></table>
+<!--l. 58--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;    $foo is read in as (BACKQUOTE foo)</td></tr></table>
+<!--l. 59--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;    %foo is read in as (#:COMMA foo)</td></tr></table>
+<!--l. 60--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;    %<tt>@</tt>foo is read in as (#:COMMA-ATSIGN foo)</td></tr></table>
+<!--l. 61--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;    %.foo is read in as (#:COMMA-DOT foo)</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 62--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; where #:COMMA is the value of the variable *COMMA*, etc.</td></tr></table>
+<!--l. 64--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; BACKQUOTE is an ordinary macro (not a read-macro) that
+</td></tr></table>
+<!--l. 66--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; processes the expression foo, looking for occurrences of</td></tr></table>
+<!--l. 67--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; #:COMMA, #:COMMA-ATSIGN, and #:COMMA-DOT.  It constructs code</td></tr></table>
+<!--l. 68--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; in strict accordance with the rules on pages 349-350 of</td></tr></table>
+<!--l. 69--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; the ﬁrst edition (pages 528-529 of this second edition).</td></tr></table>
+<!--l. 70--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; It then optionally applies a code simpliﬁer.</td></tr></table>
+<!--l. 72--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-macro-character #<tt>\</tt>$
+</td></tr></table>
+<!--l. 74--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  #&#x2019;(lambda (stream char)</td></tr></table>
+<!--l. 75--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (declare (ignore char))</td></tr></table>
+<!--l. 76--><p class="indent" >                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (list &#x2019;backquote (read stream t nil t))))</td></tr></table>
+<!--l. 78--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-macro-character #<tt>\</tt>%
+</td></tr></table>
+<!--l. 80--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  #&#x2019;(lambda (stream char)</td></tr></table>
+<!--l. 81--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (declare (ignore char))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 82--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (case (peek-char nil stream t nil t)</td></tr></table>
+<!--l. 83--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (#<tt>\</tt><tt>@</tt> (read-char stream t nil t)</td></tr></table>
+<!--l. 84--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (list *comma-atsign* (read stream t nil t)))</td></tr></table>
+<!--l. 85--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (#<tt>\</tt>. (read-char stream t nil t)</td></tr></table>
+<!--l. 86--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (list *comma-dot* (read stream t nil t)))</td></tr></table>
+<!--l. 87--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (otherwise (list *comma* (read stream t nil t))))))</td></tr></table>
+<!--l. 89--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">
+</td></tr></table>
+<!--l. 91--><p class="indent" >       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; If the value of *BQ-SIMPLIFY* is non-NIL, then BACKQUOTE</td></tr></table>
+<!--l. 92--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; processing applies the code simpliﬁer.  If the value is NIL,</td></tr></table>
+<!--l. 93--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; then the code resulting from BACKQUOTE is exactly that</td></tr></table>
+<!--l. 94--><p class="indent" >                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; speciﬁed by the oﬃcial rules.</td></tr></table>
+<!--l. 96--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defparameter *bq-simplify* t)
+</td></tr></table>
+<!--l. 99--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defmacro backquote (x)
+</td></tr></table>
+<!--l. 101--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (bq-completely-process x))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 103--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Backquote processing proceeds in three stages:
+</td></tr></table>
+<!--l. 105--><p class="indent" >                                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;</td></tr></table>
+<!--l. 106--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; (1) BQ-PROCESS applies the rules to remove occurrences of</td></tr></table>
+<!--l. 107--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; #:COMMA, #:COMMA-ATSIGN, and #:COMMA-DOT corresponding to</td></tr></table>
+<!--l. 108--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; this level of BACKQUOTE.  (It also causes embedded calls to</td></tr></table>
+<!--l. 109--><p class="indent" >     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; BACKQUOTE to be expanded so that nesting is properly handled.)</td></tr></table>
+<!--l. 110--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Code is produced that is expressed in terms of functions</td></tr></table>
+<!--l. 111--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; #:BQ-LIST, #:BQ-APPEND, and #:BQ-CLOBBERABLE.  This is done</td></tr></table>
+<!--l. 112--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; so that the simpliﬁer will simplify only list construction</td></tr></table>
+<!--l. 113--><p class="indent" >     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; functions actually generated by BACKQUOTE and will not involve</td></tr></table>
+<!--l. 114--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; any user code in the simpliﬁcation.  #:BQ-LIST means LIST,</td></tr></table>
+<!--l. 115--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; #:BQ-APPEND means APPEND, and #:BQ-CLOBBERABLE means IDENTITY</td></tr></table>
+<!--l. 116--><p class="indent" >      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; but indicates places where &#x0022;%.&#x0022; was used and where NCONC may</td></tr></table>
+<!--l. 117--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; therefore be introduced by the simpliﬁer for eﬃciency.</td></tr></table>
+<!--l. 118--><p class="indent" >                                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;</td></tr></table>
+<!--l. 119--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; (2) BQ-SIMPLIFY, if used, rewrites the code produced by</td></tr></table>
+<!--l. 120--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; BQ-PROCESS to produce equivalent but faster code.  The</td></tr></table>
+<!--l. 121--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; additional functions #:BQ-LIST* and #:BQ-NCONC may be</td></tr></table>
+<!--l. 122--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; introduced into the code.</td></tr></table>
+<!--l. 123--><p class="indent" >                                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;</td></tr></table>
+<!--l. 124--><p class="indent" >        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; (3) BQ-REMOVE-TOKENS goes through the code and replaces</td></tr></table>
+<!--l. 125--><p class="indent" >     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; #:BQ-LIST with LIST, #:BQ-APPEND with APPEND, and so on.</td></tr></table>
+<!--l. 126--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; #:BQ-CLOBBERABLE is simply eliminated (a call to it being</td></tr></table>
+<!--l. 127--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; replaced by its argument).  #:BQ-LIST* is replaced by either</td></tr></table>
+<!--l. 128--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; LIST* or CONS (the latter is used in the two-argument case,</td></tr></table>
+<!--l. 129--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; purely to make the resulting code a tad more readable).</td></tr></table>
+<!--l. 131--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-completely-process (x)
+</td></tr></table>
+<!--l. 133--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (let ((raw-result (bq-process x)))</td></tr></table>
+<!--l. 134--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (bq-remove-tokens (if *bq-simplify*</td></tr></table>
+<!--l. 135--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                          (bq-simplify raw-result)</td></tr></table>
+<!--l. 136--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                          raw-result))))</td></tr></table>
+<!--l. 138--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-process (x)
+</td></tr></table>
+<!--l. 140--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (cond ((atom x)</td></tr></table>
+<!--l. 141--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (list *bq-quote* x))</td></tr></table>
+<!--l. 142--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) &#x2019;backquote)</td></tr></table>
+<!--l. 143--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (bq-process (bq-completely-process (cadr x))))</td></tr></table>
+<!--l. 144--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) *comma*) (cadr x))</td></tr></table>
+<!--l. 145--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) *comma-atsign*)</td></tr></table>
+<!--l. 146--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (error &#x0022;,<tt>@</tt><tt>~</tt>S after <tt>‘</tt>&#x0022; (cadr x)))</td></tr></table>
+<!--l. 147--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) *comma-dot*)</td></tr></table>
+<!--l. 148--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (error &#x0022;,.<tt>~</tt>S after <tt>‘</tt>&#x0022; (cadr x)))</td></tr></table>
+<!--l. 149--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (t (do ((p x (cdr p))</td></tr></table>
+<!--l. 150--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (q &#x2019;() (cons (bracket (car p)) q)))</td></tr></table>
+<!--l. 151--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               ((atom p)</td></tr></table>
+<!--l. 152--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (cons *bq-append*</td></tr></table>
+<!--l. 153--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      (nreconc q (list (list *bq-quote* p)))))</td></tr></table>
+<!--l. 154--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (when (eq (car p) *comma*)</td></tr></table>
+<!--l. 155--><p class="indent" >       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (unless (null (cddr p)) (error &#x0022;Malformed ,<tt>~</tt>S&#x0022; p))</td></tr></table>
+<!--l. 156--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (return (cons *bq-append*</td></tr></table>
+<!--l. 157--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                             (nreconc q (list (cadr p))))))</td></tr></table>
+<!--l. 158--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (when (eq (car p) *comma-atsign*)</td></tr></table>
+<!--l. 159--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (error &#x0022;Dotted ,<tt>@</tt><tt>~</tt>S&#x0022; p))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 160--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (when (eq (car p) *comma-dot*)</td></tr></table>
+<!--l. 161--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (error &#x0022;Dotted ,.<tt>~</tt>S&#x0022; p))))))</td></tr></table>
+<!--l. 163--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; This implements the bracket operator of the formal rules.
+</td></tr></table>
+<!--l. 166--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bracket (x)
+</td></tr></table>
+<!--l. 168--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (cond ((atom x)</td></tr></table>
+<!--l. 169--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (list *bq-list* (bq-process x)))</td></tr></table>
+<!--l. 170--><p class="indent" >                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) *comma*)</td></tr></table>
+<!--l. 171--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (list *bq-list* (cadr x)))</td></tr></table>
+<!--l. 172--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) *comma-atsign*)</td></tr></table>
+<!--l. 173--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (cadr x))</td></tr></table>
+<!--l. 174--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) *comma-dot*)</td></tr></table>
+<!--l. 175--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (list *bq-clobberable* (cadr x)))</td></tr></table>
+<!--l. 176--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (t (list *bq-list* (bq-process x)))))</td></tr></table>
+<!--l. 178--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; This auxiliary function is like MAPCAR but has two extra
+</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 180--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; purposes: (1) it handles dotted lists; (2) it tries to make</td></tr></table>
+<!--l. 181--><p class="indent" >               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; the result share with the argument x as much as possible.</td></tr></table>
+<!--l. 183--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun maptree (fn x)
+</td></tr></table>
+<!--l. 185--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (if (atom x)</td></tr></table>
+<!--l. 186--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (funcall fn x)</td></tr></table>
+<!--l. 187--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (let ((a (funcall fn (car x)))</td></tr></table>
+<!--l. 188--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (d (maptree fn (cdr x))))</td></tr></table>
+<!--l. 189--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (if (and (eql a (car x)) (eql d (cdr x)))</td></tr></table>
+<!--l. 190--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            x</td></tr></table>
+<!--l. 191--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (cons a d)))))</td></tr></table>
+<!--l. 193--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; This predicate is true of a form that when read looked
+</td></tr></table>
+<!--l. 195--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; like %<tt>@</tt>foo or %.foo.</td></tr></table>
+<!--l. 197--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-splicing-frob (x)
+</td></tr></table>
+<!--l. 199--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (and (consp x)</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 200--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (or (eq (car x) *comma-atsign*)</td></tr></table>
+<!--l. 201--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (eq (car x) *comma-dot*))))</td></tr></table>
+<!--l. 203--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">
+</td></tr></table>
+<!--l. 205--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; This predicate is true of a form that when read</td></tr></table>
+<!--l. 206--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; looked like %<tt>@</tt>foo or %.foo or just plain %foo.</td></tr></table>
+<!--l. 208--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-frob (x)
+</td></tr></table>
+<!--l. 210--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (and (consp x)</td></tr></table>
+<!--l. 211--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (or (eq (car x) *comma*)</td></tr></table>
+<!--l. 212--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (eq (car x) *comma-atsign*)</td></tr></table>
+<!--l. 213--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (eq (car x) *comma-dot*))))</td></tr></table>
+<!--l. 215--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; The simpliﬁer essentially looks for calls to #:BQ-APPEND and
+</td></tr></table>
+<!--l. 217--><p class="indent" >         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; tries to simplify them.  The arguments to #:BQ-APPEND are</td></tr></table>
+<!--l. 218--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; processed from right to left, building up a replacement form.</td></tr></table>
+<!--l. 219--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; At each step a number of special cases are handled that,</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 220--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; loosely speaking, look like this:</td></tr></table>
+<!--l. 221--><p class="indent" >                                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;</td></tr></table>
+<!--l. 222--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (APPEND (LIST a b c) foo) =&#x003E; (LIST* a b c foo)</td></tr></table>
+<!--l. 223--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;       provided a, b, c are not splicing frobs</td></tr></table>
+<!--l. 224--><p class="indent" >      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (APPEND (LIST* a b c) foo) =&#x003E; (LIST* a b (APPEND c foo))</td></tr></table>
+<!--l. 225--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;       provided a, b, c are not splicing frobs</td></tr></table>
+<!--l. 226--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (APPEND (QUOTE (x)) foo) =&#x003E; (LIST* (QUOTE x) foo)</td></tr></table>
+<!--l. 227--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (APPEND (CLOBBERABLE x) foo) =&#x003E; (NCONC x foo)</td></tr></table>
+<!--l. 229--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-simplify (x)
+</td></tr></table>
+<!--l. 231--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (if (atom x)</td></tr></table>
+<!--l. 232--><p class="indent" >                                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      x</td></tr></table>
+<!--l. 233--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (let ((x (if (eq (car x) *bq-quote*)</td></tr></table>
+<!--l. 234--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                   x</td></tr></table>
+<!--l. 235--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                   (maptree #&#x2019;bq-simplify x))))</td></tr></table>
+<!--l. 236--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (if (not (eq (car x) *bq-append*))</td></tr></table>
+<!--l. 237--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            x</td></tr></table>
+<!--l. 238--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (bq-simplify-args x)))))</td></tr></table>
+<!--l. 240--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-simplify-args (x)
+</td></tr></table>
+<!--l. 242--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (do ((args (reverse (cdr x)) (cdr args))</td></tr></table>
+<!--l. 243--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (result</td></tr></table>
+<!--l. 244--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         nil</td></tr></table>
+<!--l. 245--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (cond ((atom (car args))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 246--><p class="indent" >      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (bq-attach-append *bq-append* (car args) result))</td></tr></table>
+<!--l. 247--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               ((and (eq (caar args) *bq-list*)</td></tr></table>
+<!--l. 248--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     (notany #&#x2019;bq-splicing-frob (cdar args)))</td></tr></table>
+<!--l. 249--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (bq-attach-conses (cdar args) result))</td></tr></table>
+<!--l. 250--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               ((and (eq (caar args) *bq-list**)</td></tr></table>
+<!--l. 251--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     (notany #&#x2019;bq-splicing-frob (cdar args)))</td></tr></table>
+<!--l. 252--><p class="indent" >                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (bq-attach-conses</td></tr></table>
+<!--l. 253--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                  (reverse (cdr (reverse (cdar args))))</td></tr></table>
+<!--l. 254--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                  (bq-attach-append *bq-append*</td></tr></table>
+<!--l. 255--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                    (car (last (car args)))</td></tr></table>
+<!--l. 256--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                    result)))</td></tr></table>
+<!--l. 257--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               ((and (eq (caar args) *bq-quote*)</td></tr></table>
+<!--l. 258--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     (consp (cadar args))</td></tr></table>
+<!--l. 259--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     (not (bq-frob (cadar args)))</td></tr></table>
+<!--l. 260--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     (null (cddar args)))</td></tr></table>
+<!--l. 261--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (bq-attach-conses (list (list *bq-quote*</td></tr></table>
+<!--l. 262--><p class="indent" >     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                              (caadar args)))</td></tr></table>
+<!--l. 263--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                  result))</td></tr></table>
+<!--l. 264--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               ((eq (caar args) *bq-clobberable*)</td></tr></table>
+<!--l. 265--><p class="indent" >     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (bq-attach-append *bq-nconc* (cadar args) result))</td></tr></table>
+<!--l. 266--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (t (bq-attach-append *bq-append*</td></tr></table>
+<!--l. 267--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                    (car args)</td></tr></table>
+<!--l. 268--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                    result)))))</td></tr></table>
+<!--l. 269--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      ((null args) result)))</td></tr></table>
+<!--l. 271--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun null-or-quoted (x)
+</td></tr></table>
+<!--l. 273--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (or (null x) (and (consp x) (eq (car x) *bq-quote*))))</td></tr></table>
+<!--l. 275--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; When BQ-ATTACH-APPEND is called, the OP should be #:BQ-APPEND
+</td></tr></table>
+<!--l. 277--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; or #:BQ-NCONC.  This produces a form (op item result) but</td></tr></table>
+<!--l. 278--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; some simpliﬁcations are done on the ﬂy:</td></tr></table>
+<!--l. 279--><p class="indent" >                                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;</td></tr></table>
+<!--l. 280--><p class="indent" >                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (op &#x2019;(a b c) &#x2019;(d e f g)) =&#x003E; &#x2019;(a b c d e f g)</td></tr></table>
+<!--l. 281--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (op item &#x2019;nil) =&#x003E; item, provided item is not a splicable frob</td></tr></table>
+<!--l. 282--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (op item &#x2019;nil) =&#x003E; (op item), if item is a splicable frob</td></tr></table>
+<!--l. 283--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (op item (op a b c)) =&#x003E; (op item a b c)</td></tr></table>
+<!--l. 285--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-attach-append (op item result)
+</td></tr></table>
+<!--l. 287--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (cond ((and (null-or-quoted item) (null-or-quoted result))</td></tr></table>
+<!--l. 288--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (list *bq-quote* (append (cadr item) (cadr result))))</td></tr></table>
+<!--l. 289--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((or (null result) (equal result *bq-quote-nil*))</td></tr></table>
+<!--l. 290--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (if (bq-splicing-frob item) (list op item) item))</td></tr></table>
+<!--l. 291--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((and (consp result) (eq (car result) op))</td></tr></table>
+<!--l. 292--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (list* (car result) item (cdr result)))</td></tr></table>
+<!--l. 293--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (t (list op item result))))</td></tr></table>
+<!--l. 295--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; The eﬀect of BQ-ATTACH-CONSES is to produce a form as if by
+</td></tr></table>
+<!--l. 297--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; <tt>‘</tt>(LIST* ,<tt>@</tt>items ,result) but some simpliﬁcations are done</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 298--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; on the ﬂy.</td></tr></table>
+<!--l. 299--><p class="indent" >                                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;</td></tr></table>
+<!--l. 300--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (LIST* &#x2019;a &#x2019;b &#x2019;c &#x2019;d) =&#x003E; &#x2019;(a b c . d)</td></tr></table>
+<!--l. 301--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (LIST* a b c &#x2019;nil) =&#x003E; (LIST a b c)</td></tr></table>
+<!--l. 302--><p class="indent" >               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (LIST* a b c (LIST* d e f g)) =&#x003E; (LIST* a b c d e f g)</td></tr></table>
+<!--l. 303--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (LIST* a b c (LIST d e f g)) =&#x003E; (LIST a b c d e f g)</td></tr></table>
+<!--l. 305--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-attach-conses (items result)
+</td></tr></table>
+<!--l. 307--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (cond ((and (every #&#x2019;null-or-quoted items)</td></tr></table>
+<!--l. 308--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (null-or-quoted result))</td></tr></table>
+<!--l. 309--><p class="indent" >                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (list *bq-quote*</td></tr></table>
+<!--l. 310--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (append (mapcar #&#x2019;cadr items) (cadr result))))</td></tr></table>
+<!--l. 311--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((or (null result) (equal result *bq-quote-nil*))</td></tr></table>
+<!--l. 312--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (cons *bq-list* items))</td></tr></table>
+<!--l. 313--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((and (consp result)</td></tr></table>
+<!--l. 314--><p class="indent" >                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (or (eq (car result) *bq-list*)</td></tr></table>
+<!--l. 315--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                  (eq (car result) *bq-list**)))</td></tr></table>
+<!--l. 316--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (cons (car result) (append items (cdr result))))</td></tr></table>
+<!--l. 317--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (t (cons *bq-list** (append items (list result))))))</td></tr></table>
+<!--l. 319--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Removes funny tokens and changes (#:BQ-LIST* a b) into
+</td></tr></table>
+<!--l. 321--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; (CONS a b) instead of (LIST* a b), purely for readability.</td></tr></table>
+<!--l. 323--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun bq-remove-tokens (x)
+</td></tr></table>
+<!--l. 325--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (cond ((eq x *bq-list*) &#x2019;list)</td></tr></table>
+<!--l. 326--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq x *bq-append*) &#x2019;append)</td></tr></table>
+<!--l. 327--><p class="indent" >                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq x *bq-nconc*) &#x2019;nconc)</td></tr></table>
+<!--l. 328--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq x *bq-list**) &#x2019;list*)</td></tr></table>
+<!--l. 329--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq x *bq-quote*) &#x2019;quote)</td></tr></table>
+<!--l. 330--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((atom x) x)</td></tr></table>
+<!--l. 331--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((eq (car x) *bq-clobberable*)</td></tr></table>
+<!--l. 332--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (bq-remove-tokens (cadr x)))</td></tr></table>
+<!--l. 333--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((and (eq (car x) *bq-list**)</td></tr></table>
+<!--l. 334--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (consp (cddr x))</td></tr></table>
+<!--l. 335--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (null (cdddr x)))</td></tr></table>
+<!--l. 336--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (cons &#x2019;cons (maptree #&#x2019;bq-remove-tokens (cdr x))))</td></tr></table>
+<!--l. 337--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (t (maptree #&#x2019;bq-remove-tokens x))))</td></tr></table>
+<!--l. 339--><p class="indent" >
+</div>
+</div>
+<!--l. 341--><p class="indent" >   Suppose that we ﬁrst make the following deﬁnitions:
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq q &#x2019;(r s))
+</td></tr></table>
+<!--l. 344--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun r (x) (reduce #&#x2019;* x))</td></tr></table>
+<!--l. 345--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq r &#x2019;(3 5))</td></tr></table>
+<!--l. 346--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq s &#x2019;(4 6))</td></tr></table>
+<!--l. 348--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 350--><p class="indent" >   Without simpliﬁcation, the notation <i>$$(%%q)</i> (which stands for <i><tt>`</tt><tt>`</tt>(„q)</i>) is
+read as the expression <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(APPEND (LIST &#x2019;APPEND) (LIST (APPEND (LIST &#x2019;LIST) (LIST Q))))
+</td></tr></table>
+<!--l. 355--><p class="indent" >
+</div>
+</div>
+<!--l. 356--><p class="noindent" >The value of this expression is <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(APPEND (LIST (R S)))
+</td></tr></table>
+<!--l. 359--><p class="indent" >
+</div>
+</div>
+<!--l. 360--><p class="noindent" >and the value of this value is <i>(24)</i>. We conclude that the net eﬀect of twice-evaluating
+<i><tt>`</tt><tt>`</tt>(„q)</i> is to take the value <i>24</i> of the value <i>(r s)</i> of <i>q</i> and plug it into the template
+<i>( )</i> to produce <i>(24)</i>.
+<!--l. 366--><p class="indent" >   With simpliﬁcation, the notation <i>$$(%%q)</i> is read as the expression <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(LIST &#x2019;LIST Q)
+</td></tr></table>
+<!--l. 371--><p class="indent" >
+</div>
+</div>
+<!--l. 372--><p class="noindent" >The value of this expression is <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(LIST (R S))
+</td></tr></table>
+<!--l. 375--><p class="indent" >
+</div>
+</div>
+<!--l. 376--><p class="noindent" >and the value of this value is <i>(24)</i>. Thus the two ways of reading <i>$$(%%q)</i> do not
+produce the same expression—this we expected—but the values of the two ways
+                                                                          
+
+                                                                          
+are diﬀerent as well. Only the values of the values are the same. In general,
+Common Lisp guarantees the result of an expression with backquotes nested to
+depth k only after k successive evaluations have been performed; the results after
+fewer than k evaluations are implementation-dependent.
+<!--l. 385--><p class="indent" >   (Note that in the expression <i>‘(foo ,(process ‘(bar ,x)))</i> the backquotes are not
+doubly nested. The inner backquoted expression occurs within the textual
+scope of a comma belonging to the outer backquote. The correct way to
+determine the backquote nesting level of any subexpression is to start a
+count at zero and proceed up the S-expression tree, adding one for each
+backquote and subtracting one for each comma. This is similar to the rule
+for determining nesting level with respect to parentheses by scanning a
+character string linearly, adding or subtracting one as parentheses are
+passed.)
+<!--l. 396--><p class="indent" >   It is convenient to extend the “ ≡” notation to handle multiple evaluation:
+x  ≡≡ y means that the expressions x and y may have diﬀerent results but they
+have the same results when twice evaluated. Similarly, x  ≡≡≡ y means that
+the values of the values of the values of x and y are the same, and so
+on.
+<!--l. 402--><p class="indent" >   We can illustrate the diﬀerences between non-splicing and splicing backquote
+inclusions quite concisely: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">$$(%%q)   ≡
+</td></tr></table>
+<!--l. 405--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (APPEND (LIST &#x2019;APPEND) (LIST (APPEND (LIST &#x2019;LIST) (LIST Q))))</td></tr></table>
+<!--l. 406--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   ≡≡ (LIST &#x2019;LIST Q)  ⇒ (LIST (R S))  ⇒ (24)</td></tr></table>
+<!--l. 408--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">$$(%<tt>@</tt>%q)  ≡
+</td></tr></table>
+<!--l. 410--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (APPEND (LIST &#x2019;APPEND) (LIST Q))</td></tr></table>
+<!--l. 411--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   ≡≡ Q  ⇒ (R S)  ⇒ 24</td></tr></table>
+<!--l. 413--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">$$(%%<tt>@</tt>q)  ≡
+</td></tr></table>
+<!--l. 415--><p class="indent" >      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (APPEND (LIST &#x2019;APPEND) (LIST (APPEND (LIST &#x2019;LIST) Q)))</td></tr></table>
+<!--l. 416--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   ≡≡ (CONS &#x2019;LIST Q)  ⇒ (LIST R S)  ⇒ ((3 5) (4 6))</td></tr></table>
+<!--l. 418--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">$$(%<tt>@</tt>%<tt>@</tt>q)  ≡
+</td></tr></table>
+<!--l. 420--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (APPEND (LIST &#x2019;APPEND) Q)</td></tr></table>
+<!--l. 421--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   ≡≡ (CONS &#x2019;APPEND Q)  ⇒ (APPEND R S)  ⇒ (3 5 4 6)</td></tr></table>
+<!--l. 423--><p class="indent" >
+</div>
+</div>
+<!--l. 424--><p class="noindent" >In each case I have shown both the unsimpliﬁed and simpliﬁed forms and then traced
+the intermediate evaluations of the simpliﬁed form. (Actually, the unsimpliﬁed
+forms do contain one simpliﬁcation without which they would be unreadable: the
+<i>nil</i> that terminates each list has been systematically suppressed, so that one sees
+<i>(append x y)</i> rather than <i>(append x y &#x2019;nil)</i>.)
+<!--l. 432--><p class="indent" >   The following driver function is useful for tracing the behavior of nested
+backquote syntax through multiple evaluations. The argument <i>ls</i> is a list of
+strings; each string will be processed by the reader (<i>read-from-string</i>). The
+argument <i>n</i> is the number of evaluations desired. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun try (ls &#x0026;optional (n 0))
+</td></tr></table>
+<!--l. 438--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (dolist (x ls)</td></tr></table>
+<!--l. 439--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (format t &#x0022;<tt>~</tt>&#x0026;<tt>~</tt>A&#x0022;</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 440--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (substitute #<tt>\</tt><tt>‘</tt> #<tt>\</tt>$ (substitute #<tt>\</tt>, #<tt>\</tt>% x)))</td></tr></table>
+<!--l. 441--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (do ((form (macroexpand (read-from-string x)) (eval form))</td></tr></table>
+<!--l. 442--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (str &#x0022; = &#x0022; &#x0022;<tt>~</tt>% =&#x003E; &#x0022;)</td></tr></table>
+<!--l. 443--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (j 0 (+ j 1)))</td></tr></table>
+<!--l. 444--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ((&#x003E;= j n)</td></tr></table>
+<!--l. 445--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (format t str)</td></tr></table>
+<!--l. 446--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (write form :pretty t))</td></tr></table>
+<!--l. 447--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (format t str)</td></tr></table>
+<!--l. 448--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (write form :pretty t)))</td></tr></table>
+<!--l. 449--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format t &#x0022;<tt>~</tt>&#x0026;&#x0022;))</td></tr></table>
+<!--l. 451--><p class="indent" >
+</div>
+</div>
+<!--l. 452--><p class="noindent" >This driver routine makes it easdy to explore a large number of cases systematically.
+Here is a list of examples that illustrate not only the diﬀerences between <i>,</i> and <i>,<tt>@</tt></i>
+but also their interaction with <i>&#x2019;</i>. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq fools2 &#x2019;(
+</td></tr></table>
+<!--l. 457--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %%p)&#x0022;</td></tr></table>
+<!--l. 458--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 459--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %&#x2019;%r)&#x0022;</td></tr></table>
+<!--l. 460--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 461--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %<tt>@</tt>%p)&#x0022;</td></tr></table>
+<!--l. 462--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %<tt>@</tt>%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 463--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %<tt>@</tt>&#x2019;%r)&#x0022;</td></tr></table>
+<!--l. 464--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$(foo %<tt>@</tt>&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 465--><p class="indent" >                                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">))</td></tr></table>
+<!--l. 467--><p class="indent" >
+</div>
+</div>
+<!--l. 469--><p class="indent" >   Consider this set of sample values: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq p &#x2019;(union x y))
+</td></tr></table>
+<!--l. 471--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq q &#x2019;((union x y) (list &#x2019;sqrt 9)))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 472--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq r &#x2019;(union x y))</td></tr></table>
+<!--l. 473--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq s &#x2019;((union x y)))</td></tr></table>
+<!--l. 475--><p class="indent" >
+</div>
+</div>
+<!--l. 477--><p class="indent" >   Here is what happened when I executed <i>(try fools2 2)</i> with a non-<i>nil</i> value for
+the variable <i>*bq-simplify*</i> (to see simpliﬁed forms). I have interpolated some
+remarks. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo „p) = (LIST &#x2019;LIST ”FOO P)
+</td></tr></table>
+<!--l. 481--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (LIST &#x2019;FOO (UNION X Y))</td></tr></table>
+<!--l. 482--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO (A B C))</td></tr></table>
+<!--l. 484--><p class="indent" >
+</div>
+</div>
+<!--l. 485--><p class="noindent" >So <i> „p</i> means “the value of <i>p</i> is a form; use the value of the value of <i>p</i>.” <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo „<tt>@</tt>q) = (LIST* &#x2019;LIST ”FOO Q)
+</td></tr></table>
+<!--l. 488--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (LIST &#x2019;FOO (UNION X Y) (LIST &#x2019;SQRT 9))</td></tr></table>
+<!--l. 489--><p class="indent" >                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO (A B C) (SQRT 9))</td></tr></table>
+<!--l. 491--><p class="indent" >
+</div>
+</div>
+<!--l. 492--><p class="noindent" >So <i> „<tt>@</tt>q</i> means “the value of <i>q</i> is a list of forms; splice the list of values of the elements
+of the value of <i>q</i>.” <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo ,&#x2019;,r) = (LIST &#x2019;LIST ”FOO (LIST &#x2019;QUOTE R))
+</td></tr></table>
+<!--l. 495--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (LIST &#x2019;FOO &#x2019;(UNION X Y))</td></tr></table>
+<!--l. 496--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO (UNION X Y))</td></tr></table>
+<!--l. 498--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 499--><p class="noindent" >So <i> ,&#x2019;,r</i> means “the value of <i>r</i> may be any object; use the value of <i>r</i> that is
+available at the time of ﬁrst evaluation, that is, when the outer backquote is
+evaluated.” (To use the value of <i>r</i> that is available at the time of second
+evaluation, that is, when the inner backquote is evaluated, just use <i>,r</i>.) <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo ,&#x2019;,<tt>@</tt>s) = (LIST &#x2019;LIST ”FOO (CONS &#x2019;QUOTE S))
+</td></tr></table>
+<!--l. 507--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (LIST &#x2019;FOO &#x2019;(UNION X Y))</td></tr></table>
+<!--l. 508--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO (UNION X Y))</td></tr></table>
+<!--l. 510--><p class="indent" >
+</div>
+</div>
+<!--l. 511--><p class="noindent" >So <i> ,&#x2019;,<tt>@</tt>s</i> means “the value of <i>s</i> must be a singleton list of any object; use the element
+of the value of <i>s</i> that is available at the time of ﬁrst evaluation, that is,
+when the outer backquote is evaluated.” Note that <i>s</i> must be a singleton
+list because it will be spliced into a form <i>(quote )</i>, and the <i>quote</i> special
+form requires exactly one subform to appear; this is generally true of
+the sequence <i>&#x2019;,<tt>@</tt></i>. (To use the value of <i>s</i> that is available at the time of
+second evaluation, that is, when the inner backquote is evaluated, just use
+<i>,<tt>@</tt>s</i>,in which case the list <i>s</i> is not restricted to be singleton, or <i>,(car s)</i>.) <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo ,<tt>@</tt>,p) = (LIST &#x2019;CONS ”FOO P)
+</td></tr></table>
+<!--l. 523--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (CONS &#x2019;FOO (UNION X Y))</td></tr></table>
+<!--l. 524--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO A B C)</td></tr></table>
+<!--l. 526--><p class="indent" >
+</div>
+</div>
+<!--l. 527--><p class="noindent" >So <i> ,<tt>@</tt>,p</i> means “the value of <i>p</i> is a form; splice in the value of the value of <i>p</i>.” <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo ,<tt>@</tt>,<tt>@</tt>q) = (LIST &#x2019;CONS ”FOO (CONS &#x2019;APPEND Q))
+</td></tr></table>
+<!--l. 530--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (CONS &#x2019;FOO (APPEND (UNION X Y) (LIST &#x2019;SQRT 9)))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 531--><p class="indent" >                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO A B C SQRT 9)</td></tr></table>
+<!--l. 533--><p class="indent" >
+</div>
+</div>
+<!--l. 534--><p class="noindent" >So <i> ,<tt>@</tt>,<tt>@</tt>q</i> means “the value of <i>q</i> is a list of forms; splice each of the values of the
+elements of the value of <i>q</i>, so that many splicings occur.” <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo ,<tt>@</tt>&#x2019;,r) = (LIST &#x2019;CONS ”FOO (LIST &#x2019;QUOTE R))
+</td></tr></table>
+<!--l. 538--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (CONS &#x2019;FOO &#x2019;(UNION X Y))</td></tr></table>
+<!--l. 539--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO UNION X Y)</td></tr></table>
+<!--l. 541--><p class="indent" >
+</div>
+</div>
+<!--l. 542--><p class="noindent" >So <i> ,<tt>@</tt>&#x2019;,r</i> means “the value of <i>r</i> must be a list; splice in the value of <i>r</i> that is
+available at the time of ﬁrst evaluation, that is, when the outer backquote is
+evaluated.” (To splice the value of <i>r</i> that is available at the time of second
+evaluation, that is, when the inner backquote is evaluated, just use <i>,<tt>@</tt>r</i>.) <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><tt>‘</tt><tt>‘</tt>(foo ,<tt>@</tt>&#x2019;,<tt>@</tt>s) = (LIST &#x2019;CONS ”FOO (CONS &#x2019;QUOTE S))
+</td></tr></table>
+<!--l. 550--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (CONS &#x2019;FOO &#x2019;(UNION X Y))</td></tr></table>
+<!--l. 551--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">=&#x003E; (FOO UNION X Y)</td></tr></table>
+<!--l. 553--><p class="indent" >
+</div>
+</div>
+<!--l. 554--><p class="noindent" >So <i> ,<tt>@</tt>&#x2019;,<tt>@</tt>s</i> means “the value of <i>s</i> must be a singleton list whose element is a list; splice
+in the list that is the element of the value of <i>s</i> that is available at the
+time of ﬁrst evaluation, that is, when the outer backquote is evaluated.”
+(To splice the element of the value of <i>s</i> that is available at the time of
+second evaluation, that is, when the inner backquote is evaluated, just use
+<i>,<tt>@</tt>(car s)</i>.)
+<!--l. 563--><p class="indent" >   I leave it to the reader to explore the possibilities of triply nested backquotes. <div class=lisp>
+<div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq fools3 &#x2019;(
+</td></tr></table>
+<!--l. 565--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %%%p)&#x0022;     &#x0022;$$$(foo %%%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 566--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %%&#x2019;%r)&#x0022;    &#x0022;$$$(foo %%&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 567--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %%<tt>@</tt>%p)&#x0022;    &#x0022;$$$(foo %%<tt>@</tt>%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 568--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %%<tt>@</tt>&#x2019;%r)&#x0022;   &#x0022;$$$(foo %%<tt>@</tt>&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 569--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %&#x2019;%%p)&#x0022;    &#x0022;$$$(foo %&#x2019;%%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 570--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %&#x2019;%&#x2019;%r)&#x0022;   &#x0022;$$$(foo %&#x2019;%&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 571--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %&#x2019;%<tt>@</tt>%p)&#x0022;   &#x0022;$$$(foo %&#x2019;%<tt>@</tt>%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 572--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %&#x2019;%<tt>@</tt>&#x2019;%r)&#x0022;  &#x0022;$$$(foo %&#x2019;%<tt>@</tt>&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 573--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>%%p)&#x0022;    &#x0022;$$$(foo %<tt>@</tt>%%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 574--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>%&#x2019;%r)&#x0022;   &#x0022;$$$(foo %<tt>@</tt>%&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 575--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>%<tt>@</tt>%p)&#x0022;   &#x0022;$$$(foo %<tt>@</tt>%<tt>@</tt>%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 576--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>%<tt>@</tt>&#x2019;%r)&#x0022;  &#x0022;$$$(foo %<tt>@</tt>%<tt>@</tt>&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 577--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>&#x2019;%%p)&#x0022;   &#x0022;$$$(foo %<tt>@</tt>&#x2019;%%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 578--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>&#x2019;%&#x2019;%r)&#x0022;  &#x0022;$$$(foo %<tt>@</tt>&#x2019;%&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 579--><p class="indent" >                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>&#x2019;%<tt>@</tt>%p)&#x0022;  &#x0022;$$$(foo %<tt>@</tt>&#x2019;%<tt>@</tt>%<tt>@</tt>q)&#x0022;</td></tr></table>
+<!--l. 580--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;$$$(foo %<tt>@</tt>&#x2019;%<tt>@</tt>&#x2019;%r)&#x0022; &#x0022;$$$(foo %<tt>@</tt>&#x2019;%<tt>@</tt>&#x2019;%<tt>@</tt>s)&#x0022;</td></tr></table>
+<!--l. 581--><p class="indent" >                                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">))</td></tr></table>
+<!--l. 583--><p class="indent" >
+</div>
+</div>
+<!--l. 584--><p class="noindent" >It is a pleasant exercise to construct values for <i>p</i>, <i>q</i>, <i>r</i>, and <i>s</i> that will allow execution
+of <i>(try fools3 3)</i> without error.
+</div>
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+   <!--l. 6--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmli5.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse164.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse164.html#tailclmse164.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmap3.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clm.html#clmap3.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 6--><p class="indent" >   <a 
+ id="tailclmap3.html"></a>  
+</body></html> 

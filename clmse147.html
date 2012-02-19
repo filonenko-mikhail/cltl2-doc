@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Format Directive Interface</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 714--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse148.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse146.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse146.html#tailclmse146.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse147.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch27.html#clmse147.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">27.4   </span> <a 
+ id="x179-25700027.4"></a>Format Directive Interface</h3>
+<!--l. 717--><p class="noindent" >The primary interface to operations for dynamically determining the arrangement
+of output is provided through the functions above. However, an additional
+interface is provided via a set of format directives because, as shown by the
+examples in this section and the next, <i>format</i> strings are typically a much more
+compact way to specify pretty printing. In addition, without such an interface,
+one would have to abandon the use of <i>format</i> when interacting with the pretty
+printer.
+<div class=flushdesc>
+<!--l. 726--><p class="indent" >
+  <div><br /><b>
+<i><tt>~</tt>W </i>                                                                      </b>
+Write. An  arg,  any  Lisp  object,  is  printed  obeying  every printer  control
+variable  (as  by  <i>write</i>).  In  addition,  <i><tt>~</tt>W </i>  interacts  correctly  with  depth
+abbreviation by not resetting the depth counter to zero. <i><tt>~</tt>W </i> does not accept
+parameters. If given the colon modiﬁer, <i><tt>~</tt>W </i> binds <i>*print-pretty*</i> to <i>t</i>. If
+given the atsign modiﬁer, <i><tt>~</tt>W </i> binds <i>*print-level*</i> and <i>*print-length*</i> to <i>nil</i>.
+<i>
+<!--l. 735--><p class="indent" >  <tt>~</tt>W </i> provides automatic support for circularity detection. If <i>*print-circle*</i>
+(and  possibly  also  <i>*print-shared*</i>)  is  not  <i>nil</i>  and  <i><tt>~</tt>W </i>  is  applied  to  an
+argument that is a circular (or shared) reference, an appropriate “<i>#n#</i>”
+marker is inserted in the output instead of printing the argument.
+  <br /><b>
+<i><tt>~</tt><tt>_</tt></i>                                                                        </b>
+Conditional   newline.   Without   any   modiﬁers,   <i><tt>~</tt><tt>_</tt></i>  is   equivalent   to
+<i>(pprint-newline :linear)</i>. The directive <i><tt>~</tt><tt>@</tt><tt>_</tt></i> is equivalent to <i>(pprint-newline
+:miser)</i>. The directive <i><tt>~</tt>:<tt>_</tt></i> is equivalent to <i>(pprint-newline :ﬁll)</i>. The directive
+<i><tt>~</tt>:<tt>@</tt><tt>_</tt></i> is equivalent to <i>(pprint-newline :mandatory)</i>.
+                                                                          
+
+                                                                          
+  <br /><b>
+<i><tt>~</tt>&#x003C;str<tt>~</tt>:&#x003E;</i>                                                                 </b>
+Logical block. If <i><tt>~</tt>:&#x003E;</i> is used to terminate a <i><tt>~</tt>&#x003C;...</i> directive, the directive
+is  equivalent  to  a  call  on  <i>pprint-logical-block</i>.  The  <i>format</i>  argument
+corresponding to the <i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i> directive is treated in the same way as the
+list argument to <i>pprint-logical-block</i>, thereby providing automatic support
+for non-list arguments and the detection of circularity, sharing, and depth
+abbreviation. The portion of the <i>format</i> control string nested within the
+<i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i> speciﬁes the <i>:preﬁx</i> (or <i>:per-line-preﬁx</i>), <i>:suﬃx</i>, and body of the
+<i>pprint-logical-block</i>.
+<!--l. 764--><p class="indent" >  The  <i>format</i>  string  portion  enclosed  by  <i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i>  can  be  divided  into
+segments <i><tt>~</tt>&#x003C;preﬁx<tt>~</tt>;body<tt>~</tt>;suﬃx<tt>~</tt>:&#x003E;</i> by <i><tt>~</tt>;</i> directives. If the ﬁrst section is
+terminated by <i><tt>~</tt><tt>@</tt>;</i>, it speciﬁes a per-line preﬁx rather than a simple preﬁx.
+The preﬁx and suﬃx cannot contain <i>format</i> directives. An error is signaled
+if either the preﬁx or suﬃx fails to be a constant string or if the enclosed
+portion is divided into more than three segments.
+<!--l. 772--><p class="indent" >  If the enclosed portion is divided into only two segments, the suﬃx defaults
+to the null string. If the enclosed portion consists of only a single segment,
+both the preﬁx and the suﬃx default to the null string. If the colon modiﬁer
+is used (that is, <i><tt>~</tt>:&#x003C;...<tt>~</tt>:&#x003E;</i>), the preﬁx and suﬃx default to <i>&#x0022;(&#x0022;</i> and <i>&#x0022;)&#x0022;</i>,
+respectively, instead of the null string.
+<!--l. 779--><p class="indent" >  The body segment can be any arbitrary <i>format</i> control string. This <i>format</i>
+control string is applied to the elements of the list corresponding to the
+<i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i> directive as a whole. Elements are extracted from this list using
+<i>pprint-pop</i>, thereby providing automatic support for malformed lists and the
+detection of circularity, sharing, and length abbreviation. Within the body
+segment, <i><tt>~</tt><tt>^</tt></i> acts like <i>pprint-exit-if-list-exhausted</i>.
+<i>
+<!--l. 787--><p class="indent" >  <tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i> supports a feature not supported by <i>pprint-logical-block</i>. If <i><tt>~</tt>:<tt>@</tt>&#x003E;</i>
+is  used  to  terminate  the  directive  (that  is,  <i><tt>~</tt>&#x003C;...<tt>~</tt>:<tt>@</tt>&#x003E;</i>),  then  a  ﬁll-style
+conditional  newline  is  automatically  inserted  after  each  group  of  blanks
+immediately contained in the body (except for blanks after a <i><tt>~</tt>&#x003C;newline&#x003E;</i>
+directive). This makes it easy to achieve the equivalent of paragraph ﬁlling.
+<!--l. 795--><p class="indent" >  If the atsign modiﬁer is used with <i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i>, the entire remaining argument
+list is passed to the directive as its argument. All of the remaining arguments
+are always consumed by <i><tt>~</tt><tt>@</tt>&#x003C;...<tt>~</tt>:&#x003E;</i>, even if they are not all used by the <i>format</i>
+string nested in the directive. Other than the diﬀerence in its argument,
+                                                                          
+
+                                                                          
+<i><tt>~</tt><tt>@</tt>&#x003C;...<tt>~</tt>:&#x003E;</i>  is  exactly  the  same  as  <i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i>,  except  that  circularity  (and
+sharing) detection is not applied if the <i><tt>~</tt><tt>@</tt>&#x003C;...<tt>~</tt>:&#x003E;</i> is at top level in a <i>format</i>
+string. This ensures that circularity detection is applied only to data lists
+and not to <i>format</i> argument lists.
+<!--l. 806--><p class="indent" >  To  a  considerable  extent,  the  basic  form  of  the  directive  <i><tt>~</tt>&#x003C;...<tt>~</tt>&#x003E;</i>  is
+incompatible with the dynamic control of the arrangement of output by <i><tt>~</tt>W </i>,
+<i><tt>~</tt><tt>_</tt></i>, <i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i>, <i><tt>~</tt>I</i>, and <i><tt>~</tt>:T</i>. As a result, an error is signaled if any of these
+directives is nested within <i><tt>~</tt>&#x003C;...<tt>~</tt>&#x003E;</i>. Beyond this, an error is also signaled if
+the <i><tt>~</tt>&#x003C;...<tt>~</tt>:;...<tt>~</tt>&#x003E;</i> form of <i><tt>~</tt>&#x003C;...<tt>~</tt>&#x003E;</i> is used in the same <i>format</i> string with <i><tt>~</tt>W </i>,
+<i><tt>~</tt><tt>_</tt></i>, <i><tt>~</tt>&#x003C;...<tt>~</tt>:&#x003E;</i>, <i><tt>~</tt>I</i>, or <i><tt>~</tt>:T</i>.
+  <br /><b>
+<i><tt>~</tt>I</i>                                                                        </b>
+Indent. <i><tt>~</tt>nI</i> is equivalent to <i>(pprint-indent :block n)</i>. <i><tt>~</tt>:nI</i> is equivalent to
+<i>(pprint-indent :current n)</i>. In both cases, n defaults to zero if it is omitted.
+  <br /><b>
+<i><tt>~</tt>:T</i>                                                                       </b>
+Tabulate. If the colon modiﬁer is used with the <i><tt>~</tt>T</i> directive, the tabbing
+computation is done relative to the column where the section immediately
+containing the directive begins, rather than with respect to column zero.
+<i><tt>~</tt>n,m:T</i> is equivalent to <i>(pprint-tab :section n m)</i>. <i><tt>~</tt>n,m:<tt>@</tt>T</i> is equivalent
+to  <i>(pprint-tab :section-relative n m)</i>.  The  numerical  parameters  are  both
+interpreted as being in units of ems and both default to 1.
+  <br /><b>
+<i><tt>~</tt>/name/</i>                                                                 </b>
+Call function. User-deﬁned functions can be called from within a <i>format</i>
+string  by  using  the  directive  <i><tt>~</tt>/name/</i>.  The  colon  modiﬁer,  the  atsign
+modiﬁer, and arbitrarily many parameters can be speciﬁed with the <i><tt>~</tt>/name/</i>
+directive. The name can be any string that does not contain “<i>/</i>”. All of the
+characters in name are treated as if they were upper case. If name contains a
+“<i>:</i>” or “<i>::</i>”, then everything up to but not including the ﬁrst “<i>:</i>” or “<i>::</i>” is taken
+to be a string that names a package. Everything after the ﬁrst “<i>:</i>” or “<i>::</i>” (if
+any) is taken to be a string that names a symbol. The function corresponding
+to a <i><tt>~</tt>/name/</i> directive is obtained by looking up the symbol that has the
+indicated name in the indicated package. If name does not contain a “<i>:</i>” or
+“<i>::</i>”, then the whole name string is looked up in the <i>user</i> package.
+                                                                          
+
+                                                                          
+<!--l. 851--><p class="indent" >  When a <i><tt>~</tt>/name/</i> directive is encountered, the indicated function is called
+with  four  or  more  arguments.  The  ﬁrst  four  arguments  are  the  output
+stream, the <i>format</i> argument corresponding to the directive, the value <i>t</i> if
+the colon modiﬁer was used (<i>nil</i> otherwise), and the value <i>t</i> if the atsign
+modiﬁer  was  used  (<i>nil</i>  otherwise).  The  remaining  arguments  consist  of
+any parameters speciﬁed with the directive. The function should print the
+argument appropriately. Any values returned by the function are ignored.
+<!--l. 860--><p class="indent" >  The  three  functions  <i>pprint-linear</i>,  <i>pprint-ﬁll</i>,  and  <i>pprint-tabular</i>  are
+designed so that they can be called by <i><tt>~</tt>/.../</i> (that is, <i><tt>~</tt>/pprint-linear/</i>,
+<i><tt>~</tt>/pprint-ﬁll/</i>, and <i><tt>~</tt>/pprint-tabular/</i>. In particular they take colon and atsign
+arguments.</div>
+</div>
+<!--l. 867--><p class="indent" >   As examples of the convenience of specifying pretty printing with
+<i>format</i> strings, consider the functions <i>pprint-defun</i> and <i>pprint-let</i> used as
+examples in the last section. They can be more compactly deﬁned as follows.
+The function <i>pprint-vector</i> cannot be deﬁned using <i>format</i>, because the
+data structure it traverses is not a list. The function <i>pprint-tabular</i> is
+inconvenient to deﬁne using <i>format</i>, because of the need to pass its <i>tabsize</i>
+argument through to a <i><tt>~</tt>:T</i> directive nested within an iteration over a list. <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun pprint-defun (list)
+</td></tr></table>
+<!--l. 877--><p class="indent" >               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format t &#x0022;<tt>~</tt>:&#x003C;<tt>~</tt>W <tt>~</tt><tt>@</tt><tt>_</tt><tt>~</tt>:I<tt>~</tt>W <tt>~</tt>:<tt>_</tt><tt>~</tt>W<tt>~</tt>1I <tt>~</tt><tt>_</tt><tt>~</tt>W<tt>~</tt>:&#x003E;&#x0022; list))</td></tr></table>
+<!--l. 880--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 881--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun pprint-let (list)</td></tr></table>
+<!--l. 882--><p class="indent" >      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format t &#x0022;<tt>~</tt>:&#x003C;<tt>~</tt>W<tt>~</tt><tt>̂</tt> <tt>~</tt>:&#x003C;<tt>~</tt><tt>@</tt>{<tt>~</tt>:&#x003C;<tt>~</tt><tt>@</tt>{<tt>~</tt>W<tt>~</tt><tt>̂</tt> <tt>~</tt><tt>_</tt><tt>~</tt>}<tt>~</tt>:&#x003E;<tt>~</tt><tt>̂</tt> <tt>~</tt>:<tt>_</tt><tt>~</tt>}<tt>~</tt>:&#x003E;<tt>~</tt>1I<tt>~</tt></td></tr></table>
+<!--l. 886--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                <tt>~</tt><tt>@</tt>{<tt>~</tt><tt>̂</tt> <tt>~</tt><tt>_</tt><tt>~</tt>W<tt>~</tt>}<tt>~</tt>:&#x003E;&#x0022;</td></tr></table>
+<!--l. 887--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          list))</td></tr></table>
+<!--l. 889--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 891--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse148.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse146.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse146.html#tailclmse146.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse147.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch27.html#clmse147.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 891--><p class="indent" >   <a 
+ id="tailclmse147.html"></a>  
+</body></html> 

@@ -1,0 +1,465 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Structures of Explicitly Speciﬁed Representational Type</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 1002--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch20.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse108.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse108.html#tailclmse108.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse109.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch19.html#clmse109.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">19.7   </span> <a 
+ id="x133-17500019.7"></a>Structures of Explicitly Speciﬁed Representational Type</h3>
+<!--l. 1005--><p class="noindent" >Sometimes it is important to have explicit control over the representation of a
+structure. The <i>:type</i> option allows one to specify that a structure must be
+implemented in a particular way, using a list or a speciﬁc kind of vector, and
+to specify the exact allocation of structure slots to components of the
+representation. A structure may also be “unnamed” or “named,” according to
+whether the structure name is stored in (and thus recoverable from) the
+structure.
+<!--l. 1014--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">19.7.1   </span> <a 
+ id="x133-17600019.7.1"></a>Unnamed Structures</h4>
+<!--l. 1016--><p class="noindent" >Sometimes a particular data representation is imposed by external requirements,
+and yet it is desirable to document the data format as a <i>defstruct</i>-style structure.
+For example, consider expressions built up from numbers, symbols, and binary
+operations such as <i>+</i> and <i>*</i>. An operation might be represented as it is in Lisp, as
+a list of the operator and the two operands. This fact can be expressed succinctly
+with <i>defstruct</i> in this manner: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defstruct (binop (:type list))
+</td></tr></table>
+<!--l. 1024--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (operator &#x2019;? :type symbol)</td></tr></table>
+<!--l. 1025--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-1</td></tr></table>
+<!--l. 1026--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-2)</td></tr></table>
+<!--l. 1028--><p class="indent" >
+</div>
+</div>
+<!--l. 1029--><p class="noindent" >This will deﬁne a constructor function <i>make-binop</i> and three selector functions,
+namely <i>binop-operator</i>, <i>binop-operand-1</i>, and <i>binop-operand-2</i>. (It will not,
+however, deﬁne a predicate <i>binop-p</i>, for reasons explained below.)
+                                                                          
+
+                                                                          
+<!--l. 1034--><p class="indent" >   The eﬀect of <i>make-binop</i> is simply to construct a list of length 3: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operator &#x2019;+ :operand-1 &#x2019;x :operand-2 5)
+</td></tr></table>
+<!--l. 1036--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (+ x 5)</td></tr></table>
+<!--l. 1037--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1038--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operand-2 4 :operator &#x2019;*)</td></tr></table>
+<!--l. 1039--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (* <i>nil</i> 4)</td></tr></table>
+<!--l. 1041--><p class="indent" >
+</div>
+</div>
+<!--l. 1042--><p class="noindent" >It is just like the function <i>list</i> except that it takes keyword arguments and performs
+slot defaulting appropriate to the <i>binop</i> conceptual data type. Similarly, the
+selector functions <i>binop-operator</i>, <i>binop-operand-1</i>, and <i>binop-operand-2</i> are
+essentially equivalent to <i>car</i>, <i>cadr</i>, and <i>caddr</i>, respectively. (They might not be
+completely equivalent because, for example, an implementation would be justiﬁed
+in adding error-checking code to ensure that the argument to each selector
+function is a length-3 list.)
+<!--l. 1053--><p class="indent" >   We speak of <i>binop</i> as being a “conceptual” data type because <i>binop</i> is not
+made a part of the Common Lisp type system. The predicate <i>typep</i> will not
+recognize <i>binop</i> as a type speciﬁer, and <i>type-of </i> will return <i>list</i> when given a
+<i>binop</i> structure. Indeed, there is no way to distinguish a data structure
+constructed by <i>make-binop</i> from any other list that happens to have the correct
+structure.
+<!--l. 1060--><p class="indent" >   There is not even any way to recover the structure name <i>binop</i> from a
+structure created by <i>make-binop</i>. This can be done, however, if the structure is
+“named.”
+<!--l. 1064--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">19.7.2   </span> <a 
+ id="x133-17700019.7.2"></a>Named Structures</h4>
+<!--l. 1066--><p class="noindent" >A “named” structure has the property that, given an instance of the structure, the
+structure name (that names the type) can be reliably recovered. For structures
+deﬁned with no <i>:type</i> option, the structure name actually becomes part of
+the Common Lisp data-type system. The function <i>type-of </i>, when applied
+                                                                          
+
+                                                                          
+to such a structure, will return the structure name as the type of the
+object; the predicate <i>typep</i> will recognize the structure name as a valid type
+speciﬁer.
+<!--l. 1075--><p class="indent" >   For structures deﬁned with a <i>:type</i> option, <i>type-of </i> will return a type speciﬁer
+such as <i>list</i> or <i>(vector t)</i>, depending on the type speciﬁed to the <i>:type</i> option. The
+structure name does not become a valid type speciﬁer. However, if the <i>:named</i>
+option is also speciﬁed, then the ﬁrst component of the structure (as created by a
+<i>defstruct</i> constructor function) will always contain the structure name. This
+allows the structure name to be recovered from an instance of the structure and
+allows a reasonable predicate for the conceptual type to be deﬁned: the
+automatically deﬁned <i>name-p</i> predicate for the structure operates by ﬁrst
+checking that its argument is of the proper type (<i>list</i>, <i>(vector t)</i>, or whatever) and
+then checking whether the ﬁrst component contains the appropriate type
+name.
+<!--l. 1091--><p class="indent" >   Consider the <i>binop</i> example shown above, modiﬁed only to include the <i>:named</i>
+option: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defstruct (binop (:type list) :named)
+</td></tr></table>
+<!--l. 1094--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (operator &#x2019;? :type symbol)</td></tr></table>
+<!--l. 1095--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-1</td></tr></table>
+<!--l. 1096--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-2)</td></tr></table>
+<!--l. 1098--><p class="indent" >
+</div>
+</div>
+<!--l. 1099--><p class="noindent" >As before, this will deﬁne a constructor function <i>make-binop</i> and three selector
+functions <i>binop-operator</i>, <i>binop-operand-1</i>, and <i>binop-operand-2</i>. It will also
+deﬁne a predicate <i>binop-p</i>.
+<!--l. 1103--><p class="indent" >   The eﬀect of <i>make-binop</i> is now to construct a list of length 4: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operator &#x2019;+ :operand-1 &#x2019;x :operand-2 5)
+</td></tr></table>
+<!--l. 1105--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (binop + x 5)</td></tr></table>
+<!--l. 1106--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1107--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operand-2 4 :operator &#x2019;*)</td></tr></table>
+<!--l. 1108--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (binop * <i>nil</i> 4)</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 1110--><p class="indent" >
+</div>
+</div>
+<!--l. 1111--><p class="noindent" >The structure has the same layout as before except that the structure name <i>binop</i> is
+included as the ﬁrst list element. The selector functions <i>binop-operator</i>,
+<i>binop-operand-1</i>, and <i>binop-operand-2</i> are essentially equivalent to <i>cadr</i>, <i>caddr</i>,
+and <i>cadddr</i>, respectively. The predicate <i>binop-p</i> is more or less equivalent to the
+following deﬁnition. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun binop-p (x)
+</td></tr></table>
+<!--l. 1120--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (and (consp x) (eq (car x) &#x2019;binop)))</td></tr></table>
+<!--l. 1122--><p class="indent" >
+</div>
+</div>
+<!--l. 1123--><p class="noindent" >The name <i>binop</i> is still not a valid type speciﬁer recognizable to <i>typep</i>, but at least
+there is a way of distinguishing <i>binop</i> structures from other similarly deﬁned
+structures.
+<!--l. 1127--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">19.7.3   </span> <a 
+ id="x133-17800019.7.3"></a>Other Aspects of Explicitly Speciﬁed Structures</h4>
+<!--l. 1130--><p class="noindent" >The <i>:initial-oﬀset</i> option allows one to specify that slots be allocated beginning at
+a representational element other than the ﬁrst. For example, the form <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defstruct (binop (:type list) (:initial-oﬀset 2))
+</td></tr></table>
+<!--l. 1134--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (operator &#x2019;? :type symbol)</td></tr></table>
+<!--l. 1135--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-1</td></tr></table>
+<!--l. 1136--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-2)</td></tr></table>
+<!--l. 1138--><p class="indent" >
+</div>
+</div>
+<!--l. 1139--><p class="noindent" >would result in the following behavior for <i>make-binop</i>: <div class=lisp> <div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operator &#x2019;+ :operand-1 &#x2019;x :operand-2 5)
+</td></tr></table>
+<!--l. 1141--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (nil nil + x 5)</td></tr></table>
+<!--l. 1142--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1143--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operand-2 4 :operator &#x2019;*)</td></tr></table>
+<!--l. 1144--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (nil nil * <i>nil</i> 4)</td></tr></table>
+<!--l. 1146--><p class="indent" >
+</div>
+</div>
+<!--l. 1147--><p class="noindent" >The selectors <i>binop-operator</i>, <i>binop-operand-1</i>, and <i>binop-operand-2</i> would be
+essentially equivalent to <i>caddr</i>, <i>cadddr</i>, and <i>car</i> of <i>cddddr</i>, respectively. Similarly,
+the form <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defstruct (binop (:type list) :named (:initial-oﬀset 2))
+</td></tr></table>
+<!--l. 1153--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (operator &#x2019;? :type symbol)</td></tr></table>
+<!--l. 1154--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-1</td></tr></table>
+<!--l. 1155--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-2)</td></tr></table>
+<!--l. 1157--><p class="indent" >
+</div>
+</div>
+<!--l. 1158--><p class="noindent" >would result in the following behavior for <i>make-binop</i>: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operator &#x2019;+ :operand-1 &#x2019;x :operand-2 5)
+</td></tr></table>
+<!--l. 1160--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (nil nil binop + x 5)</td></tr></table>
+<!--l. 1161--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1162--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-binop :operand-2 4 :operator &#x2019;*)</td></tr></table>
+<!--l. 1163--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (nil nil binop * <i>nil</i> 4)</td></tr></table>
+<!--l. 1165--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 1167--><p class="indent" >   If the <i>:include</i> is used with the <i>:type</i> option, then the eﬀect is ﬁrst to skip over
+as many representation elements as needed to represent the included structure,
+then to skip over any additional elements speciﬁed by the <i>:initial-oﬀset</i> option,
+and then to begin allocation of elements from that point. For example: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defstruct (binop (:type list) :named (:initial-oﬀset 2))
+</td></tr></table>
+<!--l. 1174--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (operator &#x2019;? :type symbol)</td></tr></table>
+<!--l. 1175--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-1</td></tr></table>
+<!--l. 1176--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  operand-2)</td></tr></table>
+<!--l. 1177--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1178--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defstruct (annotated-binop (:type list)</td></tr></table>
+<!--l. 1179--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                            (:initial-oﬀset 3)</td></tr></table>
+<!--l. 1180--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                            (:include binop))</td></tr></table>
+<!--l. 1181--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  commutative associative identity)</td></tr></table>
+<!--l. 1182--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1183--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-annotated-binop :operator &#x2019;*</td></tr></table>
+<!--l. 1184--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      :operand-1 &#x2019;x</td></tr></table>
+<!--l. 1185--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      :operand-2 5</td></tr></table>
+<!--l. 1186--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      :commutative t</td></tr></table>
+<!--l. 1187--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      :associative t</td></tr></table>
+<!--l. 1188--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      :identity 1)</td></tr></table>
+<!--l. 1189--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (nil nil binop * x 5 nil nil nil t t 1)</td></tr></table>
+<!--l. 1191--><p class="indent" >
+</div>
+</div>
+<!--l. 1192--><p class="noindent" >The ﬁrst two <i>nil</i> elements stem from the <i>:initial-oﬀset</i> of <i>2</i> in the deﬁnition of <i>binop</i>.
+The next four elements contain the structure name and three slots for <i>binop</i>. The
+next three <i>nil</i> elements stem from the <i>:initial-oﬀset</i> of <i>3</i> in the deﬁnition of
+<i>annotated-binop</i>. The last three list elements contain the additional slots for an
+<i>annotated-binop</i>.
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+   <!--l. 6--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch20.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse108.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse108.html#tailclmse108.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse109.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch19.html#clmse109.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 6--><p class="indent" >   <a 
+ id="tailclmse109.html"></a>  
+</body></html> 

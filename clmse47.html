@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Macro Expansion</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 560--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse48.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse46.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse46.html#tailclmse46.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse47.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch8.html#clmse47.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">8.2   </span> <a 
+ id="x60-990008.2"></a>Macro Expansion</h3>
+<!--l. 562--><p class="noindent" >The <i>macroexpand</i> function is the conventional means for expanding a macro call.
+A hook is provided for a user function to gain control during the expansion
+process.
+<div class=defun>
+<!--l. 566--><p class="noindent" > <i>[Function]</i>   <b>macroexpand</b> <a 
+ id="dx60-99001"></a><a 
+ id="x60-99002r137"></a>   <i>form</i>  <b>&#x0026;optional</b>  <i>env</i><br 
+class="newline" /><i>[Function]</i>   <b>macroexpand-1</b> <a 
+ id="dx60-99003"></a><a 
+ id="x60-99004r138"></a>   <i>form</i>  <b>&#x0026;optional</b>  <i>env</i>
+<!--l. 569--><p class="noindent" >If form is a macro call, then <i>macroexpand-1</i> will expand the macro call once and
+return two values: the expansion and <i>t</i>. If form is not a macro call, then the two
+values form and <i>nil</i> are returned.
+<!--l. 575--><p class="indent" >   A form is considered to be a macro call only if it is a cons whose car is a
+symbol that names a macro. The environment env is similar to that used within
+the evaluator (see <i>evalhook</i>); it defaults to a null environment. Any local macro
+deﬁnitions established within env by <i>macrolet</i> will be considered. If only
+form is given as an argument, then the environment is eﬀectively null,
+and only global macro deﬁnitions (as established by <i>defmacro</i>) will be
+considered.
+<!--l. 585--><p class="indent" >   Macro expansion is carried out as follows. Once <i>macroexpand-1</i> has
+determined that a symbol names a macro, it obtains the expansion function for
+that macro. The value of the variable <i>*macroexpand-hook*</i> is then called as a
+function of three arguments: the expansion function, the form, and the
+environment env. The value returned from this call is taken to be the expansion of
+the macro call. The initial value of <i>*macroexpand-hook*</i> is <i>funcall</i>, and the net
+eﬀect is to invoke the expansion function, giving it form and env as its two
+arguments.
+<div class=newer>
+<!--l. 597--><p class="indent" >   X3J13 voted in June 1988 ⟨<b>?</b>⟩ to specify that the value of <i>*macroexpand-hook*</i>
+is ﬁrst coerced to a function before being called as the expansion interface hook.
+Therefore its value may be a symbol, a lambda-expression, or any object of type
+<i>function</i>.
+</div>
+                                                                          
+
+                                                                          
+<div class=newer>
+<!--l. 605--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to specify that macro environment objects
+received by a <i>*macroexpand-hook*</i> function have only dynamic extent. The
+consequences are undeﬁned if such objects are referred to outside the dynamic
+extent of that particular invocation of the hook function. This allows
+implementations to use somewhat more eﬃcient techniques for representing
+environment objects.
+</div>
+<div class=obsolete>
+<!--l. 615--><p class="indent" >   (The purpose of <i>*macroexpand-hook*</i> is to facilitate various techniques for
+improving interpretation speed by caching macro expansions.)
+</div>
+<div class=newer>
+<!--l. 621--><p class="indent" >   X3J13 voted in June 1989 ⟨<b>?</b>⟩ to clarify that, while <i>*macroexpand-hook*</i>
+may be useful for debugging purposes, despite the original design intent
+there is currently no correct portable way to use it for caching macro
+expansions.
+      <ul class="itemize1">
+      <li class="itemize">Caching by displacement (performing a side eﬀect on the macro-call
+      form) won&#x2019;t work because the same (<i>eq</i>) macro-call form may appear
+      in distinct lexical contexts. In addition, the macro-call form may be a
+      read-only constant (see <i>quote</i> and also section <a 
+href="clmse127.html#x157-22400025.1">25.1<!--tex4ht:ref: COMPILER-SECTION --></a>).
+      </li>
+      <li class="itemize">Caching by table lookup won&#x2019;t work because such a table would have to
+      be keyed by both the macro-call form and the environment, but X3J13
+      voted in March 1989 ⟨<b>?</b>⟩ to permit macro environments to have only
+      dynamic extent.
+      </li>
+      <li class="itemize">Caching  by  storing  macro-call  forms  and  expansions  within  the
+      environment  object  itself  would  work,  but  there  are  no  portable
+      primitives that would allow users to do this.</li></ul>
+<!--l. 642--><p class="noindent" >X3J13 also noted that, although there seems to be no correct portable way to use
+<i>*macroexpand-hook*</i> to cache macro expansions, there is no requirement that an
+implementation call the macro expansion function more than once for a given
+form and lexical environment.
+</div>
+                                                                          
+
+                                                                          
+<div class=new>
+<!--l. 649--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to specify that <i>macroexpand-1</i> will
+also expand symbol macros deﬁned by <i>symbol-macrolet</i>; therefore a form
+may also be a macro call if it is a symbol. The vote did not address the
+interaction of this feature with the <i>*macroexpand-hook*</i> function. An obvious
+implementation choice is that the hook function is indeed called and given a
+special expansion function that, when applied to the form (a symbol) and env,
+will produce the expansion, just as for an ordinary macro; but this is only my
+suggestion.
+</div>
+<!--l. 661--><p class="indent" >   The evaluator expands macro calls as if through the use of <i>macroexpand-1</i>; the
+point is that <i>eval</i> also uses <i>*macroexpand-hook*</i>.
+<i>
+<!--l. 664--><p class="indent" >   macroexpand</i> is similar to <i>macroexpand-1</i>, but repeatedly expands form until it
+is no longer a macro call. (In eﬀect, <i>macroexpand</i> simply calls <i>macroexpand-1</i>
+repeatedly until the second value returned is <i>nil</i>.) A second value of <i>t</i> or <i>nil</i> is
+returned as for <i>macroexpand-1</i>, indicating whether the original form was a macro
+call.
+</div>
+<div class=defun>
+<!--l. 672--><p class="noindent" > <i>[Variable]</i>   <b>*macroexpand-hook*</b> <a 
+ id="dx60-99005"></a><a 
+ id="x60-99006r139"></a>
+<!--l. 674--><p class="noindent" >The value of <i>*macroexpand-hook*</i> is used as the expansion interface hook by
+<i>macroexpand-1</i>.
+</div>
+<div class=newer>
+                                                                          
+
+                                                                          
+   <!--l. 680--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse48.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse46.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse46.html#tailclmse46.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse47.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch8.html#clmse47.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 680--><p class="indent" >   <a 
+ id="tailclmse47.html"></a>  
+</body></html> 

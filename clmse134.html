@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Parsing Loop Clauses</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 103--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse135.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse133.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse133.html#tailclmse133.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse134.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch26.html#clmse134.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">26.3   </span> <a 
+ id="x165-23800026.3"></a>Parsing Loop Clauses</h3>
+<!--l. 105--><p class="noindent" >The syntactic parts of a loop construct are called clauses; the scope of each clause
+is determined by the top-level parsing of that clause&#x2019;s keyword. The following
+example shows a loop construct with six clauses:
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(loop for i from 1 to (compute-top-value)         ;First clause
+</td></tr></table>
+<!--l. 111--><p class="indent" >       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      while (not (unacceptable i))                ;Second clause</td></tr></table>
+<!--l. 112--><p class="indent" >       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      collect (square i)                          ;Third clause</td></tr></table>
+<!--l. 113--><p class="indent" >      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      do (format t &#x0022;Working on <tt>~</tt>D now&#x0022; i)         ;Fourth clause</td></tr></table>
+<!--l. 114--><p class="indent" >     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      when (evenp i)                              ;Fifth clause</td></tr></table>
+<!--l. 115--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        do (format t &#x0022;<tt>~</tt>D is a non-odd number&#x0022; i)</td></tr></table>
+<!--l. 116--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      ﬁnally (format t &#x0022;About to exit!&#x0022;))        ;Sixth clause</td></tr></table>
+<!--l. 118--><p class="indent" >
+</div>
+</div>
+<!--l. 121--><p class="indent" >   Each loop keyword introduces either a compound loop clause or a simple
+loop clause that can consist of a loop keyword followed by a single Lisp
+form. The number of forms in a clause is determined by the loop keyword
+that begins the clause and by the auxiliary keywords in the clause. The
+keywords <i>do</i>, <i>initially</i>, and <i>ﬁnally</i> are the only loop keywords that can
+take any number of Lisp forms and group them as if in a single <i>progn</i>
+form.
+<!--l. 130--><p class="indent" >   Loop clauses can contain auxiliary keywords, which are sometimes called
+prepositions. For example, the ﬁrst clause in the preceding code includes the
+prepositions <i>from</i> and <i>to</i>, which mark the value from which stepping begins and
+the value at which stepping ends.
+                                                                          
+
+                                                                          
+<!--l. 136--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">26.3.1   </span> <a 
+ id="x165-23900026.3.1"></a>Order of Execution</h4>
+<!--l. 138--><p class="noindent" >With the exceptions listed below, clauses are executed in the loop body in the
+order in which they appear in the source. Execution is repeated until a clause
+terminates the loop or until a Common Lisp <i>return</i>, <i>go</i>, or <i>throw</i> form is
+encountered. The following actions are exceptions to the linear order of
+execution:
+      <ul class="itemize1">
+      <li class="itemize">All variables are initialized ﬁrst, regardless of where the establishing
+      clauses appear in the source. The order of initialization follows the order
+      of these clauses.
+      </li>
+      <li class="itemize">The code for any <i>initially</i> clauses is collected into one <i>progn</i> in the order
+      in which the clauses appear in the source. The collected code is executed
+      once in the loop prologue after any implicit variable initializations.
+      </li>
+      <li class="itemize">The  code  for  any  <i>ﬁnally</i> clauses  is  collected  into  one  <i>progn</i> in  the
+      order in which the clauses appear in the source. The collected code is
+      executed once in the loop epilogue before any implicit values from the
+      accumulation clauses are returned. Explicit returns anywhere in the
+      source, however, will exit the loop without executing the epilogue code.
+      </li>
+      <li class="itemize">A <i>with</i> clause introduces a variable binding and an optional initial
+      value. The initial values are calculated in the order in which the <i>with</i>
+      clauses occur.
+      </li>
+      <li class="itemize">Iteration control clauses implicitly perform the following actions:
+           <ul class="itemize2">
+           <li class="itemize">initializing variables
+                                                                          
+
+                                                                          
+           </li>
+           <li class="itemize">stepping variables, generally between each execution of the loop
+           body
+           </li>
+           <li class="itemize">performing termination tests, generally just before the execution
+           of the loop body</li></ul>
+      </li></ul>
+<!--l. 186--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">26.3.2   </span> <a 
+ id="x165-24000026.3.2"></a>Kinds of Loop Clauses</h4>
+<!--l. 189--><p class="noindent" >Loop clauses fall into one of the following categories:
+      <ul class="itemize1">
+      <li class="itemize">variable initialization and stepping
+           <ul class="itemize2">
+           <li class="itemize">The <i>for</i> and <i>as</i> constructs provide iteration control clauses that
+           establish a variable to be initialized. You can combine <i>for</i> and <i>as</i>
+           clauses with the loop keyword <i>and</i> to get parallel initialization
+           and stepping.
+           </li>
+           <li class="itemize">The  <i>with</i>  construct  is  similar  to  a  single  <i>let</i>  clause.  You  can
+           combine <i>with</i> clauses using <i>and</i> to get parallel initialization.
+           </li>
+           <li class="itemize">The <i>repeat</i> construct causes iteration to terminate after a speciﬁed
+           number of times. It uses an internal variable to keep track of the
+           number of iterations.</li></ul>
+      <!--l. 214--><p class="noindent" >You can specify data types for loop variables (see section <a 
+href="clmse143.html#x174-25100026.12.1">26.12.1<!--tex4ht:ref: LOOP-TYPES-SECTION --></a>). It is an
+      error to bind the same variable twice in any variable-binding clause of a
+      single loop expression. Such variables include local variables, iteration
+      control variables, and variables found by destructuring.
+                                                                          
+
+                                                                          
+      </li>
+      <li class="itemize">value accumulation
+           <ul class="itemize2">
+           <li class="itemize">The <i>collect</i> construct takes one form in its clause and adds the
+           value of that form to the end of a list of values. By default, the
+           list of values is returned when the loop ﬁnishes.
+           </li>
+           <li class="itemize">The <i>append</i> construct takes one form in its clause and appends
+           the value of that form to the end of a list of values. By default,
+           the list of values is returned when the loop ﬁnishes.
+           </li>
+           <li class="itemize">The  <i>nconc</i>  construct  is  similar  to  <i>append</i>,  but  its  list  values
+           are concatenated as if by the Common Lisp function <i>nconc</i>. By
+           default, the list of values is returned when the loop ﬁnishes.
+           </li>
+           <li class="itemize">The <i>sum</i> construct takes one form in its clause that must evaluate
+           to  a  number  and  adds  that  number  into  a  running  total.  By
+           default, the cumulative sum is returned when the loop ﬁnishes.
+           </li>
+           <li class="itemize">The <i>count</i> construct takes one form in its clause and counts the
+           number of times that the form evaluates to a non-<i>nil</i> value. By
+           default, the count is returned when the loop ﬁnishes.
+           </li>
+           <li class="itemize">The  <i>minimize</i>  construct  takes  one  form  in  its  clause  and
+           determines the minimum value obtained by evaluating that form.
+           By default, the minimum value is returned when the loop ﬁnishes.
+           </li>
+           <li class="itemize">The  <i>maximize</i>  construct  takes  one  form  in  its  clause  and
+           determines the maximum value obtained by evaluating that form.
+           By default, the maximum value is returned when the loop ﬁnishes.</li></ul>
+      </li>
+      <li class="itemize">termination conditions
+                                                                          
+
+                                                                          
+           <ul class="itemize2">
+           <li class="itemize">The <i>loop-ﬁnish</i> Lisp macro terminates iteration and returns any
+           accumulated result. If speciﬁed, any <i>ﬁnally</i> clauses are evaluated.
+           </li>
+           <li class="itemize">The  <i>for</i>  and  <i>as</i>  constructs  provide  a  termination  test  that  is
+           determined by the iteration control clause.
+           </li>
+           <li class="itemize">The <i>repeat</i> construct causes termination after a speciﬁed number
+           of iterations.
+           </li>
+           <li class="itemize">The <i>while</i> construct takes one form, a condition, and terminates
+           the iteration if the condition evaluates to <i>nil</i>. A <i>while</i> clause is
+           equivalent to the expression <i>(if (not condition) (loop-ﬁnish))</i>.
+           </li>
+           <li class="itemize">The  <i>until</i>  construct  is  the  inverse  of  <i>while</i>;  it  terminates  the
+           iteration if the condition evaluates to any non-<i>nil</i> value. An <i>until</i>
+           clause is equivalent to the expression <i>(if condition (loop-ﬁnish))</i>.
+           </li>
+           <li class="itemize">The <i>always</i> construct takes one form and terminates the loop if the
+           form ever evaluates to <i>nil</i>; in this case, it returns <i>nil</i>. Otherwise,
+           it provides a default return value of <i>t</i>.
+           </li>
+           <li class="itemize">The <i>never</i> construct takes one form and terminates the loop if
+           the form ever evaluates to non-<i>nil</i>; in this case, it returns <i>nil</i>.
+           Otherwise, it provides a default return value of <i>t</i>.
+           </li>
+           <li class="itemize">The <i>thereis</i> construct takes one form and terminates the loop if
+           the form ever evaluates to non-<i>nil</i>; in this case, it returns that
+           value.</li></ul>
+      </li>
+      <li class="itemize">unconditional execution
+           <ul class="itemize2">
+           <li class="itemize">The <i>do</i> construct simply evaluates all forms in its clause.
+                                                                          
+
+                                                                          
+           </li>
+           <li class="itemize">The <i>return</i> construct takes one form and returns its value. It is
+           equivalent to the clause <i>do (return value)</i>.</li></ul>
+      </li>
+      <li class="itemize">conditional execution
+           <ul class="itemize2">
+           <li class="itemize">The <i>if </i> construct takes one form as a predicate and a clause that
+           is executed when the predicate is true. The clause can be a value
+           accumulation, unconditional, or another conditional clause; it can
+           also be any combination of such clauses connected by the loop
+           keyword <i>and</i>.
+           </li>
+           <li class="itemize">The <i>when</i> construct is a synonym for <i>if </i>.
+           </li>
+           <li class="itemize">The <i>unless</i> construct is similar to <i>when</i> except that it complements
+           the predicate; it executes the following clause if the predicate is
+           false.
+           </li>
+           <li class="itemize">The <i>else</i> construct provides an optional component of <i>if </i>, <i>when</i>,
+           and <i>unless</i> clauses that is executed when the predicate is false.
+           The component is one of the clauses described under <i>if </i>.
+           </li>
+           <li class="itemize">The <i>end</i> construct provides an optional component to mark the
+           end of a conditional clause.</li></ul>
+      </li>
+      <li class="itemize">miscellaneous operations
+           <ul class="itemize2">
+           <li class="itemize">The <i>named</i> construct assigns a name to a loop construct.
+           </li>
+           <li class="itemize">The <i>initially</i> construct causes its forms to be evaluated in the loop
+           prologue, which precedes all loop code except for initial settings
+           speciﬁed by the constructs <i>with</i>, <i>for</i>, or <i>as</i>.
+                                                                          
+
+                                                                          
+           </li>
+           <li class="itemize">The  <i>ﬁnally</i>  construct  causes  its  forms  to  be  evaluated  in  the
+           loop epilogue after normal iteration terminates. An unconditional
+           clause can also follow the loop keyword <i>ﬁnally</i>.</li></ul>
+      </li></ul>
+<!--l. 358--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">26.3.3   </span> <a 
+ id="x165-24100026.3.3"></a>Loop Syntax</h4>
+<!--l. 360--><p class="noindent" >The following syntax description provides an overview of the syntax for
+loop clauses. Detailed syntax descriptions of individual clauses appear in
+sections <a 
+href="clmse137.html#x168-24400026.6">26.6<!--tex4ht:ref: LOOP-ITERATION-SECTION --></a> through <a 
+href="clmse143.html#x174-25000026.12">26.12<!--tex4ht:ref: LOOP-MISC-SECTION --></a>. A loop consists of the following types of
+clauses:
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">initial-ﬁnal ::= initially | ﬁnally
+</td></tr></table>
+<!--l. 367--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">variables ::= with | initial-ﬁnal | for-as | repeat</td></tr></table>
+<!--l. 368--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">main ::= unconditional | accumulation | conditional | termination | initial-ﬁnal</td></tr></table>
+<!--l. 370--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">loop ::= <i>(loop  [<i><i>named name</i></i>]   {<i>variables</i>}∗ {<i>main</i>}∗ )</i></td></tr></table>
+<!--l. 372--><p class="indent" >
+</div>
+<!--l. 374--><p class="indent" >   Note that a loop must have at least one clause; however, for backward
+compatibility, the following format is also supported: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(loop  {<i>tag | expr</i>}∗ )
+</td></tr></table>
+<!--l. 378--><p class="indent" >
+</div>
+</div>
+<!--l. 379--><p class="noindent" >where expr is any Common Lisp expression that can be evaluated, and tag is any
+symbol not identiﬁable as a loop keyword. Such a format is roughly equivalent to
+the following one:
+                                                                          
+
+                                                                          
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(loop do  {<i>tag | expr</i>}∗ )
+</td></tr></table>
+<!--l. 385--><p class="indent" >
+</div>
+</div>
+<!--l. 387--><p class="indent" >   A loop prologue consists of any automatic variable initializations prescribed by
+the variable clauses, along with any initially clauses in the order they appear in
+the source.
+<!--l. 391--><p class="indent" >   A loop epilogue consists of ﬁnally clauses, if any, along with any implicit
+return value from an accumulation clause or an end-test clause.
+                                                                          
+
+                                                                          
+   <!--l. 396--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse135.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse133.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse133.html#tailclmse133.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse134.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch26.html#clmse134.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 396--><p class="indent" >   <a 
+ id="tailclmse134.html"></a>  
+</body></html> 

@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Blocks and Exits</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 2929--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse42.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse40.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse40.html#tailclmse40.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse41.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch7.html#clmse41.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">7.7   </span> <a 
+ id="x53-850007.7"></a>Blocks and Exits</h3>
+<!--l. 2932--><p class="noindent" >The <i>block</i> and <i>return-from</i> constructs provide a structured lexical non-local exit
+facility. At any point lexically within a <i>block</i> construct, a <i>return-from</i> with the
+same name may be used to perform an immediate transfer of control that exits
+from the <i>block</i>. In the most common cases this mechanism is more eﬃcient than
+the dynamic non-local exit facility provided by <i>catch</i> and <i>throw</i>, described in
+section <a 
+href="clmse45.html#x57-960007.11">7.11<!--tex4ht:ref: CATCH-THROW-SECTION --></a>.
+<div class=defspec>
+<!--l. 2942--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> block </b> <a 
+ id="dx53-85001"></a><a 
+ id="x53-85002r102"></a>   name  {<i>form</i>}∗
+</td></tr></table>
+<!--l. 2943--><p class="indent" >
+</div>
+   The <i>block</i> construct executes each form from left to right, returning whatever
+is returned by the last form. If, however, a <i>return</i> or <i>return-from</i> form that
+speciﬁes the same name is executed during the execution of some form, then the
+results speciﬁed by the <i>return</i> or <i>return-from</i> are immediately returned as the
+value of the <i>block</i> construct, and execution proceeds as if the <i>block</i> had terminated
+normally. In this, <i>block</i> diﬀers from <i>progn</i>; the <i>progn</i> construct has nothing to do
+with <i>return</i>.
+   The name is not evaluated; it must be a symbol. The scope of the name is
+lexical; only a <i>return</i> or <i>return-from</i> textually contained in some form can exit
+from the block. The extent of the name is dynamic. Therefore it is only possible to
+exit from a given run-time incarnation of a block once, either normally or by
+explicit return.
+   The <i>defun</i> form implicitly puts a <i>block</i> around the body of the function
+deﬁned; the <i>block</i> has the same name as the function. Therefore one may use
+<i>return-from</i> to return prematurely from a function deﬁned by <i>defun</i>.
+                                                                          
+
+                                                                          
+   The lexical scoping of the block name is fully general and has consequences
+that may be surprising to users and implementors of other Lisp systems. For
+example, the <i>return-from</i> in the following example actually does work in Common
+Lisp as one might expect: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(block loser
+</td></tr></table>
+<!--l. 2973--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   (catch &#x2019;stuﬀ</td></tr></table>
+<!--l. 2974--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (mapcar #&#x2019;(lambda (x) (if (numberp x)</td></tr></table>
+<!--l. 2975--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                (hairyfun x)</td></tr></table>
+<!--l. 2976--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                (return-from loser <i>nil</i>)))</td></tr></table>
+<!--l. 2977--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              items)))</td></tr></table>
+<!--l. 2979--><p class="indent" >
+</div>
+</div>
+<!--l. 2980--><p class="noindent" >Depending on the situation, a <i>return</i> in Common Lisp may not be simple. A <i>return</i>
+can break up catchers if necessary to get to the block in question. It is possible for
+a “closure” created by <i>function</i> for a lambda-expression to refer to a block name as
+long as the name is lexically apparent.
+</div>
+<div class=defspec>
+<!--l. 2990--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> return-from </b> <a 
+ id="dx53-85003"></a><a 
+ id="x53-85004r103"></a>   name  [ <i>result</i>]
+</td></tr></table>
+<!--l. 2991--><p class="indent" >
+</div>
+   <i>return-from</i> is used to return from a <i>block</i> or from such constructs as <i>do</i> and
+<i>prog</i> that implicitly establish a <i>block</i>. The name is not evaluated and must be a
+symbol. A <i>block</i> construct with the same name must lexically enclose the
+occurrence of <i>return-from</i>; whatever the evaluation of result produces is
+immediately returned from the block. (If the result form is omitted, it defaults to
+<i>nil</i>. As a matter of style, this form ought to be used to indicate that the particular
+value returned doesn&#x2019;t matter.)
+                                                                          
+
+                                                                          
+   The <i>return-from</i> form itself never returns and cannot have a value; it causes
+results to be returned from a <i>block</i> construct. If the evaluation of result
+produces multiple values, those multiple values are returned by the construct
+exited.
+</div>
+<div class=defmac>
+<!--l. 3011--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> return </b> <a 
+ id="dx53-85005"></a><a 
+ id="x53-85006r104"></a>   [ <i>result</i>]
+</td></tr></table>
+<!--l. 3012--><p class="indent" >
+</div>
+   <i>(return form)</i> is identical in meaning to <i>(return-from <i>nil</i> form)</i>; it returns from
+a block named <i>nil</i>. Blocks established implicitly by iteration constructs
+such as <i>do</i> are named <i>nil</i>, so that <i>return</i> will exit properly from such a
+construct.
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 3020--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse42.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse40.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse40.html#tailclmse40.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse41.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch7.html#clmse41.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 3020--><p class="indent" >   <a 
+ id="tailclmse41.html"></a>  
+</body></html> 

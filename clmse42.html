@@ -1,0 +1,1619 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Iteration</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 3020--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse43.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse41.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse41.html#tailclmse41.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse42.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch7.html#clmse42.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">7.8   </span> <a 
+ id="x54-860007.8"></a>Iteration</h3>
+<a 
+ id="dx54-86001"></a>
+<!--l. 3023--><p class="noindent" >Common Lisp provides a number of iteration constructs. The <i>loop</i> construct
+provides a trivial iteration facility; it is little more than a <i>progn</i> with a branch
+from the bottom back to the top. The <i>do</i> and <i>do*</i> constructs provide a general
+iteration facility for controlling the variation of several variables on each
+cycle. For specialized iterations over the elements of a list or n consecutive
+integers, <i>dolist</i> and <i>dotimes</i> are provided. The <i>tagbody</i> construct is the most
+general, permitting arbitrary <i>go</i> statements within it. (The traditional <i>prog</i>
+construct is a synthesis of <i>tagbody</i>, <i>block</i>, and <i>let</i>.) Most of the iteration
+constructs permit statically deﬁned non-local exits (see <i>return-from</i> and
+<i>return</i>).
+<!--l. 3038--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.8.1   </span> <a 
+ id="x54-870007.8.1"></a>Indeﬁnite Iteration</h4>
+<!--l. 3040--><p class="noindent" >The <i>loop</i> construct is the simplest iteration facility. It controls no variables, and
+simply executes its body repeatedly.
+<div class=defmac>
+<!--l. 3044--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> loop </b> <a 
+ id="dx54-87001"></a><a 
+ id="x54-87002r105"></a>   {<i>form</i>}∗
+</td></tr></table>
+<!--l. 3045--><p class="indent" >
+</div>
+   Each form is evaluated in turn from left to right. When the last form has been
+evaluated, then the ﬁrst form is evaluated again, and so on, in a never-ending
+cycle. The <i>loop</i> construct never returns a value. Its execution must be terminated
+explicitly, using <i>return</i> or <i>throw</i>, for example.
+                                                                          
+
+                                                                          
+<i>
+   loop</i>, like most iteration constructs, establishes an implicit block named <i>nil</i>.
+Thus <i>return</i> may be used to exit from a <i>loop</i> with speciﬁed results.
+<div class=obsolete>
+   A <i>loop</i> construct has this meaning only if every form is non-atomic (a list).
+The case where some form is atomic is reserved for future extensions.
+<div class=implementation>
+   <b>Implementation note:</b> There have been several proposals for a powerful iteration
+mechanism to be called <i>loop</i>. One version is provided in Lisp Machine Lisp.
+Implementors are encouraged to experiment with extensions to the <i>loop</i> syntax, but
+users should be advised that in all likelihood some speciﬁc set of extensions to <i>loop</i> will
+be adopted in a future revision of Common Lisp.
+</div>
+</div>
+<div class=new>
+   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to include just such an extension of <i>loop</i>. See
+chapter <a 
+href="clmch26.html#x162-23500026">26<!--tex4ht:ref: LOOP --></a>.
+</div>
+</div>
+<!--l. 3080--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.8.2   </span> <a 
+ id="x54-880007.8.2"></a>General Iteration</h4>
+<!--l. 3082--><p class="noindent" >In contrast to <i>loop</i>, <i>do</i> and <i>do*</i> provide a powerful and general mechanism for
+repetitively recalculating many variables.
+<div class=defmac>
+<!--l. 3086--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> do </b> <a 
+ id="dx54-88001"></a><a 
+ id="x54-88002r106"></a>   ( {<i>(var [<i>init [<i>step</i>] </i>] )</i>}∗ ) (end-test  {<i>result</i>}∗ )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗   <i>[Macro]</i><b> do* </b> <a 
+ id="dx54-88003"></a><a 
+ id="x54-88004r107"></a>   ( {<i>(var [<i>init [<i>step</i>] </i>] )</i>}∗ ) (end-test  {<i>result</i>}∗ )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 3092--><p class="indent" >
+</div>
+   The <i>do</i> special form provides a generalized iteration facility, with an arbitrary
+number of “index variables.” These variables are bound within the iteration and
+stepped in parallel in speciﬁed ways. They may be used both to generate
+successive values of interest (such as successive integers) or to accumulate results.
+                                                                          
+
+                                                                          
+When an end condition is met, the iteration terminates with a speciﬁed
+value.
+   In general, a <i>do</i> loop looks like this: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(do ((var1 init1 step1)
+</td></tr></table>
+<!--l. 3102--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (var2 init2 step2)</td></tr></table>
+<!--l. 3103--><p class="indent" >                                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     ...</td></tr></table>
+<!--l. 3104--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (varn initn stepn))</td></tr></table>
+<!--l. 3105--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (end-test . result)</td></tr></table>
+<!--l. 3106--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   {<i>declaration</i>}∗</td></tr></table>
+<!--l. 3107--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  . tagbody)</td></tr></table>
+<!--l. 3109--><p class="indent" >
+</div>
+</div>
+<!--l. 3110--><p class="noindent" >A <i> do*</i> loop looks exactly the same except that the name <i>do</i> is replaced by
+<i>do*</i>.
+<!--l. 3113--><p class="indent" >   The ﬁrst item in the form is a list of zero or more index-variable speciﬁers.
+Each index-variable speciﬁer is a list of the name of a variable var, an initial value
+init, and a stepping form step. If init is omitted, it defaults to <i>nil</i>. If step is
+omitted, the var is not changed by the <i>do</i> construct between repetitions
+(though code within the <i>do</i> is free to alter the value of the variable by using
+<i>setq</i>).
+<!--l. 3122--><p class="indent" >   An index-variable speciﬁer can also be just the name of a variable. In this case,
+the variable has an initial value of <i>nil</i> and is not changed between repetitions. As
+a matter of style, it is recommended that an unadorned variable name be written
+only when that variable will be stored into (such as by <i>setq</i>) before its ﬁrst use. If
+it is important that the initial value be <i>nil</i> rather than some undeﬁned value,
+then it is clearer to write out <i>(varj <i>nil</i>)</i> if the initial value is intended to
+mean “false,” or <i>(varj &#x2019;<i>(</i><i>)</i>)</i> if the initial value is intended to be an empty
+list.
+<div class=new>
+<!--l. 3136--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to regularize the binding formats for <i>do</i>, <i>do*</i>,
+<i>let</i>, <i>let*</i>, <i>prog</i>, <i>prog*</i>, and <i>compiler-let</i>. In the case of <i>do</i> and <i>do*</i> the ﬁrst edition
+was inconsistent; the formal syntax fails to reﬂect the fact that a simple variable
+name may appear, as described in the preceding paragraph. The deﬁnitions should
+read
+                                                                          
+
+                                                                          
+<div class=defmac>
+<!--l. 3146--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> do </b> <a 
+ id="dx54-88005"></a><a 
+ id="x54-88006r108"></a>   ( {<i>var|(var [<i>init [<i>step</i>] </i>] )</i>}∗ ) (end-test  {<i>result</i>}∗ )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗   <i>[Macro]</i><b> do* </b> <a 
+ id="dx54-88007"></a><a 
+ id="x54-88008r109"></a>   ( {<i>var|(var [<i>init [<i>step</i>] </i>] )</i>}∗ ) (end-test  {<i>result</i>}∗ )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 3152--><p class="indent" >
+</div>
+   for consistency with the reading of the ﬁrst edition and the X3J13
+vote.
+</div>
+</div>
+<!--l. 3157--><p class="indent" >   Before the ﬁrst iteration, all the init forms are evaluated, and each
+var is bound to the value of its respective init. This is a binding, not an
+assignment; when the loop terminates, the old values of those variables will
+be restored. For <i>do</i>, all of the init forms are evaluated before any var is
+bound; hence all the init forms may refer to the old bindings of all the
+variables (that is, to the values visible before beginning execution of the
+<i>do</i> construct). For <i>do*</i>, the ﬁrst init form is evaluated, then the ﬁrst
+var is bound to that value, then the second init form is evaluated, then
+the second var is bound, and so on; in general, the initj form can refer
+to the new binding vark if k &#x003C; j, and otherwise to the old binding of
+vark.
+<!--l. 3172--><p class="indent" >   The second element of the loop is a list of an end-testing predicate form
+end-test and zero or more result forms. This resembles a <i>cond</i> clause. At the
+beginning of each iteration, after processing the variables, the end-test is
+evaluated. If the result is <i>nil</i>, execution proceeds with the body of the <i>do</i> (or <i>do*</i>)
+form. If the result is not <i>nil</i>, the result forms are evaluated in order as an implicit
+<i>progn</i>, <a 
+ id="dx54-88009"></a>and then <i>do</i> returns. <i>do</i> returns the results of evaluating the last result
+form. If there are no result forms, the value of <i>do</i> is <i>nil</i>. Note that this is
+not quite analogous to the treatment of clauses in a <i>cond</i> form, because
+a <i>cond</i> clause with no result forms returns the (non-<i>nil</i>) result of the
+test.
+<!--l. 3189--><p class="indent" >   At the beginning of each iteration other than the ﬁrst, the index variables are
+updated as follows. All the step forms are evaluated, from left to right, and the
+resulting values are assigned to the respective index variables. Any variable that
+has no associated step form is not assigned to. For <i>do</i>, all the step forms are
+evaluated before any variable is updated; the assignment of values to variables is
+                                                                          
+
+                                                                          
+done in parallel, as if by <i>psetq</i>. Because all of the step forms are evaluated before
+any of the variables are altered, a step form when evaluated always has access to
+the old values of all the index variables, even if other step forms precede it. For
+<i>do*</i>, the ﬁrst step form is evaluated, then the value is assigned to the ﬁrst
+var, then the second step form is evaluated, then the value is assigned to
+the second var, and so on; the assignment of values to variables is done
+sequentially, as if by <i>setq</i>. For either <i>do</i> or <i>do*</i>, after the variables have been
+updated, the end-test is evaluated as described above, and the iteration
+continues.
+<!--l. 3210--><p class="indent" >   If the end-test of a <i>do</i> form is <i><i>nil</i></i>, the test will never succeed. Therefore
+this provides an idiom for “do forever”: the body of the <i>do</i> is executed
+repeatedly, stepping variables as usual. (The <i>loop</i> construct performs a “do
+forever” that steps no variables.) The inﬁnite loop can be terminated by the
+use of <i>return</i>, <i>return-from</i>, <i>go</i> to an outer level, or <i>throw</i>. For example: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(do ((j 0 (+ j 1)))
+</td></tr></table>
+<!--l. 3220--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (<i>nil</i>)                        ;Do forever</td></tr></table>
+<!--l. 3221--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format t &#x0022;<tt>~</tt>%Input <tt>~</tt>D:&#x0022; j)</td></tr></table>
+<!--l. 3222--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (let ((item (read)))</td></tr></table>
+<!--l. 3223--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (if (null item) (return)     ;Process items until <i>nil</i> seen</td></tr></table>
+<!--l. 3224--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (format t &#x0022;<tt>~</tt>&#x0026;Output <tt>~</tt>D: <tt>~</tt>S&#x0022; j (process item)))))</td></tr></table>
+<!--l. 3226--><p class="indent" >
+</div>
+</div>
+<!--l. 3228--><p class="indent" >   The remainder of the <i>do</i> form constitutes an implicit <i>tagbody</i>. Tags may
+appear within the body of a <i>do</i> loop for use by <i>go</i> statements appearing in the
+body (but such <i>go</i> statements may not appear in the variable speciﬁers, the
+end-test, or the result forms). When the end of a <i>do</i> body is reached,
+the next iteration cycle (beginning with the evaluation of step forms)
+occurs.
+<!--l. 3236--><p class="indent" >   An implicit <i>block</i> named <i>nil</i> surrounds the entire <i>do</i> form. A <i>return</i> statement
+may be used at any point to exit the loop immediately.
+<i>
+<!--l. 3240--><p class="indent" >   declare</i> forms may appear at the beginning of a <i>do</i> body. They apply to code
+                                                                          
+
+                                                                          
+in the <i>do</i> body, to the bindings of the <i>do</i> variables, to the init forms, to the step
+forms, to the end-test, and to the result forms.
+<div class=incompatibility>
+<!--l. 3246--><p class="noindent" ><b>Compatibility note:</b> “Old-style” MacLisp <i>do</i> loops, that is, those of the form <i>(do var
+init step end-test . body)</i>, are not supported in Common Lisp. Such old-style loops are
+considered obsolete and in any case are easily converted to a new-style <i>do</i> with the
+insertion of three pairs of parentheses. In practice the compiler can catch nearly
+all instances of old-style <i>do</i> loops because they will not have a legal format
+anyway.
+</div>
+<!--l. 3258--><p class="indent" >   Here are some examples of the use of <i>do</i>: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(do ((i 0 (+ i 1))     ;Sets every null element of <i>a-vector</i> to zero
+</td></tr></table>
+<!--l. 3260--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (n (length a-vector)))</td></tr></table>
+<!--l. 3261--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ((= i n))</td></tr></table>
+<!--l. 3262--><p class="indent" >                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (when (null (aref a-vector i))</td></tr></table>
+<!--l. 3263--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (setf (aref a-vector i) 0)))</td></tr></table>
+<!--l. 3265--><p class="indent" >
+</div>
+</div>
+<!--l. 3266--><p class="noindent" >The construction <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(do ((x e (cdr x))
+</td></tr></table>
+<!--l. 3268--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (oldx x x))</td></tr></table>
+<!--l. 3269--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ((null x))</td></tr></table>
+<!--l. 3270--><p class="indent" >                                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  body)</td></tr></table>
+<!--l. 3272--><p class="indent" >
+</div>
+</div>
+<!--l. 3273--><p class="noindent" >exploits parallel assignment to index variables. On the ﬁrst iteration, the value of
+<i>oldx</i> is whatever value <i>x</i> had before the <i>do</i> was entered. On succeeding iterations,
+<i>oldx</i> contains the value that <i>x</i> had on the previous iteration.
+<!--l. 3278--><p class="indent" >   Very often an iterative algorithm can be most clearly expressed entirely in the
+step forms of a <i>do</i>, and the body is empty. For example, <div class=lisp> <div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(do ((x foo (cdr x))
+</td></tr></table>
+<!--l. 3282--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (y bar (cdr y))</td></tr></table>
+<!--l. 3283--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (z &#x2019;<i>(</i><i>)</i> (cons (f (car x) (car y)) z)))</td></tr></table>
+<!--l. 3284--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ((or (null x) (null y))</td></tr></table>
+<!--l. 3285--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (nreverse z)))</td></tr></table>
+<!--l. 3287--><p class="indent" >
+</div>
+</div>
+<!--l. 3288--><p class="noindent" >does the same thing as <i>(mapcar #&#x2019;f foo bar)</i>. Note that the step computation for <i>z</i>
+exploits the fact that variables are stepped in parallel. Also, the body of
+the loop is empty. Finally, the use of <i>nreverse</i> to put an accumulated <i>do</i>
+loop result into the correct order is a standard idiom. Another example: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun list-reverse (list)
+</td></tr></table>
+<!--l. 3294--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (do ((x list (cdr x))</td></tr></table>
+<!--l. 3295--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (y &#x2019;<i>(</i><i>)</i> (cons (car x) y)))</td></tr></table>
+<!--l. 3296--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           ((endp x) y)))</td></tr></table>
+<!--l. 3298--><p class="indent" >
+</div>
+</div>
+<!--l. 3299--><p class="noindent" >Note the use of <i>endp</i> rather than <i>null</i> or <i>atom</i> to test for the end of a list; this may
+result in more robust code.
+<!--l. 3302--><p class="indent" >   As an example of nested loops, suppose that <i>env</i> holds a list of conses. The car
+of each cons is a list of symbols, and the cdr of each cons is a list of equal
+length containing corresponding values. Such a data structure is similar
+to an association list but is divided into “frames”; the overall structure
+resembles a rib cage. A lookup function on such a data structure might be <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun ribcage-lookup (sym ribcage)
+</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 3310--><p class="indent" >                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (do ((r ribcage (cdr r)))</td></tr></table>
+<!--l. 3311--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           ((null r) <i>nil</i>)</td></tr></table>
+<!--l. 3312--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (do ((s (caar r) (cdr s))</td></tr></table>
+<!--l. 3313--><p class="indent" >                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (v (cdar r) (cdr v)))</td></tr></table>
+<!--l. 3314--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             ((null s))</td></tr></table>
+<!--l. 3315--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (when (eq (car s) sym)</td></tr></table>
+<!--l. 3316--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (return-from ribcage-lookup (car v))))))</td></tr></table>
+<!--l. 3318--><p class="indent" >
+</div>
+</div>
+<!--l. 3319--><p class="noindent" >(Notice the use of indentation in the above example to set oﬀ the bodies of the <i>do</i>
+loops.)
+<!--l. 3322--><p class="indent" >   A <i>do</i> loop may be explained in terms of the more primitive constructs <i>block</i>,
+<i>return</i>, <i>let</i>, <i>loop</i>, <i>tagbody</i>, and <i>psetq</i> as follows: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(block nil
+</td></tr></table>
+<!--l. 3326--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (let ((var1 init1)</td></tr></table>
+<!--l. 3327--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (var2 init2)</td></tr></table>
+<!--l. 3328--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        ...</td></tr></table>
+<!--l. 3329--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (varn initn))</td></tr></table>
+<!--l. 3330--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     {<i>declaration</i>}∗</td></tr></table>
+<!--l. 3331--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (loop (when end-test (return (progn . result)))</td></tr></table>
+<!--l. 3332--><p class="indent" >                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (tagbody . tagbody)</td></tr></table>
+<!--l. 3333--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (psetq var1 step1</td></tr></table>
+<!--l. 3334--><p class="indent" >                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                 var2 step2</td></tr></table>
+<!--l. 3335--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                 ...</td></tr></table>
+<!--l. 3336--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                 varn stepn))))</td></tr></table>
+<!--l. 3338--><p class="indent" >
+</div>
+</div>
+<i>
+<!--l. 3339--><p class="noindent" >do*</i> is exactly like <i>do</i> except that the bindings and steppings of the variables are
+performed sequentially rather than in parallel. It is as if, in the above explanation,
+<i>let</i> were replaced by <i>let*</i> and <i>psetq</i> were replaced by <i>setq</i>.
+</div>
+                                                                          
+
+                                                                          
+<!--l. 3346--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.8.3   </span> <a 
+ id="x54-890007.8.3"></a>Simple Iteration Constructs</h4>
+<!--l. 3348--><p class="noindent" >The constructs <i>dolist</i> and <i>dotimes</i> execute a body of code once for each value
+taken by a single variable. They are expressible in terms of <i>do</i>, but capture very
+common patterns of use.
+<!--l. 3352--><p class="indent" >   Both <i>dolist</i> and <i>dotimes</i> perform a body of statements repeatedly. On each
+iteration a speciﬁed variable is bound to an element of interest that the
+body may examine. <i>dolist</i> examines successive elements of a list, and
+<i>dotimes</i> examines integers from 0 to n − 1 for some speciﬁed positive integer
+n.
+<!--l. 3359--><p class="indent" >   The value of any of these constructs may be speciﬁed by an optional result
+form, which if omitted defaults to the value <i>nil</i>.
+<!--l. 3362--><p class="indent" >   The <i>return</i> statement may be used to return immediately from a <i>dolist</i> or
+<i>dotimes</i> form, discarding any following iterations that might have been performed;
+in eﬀect, a <i>block</i> named <i>nil</i> surrounds the construct. The body of the
+loop is implicitly a <i>tagbody</i> construct; it may contain tags to serve as the
+targets of <i>go</i> statements. Declarations may appear before the body of the
+loop.
+<div class=defmac>
+<!--l. 3372--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> dolist </b> <a 
+ id="dx54-89001"></a><a 
+ id="x54-89002r110"></a>   (var listform  [ <i>resultform</i>]  )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 3374--><p class="indent" >
+</div>
+   <i>dolist</i> provides straightforward iteration over the elements of a list.
+First <i>dolist</i> evaluates the form listform, which should produce a list. It
+then executes the body once for each element in the list, in order, with
+the variable var bound to the element. Then resultform (a single form,
+not an implicit <i>progn</i>) is evaluated, and the result is the value of the
+<i>dolist</i> form. (When the resultform is evaluated, the control variable var is
+still bound and has the value <i>nil</i>.) If resultform is omitted, the result is
+<i>nil</i>.
+<div class=lisp>
+<div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(dolist (x &#x2019;(a b c d)) (prin1 x) (princ &#x0022; &#x0022;))  ⇒ <i>nil</i>
+</td></tr></table>
+<!--l. 3388--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   after printing “<i>a b c d </i>” (note the trailing space)</td></tr></table>
+<!--l. 3390--><p class="indent" >
+</div>
+</div>
+<!--l. 3392--><p class="noindent" >An explicit <i>return</i> statement may be used to terminate the loop and return a
+speciﬁed value.
+<div class=new>
+<!--l. 3396--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-920007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>
+</div>
+<div class=defmac>
+<!--l. 3403--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> dotimes </b> <a 
+ id="dx54-89003"></a><a 
+ id="x54-89004r111"></a>   (var countform  [ <i>resultform</i>]  )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 3405--><p class="indent" >
+</div>
+   <i>dotimes</i> provides straightforward iteration over a sequence of integers.
+The expression <i>(dotimes (var countform resultform) . progbody)</i> evaluates
+the form countform, which should produce an integer. It then performs
+progbody once for each integer from zero (inclusive) to count (exclusive), in
+order, with the variable var bound to the integer; if the value of countform
+is zero or negative, then the progbody is performed zero times. Finally,
+resultform (a single form, not an implicit <i>progn</i>) is evaluated, and the
+result is the value of the <i>dotimes</i> form. (When the resultform is evaluated,
+the control variable var is still bound and has as its value the number
+of times the body was executed.) If resultform is omitted, the result is
+<i>nil</i>.
+   An explicit <i>return</i> statement may be used to terminate the loop and return a
+speciﬁed value.
+   Here is an example of the use of <i>dotimes</i> in processing strings: <div class=lisp> <div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; True if the speciﬁed subsequence of the string is a
+</td></tr></table>
+<!--l. 3426--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; palindrome (reads the same forwards and backwards).</td></tr></table>
+<!--l. 3427--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3428--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun palindromep (string <i>&#x0026;optional</i></td></tr></table>
+<!--l. 3429--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                           (start 0)</td></tr></table>
+<!--l. 3430--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                           (end (length string)))</td></tr></table>
+<!--l. 3431--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (dotimes (k (ﬂoor (- end start) 2) <i>t</i>)</td></tr></table>
+<!--l. 3432--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (unless (char-equal (char string (+ start k))</td></tr></table>
+<!--l. 3433--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                        (char string (- end k 1)))</td></tr></table>
+<!--l. 3434--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (return <i>nil</i>))))</td></tr></table>
+<!--l. 3435--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3436--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(palindromep &#x0022;Able was I ere I saw Elba&#x0022;)  ⇒ <i>t</i></td></tr></table>
+<!--l. 3437--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3438--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(palindromep &#x0022;A man, a plan, a canal–Panama!&#x0022;)  ⇒ <i>nil</i></td></tr></table>
+<!--l. 3439--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3440--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(remove-if-not #&#x2019;alpha-char-p     ;Remove punctuation</td></tr></table>
+<!--l. 3441--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               &#x0022;A man, a plan, a canal–Panama!&#x0022;)</td></tr></table>
+<!--l. 3442--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ &#x0022;AmanaplanacanalPanama&#x0022;</td></tr></table>
+<!--l. 3443--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3444--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(palindromep</td></tr></table>
+<!--l. 3445--><p class="indent" >                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> (remove-if-not #&#x2019;alpha-char-p</td></tr></table>
+<!--l. 3446--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                &#x0022;A man, a plan, a canal–Panama!&#x0022;))  ⇒ <i>t</i></td></tr></table>
+<!--l. 3447--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3448--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(palindromep</td></tr></table>
+<!--l. 3449--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> (remove-if-not</td></tr></table>
+<!--l. 3450--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   #&#x2019;alpha-char-p</td></tr></table>
+<!--l. 3451--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   &#x0022;Unremarkable was I ere I saw Elba Kramer, nu?&#x0022;))  ⇒ <i>t</i></td></tr></table>
+<!--l. 3452--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3453--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(palindromep</td></tr></table>
+<!--l. 3454--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> (remove-if-not</td></tr></table>
+<!--l. 3455--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   #&#x2019;alpha-char-p</td></tr></table>
+<!--l. 3456--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   &#x0022;A man, a plan, a cat, a ham, a yak,</td></tr></table>
+<!--l. 3457--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                   a yam, a hat, a canal–Panama!&#x0022;))  ⇒ <i>t</i></td></tr></table>
+<!--l. 3459--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(palindromep</td></tr></table>
+<!--l. 3460--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> (remove-if-not</td></tr></table>
+<!--l. 3461--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   #&#x2019;alpha-char-p</td></tr></table>
+<!--l. 3462--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   &#x0022;Ja-da, ja-da, ja-da ja-da jing jing jing&#x0022;))  ⇒ <i>nil</i></td></tr></table>
+<!--l. 3464--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<!--l. 3466--><p class="noindent" >Altering the value of var in the body of the loop (by using <i>setq</i>, for example) will
+have unpredictable, possibly implementation-dependent results. A Common Lisp
+compiler may choose to issue a warning if such a variable appears in a
+<i>setq</i>.
+<div class=incompatibility>
+<!--l. 3472--><p class="noindent" ><b>Compatibility note:</b> The <i>dotimes</i> construct is the closest thing in Common Lisp to the
+Interlisp <i>rptq</i> construct.
+</div>
+</div>
+<!--l. 3479--><p class="indent" >   See also <i>do-symbols</i>, <i>do-external-symbols</i>, and <i>do-all-symbols</i>.
+<!--l. 3482--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.8.4   </span> <a 
+ id="x54-900007.8.4"></a>Mapping</h4>
+<a 
+ id="dx54-90001"></a>
+<!--l. 3485--><p class="noindent" >Mapping is a type of iteration in which a function is successively applied to pieces
+of one or more sequences. The result of the iteration is a sequence containing the
+respective results of the function applications. There are several options for the
+way in which the pieces of the list are chosen and for what is done with the results
+returned by the applications of the function.
+<!--l. 3493--><p class="indent" >   The function <i>map</i> may be used to map over any kind of sequence. The
+following functions operate only on lists.
+<div class=defun>
+<!--l. 3496--><p class="noindent" > <i>[Function]</i>   <b>mapcar</b> <a 
+ id="dx54-90002"></a><a 
+ id="x54-90003r112"></a>   <i>function</i>  <i>list</i>  <b>&#x0026;rest</b>  more-lists <br 
+class="newline" /><i>[Function]</i>   <b>maplist</b> <a 
+ id="dx54-90004"></a><a 
+ id="x54-90005r113"></a>   <i>function</i>  <i>list</i>  <b>&#x0026;rest</b>  more-lists <br 
+class="newline" /><i>[Function]</i>   <b>mapc</b> <a 
+ id="dx54-90006"></a><a 
+ id="x54-90007r114"></a>   <i>function</i>  <i>list</i>  <b>&#x0026;rest</b>  more-lists <br 
+class="newline" /><i>[Function]</i>   <b>mapl</b> <a 
+ id="dx54-90008"></a><a 
+ id="x54-90009r115"></a>   <i>function</i>  <i>list</i>  <b>&#x0026;rest</b>  more-lists <br 
+class="newline" /><i>[Function]</i>   <b>mapcan</b> <a 
+ id="dx54-90010"></a><a 
+ id="x54-90011r116"></a>   <i>function</i>  <i>list</i>  <b>&#x0026;rest</b>  more-lists <br 
+class="newline" /><i>[Function]</i>   <b>mapcon</b> <a 
+ id="dx54-90012"></a><a 
+ id="x54-90013r117"></a>   <i>function</i>  <i>list</i>  <b>&#x0026;rest</b>  more-lists
+<!--l. 3503--><p class="noindent" >For each of these mapping functions, the ﬁrst argument is a function and the rest
+must be lists. The function must take as many arguments as there are
+lists.
+<i>
+<!--l. 3508--><p class="indent" >   mapcar</i> operates on successive elements of the lists. First the function is
+applied to the car of each list, then to the cadr of each list, and so on. (Ideally all
+                                                                          
+
+                                                                          
+the lists are the same length; if not, the iteration terminates when the shortest list
+runs out, and excess elements in other lists are ignored.) The value returned by
+<i>mapcar</i> is a list of the results of the successive calls to the function. For example: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(mapcar #&#x2019;abs &#x2019;(3 -4 2 -5 -6))  ⇒ (3 4 2 5 6)
+</td></tr></table>
+<!--l. 3518--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(mapcar #&#x2019;cons &#x2019;(a b c) &#x2019;(1 2 3))  ⇒ ((a . 1) (b . 2) (c . 3))</td></tr></table>
+<!--l. 3520--><p class="indent" >
+</div>
+</div>
+<i>
+<!--l. 3522--><p class="indent" >   maplist</i> is like <i>mapcar</i> except that the function is applied to the lists and
+successive cdr&#x2019;s of those lists rather than to successive elements of the lists. For
+example: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(maplist #&#x2019;(lambda (x) (cons &#x2019;foo x))
+</td></tr></table>
+<!--l. 3527--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         &#x2019;(a b c d))</td></tr></table>
+<!--l. 3528--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ ((foo a b c d) (foo b c d) (foo c d) (foo d))</td></tr></table>
+<!--l. 3530--><p class="indent" >
+</div>
+</div>
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(maplist #&#x2019;(lambda (x) (if (member (car x) (cdr x)) 0 1)))
+</td></tr></table>
+<!--l. 3533--><p class="indent" >                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         &#x2019;(a b a c d b c))</td></tr></table>
+<!--l. 3534--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (0 0 1 0 1 1 1)</td></tr></table>
+<!--l. 3535--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   ;An entry is <i>1</i> if the corresponding element of the input</td></tr></table>
+<!--l. 3536--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   ; list was the last instance of that element in the input list.</td></tr></table>
+<!--l. 3538--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<i>
+<!--l. 3540--><p class="indent" >   mapl</i> and <i>mapc</i> are like <i>maplist</i> and <i>mapcar</i>, respectively, except that they do
+not accumulate the results of calling the function.
+<div class=incompatibility>
+<!--l. 3545--><p class="noindent" ><b>Compatibility note:</b> In all Lisp systems since Lisp 1.5, <i>mapl</i> has been called
+<i>map</i>. In the chapter on sequences it is explained why this was a bad choice.
+Here the name <i>map</i> is used for the far more useful generic sequence mapper, in
+closer accordance with the computer science literature, especially the growing
+body of papers on functional programming. <div class=new> Note that this remark, predating
+the design of the Common Lisp Object System, uses the term “generic” in a
+generic sense and not necessarily in the technical sense used by CLOS (see
+chapter <a 
+href="clmch2.html#x9-150002">2<!--tex4ht:ref: DTYPES --></a>).
+</div>
+</div>
+<!--l. 3561--><p class="indent" >   These functions are used when the function is being called merely for its side
+eﬀects rather than for its returned values. The value returned by <i>mapl</i> or <i>mapc</i> is
+the second argument, that is, the ﬁrst sequence argument.
+<i>
+<!--l. 3566--><p class="indent" >   mapcan</i> and <i>mapcon</i> are like <i>mapcar</i> and <i>maplist</i>, respectively, except that
+they combine the results of the function using <i>nconc</i> instead of <i>list</i>. That is, <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(mapcon f x1 ... xn)
+</td></tr></table>
+<!--l. 3570--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ≡ (apply #&#x2019;nconc (maplist f x1 ... xn))</td></tr></table>
+<!--l. 3572--><p class="indent" >
+</div>
+</div>
+<!--l. 3573--><p class="noindent" >and similarly for the relationship between <i>mapcan</i> and <i>mapcar</i>. Conceptually, these
+functions allow the mapped function to return a variable number of items to be
+put into the output list. This is particularly useful for eﬀectively returning zero or
+one item: <div class=lisp> <div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(mapcan #&#x2019;(lambda (x) (and (numberp x) (list x)))
+</td></tr></table>
+<!--l. 3578--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        &#x2019;(a 1 b c 3 4 d 5))</td></tr></table>
+<!--l. 3579--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (1 3 4 5)</td></tr></table>
+<!--l. 3581--><p class="indent" >
+</div>
+</div>
+<!--l. 3582--><p class="noindent" >In this case the function serves as a ﬁlter; this is a standard Lisp idiom using <i>mapcan</i>.
+(The function <i>remove-if-not</i> might have been useful in this particular context,
+however.) Remember that <i>nconc</i> is a destructive operation, and therefore so are
+<i>mapcan</i> and <i>mapcon</i>; the lists returned by the function are altered in order to
+concatenate them.
+<!--l. 3590--><p class="indent" >   Sometimes a <i>do</i> or a straightforward recursion is preferable to a mapping
+operation; however, the mapping functions should be used wherever they
+naturally apply because this increases the clarity of the code.
+<!--l. 3594--><p class="indent" >   The functional argument to a mapping function must be acceptable to <i>apply</i>;
+it cannot be a macro or the name of a special form. Of course, there is nothing
+wrong with using a function that has <i>&#x0026;optional</i> and <i>&#x0026;rest</i> parameters as the
+functional argument.
+<div class=newer>
+<!--l. 3600--><p class="indent" >   X3J13 voted in June 1988 ⟨<b>?</b>⟩ to allow the function to be only of type <i>symbol</i>
+or <i>function</i>; a lambda-expression is no longer acceptable as a functional argument.
+One must use the <i>function</i> special form or the abbreviation <i>#&#x2019;</i> before a
+lambda-expression that appears as an explicit argument form.
+</div>
+<div class=new>
+<!--l. 3608--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-920007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>
+</div>
+<!--l. 3614--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.8.5   </span> <a 
+ id="x54-910007.8.5"></a>The “Program Feature”</h4>
+<!--l. 3616--><p class="noindent" >Lisp implementations since Lisp 1.5 have had what was originally called “the
+program feature,” as if it were impossible to write programs without it!
+The <i>prog</i> construct allows one to write in an Algol-like or Fortran-like
+statement-oriented style, using <i>go</i> statements that can refer to tags in
+the body of the <i>prog</i>. Modern Lisp programming style tends to use <i>prog</i>
+                                                                          
+
+                                                                          
+rather infrequently. The various iteration constructs, such as <i>do</i>, have
+bodies with the characteristics of a <i>prog</i>. (However, the ability to use
+<i>go</i> statements within iteration constructs is very seldom called upon in
+practice.)
+<!--l. 3627--><p class="indent" >   Three distinct operations are performed by <i>prog</i>: it binds local variables, it
+permits use of the <i>return</i> statement, and it permits use of the <i>go</i> statement. In
+Common Lisp, these three operations have been separated into three distinct
+constructs: <i>let</i>, <i>block</i>, and <i>tagbody</i>. These three constructs may be used
+independently as building blocks for other types of constructs.
+<div class=defspec>
+<!--l. 3636--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> tagbody </b> <a 
+ id="dx54-91001"></a><a 
+ id="x54-91002r118"></a>   {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 3637--><p class="indent" >
+</div>
+   The part of a <i>tagbody</i> after the variable list is called the body. An item
+in the body may be a symbol or an integer, in which case it is called a
+tag, or an item in the body may be a list, in which case it is called a
+statement.
+   Each element of the body is processed from left to right. A tag is ignored; a
+statement is evaluated, and its results are discarded. If the end of the body is
+reached, the <i>tagbody</i> returns <i>nil</i>.
+   If <i>(go tag)</i> is evaluated, control jumps to the part of the body labelled with the
+tag.
+<div class=incompatibility>
+   <b>Compatibility note:</b> The “computed <i>go</i>” feature of MacLisp is not supported. The
+syntax of a computed <i>go</i> is idiosyncratic, and the feature is not supported by Lisp
+Machine Lisp, NIL (New Implementation of Lisp), or Interlisp. The computed <i>go</i> has
+been infrequently used in MacLisp anyway and is easily simulated with no loss of
+eﬃciency by using a <i>case</i> statement each of whose clauses performs a (non-computed)
+<i>go</i>.
+</div>
+   The scope of the tags established by a <i>tagbody</i> is lexical, and the extent is
+dynamic. Once a <i>tagbody</i> construct has been exited, it is no longer legal to <i>go</i> to a
+tag in its body. It is permissible for a <i>go</i> to jump to a <i>tagbody</i> that is not the
+innermost <i>tagbody</i> construct containing that <i>go</i>; the tags established by a <i>tagbody</i>
+                                                                          
+
+                                                                          
+will only shadow other tags of like name.
+   The lexical scoping of the <i>go</i> targets named by tags is fully general and has
+consequences that may be surprising to users and implementors of other Lisp
+systems. For example, the <i>go</i> in the following example actually does work in
+Common Lisp as one might expect: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(tagbody
+</td></tr></table>
+<!--l. 3677--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   (catch &#x2019;stuﬀ</td></tr></table>
+<!--l. 3678--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (mapcar #&#x2019;(lambda (x) (if (numberp x)</td></tr></table>
+<!--l. 3679--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                (hairyfun x)</td></tr></table>
+<!--l. 3680--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                (go lose)))</td></tr></table>
+<!--l. 3681--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              items))</td></tr></table>
+<!--l. 3682--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   (return)</td></tr></table>
+<!--l. 3683--><p class="indent" >                                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> lose</td></tr></table>
+<!--l. 3684--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   (error &#x0022;I lost big!&#x0022;))</td></tr></table>
+<!--l. 3686--><p class="indent" >
+</div>
+</div>
+<!--l. 3687--><p class="noindent" >Depending on the situation, a <i>go</i> in Common Lisp does not necessarily correspond to
+a simple machine “jump” instruction. A <i>go</i> can break up catchers if necessary to
+get to the target. It is possible for a “closure” created by <i>function</i> for a
+lambda-expression to refer to a <i>go</i> target as long as the tag is lexically apparent.
+See chapter <a 
+href="clmch3.html#x25-430003">3<!--tex4ht:ref: SCOPE --></a> for an elaborate example of this.
+<div class=new>
+<!--l. 3696--><p class="indent" >   There are some holes in this speciﬁcation (and that of <i>go</i>) that leave
+some room for interpretation. For example, there is no explicit prohibition
+against the same tag appearing more than once in the same <i>tagbody</i> body.
+Every implementation I know of will complain in the compiler, if not
+in the interpreter, if there is a <i>go</i> to such a duplicated tag; but some
+implementors take the position that duplicate tags are permitted provided
+there is no <i>go</i> to such a tag. (“If a tree falls in the forest, and there is no
+one there to hear it, then no one needs to yell ‘Timber!&#x2019; ”) Also, some
+implementations allow objects other than symbols, integers, and lists in the
+body and typically ignore them. Consequently, some programmers use
+redundant tags such as <i>—</i> for formatting purposes, and strings as comments: <div class=lisp>
+<div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun dining-philosopher (j)
+</td></tr></table>
+<!--l. 3711--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (tagbody —</td></tr></table>
+<!--l. 3712--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   think   (unless (hungry) (go think))</td></tr></table>
+<!--l. 3713--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           —</td></tr></table>
+<!--l. 3714--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           &#x0022;Can&#x2019;t eat without chopsticks.&#x0022;</td></tr></table>
+<!--l. 3715--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (snatch (chopstick j))</td></tr></table>
+<!--l. 3716--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (snatch (chopstick (mod (+ j 1) 5)))</td></tr></table>
+<!--l. 3717--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           —</td></tr></table>
+<!--l. 3718--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   eat     (when (hungry)</td></tr></table>
+<!--l. 3719--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (mapc #&#x2019;gobble-down</td></tr></table>
+<!--l. 3720--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                   &#x2019;(twice-cooked-pork kung-pao-chi-ding</td></tr></table>
+<!--l. 3721--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     wu-dip-har orange-ﬂavor-beef</td></tr></table>
+<!--l. 3722--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     two-side-yellow-noodles twinkies))</td></tr></table>
+<!--l. 3723--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (go eat))</td></tr></table>
+<!--l. 3724--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           —</td></tr></table>
+<!--l. 3725--><p class="indent" >        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           &#x0022;Can&#x2019;t think with my neighbors&#x2019; stomachs rumbling.&#x0022;</td></tr></table>
+<!--l. 3726--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (relinquish (chopstick j))</td></tr></table>
+<!--l. 3727--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (relinquish (chopstick (mod (+ j 1) 5)))</td></tr></table>
+<!--l. 3728--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           —</td></tr></table>
+<!--l. 3729--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (if (happy) (go think)</td></tr></table>
+<!--l. 3730--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">               (become insurance-salesman))))</td></tr></table>
+<!--l. 3732--><p class="indent" >
+</div>
+</div>
+<!--l. 3733--><p class="noindent" >In certain implementations of Common Lisp they get away with it. Others abhor
+what they view as an abuse of unintended ambiguity in the language speciﬁcation.
+For maximum portability, I advise users to steer clear of these issues. Similarly, it
+is best to avoid using <i>nil</i> as a tag, even though it is a symbol, because a few
+implementations treat <i>nil</i> as a list to be executed. To be extra careful, avoid
+calling from within a <i>tagbody</i> a macro whose expansion might not be a non-<i>nil</i>
+list; wrap such a call in <i>(progn ...)</i>, or rewrite the macro to return <i>(progn ...)</i> if
+possible.
+</div>
+</div>
+<div class=defmac>
+                                                                          
+
+                                                                          
+<!--l. 3747--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> prog </b> <a 
+ id="dx54-91003"></a><a 
+ id="x54-91004r119"></a>   ( {<i>var|(var [<i>init</i>] )</i>}∗ )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗   <i>[Macro]</i><b> prog* </b> <a 
+ id="dx54-91005"></a><a 
+ id="x54-91006r120"></a>   ( {<i>var|(var [<i>init</i>] )</i>}∗ )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 3749--><p class="indent" >
+</div>
+   The <i>prog</i> construct is a synthesis of <i>let</i>, <i>block</i>, and <i>tagbody</i>, allowing bound
+variables and the use of <i>return</i> and <i>go</i> within a single construct. A typical <i>prog</i>
+construct looks like this: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(prog (var1 var2 (var3 init3) var4 (var5 init5))
+</td></tr></table>
+<!--l. 3754--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       {<i>declaration</i>}∗</td></tr></table>
+<!--l. 3755--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      statement1</td></tr></table>
+<!--l. 3756--><p class="indent" >                                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> tag1</td></tr></table>
+<!--l. 3757--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      statement2</td></tr></table>
+<!--l. 3758--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      statement3</td></tr></table>
+<!--l. 3759--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      statement4</td></tr></table>
+<!--l. 3760--><p class="indent" >                                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> tag2</td></tr></table>
+<!--l. 3761--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      statement5</td></tr></table>
+<!--l. 3762--><p class="indent" >                                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      ...</td></tr></table>
+<!--l. 3763--><p class="indent" >                                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      )</td></tr></table>
+<!--l. 3765--><p class="indent" >
+</div>
+</div>
+<!--l. 3766--><p class="noindent" >The list after the keyword <i>prog</i> is a set of speciﬁcations for binding var1, var2,
+etc., which are temporary variables bound locally to the <i>prog</i>. This list is
+processed exactly as the list in a <i>let</i> statement: ﬁrst all the init forms are
+evaluated from left to right (where <i>nil</i> is used for any omitted init form), and
+then the variables are all bound in parallel to the respective results. Any
+declaration appearing in the <i>prog</i> is used as if appearing at the top of the <i>let</i>
+body.
+<!--l. 3777--><p class="indent" >   The body of the <i>prog</i> is executed as if it were a <i>tagbody</i> construct; the <i>go</i>
+statement may be used to transfer control to a tag.
+                                                                          
+
+                                                                          
+<!--l. 3781--><p class="indent" >   A <i>prog</i> implicitly establishes a <i>block</i> named <i>nil</i> around the entire <i>prog</i>
+construct, so that <i>return</i> may be used at any time to exit from the <i>prog</i>
+construct.
+<!--l. 3785--><p class="indent" >   Here is a ﬁne example of what can be done with <i>prog</i>: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun king-of-confusion (w)
+</td></tr></table>
+<!--l. 3787--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  &#x0022;Take a cons of two lists and make a list of conses.</td></tr></table>
+<!--l. 3788--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   Think of this function as being like a zipper.&#x0022;</td></tr></table>
+<!--l. 3789--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (prog (x y z)     ;Initialize <i>x</i>, <i>y</i>, <i>z</i> to <i>nil</i></td></tr></table>
+<!--l. 3790--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (setq y (car w) z (cdr w))</td></tr></table>
+<!--l. 3791--><p class="indent" >                                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   loop</td></tr></table>
+<!--l. 3792--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (cond ((null y) (return x))</td></tr></table>
+<!--l. 3793--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              ((null z) (go err)))</td></tr></table>
+<!--l. 3794--><p class="indent" >                                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   rejoin</td></tr></table>
+<!--l. 3795--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (setq x (cons (cons (car y) (car z)) x))</td></tr></table>
+<!--l. 3796--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (setq y (cdr y) z (cdr z))</td></tr></table>
+<!--l. 3797--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (go loop)</td></tr></table>
+<!--l. 3798--><p class="indent" >                                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   err</td></tr></table>
+<!--l. 3799--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (cerror &#x0022;Will self-pair extraneous items&#x0022;</td></tr></table>
+<!--l. 3800--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                &#x0022;Mismatch - gleep!  S&#x0022; y)</td></tr></table>
+<!--l. 3801--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (setq z y)</td></tr></table>
+<!--l. 3802--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (go rejoin)))</td></tr></table>
+<!--l. 3804--><p class="indent" >
+</div>
+</div>
+<!--l. 3805--><p class="noindent" >which is accomplished somewhat more perspicuously by <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun prince-of-clarity (w)
+</td></tr></table>
+<!--l. 3807--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  &#x0022;Take a cons of two lists and make a list of conses.</td></tr></table>
+<!--l. 3808--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">   Think of this function as being like a zipper.&#x0022;</td></tr></table>
+<!--l. 3809--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (do ((y (car w) (cdr y))</td></tr></table>
+<!--l. 3810--><p class="indent" >                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (z (cdr w) (cdr z))</td></tr></table>
+<!--l. 3811--><p class="indent" >                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (x &#x2019;<i>(</i><i>)</i> (cons (cons (car y) (car z)) x)))</td></tr></table>
+<!--l. 3812--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      ((null y) x)</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 3813--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (when (null z)</td></tr></table>
+<!--l. 3814--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (cerror &#x0022;Will self-pair extraneous items&#x0022;</td></tr></table>
+<!--l. 3815--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              &#x0022;Mismatch - gleep!  S&#x0022; y)</td></tr></table>
+<!--l. 3816--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (setq z y))))</td></tr></table>
+<!--l. 3818--><p class="indent" >
+</div>
+</div>
+<!--l. 3820--><p class="indent" >   The <i>prog</i> construct may be explained in terms of the simpler constructs <i>block</i>,
+<i>let</i>, and <i>tagbody</i> as follows: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(prog variable-list {<i>declaration</i>}∗ . body)
+</td></tr></table>
+<!--l. 3824--><p class="indent" >        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ≡ (block nil (let variable-list {<i>declaration</i>}∗ (tagbody . body)))</td></tr></table>
+<!--l. 3826--><p class="indent" >
+</div>
+</div>
+<!--l. 3828--><p class="indent" >   The <i>prog*</i> special form is almost the same as <i>prog</i>. The only diﬀerence is that
+the binding and initialization of the temporary variables is done sequentially, so
+that the init form for each one can use the values of previous ones. Therefore
+<i>prog*</i> is to <i>prog</i> as <i>let*</i> is to <i>let</i>. For example, <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(prog* ((y z) (x (car y)))
+</td></tr></table>
+<!--l. 3835--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (return x))</td></tr></table>
+<!--l. 3837--><p class="indent" >
+</div>
+</div>
+<!--l. 3838--><p class="noindent" >returns the car of the value of <i>z</i>.
+<div class=new>
+<!--l. 3841--><p class="indent" >   I haven&#x2019;t seen <i>prog</i> used very much in the last several years. Apparently
+splitting it into functional constituents (<i>let</i>, <i>block</i>, <i>tagbody</i>) has been a success.
+Common Lisp programmers now tend to use whichever speciﬁc construct is
+appropriate.
+</div>
+</div>
+                                                                          
+
+                                                                          
+<div class=defspec>
+<!--l. 3849--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> go </b> <a 
+ id="dx54-91007"></a><a 
+ id="x54-91008r121"></a>   tag
+</td></tr></table>
+<!--l. 3850--><p class="indent" >
+</div>
+   The <i>(go tag)</i> special form is used to do a “go to” within a <i>tagbody</i> construct.
+The tag must be a symbol or an integer; the tag is not evaluated. <i>go</i> transfers
+control to the point in the body labelled by a tag <i>eql</i> to the one given. If there is
+no such tag in the body, the bodies of lexically containing <i>tagbody</i> constructs (if
+any) are examined as well. It is an error if there is no matching tag lexically
+visible to the point of the <i>go</i>.
+   The <i>go</i> form does not ever return a value.
+   As a matter of style, it is recommended that the user think twice before using
+a <i>go</i>. Most purposes of <i>go</i> can be accomplished with one of the iteration
+primitives, nested conditional forms, or <i>return-from</i>. If the use of <i>go</i> seems to be
+unavoidable, perhaps the control structure implemented by <i>go</i> should be packaged
+as a macro deﬁnition.
+</div>
+<div class=new>
+                                                                          
+
+                                                                          
+   <!--l. 3874--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse43.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse41.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse41.html#tailclmse41.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse42.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch7.html#clmse42.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 3874--><p class="indent" >   <a 
+ id="tailclmse42.html"></a>  
+</body></html> 

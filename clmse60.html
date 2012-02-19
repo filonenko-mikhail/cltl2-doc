@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Exporting and Importing Symbols</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 330--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse61.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse59.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse59.html#tailclmse59.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse60.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch11.html#clmse60.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">11.4   </span> <a 
+ id="x76-11500011.4"></a>Exporting and Importing Symbols</h3>
+<!--l. 333--><p class="noindent" >Symbols from one package may be made accessible in another package in two
+ways.
+<!--l. 336--><p class="indent" >   First, any individual symbol may be added to a package by use of the function
+<i>import</i>. The form <i>(import &#x2019;editor:buﬀer)</i> takes the external symbol named <i>buﬀer</i>
+in the <i>editor</i> package (this symbol was located when the form was read by the
+Lisp reader) and adds it to the current package as an internal symbol. The symbol
+is then present in the current package. The imported symbol is not automatically
+exported from the current package, but if it is already present and external, then
+the fact that it is external is not changed. After the call to <i>import</i> it is possible
+to refer to <i>buﬀer</i> in the importing package without any qualiﬁer. The
+status of <i>buﬀer</i> in the package named <i>editor</i> is unchanged, and <i>editor</i>
+remains the home package for this symbol. Once imported, a symbol is
+present in the importing package and can be removed only by calling
+<i>unintern</i>.
+<!--l. 351--><p class="indent" >   If the symbol is already present in the importing package, <i>import</i> has no eﬀect.
+If a distinct symbol with the name <i>buﬀer</i> is accessible in the importing
+package (directly or by inheritance), then a correctable error is signaled, as
+described in section <a 
+href="clmse61.html#x77-11600011.5">11.5<!--tex4ht:ref: NAME-CONFLICTS-SECTION --></a>, because <i>import</i> avoids letting one symbol shadow
+another.
+<!--l. 358--><p class="indent" >   A symbol is said to be shadowed by another symbol in some package if the ﬁrst
+symbol would be accessible by inheritance if not for the presence of the second
+symbol. To import a symbol without the possibility of getting an error because of
+shadowing, use the function <i>shadowing-import</i>. This inserts the symbol into the
+speciﬁed package as an internal symbol, regardless of whether another symbol of
+the same name will be shadowed by this action. If a diﬀerent symbol of the same
+name is already present in the package, that symbol will ﬁrst be uninterned from
+the package (see <i>unintern</i>). The new symbol is added to the package&#x2019;s
+shadowing-symbols list. <i>shadowing-import</i> should be used with caution. It changes
+the state of the package system in such a way that the consistency rules do not
+hold across the change.
+                                                                          
+
+                                                                          
+<!--l. 375--><p class="indent" >   The second mechanism is provided by the function <i>use-package</i>. This causes a
+package to inherit all of the external symbols of some other package. These
+symbols become accessible as internal symbols of the using package. That is, they
+can be referred to without a qualiﬁer while this package is current, but they are
+not passed along to any other package that uses this package. Note that
+<i>use-package</i>, unlike <i>import</i>, does not cause any new symbols to be present in the
+current package but only makes them accessible by inheritance. <i>use-package</i>
+checks carefully for name conﬂicts between the newly imported symbols and those
+already accessible in the importing package. This is described in detail in
+section <a 
+href="clmse61.html#x77-11600011.5">11.5<!--tex4ht:ref: NAME-CONFLICTS-SECTION --></a>.
+<!--l. 388--><p class="indent" >   Typically a user, working by default in the <i>user</i> package, will load a number of
+packages into Lisp to provide an augmented working environment, and then call
+<i>use-package</i> on each of these packages to allow easy access to their external
+symbols. <i>unuse-package</i> undoes the eﬀects of a previous <i>use-package</i>. The external
+symbols of the used package are no longer inherited. However, any symbols that
+have been imported into the using package continue to be present in that
+package.
+<!--l. 397--><p class="indent" >   There is no way to inherit the internal symbols of another package; to refer
+to an internal symbol, the user must either make that symbol&#x2019;s home
+package current, use a qualiﬁer, or import that symbol into the current
+package.
+<div class=newer>
+<!--l. 403--><p class="indent" >   The distinction between external and internal symbols is a primary means of
+hiding names so that one program does not tread on the namespace of
+another.
+</div>
+<!--l. 408--><p class="indent" >   When <i>intern</i> or some other function wants to look up a symbol in a given
+package, it ﬁrst looks for the symbol among the external and internal symbols of
+the package itself; then it looks through the external symbols of the used packages
+in some unspeciﬁed order. The order does not matter; according to the rules for
+handling name conﬂicts (see below), if conﬂicting symbols appear in two or
+more packages inherited by package X, a symbol of this name must also
+appear in X itself as a shadowing symbol. Of course, implementations are
+free to choose other, more eﬃcient ways of implementing this search,
+as long as the user-visible behavior is equivalent to what is described
+here.
+<!--l. 420--><p class="indent" >   The function <i>export</i> takes a symbol that is accessible in some speciﬁed package
+(directly or by inheritance) and makes it an external symbol of that package. If
+                                                                          
+
+                                                                          
+the symbol is already accessible as an external symbol in the package, <i>export</i> has
+no eﬀect. If the symbol is directly present in the package as an internal symbol, it
+is simply changed to external status. If it is accessible as an internal symbol via
+<i>use-package</i>, the symbol is ﬁrst imported into the package, then exported. (The
+symbol is then present in the speciﬁed package whether or not the package
+continues to use the package through which the symbol was originally inherited.)
+If the symbol is not accessible at all in the speciﬁed package, a correctable error is
+signaled that, upon continuing, asks the user whether the symbol should be
+imported.
+<!--l. 435--><p class="indent" >   The function <i>unexport</i> is provided mainly as a way to undo erroneous calls to
+<i>export</i>. It works only on symbols directly present in the current package,
+switching them back to internal status. If <i>unexport</i> is given a symbol already
+accessible as an internal symbol in the current package, it does nothing; if
+it is given a symbol not accessible in the package at all, it signals an
+error.
+                                                                          
+
+                                                                          
+   <!--l. 442--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse61.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse59.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse59.html#tailclmse59.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse60.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch11.html#clmse60.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 442--><p class="indent" >   <a 
+ id="tailclmse60.html"></a>  
+</body></html> 

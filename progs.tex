@@ -4,30 +4,45 @@
 \clearpage\def\pagestatus{FINAL PROOF}
 
 
-\chapter{Program Structure}
+\chapter{Program Structure Структура программы}
 \label{PROGS}
 
 In chapter~\ref{DTYPES} the syntax was sketched for notating data objects
 in Common Lisp.  The same syntax is used for notating programs because all
 Common Lisp programs have a representation as Common Lisp data objects.
 
+В главе~\ref{DTYPES} был обозначен синтаксис для записи объектов данных в Common
+Lisp'е. Такой же синтаксис используется для записи программ, потому что все
+Common Lisp программы представлены как объекты данных Common Lisp'а.
+
 Lisp programs are organized as forms and functions.  Forms are
-{\it evaluated} (relative to some context) to produce values and side
-effects.  Functions are invoked by {\it applying} them to arguments.
+\textit{evaluated} (relative to some context) to produce values and side
+effects.  Functions are invoked by \textit{applying} them to arguments.
 The most important kind of form performs a function call;
 conversely, a function performs computation by evaluating forms.
+
+Lisp программы организованы как формы и функции. Формы \textit{выполняются}
+(относительно некоторого контекста) для получения значений и побочных
+эффектов. Функции вызываются с помощью \textit{применения} их к аргументам.
+Наиболее важный вид форм выполняет вызов функции, и наоборот, функция выполняет
+вычисление с помощью выполнения форм.
 
 In this chapter, forms are discussed first and then functions.
 Finally, certain ``top level'' special forms are discussed; the most
 important of these is \cd{defun}, whose purpose is to define a
 named function.
 
-\section{Forms}
+В данной главе, сначала обсуджаются формы и затем функции. В конце, обсуждаются
+специальные формы <<верхнего уровня (top level)>>. Наиболее важной из этих форм
+является \cd{defun}, цель которой --- создание именных функций (будут
+еще и безымянные).
 
-The standard unit of interaction with a Common Lisp implementation is the {\it form},
-which is simply a data object meant to be {\it evaluated} as a program
-to produce one or more {\it values} (which are also data objects).
-One may request evaluation of {\it any} data object, but only certain ones
+\section{Forms Формы}
+
+The standard unit of interaction with a Common Lisp implementation is the \textit{form},
+which is simply a data object meant to be \textit{evaluated} as a program
+to produce one or more \textit{values} (which are also data objects).
+One may request evaluation of \textit{any} data object, but only certain ones
 are meaningful.  For instance,
 symbols and lists are meaningful forms, while arrays
 normally are not.  Examples of meaningful forms are \cd{3},
@@ -35,10 +50,28 @@ whose value is \cd{3}, and \cd{(+ 3 4)}, whose value is \cd{7}.
 We write \cd{3} \EV\ \cd{3} and \cd{(+ 3 4)} \EV\ \cd{7}
 to indicate these facts.  (\EV\ means ``evaluates to.'')
 
+Стандартная единица взаимодействия с реализацией Common Lisp'а является
+\textit{форма}, которая является объектом данных, который выполняется как
+программа для вычисления одного или более \textit{значений} (который также
+являются объектами данных). Запросить выполнение можно для \textit{любого}
+объекта данных, но не для всех это имеет смысл. Например, символы и списки имеет
+смысл выполнять, тогда как массивы обычно нет. Примеры содержательных форм:
+\cd{3}, значение которой \cd{3}, и \cd{(+ 3 4)}, значение которой \cd{7}.
+Для обозначения этих фактов мы пишем \cd{3} \EV\ \cd{3} и \cd{(+ 3 4)} \EV\
+\cd{7}. (\EV\ означает <<вычисляется в>>)
+
 Meaningful forms may be divided into three categories:
 self-evaluating forms, such as numbers; symbols, which stand
 for variables; and lists.  The lists in turn may be divided
 into three categories: special forms, macro calls, and function calls.
+
+Содержательные формы могут быть разделены на три категории:
+самовычисляемые формы, такие как числа,
+символы, которые используются для переменных,
+и списки. Списки в свою очередь могут быть разделены на три категории:
+специальные формы, 
+вызовы макросов,
+вызовы функций.
 
 \begin{obsolete}
 Any Common Lisp data object not explicitly defined here to be a valid form
@@ -58,15 +91,19 @@ a meaningful evaluation extension has been purposely defined.
 
 \begin{newer}
 X3J13 voted in October 1988 \issue{EVAL-OTHER} to specify that
-{\it all} standard Common Lisp data objects other than symbols
+\textit{all} standard Common Lisp data objects other than symbols
 and lists (including \cd{defstruct} structures defined
 without the \cd{:type} option) are self-evaluating.
+
+Все стандартные объекты данных Common Lisp, не являющиеся символами и списками
+(включая \cd{defstruct} структуры, определенные без опции \cd{:type}) являются
+самовычисляемыми. 
 \end{newer}
 
-\subsection{Self-Evaluating Forms}
+\subsection{Self-Evaluating Forms Самовычисляемые формы}
 
 All numbers, characters, strings, and bit-vectors
-are {\it self-evaluating} forms.
+are \textit{self-evaluating} forms.
 When such an object is evaluated, that object
 (or possibly a copy in the case of numbers or characters)
 is returned as the value
@@ -75,6 +112,17 @@ is also a self-evaluating form: the value of {\false} is {\false}.
 Keywords (symbols written with a leading colon) also evaluate
 to themselves: the value of \cd{:start} is \cd{:start}.
 
+Все числа, строковые символы, строки и битовые векторы являются
+\textit{самовычисляемыми} формами.
+Когда данный объект вычисляется, тогда объект (или возможно копия в случае с
+числами и строковыми символами) возвращается в качестве значения данной
+формы. Пустой список {\emptylist}, который также является значением false
+{\false}, также является самовычисляемой формой: значение {\false} является
+{\false}. 
+Ключевые символы (примечание переводчика: не путать с ключевыми словами в других
+языках, в Common Lisp'е это вид символов) также вычисляюется сами в себя:
+значение \cd{:start} является \cd{:start}.
+
 \begin{newer}
 X3J13 voted in January 1989 \issue{CONSTANT-MODIFICATION} to clarify that
 it is an error to destructively modify any object that appears as a constant
@@ -82,34 +130,56 @@ in executable code, whether as
 a self-evaluating form or within a \cd{quote} special form.
 \end{newer}
 
-\subsection{Variables}
+\subsection{Variables Переменные}
 
 Symbols are used as names of variables in Common Lisp programs.
 When a symbol is evaluated as a form, the value of the variable it names
 is produced.  For example, after doing \cd{(setq items 3)}, which assigns
 the value \cd{3} to the variable named \cd{items}, then \cd{items} \EV\ \cd{3}.
-Variables can be {\it assigned} to, as by \cd{setq}, or {\it bound},
+Variables can be \textit{assigned} to, as by \cd{setq}, or \textit{bound},
 as by \cd{let}.
 Any program construct that binds a variable effectively saves the old
 value of the variable and causes it to have a new value, and on exit from
 the construct the old value is reinstated.
 
-There are actually two kinds of variables in Common Lisp, called {\it lexical} (or
-{\it static}) variables and {\it special} (or {\it dynamic}) variables.
+В Common Lisp программах символы используются в качестве имен переменных.
+Когда символ вычисляется как форма, то в качестве результата возвращается
+значение переменной, которую данный символ именовал. Например, после выполнения
+\cd{(setq items 3)}, которая присвоила значение \cd{3} переменой именованной
+символом \cd{items}, форма \cd{items} выполнится в \cd{3} (\cd{items} \EV\
+\cd{3}).
+Переменные могут \textit{назначены} с помощью \cd{setq} или \textit{связаны} с
+помощью \cd{let}.
+Любая программная конструкция, которая связывает переменную, сохраняет старое
+значение переменной, и назначает новое, и при выходе из конструкции
+восстанавливается старое значение.
+
+There are actually two kinds of variables in Common Lisp, called \textit{lexical} (or
+\textit{static}) variables and \textit{special} (or \textit{dynamic}) variables.
 At any given time either or both kinds of variable with the same name may
 have a current value.  Which of the two kinds of variable is referred to
 when a symbol is evaluated depends on the context of the evaluation.
 The general rule is that if the symbol occurs textually within a program
-construct that creates a {\it binding} for a variable of the same name,
+construct that creates a \textit{binding} for a variable of the same name,
 then the reference is to the variable specified by the binding;
 if no such program construct textually contains the reference, then
 it is taken to refer to the special variable of that name.
 
+В Common Lisp'е есть два вида переменных. Они называются \cd{лексические} (или
+\textit{статические}) и \textit{специальные} (или \textit{динамические}).
+В одно время каждая из или обе переменные с одинаковым именем могут иметь
+некоторое значение. На какую переменную ссылается символ при его вычислении,
+зависит от контекста выполнения. Главное правило заключается в том, что если
+символ вычисляется по тексту в конструкции, которая создала \textit{связывание} для
+переменной с одинаковым именем, то символ ссылается на переменную, обозначенную
+в этом связывании, если же по тексту такой конструкции нет, то символ ссылается
+на специальную переменную.
+
 The distinction between the two kinds of variable is one of scope
-and extent.  A lexically bound variable can be referred to {\it only}
-by forms occurring at any {\it place} textually within the program construct that
+and extent.  A lexically bound variable can be referred to \textit{only}
+by forms occurring at any \textit{place} textually within the program construct that
 binds the variable.  A dynamically bound (special) variable can
-be referred to at any {\it time} from the time the binding is made
+be referred to at any \textit{time} from the time the binding is made
 until the time evaluation of the construct that binds the variable
 terminates.  Therefore lexical binding of variables
 imposes a spatial limitation
@@ -119,14 +189,32 @@ remains).  Conversely, dynamic binding of variables imposes a temporal
 limitation on occurrences of references (but no spatial limitation).
 For more information on scope and extent, see chapter~\ref{SCOPE}.
 
+Различие между двумя видами переменных заключается в области видимости и
+продолжительности видимости. Лексически связанная переменная может быть использована
+\textit{только} по тексту в форме, которая установила связывание. Динамически
+связанная (специальная) переменная может быть использована в любое
+\textit{время} между установкой связи и до выполнения конструкции, которая
+упраздняет связывание. Таким образом лексическое связывание переменных
+накладывает ограничение на использование переменной только в некоторой текстовой
+области (но не на временные ограничения, так связывание продолжает существовать,
+пока возможно существование ссылки на переменную). И наоборот, динамическое
+связывание переменных накладывает ограничение на временные рамки использования
+переменной (но не на текстовую область).
+Для более подробной информации смотрите главу~\ref{SCOPE}.
+
 The value a special variable has when there are currently
-no bindings of that variable is called the {\it global} value of the
+no bindings of that variable is called the \textit{global} value of the
 (special) variable.
 A global value can be given to a variable only by assignment,
 because a value given by binding is by definition not global.
 
+Когда нет связываний, значение, которое имеет специальная
+переменная, называется \textit{глобальным} значением (специальной) переменной.
+Глобальное значение может быть задано переменной только с помощью назначения,
+потому что значение заданное связыванием по определению не глобально.
+
 It is possible for a special variable to have no value at all,
-in which case it is said to be {\it unbound}.
+in which case it is said to be \textit{unbound}.
 By default, every global variable is unbound unless and until
 explicitly assigned a value, except for those global variables
 defined in this book or by the implementation already to have values
@@ -137,6 +225,17 @@ function \cd{makunbound}.  In this situation the variable
 is also said to be ``unbound,'' although this is a misnomer;
 precisely speaking, it is bound but valueless.
 It is an error to refer to a variable that is unbound.
+
+Специальная переменная может вообще не иметь значения, в таком случае,
+говориться, что они \textit{несвязанная}. 
+По умолчанию, каждая глобальная переменная является несвязанной, пока значение
+не будет назначено явно, за исключением переменных определенных в этой книге или
+реализацией, которые уже имеют значения сразу после первого запуска Lisp машины.
+Кроме того, существует возможность установки связывания специальной переменной и
+затем упразднения этого связывания с помощью функции \cd{makunbound}. В такой
+ситуации переменная также называется <<несвязанной>>, хотя это и неправильно,
+если быть точнее, переменная связана, но без значения FIXME. Ссылка на несвязанную
+переменную является ошибкой.
 
 \begin{newer}
 X3J13 voted in June 1989 \issue{UNDEFINED-VARIABLES-AND-FUNCTIONS}
@@ -201,27 +300,60 @@ which are notated with a leading colon, are reserved and
 may never be assigned to or bound; a keyword always evaluates
 to itself.
 
-\subsection{Special Forms}
+Некоторые глобальные переменные зарезервированы в качестве <<именованных
+констант>>.
+Они имеют глобальное значение и не могут быть связаны или переназначены.
+Например символы {\true} и {\false} зарезервированы.
+Невозможно назначить и этим символам. Также невозможно связать эти символы со
+другими значениями. Символы констант определенных с помощью \cd{defconstant}
+также становяться зарезервированными и не могут быть переназначены или связаны
+(но они могут быть переопределены с помощью вызова \cd{defconstant}). Ключевые
+символы также не могут быть переназначены или связаны, ключевые символы всегда
+вычисляются сами в себя.
+
+\subsection{Special Forms Специальные формы}
 
 If a list is to be evaluated as a form, the first step is to examine
 the first element of the list.  If the first element is one of
 the symbols appearing in table~\ref{SPECIAL-FORM-TABLE},
-then the list is called a {\it special form}.  (This use of the word
+then the list is called a \textit{special form}.  (This use of the word
 ``special'' is unrelated to its use in the phrase ``special variable.'')
+
+Если список выполняется в качестве формы, первым шагом является определение
+первого элемента списка. Если первый элемент списка является одним из символов,
+перечисленных в таблице~\ref{SPECIAL-FORM-TABLE}, тогда список называется
+\textit{специальной формой}. (Использование слова <<специальный>> никак не
+связано с использованием этого слова в фразе <<специальная переменная>>.)
 
 Special forms are generally environment and control constructs.
 Every special form has its own idiosyncratic syntax.  An example
 is the \cd{if} special form:
 \cd{(if p (+ x 4) 5)} in Common Lisp means what
-``{\bf if} {\it p} {\bf then} {\it x}+4 {\bf else} 5'' means in Algol.
+``\textbf{if} \textit{p} \textbf{then} \textit{x}+4 \textbf{else} 5'' means in
+Algol.
+
+Специальные формы обычно являются окружениями и управляющими конструкциями.
+Каждая специальная форма имеет свой идиосинкразитечский синтаксис. Например
+специальная форма \cd{if}:
+\cd{(if p (+ x 4) 5)} в Common Lisp'е означает то же, что и
+<<\textbf{if} \textit{p} \textbf{then} \textit{x}+4 \textbf{else} 5>> означает в
+Algol'е.
 
 The evaluation of a special form normally produces a value or values,
 but the evaluation may instead call for a non-local exit; see \cd{return-from},
 \cd{go}, and \cd{throw}.
 
+Выполнение специальной формы обычно возвращает значение или значения, но
+выполнение может и вызвать нелокальный выход; смотрите \cd{return-from},
+\cd{go} и \cd{throw}.
+
 The set of special forms is fixed in Common Lisp; no way is provided
 for the user to define more.  The user can create new syntactic
 constructs, however, by defining macros.
+
+Множество специальных форм в Common Lisp'е фиксировано. Создание
+пользовательский специальных форм невозможно. Однако пользователь может создавать новые
+синтаксические конструкции с помощью оперделения макросов.
 
 The set of special forms in Common Lisp is purposely kept very small
 because any program-analyzing program must have special knowledge
@@ -234,13 +366,22 @@ to produce much better code if it recognizes such constructs
 as \cd{typecase} and \cd{multiple-value-bind} and gives them customized
 treatment.)
 
+Множество специальных форм в Common Lisp'е специально держится малым, потому что
+любая программа, анализирующая программы, должна содержить специальные знания он
+каждом типе специальной формы. Такие программы не нуждаются в специальных
+знаниях о макросах, так как раскрытие макроса просто, и далее остается только
+оперирования с результатом раскрытия. (Это не значит, что программы, в
+частности, компиляторы, не будут иметь специальных знаний о макросах. Компилятор
+может генерировать более лучший код, если он распознает такие конструкции, как
+\cd{typecase} и \cd{multiple-value-bind} и по особому будет обращаться с ними.)
+
 \begin{table}[t]
 \caption{Names of All Common Lisp Special Forms}
 \label{SPECIAL-FORM-TABLE}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lll@{}}
 \cd{block}&\cd{if}&\cd{progv} \\
 \cd{catch}&\cd{labels}&\cd{quote} \\
-{\rm \lbrack}\cd{compiler-let}{\rm \rbrack}&\cd{let}&\cd{return-from} \\
+\rtextrm{\lbrack}\cd{compiler-let}\textrm{\rbrack}&\cd{let}&\cd{return-from} \\
 \cd{declare}&\cd{let*}&\cd{setq} \\
 \cd{eval-when}&\cd{macrolet}&\cd{tagbody} \\
 \cd{flet}&\cd{multiple-value-call}&\cd{the} \\
@@ -276,7 +417,7 @@ if an equivalent macro definition is also provided.
 The practical consequence is that the predicates \cd{macro-function} and
 \cd{special-form-p} may both be true of the same symbol.
 It is recommended that a program-analyzing program process
-a form that is a list whose {\it car} is a symbol as follows:
+a form that is a list whose \textit{car} is a symbol as follows:
 \begin{enumerate}
 \item
 If the program has particular knowledge about the symbol,
@@ -296,15 +437,15 @@ Otherwise, assume it is a function call.
 \subsection{Macros}
 
 If a form is a list and the first element is not the name of a special
-form, it may be the name of a {\it macro}; if so, the form is said
-to be a {\it macro call}.  A macro is essentially a function from
+form, it may be the name of a \textit{macro}; if so, the form is said
+to be a \textit{macro call}.  A macro is essentially a function from
 forms to forms that will, given a call to that macro, compute
 a new form to be evaluated in place of the macro call.
-(This computation is sometimes referred to as {\it macro expansion}.)
+(This computation is sometimes referred to as \textit{macro expansion}.)
 For example, the macro named \cd{return} will take a form such as
 \cd{(return x)} and from that form compute a new form
 \cd{(return-from {\nil} x)}.  We say that the old
-form {\it expands} into the new form.  The new form is then evaluated in
+form \textit{expands} into the new form.  The new form is then evaluated in
 place of the original form; the value of the new form is returned as the
 value of the original form.
 
@@ -313,8 +454,8 @@ X3J13 voted in January 1989
 \issue{DOTTED-MACRO-FORMS}
 to clarify that macro calls, and subforms
 of macro calls, need not be proper lists, but that use of dotted forms
-requires the macro definition to use ``\cd{.~{\it var}}'' or
-``\cd{\&rest~{\it var}}'' in order to match them properly.
+requires the macro definition to use ``\cd{.~\textit{var}}'' or
+``\cd{\&rest~\textit{var}}'' in order to match them properly.
 It is then the responsibility of the macro definition to recognize
 and appropriately handle such dotted forms or subforms.
 \end{new}
@@ -350,12 +491,12 @@ by using implementation-dependent special forms in the macro expansion.
 
 If a list is to be evaluated as a form and the first element is
 not a symbol that names a special form or macro, then the list
-is assumed to be a {\it function call}.  The first element of the
+is assumed to be a \textit{function call}.  The first element of the
 list is taken to name a function.  Any and all remaining elements
 of the list are forms to be evaluated; one value is obtained
 from each form,
-and these values become the {\it arguments} to the function.
-The function is then {\it applied} to the arguments.
+and these values become the \textit{arguments} to the function.
+The function is then \textit{applied} to the arguments.
 The functional computation normally produces a value,
 but it may instead call for a non-local exit; see \cd{throw}.
 A function that does return may produce no value or several values;
@@ -392,15 +533,15 @@ There are two ways to indicate a function to be used in a function-call
 form.  One is to use a symbol that names the function.  This use of
 symbols to name functions is completely independent of their use in
 naming special and lexical variables.  The other way is to use a
-{\it lambda-expression}, which is a list whose first element is the symbol
-\cd{lambda}.  A lambda-expression is {\it not} a form; it cannot be
+\textit{lambda-expression}, which is a list whose first element is the symbol
+\cd{lambda}.  A lambda-expression is \textit{not} a form; it cannot be
 meaningfully evaluated.  Lambda-expressions and symbols, when used in
 programs as names of functions, can appear only as the first element of a
 function-call form, or as the second element of the \cd{function}
 special form.  Note that symbols and lambda-expressions are treated as
-{\it names} of functions in these two contexts.  This should be
+\textit{names} of functions in these two contexts.  This should be
 distinguished from the treatment of symbols and lambda-expressions as
-{\it function objects}, that is,
+\textit{function objects}, that is,
 objects that satisfy the predicate \cd{functionp},
 as when giving such an object to \cd{apply} or \cd{funcall} to be
 invoked.
@@ -408,9 +549,9 @@ invoked.
 \subsection{Named Functions}
 
 A name can be given to a function in one of two ways.
-A {\it global name} can be given to a function by using the
+A \textit{global name} can be given to a function by using the
 \cd{defun} construct.
-A {\it local name} can be given to a function by using the
+A \textit{local name} can be given to a function by using the
 \cd{flet} or
 \cd{labels} special form.
 When a function is named, a lambda-expression is effectively
@@ -426,53 +567,53 @@ definition (if any) if there is no such containing construct.
 \label{LAMBDA-EXPRESSIONS-SECTION}
 \indexterm{lambda-expression}
 
-A {\it lambda-expression} is a list with the following syntax:
+A \textit{lambda-expression} is a list with the following syntax:
 \begin{lisp}
-(lambda {\it lambda-list} . {\it body})
+(lambda \textit{lambda-list} . \textit{body})
 \end{lisp}
 The first element must be the symbol \cd{lambda}.  The second element
-must be a list.  It is called the {\it lambda-list}, and specifies
-names for the {\it parameters} of the function.  When the function
+must be a list.  It is called the \textit{lambda-list}, and specifies
+names for the \textit{parameters} of the function.  When the function
 denoted by the lambda-expression is applied to arguments,
 the arguments are matched with the parameters specified by the
-lambda-list.  The {\it body} may then refer to the arguments by using
-the parameter names.  The {\it body} consists of any number of
+lambda-list.  The \textit{body} may then refer to the arguments by using
+the parameter names.  The \textit{body} consists of any number of
 forms (possibly zero).  These forms are evaluated in sequence,
-and the results of the {\it last} form only are returned as the results
+and the results of the \textit{last} form only are returned as the results
 of the application (the value {\false} is returned if there are zero
 forms in the body).
 The complete syntax of a lambda-expression is:
 \begingroup
-\def\GrossOptVars{\Mstar{{\it var} {\Mor} \cd{(}{\it var} \Mopt{{\it initform} \Mopt{{\it svar}}}\cd{)}}}
-\def\GrossKeyOptVars{\Mstar{{\it var} {\Mor} \cd{(}\Mgroup{{\it var} {\Mor} \cd{(}{\it keyword} {\it var}\cd{)}} \Mopt{{\it initform} \Mopt{{\it svar}}}\cd{)}}}
-\def\GrossAuxVars{\Mstar{{\it var} {\Mor} \cd{(}{\it var} \Mopt{{\it initform}}\cd{)}}}
+\def\GrossOptVars{\Mstar{\textit{var} {\Mor} \cd{(}\textit{var} \Mopt{\textit{initform} \Mopt{\textit{svar}}}\cd{)}}}
+\def\GrossKeyOptVars{\Mstar{\textit{var} {\Mor} \cd{(}\Mgroup{\textit{var} {\Mor} \cd{(}\textit{keyword} \textit{var}\cd{)}} \Mopt{\textit{initform} \Mopt{\textit{svar}}}\cd{)}}}
+\def\GrossAuxVars{\Mstar{\textit{var} {\Mor} \cd{(}\textit{var} \Mopt{\textit{initform}}\cd{)}}}
 \begin{lisp}
-(lambda (\Mstar{{\it var}} \\
+(lambda (\Mstar{\textit{var}} \\
 ~~~~~~~~~\Mopt{\cd{\&optional} \GrossOptVars} \\
-~~~~~~~~~\Mopt{\cd{\&rest} {\it var}} \\
+~~~~~~~~~\Mopt{\cd{\&rest} \textit{var}} \\
 ~~~~~~~~~\Mopt{\cd{\&key} \GrossKeyOptVars \\
 ~~~~~~~~~~~~~~{\setbox0\hbox{\Mopt{}}\hskip0.5\wd0}\Mopt{\cd{\&allow-other-keys}}} \\
 ~~~~~~~~~\Mopt{\cd{\&aux} \GrossAuxVars}) \\
-~~~\Mchoice{\Mstar{\it declaration} {\Mor} {\it documentation-string}} \\
+~~~\Mchoice{\Mstar\textit{declaration} {\Mor} \textit{documentation-string}} \\
 ~~~\Mstar{{\it\,form}})
 \end{lisp}
 \endgroup
-Each element of a lambda-list is either a {\it parameter specifier}
-or a {\it lambda-list keyword}; lambda-list keywords begin with \cd{\&}.
+Each element of a lambda-list is either a \textit{parameter specifier}
+or a \textit{lambda-list keyword}; lambda-list keywords begin with \cd{\&}.
 (Note that lambda-list keywords are not keywords in the usual sense;
 they do not belong to the keyword package.  They are ordinary symbols
 each of whose names begins with an ampersand.  This terminology
 is unfortunately confusing but is retained for historical reasons.)
 
 \begin{obsolete}
-In all cases a {\it var} or {\it svar} must be a symbol, the name of a variable;
-each {\it keyword} must be a keyword symbol, such as \cd{:start}.
-An {\it initform} may be any form.
+In all cases a \textit{var} or \textit{svar} must be a symbol, the name of a variable;
+each \textit{keyword} must be a keyword symbol, such as \cd{:start}.
+An \textit{initform} may be any form.
 \end{obsolete}
 
 \begin{newer}
 X3J13 voted in March 1988 \issue{KEYWORD-ARGUMENT-NAME-PACKAGE}
-to allow a {\it keyword} in the preceding specification of a lambda-list
+to allow a \textit{keyword} in the preceding specification of a lambda-list
 to be any symbol whatsoever, not just a keyword symbol
 in the \cd{keyword} package.  See below.
 \end{newer}
@@ -480,40 +621,40 @@ in the \cd{keyword} package.  See below.
 A lambda-list has five parts, any or all of which may be empty:
 \begin{itemize}
 \item
-Specifiers for the {\it required} parameters.  These are all the parameter
+Specifiers for the \textit{required} parameters.  These are all the parameter
 specifiers up to the first lambda-list keyword; if there is no such
 lambda-list keyword, then all the specifiers are for required parameters.
 
 \item
-Specifiers for {\it optional} parameters.
+Specifiers for \textit{optional} parameters.
 If the lambda-list keyword \cd{\&optional} is present,
-the {\it optional} parameter specifiers are those following the
+the \textit{optional} parameter specifiers are those following the
 lambda-list keyword \cd{\&optional} up to the next lambda-list keyword or the end of the list.
 
 \item
-A specifier for a {\it rest} parameter.  The lambda-list keyword \cd{\&rest}, if present, must
-be followed by a single {\it rest} parameter specifier,
+A specifier for a \textit{rest} parameter.  The lambda-list keyword \cd{\&rest}, if present, must
+be followed by a single \textit{rest} parameter specifier,
 which in turn must be followed by another lambda-list keyword or the end
 of the lambda-list.
 
 \item
-Specifiers for {\it keyword} parameters.
+Specifiers for \textit{keyword} parameters.
 If the lambda-list keyword \cd{\&key} is present, all specifiers up to the next lambda-list keyword
-or the end of the list are {\it keyword} parameter specifiers.
+or the end of the list are \textit{keyword} parameter specifiers.
 The keyword parameter specifiers may optionally be followed by the
 lambda-list keyword \cd{\&allow-other-keys}.
 
 \item
-Specifiers for {\it aux} variables.  These are not really parameters.
+Specifiers for \textit{aux} variables.  These are not really parameters.
 If the lambda-list keyword \cd{\&key} is present, all specifiers after it are
-{\it auxiliary variable} specifiers.
+\textit{auxiliary variable} specifiers.
 \end{itemize}
 
 When the function represented by the lambda-expression is applied
 to arguments, the arguments and parameters are processed in order
 from left to right.
 In the simplest case, only required parameters are present
-in the lambda-list; each is specified simply by a name {\it var} for
+in the lambda-list; each is specified simply by a name \textit{var} for
 the parameter variable.
 When the function is applied,
 there must be exactly as many arguments as there are parameters,
@@ -522,47 +663,47 @@ the parameter is bound as a lexical variable unless a
 declaration has been made that it should be a special binding;
 see \cd{defvar}, \cd{proclaim}, and \cd{declare}.
 
-In the more general case, if there are {\it n} required parameters
-({\it n} may be zero), there must be at least {\it n} arguments,
-and the required parameters are bound to the first {\it n} arguments.
+In the more general case, if there are \textit{n} required parameters
+(\textit{n} may be zero), there must be at least \textit{n} arguments,
+and the required parameters are bound to the first \textit{n} arguments.
 The other parameters are then processed using any remaining arguments.
 
-If {\it optional} parameters are specified, then each one is processed as
+If \textit{optional} parameters are specified, then each one is processed as
 follows.  If any unprocessed arguments remain, then the parameter variable
-{\it var} is bound to the next remaining argument, just as for a required
-parameter.  If no arguments remain, however, then the {\it initform} part
+\textit{var} is bound to the next remaining argument, just as for a required
+parameter.  If no arguments remain, however, then the \textit{initform} part
 of the parameter specifier is evaluated, and the parameter variable
-is bound to the resulting value (or to {\false} if no {\it initform} appears
+is bound to the resulting value (or to {\false} if no \textit{initform} appears
 in the parameter specifier).
-If another variable name {\it svar} appears in the specifier, it is bound
-to {\it true} if an argument was available, and to {\it false} if no
-argument remained (and therefore {\it initform} had to be evaluated).
-The variable {\it svar} is called a {\it supplied-p} parameter;
+If another variable name \textit{svar} appears in the specifier, it is bound
+to \textit{true} if an argument was available, and to \textit{false} if no
+argument remained (and therefore \textit{initform} had to be evaluated).
+The variable \textit{svar} is called a \textit{supplied-p} parameter;
 it is bound not to an argument but to a value indicating whether or not
 an argument had been supplied for another parameter.
 
-After all {\it optional} parameter specifiers have been processed,
-then there may or may not be a {\it rest} parameter.
-If there is a {\it rest} parameter, it is bound to a list of all
+After all \textit{optional} parameter specifiers have been processed,
+then there may or may not be a \textit{rest} parameter.
+If there is a \textit{rest} parameter, it is bound to a list of all
 as-yet-unprocessed arguments.  (If no unprocessed arguments remain,
-the {\it rest} parameter is bound to the empty list.)
-If there is no {\it rest} parameter and there are no {\it keyword}
+the \textit{rest} parameter is bound to the empty list.)
+If there is no \textit{rest} parameter and there are no \textit{keyword}
 parameters,
 then there should be no unprocessed arguments (it is an error if there are).
 
 \begin{new}
 X3J13 voted in January 1989
 \issue{REST-LIST-ALLOCATION}
-to clarify that if a function has a {\it rest} parameter
+to clarify that if a function has a \textit{rest} parameter
 and is called using \cd{apply}, then the list to which the
-{\it rest} parameter is bound is permitted, but not required,
+\textit{rest} parameter is bound is permitted, but not required,
 to share top-level list structure with the list that was the last
 argument to \cd{apply}.  Programmers should be careful about performing
-side effects on the top-level list structure of a {\it rest} parameter.
+side effects on the top-level list structure of a \textit{rest} parameter.
 
 This was the result of a rather long discussion within X3J13 and the
 wider Lisp community.  To set it in its historical context, I must remark
-that in Lisp Machine Lisp the list to which a {\it rest} parameter was
+that in Lisp Machine Lisp the list to which a \textit{rest} parameter was
 bound had only dynamic extent; this in conjunction with the
 technique of ``cdr-coding'' permitted a clever stack-allocation technique
 with very low overhead.  However, the early designers of
@@ -573,9 +714,9 @@ definition of the function \cd{list}
 (defun list (\&rest x) x)
 \end{lisp}
 could fail catastrophically.  Therefore the first edition simply implied
-that the list for a {\it rest} parameter, like all other lists, would
+that the list for a \textit{rest} parameter, like all other lists, would
 have indefinite extent.  This still left open the flip side of the
-question, namely, Is the list for a {\it rest} parameter guaranteed fresh?
+question, namely, Is the list for a \textit{rest} parameter guaranteed fresh?
 This is the question addressed by the X3J13 vote.
 If it is always freshly consed, then it is permissible to destroy it,
 for example by giving it to \cd{nconc}.  However, the requirement always
@@ -585,9 +726,9 @@ not rely on the list being fresh; if the function was called using \cd{apply},
 there is no way to know where the list came from.
 \end{new}
 
-Next, any {\it keyword} parameters are processed.
+Next, any \textit{keyword} parameters are processed.
 For this purpose the same arguments are processed that
-would be made into a list for a {\it rest} parameter.
+would be made into a list for a \textit{rest} parameter.
 (Indeed, it is permitted to specify both \cd{\&rest} and \cd{\&key}.
 In this case the remaining arguments are used for both purposes;
 that is, all remaining arguments are made into a list for the
@@ -630,17 +771,17 @@ to justify a warning.
 
 \begin{newer}
 X3J13 voted in March 1988 \issue{KEYWORD-ARGUMENT-NAME-PACKAGE}
-to allow a {\it keyword} in a lambda-list
+to allow a \textit{keyword} in a lambda-list
 to be any symbol whatsoever, not just a keyword symbol
 in the \cd{keyword} package.  If, after \cd{\&key},
 a variable appears alone or within only one set of parentheses
-(possibly with an {\it initform} and a {\it svar}), then
+(possibly with an \textit{initform} and a \textit{svar}), then
 the behavior is as before: a keyword symbol with the same name as
 the variable is used as the keyword-name when matching arguments
 to parameter specifiers.  Only a parameter specifier of the form
-\cd{(({\it keyword} {\it var})~...)} can cause the keyword-name
+\cd{((\textit{keyword} \textit{var})~...)} can cause the keyword-name
 not to be a keyword symbol, by specifying a symbol not in the \cd{keyword}
-package as the {\it keyword}.
+package as the \textit{keyword}.
 For example:
 \begin{lisp}
 (defun wager (\&key ((secret password) nil) amount) \\*
@@ -660,10 +801,10 @@ have to write
 to win anything.
 \end{newer}
 
-In each keyword parameter specifier must be a name {\it var} for the
-parameter variable.  If an explicit {\it keyword} is
+In each keyword parameter specifier must be a name \textit{var} for the
+parameter variable.  If an explicit \textit{keyword} is
 specified, then that is the keyword name for the parameter.  Otherwise
-the name {\it var} serves to indicate the keyword name,
+the name \textit{var} serves to indicate the keyword name,
 in that a keyword with the same name (in the \cd{keyword} package) is used
 as the keyword.  Thus
 \begin{lisp}
@@ -683,11 +824,11 @@ second item (the value) of that argument pair.
 If more than one such argument pair matches, it is not an error;
 the leftmost argument pair is used.
 If no such argument pair exists, then
-the {\it initform} for that specifier is evaluated
+the \textit{initform} for that specifier is evaluated
 and the parameter variable is bound to that value (or to {\false} if
-no {\it initform} was specified).  The variable {\it svar} is treated
-as for ordinary {\it optional} parameters: it is bound to {\it true}
-if there was a matching argument pair, and to {\it false} otherwise.
+no \textit{initform} was specified).  The variable \textit{svar} is treated
+as for ordinary \textit{optional} parameters: it is bound to \textit{true}
+if there was a matching argument pair, and to \textit{false} otherwise.
 
 It is an error if an argument pair has a keyword name not matched
 by any parameter specifier, unless at least one of the following
@@ -711,8 +852,8 @@ to specify that such sharing may be taking place.
 
 After all parameter specifiers have been processed, the auxiliary
 variable specifiers (those following the lambda-list keyword \cd{\&aux}) are processed from
-left to right.  For each one, the {\it initform} is evaluated and the
-variable {\it var} bound to that value (or to {\false} if no {\it initform} was
+left to right.  For each one, the \textit{initform} is evaluated and the
+variable \textit{var} bound to that value (or to {\false} if no \textit{initform} was
 specified).  Nothing can be done with \cd{\&aux} variables that cannot be
 done with the special form \cd{let*}:
 \begin{lisp}
@@ -721,9 +862,9 @@ done with the special form \cd{let*}:
 \end{lisp}
 Which to use is purely a matter of style.
 
-Whenever any {\it initform} is evaluated for any parameter
+Whenever any \textit{initform} is evaluated for any parameter
 specifier, that form may refer to any parameter variable to the left of
-the specifier in which the {\it initform} appears, including any supplied-p
+the specifier in which the \textit{initform} appears, including any supplied-p
 variables, and may rely on the fact that no other parameter variable
 has yet been bound (including its own parameter variable).
 
@@ -869,12 +1010,12 @@ See \cd{call-arguments-limit}.
 \section{Top-Level Forms}
 
 The standard way for the user to interact with a Common Lisp implementation is
-via a {\it read-eval-print loop}: the system repeatedly
+via a \textit{read-eval-print loop}: the system repeatedly
 reads a form from some input source (such as a keyboard or a disk file),
 evaluates it, and then prints the value(s) to some output sink (such as a
 display screen or another disk file).  Any form (evaluable
 data object) is acceptable; however, certain special forms are specifically
-designed to be convenient for use as {\it top-level} forms,
+designed to be convenient for use as \textit{top-level} forms,
 rather than as forms embedded within other forms in the way
 that \cd{(+ 3 4)}
 is embedded within \cd{(if p (+ 3 4) 6)}.
@@ -925,10 +1066,10 @@ The \cd{defun} special form is the usual means of defining named functions.
 \begin{defmac}
 defun name lambda-list <{declaration}* | doc-string> {\,form}*
 
-Evaluating a \cd{defun} form causes the symbol {\it name} to be a global name
+Evaluating a \cd{defun} form causes the symbol \textit{name} to be a global name
 for the function specified by the lambda-expression
 \begin{lisp}
-(lambda {\it lambda-list} \Mstar{{\it declaration} {\Mor} {\it doc-string}} \Mstar{{\it \,form}})
+(lambda \textit{lambda-list} \Mstar{\textit{declaration} {\Mor} \textit{doc-string}} \Mstar{\textit{\,form}})
 \end{lisp}
 defined in the lexical environment in which the \cd{defun} form was
 executed.  Because \cd{defun} forms normally appear at top level, this is
@@ -946,8 +1087,8 @@ environment.
 \begin{newer}
 X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cd{defun}
 to accept any function-name (a symbol or a list
-whose {\it car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION})
-as a {\it name}.
+whose \textit{car} is \cd{setf}---see section~\ref{FUNCTION-NAME-SECTION})
+as a \textit{name}.
 Thus one may write
 \begin{lisp}
 (defun (setf cadr) ...)
@@ -960,25 +1101,25 @@ use \cd{defsetf} or \cd{define-modify-macro}).
 
 \newpage%manual
 
-If the optional documentation string {\it doc-string} is present,
-then it is attached to the {\it name}
+If the optional documentation string \textit{doc-string} is present,
+then it is attached to the \textit{name}
 as a documentation string of type \cd{function}; see \cd{documentation}.
-If {\it doc-string} is not
+If \textit{doc-string} is not
 followed by a declaration, it may be
-present only if at least one {\it form} is also specified, as it is
-otherwise taken to be a {\it form}.
-It is an error if more than one {\it doc-string} is present.
+present only if at least one \textit{form} is also specified, as it is
+otherwise taken to be a \textit{form}.
+It is an error if more than one \textit{doc-string} is present.
 
-The {\it forms} constitute the body of the defined function; they are
+The \textit{forms} constitute the body of the defined function; they are
 executed as an implicit \cd{progn}.
 
 The body of the defined function is implicitly enclosed
-in a \cd{block} construct whose name is the same as the {\it name}
+in a \cd{block} construct whose name is the same as the \textit{name}
 of the function.  Therefore \cd{return-from}
 may be used to exit from the function.
 
 Other implementation-dependent bookkeeping actions may be taken as well
-by \cd{defun}.  The {\it name} is returned as the value of the \cd{defun}
+by \cd{defun}.  The \textit{name} is returned as the value of the \cd{defun}
 form.
 For example:
 \begin{lisp}
@@ -1030,32 +1171,32 @@ defconstant name initial-value [documentation]
 \cd{defvar} is the recommended way to declare the use
 of a special variable in a program.
 \begin{lisp}
-(defvar {\it variable})
+(defvar \textit{variable})
 \end{lisp}
-proclaims {\it variable} to be \cd{special} (see \cd{proclaim}),
+proclaims \textit{variable} to be \cd{special} (see \cd{proclaim}),
 and may perform other system-dependent bookkeeping actions.
 \begin{newer}
 X3J13 voted in June 1987 \issue{DEFVAR-INITIALIZATION} to clarify
-that if no {\it initial-value} form is provided, \cd{defvar}
-does not change the value of the {\it variable};
-if no {\it initial-value} form is provided and the variable
+that if no \textit{initial-value} form is provided, \cd{defvar}
+does not change the value of the \textit{variable};
+if no \textit{initial-value} form is provided and the variable
 has no value, \cd{defvar} does not give it a value.
 \end{newer}
 If a second argument form is supplied,
 \begin{lisp}
-(defvar {\it variable} {\it initial-value})
+(defvar \textit{variable} \textit{initial-value})
 \end{lisp}
-then {\it variable} is initialized to the result of evaluating the form
-{\it initial-value} unless it already has a value.  The {\it initial-value} form
+then \textit{variable} is initialized to the result of evaluating the form
+\textit{initial-value} unless it already has a value.  The \textit{initial-value} form
 is not evaluated unless it is used; this fact is useful if
-evaluation of the {\it initial-value} form does something
+evaluation of the \textit{initial-value} form does something
 expensive like creating a large data structure.
 \begin{newer}
 X3J13 voted in June 1987 \issue{DEFVAR-INIT-TIME} to clarify that
-evaluation of the {\it initial-value} and the initialization of the
+evaluation of the \textit{initial-value} and the initialization of the
 variable occur, if at all, at the time the \cd{defvar} form is executed,
-and that the {\it initial-value} form is evaluated
-if and only if the {\it variable} does not already have a value.
+and that the \textit{initial-value} form is evaluated
+if and only if the \textit{variable} does not already have a value.
 \end{newer}
 The initialization is
 performed by assignment and thus assigns a global value to the variable
@@ -1073,19 +1214,19 @@ describe them all.
 \end{lisp}
 
 \cd{defparameter} is similar to \cd{defvar}, but \cd{defparameter} requires
-an {\it initial-value} form, always evaluates the form, and assigns the
+an \textit{initial-value} form, always evaluates the form, and assigns the
 result to the variable.  The semantic distinction is that \cd{defvar}
 is intended to declare a variable changed by the program, whereas
 \cd{defparameter} is intended to declare a variable that is normally
 constant but can be changed (possibly at run time), where such a change
 is considered a
-change {\it to} the program.  \cd{defparameter} therefore does not indicate
-that the quantity {\it never} changes; in particular, it does not license
+change \textit{to} the program.  \cd{defparameter} therefore does not indicate
+that the quantity \textit{never} changes; in particular, it does not license
 the compiler to build assumptions about the value into programs being
 compiled.
 
-\cd{defconstant} is like \cd{defparameter} but {\it does} assert that
-the value of the variable {\it name} is fixed and does license
+\cd{defconstant} is like \cd{defparameter} but \textit{does} assert that
+the value of the variable \textit{name} is fixed and does license
 the compiler to build assumptions about the value into programs being
 compiled.  (However, if the compiler chooses to replace references
 to the name of the constant by the value of the constant in code
@@ -1128,7 +1269,7 @@ function.
 \begin{new}
 X3J13 voted in March 1988
 \issue{DEFVAR-DOCUMENTATION}
-to clarify that the {\it documentation-string}
+to clarify that the \textit{documentation-string}
 is not evaluated but must appear as a literal string when the \cd{defvar},
 \cd{defparameter}, or \cd{defconstant} form is evaluated.
 
@@ -1158,7 +1299,7 @@ appears in the \cd{defvar} form.)
 \end{new}
 
 These constructs are normally used only as top-level forms.  The
-value returned by each of these constructs is the {\it name} declared.
+value returned by each of these constructs is the \textit{name} declared.
 \end{defmac}
 
 \subsection{Control of Time of Evaluation}
@@ -1172,7 +1313,7 @@ when interpreted but not compiled.  Its uses are relatively esoteric.
 eval-when ({situation}*) {\,form}*
 
 The body of an \cd{eval-when} form is processed as an implicit
-\cd{progn}, but only in the situations listed.  Each {\it situation}
+\cd{progn}, but only in the situations listed.  Each \textit{situation}
 must be a symbol, either \cd{compile}, \cd{load}, or \cd{eval}.
 
 \cd{eval} specifies that the interpreter should process the body.
@@ -1187,7 +1328,7 @@ of a model of how the compiler processes forms in a file to
 be compiled.  Successive forms are read from the file using the
 function \cd{read}.
 These top-level forms are normally processed in what we shall call
-{\it not-compile-time} mode.  There is another mode called {\it compile-time-too}
+\textit{not-compile-time} mode.  There is another mode called \textit{compile-time-too}
 mode.  The \cd{eval-when} special form controls which of these two
 modes to use.
 
@@ -1200,21 +1341,21 @@ If the form is an \cd{eval-when} form:
 If the situation \cd{load} is specified:
 \begin{itemize}
 \item
-If the situation \cd{compile} is specified, {\it or} if the
-current processing mode is {\it compile-time-too} and the situation \cd{eval}
+If the situation \cd{compile} is specified, \textit{or} if the
+current processing mode is \textit{compile-time-too} and the situation \cd{eval}
 is specified, then process each of the forms in the body
-in {\it compile-time-too} mode.
+in \textit{compile-time-too} mode.
 
 \item
-Otherwise, process each of the forms in the body in {\it not-compile-time} mode.
+Otherwise, process each of the forms in the body in \textit{not-compile-time} mode.
 \end{itemize}
 
 \item
 If the situation \cd{load} is not specified:
 \begin{itemize}
 \item
-If the situation \cd{compile} is specified, {\it or} if the
-current processing mode is {\it compile-time-too} and the situation \cd{eval}
+If the situation \cd{compile} is specified, \textit{or} if the
+current processing mode is \textit{compile-time-too} and the situation \cd{eval}
 is specified, then evaluate each of the forms in the body
 in the compiler's executing environment.
 
@@ -1225,7 +1366,7 @@ Otherwise, ignore the \cd{eval-when} form entirely.
 
 \item
 If the form is not an \cd{eval-when} form, then do two things.
-First, if the current processing mode is {\it compile-time-too} mode,
+First, if the current processing mode is \textit{compile-time-too} mode,
 evaluate the form in the compiler's executing environment.
 Second, perform normal compiler processing of the form
 (compiling functions defined by \cd{defun} forms, and so on).
@@ -1258,7 +1399,7 @@ but the old keywords are deprecated.
 eval-when ({situation}*) {\,form}*
 
   The body of an \cd{eval-when} form is processed as an implicit \cd{progn}, but
-  only in the situations listed.  Each {\it situation} must be a symbol,
+  only in the situations listed.  Each \textit{situation} must be a symbol,
   either \cd{:compile-toplevel},
   \cd{:load-toplevel}, or \cd{:execute}.
 
@@ -1345,7 +1486,7 @@ eval-when ({situation}*) {\,form}*
   is ignored and the \cd{eval-when} form has the value \cd{nil}.
 
   For the sake of backward compatibility,
-  a {\it situation} may also be \cd{compile}, \cd{load}, or \cd{eval}.
+  a \textit{situation} may also be \cd{compile}, \cd{load}, or \cd{eval}.
   Within a top-level \cd{eval-when} form
   these have the same meaning as \cd{:compile-toplevel}, \cd{:load-toplevel},
   and \cd{:execute}, respectively; but their effect is undefined when used
@@ -1447,14 +1588,14 @@ Here are some additional examples.
 ~~~~~~(setf (symbol-function 'foo2) \#'(lambda () x)))))
 \end{lisp}
  If the preceding expression occurs at the top level of a file to be compiled,
-       it has {\it both} a compile time {\it and} a load-time effect of setting
+       it has \textit{both} a compile time \textit{and} a load-time effect of setting
        \cd{(symbol-function 'foo2)} to a function that returns \cd{2}.
 \begin{lisp}
 (eval-when (:execute :load-toplevel :compile-toplevel) \\*
 ~~(setf (symbol-function 'foo3) \#'(lambda () 3)))
 \end{lisp}
  If the preceding expression occurs at the top level of a file to be compiled,
-       it has {\it both} a compile time {\it and}
+       it has \textit{both} a compile time \textit{and}
        a load-time effect of setting the
        function cell of \cd{foo3} to a function that returns \cd{3}.
 \begin{lisp}

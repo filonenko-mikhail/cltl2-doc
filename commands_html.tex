@@ -96,16 +96,19 @@
 \newenvironment{lisp}{\stepcounter{lispcounter}
   \begin{tabbing}}{\end{tabbing}}
 
-\def\@defunstart{\catcode`&=11}
+\def\@defunstart{
+  \noindent
+  \leavevmode
+  \begingroup
+  \catcode`&=11}
 
-\def\defun{
-  \typeout{\value{defuncounter}}
-  \refstepcounter{defuncounter}
+\def\defun{%
   \@ifstar{\@defunstart\@ifnextchar[{\@defuntyped}{\@defununtyped}}
   {\@defunstart\@ifnextchar[{\@defuntyped}{\@defununtyped}}}
 
 
-\def\@showdefuntype{\textit{[\@defuntype\/]}\relax\let\@defuntype\@defunsecondtype}
+\def\@showdefuntype{\textit{[\@defuntype\/]}\relax
+  \let\@defuntype\@defunsecondtype}
 
 \def\@defununtyped{\let\@defunshow=\relax \@defun}
 
@@ -120,8 +123,8 @@
   \let\@defunshow=\@showdefuntype 
   \@defun}
 
-\def\@defun{\@ifnextchar?{\@defunname}{\@defunname}}	% Skips spaces before name 
-
+\def\@defun{\@ifnextchar?{\@defunname}{\@defunname}}	% Skips spaces before
+                                % name 
 \def\enddefun{\par
   \typeout{enddefun currentdefun}
   \@ifstar{}{}
@@ -130,11 +133,13 @@
 
 % 1: entry
 % \@defuntype: \lowercase{category}
-\def\@defunname#1 {\@defunshow
+\def\@defunname#1 {%
+  \@defunshow
   \typeout{defunname}
   \typeout{1: #1} 
   \typeout{ type:  \lowercase{\@defuntype}}
-  \textbf{#1}\@defunindex#1:\par{\@defuntype}\relax
+  \textbf{#1}
+  \@defunindex#1:\par{\@defuntype}\relax
   \ifdim 1\wd0 < 1.3in\relax
      \def\@defunbreak{ }\relax
      \let\@firstdefunbreak=~\relax
@@ -160,10 +165,14 @@
 % 3: \lowercase{category}
 \def\@idefunindex#1#2:\par#3{%
   \typeout{idefunindex}\typeout{ 1: #1}\typeout{ 2: #2}\typeout{ 3: #3}%
+  % Индексируем
   \index{#2!#3}%
+    % Наращиваем счетчик секций с функциями, для того чтобы последующий label
+  % ссылался на этот счетчик.
+  \refstepcounter{defuncounter}
+  % Отметка для кросссылок в тексте
   \label{#2}
-  }%{{#2 }{\noexpand\noexpand\noexpand\cf #1#2\ \noexpand\noexpand\noexpand\rm #3}}}
-
+}
 
 \def\@newlinecheck#1#2{\def\@tempa{#1}\def\@tempb{\\}\ifx\@tempa\@tempb \\*\let\@tempd\@defunname
   \else \def\@tempd{#2}\fi \@tempd}
@@ -194,15 +203,18 @@
 
 \def\@defunkeyword &#1 {\@defunkeywordbreak \textbf{\&#1} \csname @defun#1mode\endcsname}
 \def\@defundone\par{%
-  \par 
+  \par
+  \endgroup
+  \nobreak
   \noindent
  }
 
 \begingroup
-\catcode`\[=13 \catcode`\]=13 \catcode`\(=13 \catcode`\)=13
+\catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
 \catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13
 \global\def\@defmacstart#1{\relax
-%  \noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
+  \noindent
+  \leavevmode     % Need this to trigger the \everypar for margin rules.
   \begingroup
   %\samepage  
   %\topsep 0pt
@@ -229,7 +241,7 @@
   \def\@backslashsetup{\def\\{\@backslashsetup
 				\@dodefmacname{#1}}
                             }\relax
-  \catcode`\[=13 \catcode`\]=13 \catcode`\(=13 \catcode`\)=13
+  \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
   \catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13 \catcode`\^^M=13
   \def\!##1!{\cd{##1}}\relax
   \begin{tabbing}
@@ -237,7 +249,7 @@
   \@dodefmacname{#1}}
 \endgroup
 % \begingroup
-% \catcode`\[=13 \catcode`\]=13 \catcode`\(=13 \catcode`\)=13
+% \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
 % \catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13
 % \global\def\@defmacstart#1{\relax
 % %  \noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
@@ -264,7 +276,7 @@
 %   \@defunhackbraces
 %   \def\@backslashsetup{\def\\{\-\poptabs\@tabcr*\@backslashsetup
 % 				\@dodefmacname{#1}}}\relax
-%   \catcode`\[=13 \catcode`\]=13 \catcode`\(=13 \catcode`\)=13
+%   \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
 %   \catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13 \catcode`\^^M=13
 %   \def\!##1!{\cd{##1}}\relax
 %   \begin{tabbing}\@backslashsetup\@margineveryparguts
@@ -308,7 +320,7 @@
 \let\enddefloop\enddefun
 
 \def\@defmacbegin#1{
-  \refstepcounter{defuncounter}
+
   \@ifstar{\@defmacstart{#1}}{\@defmacstart{#1}}}
 
 {\catcode`\^^M=13\global\def\@carret{

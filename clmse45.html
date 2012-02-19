@@ -1,0 +1,562 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Dynamic Non-Local Exits</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 4410--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch8.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse44.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse44.html#tailclmse44.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse45.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch7.html#clmse45.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">7.11   </span> <a 
+ id="x57-960007.11"></a>Dynamic Non-Local Exits</h3>
+<a 
+ id="dx57-96001"></a>
+<a 
+ id="dx57-96002"></a>
+<a 
+ id="dx57-96003"></a>
+<a 
+ id="dx57-96004"></a>
+<!--l. 4417--><p class="noindent" >Common Lisp provides a facility for exiting from a complex process in a non-local,
+dynamically scoped manner. There are two classes of special forms for this
+purpose, called catch forms and throw forms, or simply catches and throws. A
+catch form evaluates some subforms in such a way that, if a throw form is
+executed during such evaluation, the evaluation is aborted at that point and the
+catch form immediately returns a value speciﬁed by the throw. Unlike <i>block</i>
+and <i>return</i> (section <a 
+href="clmse41.html#x53-850007.7">7.7<!--tex4ht:ref: BLOCK-RETURN-SECTION --></a>), which allow for exiting a <i>block</i> form from any
+point lexically within the body of the <i>block</i>, the catch/throw mechanism
+works even if the throw form is not textually within the body of the catch
+form. The throw need only occur within the extent (time span) of the
+evaluation of the body of the catch. This is analogous to the distinction
+between dynamically bound (special) variables and lexically bound (local)
+variables.
+<div class=defspec>
+<!--l. 4434--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> catch </b> <a 
+ id="dx57-96005"></a><a 
+ id="x57-96006r131"></a>   tag  {<i>form</i>}∗
+</td></tr></table>
+<!--l. 4435--><p class="indent" >
+</div>
+   The <i>catch</i> special form serves as a target for transfer of control by <i>throw</i>. The
+form tag is evaluated ﬁrst to produce an object that names the catch; it may be
+any Lisp object. A catcher is then established with the object as the tag. The
+forms are evaluated as an implicit <i>progn</i>, and the results of the last form are
+returned, except that if during the evaluation of the forms a throw should be
+                                                                          
+
+                                                                          
+executed such that the tag of the throw matches (is <i>eq</i> to) the tag of the <i>catch</i>
+and the catcher is the most recent outstanding catcher with that tag, then
+the evaluation of the forms is aborted and the results speciﬁed by the
+throw are immediately returned from the <i>catch</i> expression. The catcher
+established by the <i>catch</i> expression is disestablished just before the results are
+returned.
+   The tag is used to match throws with catches. <i>(catch &#x2019;foo form)</i> will catch a
+<i>(throw &#x2019;foo form)</i> but not a <i>(throw &#x2019;bar form)</i>. It is an error if <i>throw</i> is done when
+there is no suitable <i>catch</i> ready to catch it.
+   Catch tags are compared using <i>eq</i>, not <i>eql</i>; therefore numbers and characters
+should not be used as catch tags.
+<div class=incompatibility>
+   <b>Compatibility note:</b> The name <i>catch</i> comes from MacLisp, but the syntax of <i>catch</i>
+in Common Lisp is diﬀerent. The MacLisp syntax was <i>(catch form tag)</i>, where the tag
+was not evaluated.
+</div>
+</div>
+<a 
+ id="dx57-96007"></a>
+<a 
+ id="dx57-96008"></a>
+<div class=defspec>
+<!--l. 4475--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> unwind-protect </b> <a 
+ id="dx57-96009"></a><a 
+ id="x57-96010r132"></a>   protected-form  {<i>cleanup − form</i>}∗
+</td></tr></table>
+<!--l. 4476--><p class="indent" >
+</div>
+   Sometimes it is necessary to evaluate a form and make sure that certain
+side eﬀects take place after the form is evaluated; a typical example is <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(progn (start-motor)
+</td></tr></table>
+<!--l. 4481--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (drill-hole)</td></tr></table>
+<!--l. 4482--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (stop-motor))</td></tr></table>
+<!--l. 4484--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<!--l. 4485--><p class="noindent" >The non-local exit facility of Common Lisp creates a situation in which the above
+code won&#x2019;t work, however: if <i>drill-hole</i> should do a throw to a catch that is
+outside of the <i>progn</i> form (perhaps because the drill bit broke), then <i>(stop-motor)</i>
+will never be evaluated (and the motor will presumably be left running). This is
+particularly likely if <i>drill-hole</i> causes a Lisp error and the user tells the
+error-handler to give up and abort the computation. (A possibly more practical
+example might be <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(prog2 (open-a-ﬁle)
+</td></tr></table>
+<!--l. 4496--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (process-ﬁle)</td></tr></table>
+<!--l. 4497--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (close-the-ﬁle))</td></tr></table>
+<!--l. 4499--><p class="indent" >
+</div>
+</div>
+<!--l. 4500--><p class="noindent" >where it is desired always to close the ﬁle when the computation is terminated for
+whatever reason. This case is so important that Common Lisp provides the special
+form <i>with-open-ﬁle</i> for this purpose.)
+<!--l. 4505--><p class="indent" >   In order to allow the example hole-drilling program to work, it can be
+rewritten using <i>unwind-protect</i> as follows: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;; Stop the motor no matter what (even if it failed to start).
+</td></tr></table>
+<!--l. 4508--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 4509--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(unwind-protect</td></tr></table>
+<!--l. 4510--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (progn (start-motor)</td></tr></table>
+<!--l. 4511--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (drill-hole))</td></tr></table>
+<!--l. 4512--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (stop-motor))</td></tr></table>
+<!--l. 4514--><p class="indent" >
+</div>
+</div>
+<!--l. 4515--><p class="noindent" >If <i> drill-hole</i> does a throw that attempts to quit out of the <i>unwind-protect</i>, then
+<i>(stop-motor)</i> will be executed.
+                                                                          
+
+                                                                          
+<!--l. 4518--><p class="indent" >   This example assumes that it is correct to call <i>stop-motor</i> even if the motor
+has not yet been started. Remember that an error or interrupt may cause an
+exit even before any initialization forms have been executed. Any state
+restoration code should operate correctly no matter where in the protected
+code an exit occurred. For example, the following code is not correct: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(unwind-protect
+</td></tr></table>
+<!--l. 4526--><p class="indent" >                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (progn (incf *access-count*)</td></tr></table>
+<!--l. 4527--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (perform-access))</td></tr></table>
+<!--l. 4528--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (decf *access-count*))</td></tr></table>
+<!--l. 4530--><p class="indent" >
+</div>
+</div>
+<!--l. 4531--><p class="noindent" >If an exit occurs before completion of the <i>incf </i> operation the <i>decf </i> operation will be
+executed anyway, resulting in an incorrect value for <i>*access-count*</i>. The correct
+way to code this is as follows: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(let ((old-count *access-count*))
+</td></tr></table>
+<!--l. 4536--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (unwind-protect</td></tr></table>
+<!--l. 4537--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (progn (incf *access-count*)</td></tr></table>
+<!--l. 4538--><p class="indent" >                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (perform-access))</td></tr></table>
+<!--l. 4539--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (setq *access-count* old-count)))</td></tr></table>
+<!--l. 4541--><p class="indent" >
+</div>
+</div>
+<!--l. 4543--><p class="indent" >   As a general rule, <i>unwind-protect</i> guarantees to execute the cleanup-forms
+before exiting, whether it terminates normally or is aborted by a throw of some
+kind. (If, however, an exit occurs during execution of the cleanup-forms, no
+special action is taken. The cleanup-forms of an <i>unwind-protect</i> are not protected
+by that <i>unwind-protect</i>, though they may be protected if that <i>unwind-protect</i>
+occurs within the protected form of another <i>unwind-protect</i>.) <i>unwind-protect</i>
+returns whatever results from evaluation of the protected-form and discards all the
+results from the cleanup-forms.
+                                                                          
+
+                                                                          
+<!--l. 4555--><p class="indent" >   It should be emphasized that <i>unwind-protect</i> protects against all attempts to
+exit from the protected form, including not only “dynamic exit” facilities such as
+<i>throw</i> but also “lexical exit” facilities such as <i>go</i> and <i>return-from</i>. Consider this
+situation: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(tagbody
+</td></tr></table>
+<!--l. 4561--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (let ((x 3))</td></tr></table>
+<!--l. 4562--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (unwind-protect</td></tr></table>
+<!--l. 4563--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (if (numberp x) (go out))</td></tr></table>
+<!--l. 4564--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (print x)))</td></tr></table>
+<!--l. 4565--><p class="indent" >                                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> out</td></tr></table>
+<!--l. 4566--><p class="indent" >                                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  ...)</td></tr></table>
+<!--l. 4568--><p class="indent" >
+</div>
+</div>
+<!--l. 4569--><p class="noindent" >When the <i>go</i> is executed, the call to <i>print</i> is executed ﬁrst, and then the transfer of
+control to the tag <i>out</i> is completed.
+<div class=newer>
+<!--l. 4573--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to clarify the interaction of <i>unwind-protect</i>
+with constructs that perform exits.
+<!--l. 4576--><p class="indent" >   Let an exit be a point out of which control can be transferred. For a <i>throw</i> the
+exit is the matching <i>catch</i>; for a <i>return-from</i> the exit is the corresponding <i>block</i>.
+For a <i>go</i> the exit is the statement within the <i>tagbody</i> (the one to which
+the target tag belongs) which is being executed at the time the <i>go</i> is
+performed.
+<!--l. 4582--><p class="indent" >   The extent of an exit is dynamic; it is not indeﬁnite. The extent of an exit
+begins when the corresponding form (<i>catch</i>, <i>block</i>, or <i>tagbody</i> statement) is
+entered. When the extent of an exit has ended, it is no longer legal to return from
+it.
+<!--l. 4587--><p class="indent" >   Note that the extent of an exit is not the same thing as the scope or
+extent of the designator by which the exit is identiﬁed. For example, a
+<i>block</i> name has lexical scope but the extent of its exit is dynamic. The
+extent of a <i>catch</i> tag could diﬀer from the extent of the exit associated
+with the <i>catch</i> (which is exactly what is at issue here). The diﬀerence
+matters when there are transfers of control from the cleanup clauses of an
+<i>unwind-protect</i>.
+                                                                          
+
+                                                                          
+<!--l. 4595--><p class="indent" >   When a transfer of control out of an exit is initiated by <i>throw</i>, <i>return-from</i>, or
+<i>go</i>, a variety of events occur before the transfer of control is complete:
+      <ul class="itemize1">
+      <li class="itemize">The  cleanup  clauses  of  any  intervening  <i>unwind-protect</i>  clauses  are
+      evaluated.
+      </li>
+      <li class="itemize">Intervening dynamic bindings of special variables and catch tags are
+      undone.
+      </li>
+      <li class="itemize">Intervening exits are abandoned, that is, their extent ends and it is no
+      longer legal to attempt to transfer control from them.
+      </li>
+      <li class="itemize">The extent of the exit being invoked ends.
+      </li>
+      <li class="itemize">Control is ﬁnally passed to the target.</li></ul>
+<!--l. 4608--><p class="noindent" >The ﬁrst edition left the order of these events in some doubt. The implementation
+note for <i>throw</i> hinted that the ﬁrst two processes are interwoven, but it was
+unclear whether it is permissible for an implementation to abandon all
+intervening exits before processing any intervening <i>unwind-protect</i> cleanup
+clauses.
+<!--l. 4615--><p class="indent" >   The clariﬁcation adopted by X3J13 is as follows. Intervening exits are
+abandoned as soon as the transfer of control is initiated; in the case of a <i>throw</i>,
+this occurs at the beginning of the “second pass” mentioned in the implementation
+note. It is an error to attempt a transfer of control to an exit whose dynamic
+extent has ended.
+<!--l. 4622--><p class="indent" >   Next the evaluation of <i>unwind-protect</i> cleanup clauses and the undoing of
+dynamic bindings and <i>catch</i> tags are performed together, in the order
+corresponding to the reverse of the order in which they were established. The
+eﬀect of this is that the cleanup clauses of an <i>unwind-protect</i> will see the same
+dynamic bindings of variables and <i>catch</i> tags as were visible when the
+<i>unwind-protect</i> was entered. (However, some of those <i>catch</i> tags may not be
+useable because they correspond to abandoned exit points.)
+<!--l. 4632--><p class="indent" >   Finally control is transferred to the originally invoked exit and simultaneously
+that exit is abandoned.
+                                                                          
+
+                                                                          
+<!--l. 4635--><p class="indent" >   The eﬀect of this speciﬁcation is that once a program has attempted
+to transfer control to a particular exit, an <i>unwind-protect</i> cleanup form
+cannot step in and decide to transfer control to a more recent (nested) exit,
+blithely forgetting the original exit request. However, a cleanup form may
+restate the request to transfer to the same exit that started the cleanup
+process.
+<!--l. 4643--><p class="indent" >   Here is an example based on a nautical metaphor. The function <i>gently</i> moves
+an oar in the water with low force, but if an oar gets stuck, the caller will catch a
+crab. The function <i>row</i> takes a boat, an oar-stroking function, a stream, and a
+count; an oar is constructed for the boat and stream and the oar-stroking function
+is called <i>:count</i> times. The function <i>life</i> rows a particular boat. Merriment follows,
+except that if the oarsman is winded he must stop to catch his breath. <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun gently (oar)
+</td></tr></table>
+<!--l. 4653--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (stroke oar :force 0.5)</td></tr></table>
+<!--l. 4654--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (when (stuck oar)</td></tr></table>
+<!--l. 4655--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (throw &#x2019;crab nil)))</td></tr></table>
+<!--l. 4656--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 4657--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun row (boat stroke-fn stream &#x0026;key count)</td></tr></table>
+<!--l. 4658--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (let ((oar (make-oar boat stream)))</td></tr></table>
+<!--l. 4659--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (loop repeat count do (funcall stroke-fn oar))))</td></tr></table>
+<!--l. 4660--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 4661--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun life ()</td></tr></table>
+<!--l. 4662--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (catch &#x2019;crab</td></tr></table>
+<!--l. 4663--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (catch &#x2019;breath</td></tr></table>
+<!--l. 4664--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (unwind-protect</td></tr></table>
+<!--l. 4665--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (row *your-boat* #&#x2019;gently *query-io* :count 3))</td></tr></table>
+<!--l. 4666--><p class="indent" >                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (when (winded) (throw &#x2019;breath nil)))</td></tr></table>
+<!--l. 4667--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (loop repeat 4 (set-mode :merry))</td></tr></table>
+<!--l. 4668--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (dream))))</td></tr></table>
+<!--l. 4670--><p class="indent" >
+</div>
+</div>
+<!--l. 4671--><p class="noindent" >Suppose that the oar gets stuck, causing <i>gently</i> to call <i>throw</i> with the tag <i>crab</i>. The
+                                                                          
+
+                                                                          
+program is then committed to exiting from the outer <i>catch</i> (the one with the tag
+<i>crab</i>). As control breaks out of the <i>unwind-protect</i> form, the <i>winded</i> test is
+executed. Suppose it is true; then another call to <i>throw</i> occurs, this time with the
+tag <i>breath</i>. The inner <i>catch</i> (the one with the tag <i>breath</i>) has been abandoned as a
+result of the ﬁrst <i>throw</i> operation (still in progress). The clariﬁcation voted by
+X3J13 speciﬁes that the program is in error for attempting to transfer control to
+an abandoned exit point. To put it in terms of the example: once you
+have begun to catch a crab, you cannot rely on being able to catch your
+breath.
+<!--l. 4684--><p class="indent" >   Implementations may support longer extents for exits than is required by
+this speciﬁcation, but portable programs may not rely on such extended
+extents.
+<!--l. 4688--><p class="indent" >   (This speciﬁcation is somewhat controversial. An alternative proposal was
+that the abandoning of exits should be lumped in with the evaluation of
+<i>unwind-protect</i> cleanup clauses and the undoing of dynamic bindings and <i>catch</i>
+tags, performing all in reverse order of establishment. X3J13 agreed that this
+approach is theoretically cleaner and more elegant but also more stringent and of
+little additional practical use. There was some concern that a more stringent
+speciﬁcation might be a great added burden to some implementors and would
+achieve only a small gain for users.)
+</div>
+</div>
+<div class=defspec>
+<!--l. 4701--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> throw </b> <a 
+ id="dx57-96011"></a><a 
+ id="x57-96012r133"></a>   tag result
+</td></tr></table>
+<!--l. 4702--><p class="indent" >
+</div>
+   The <i>throw</i> special form transfers control to a matching <i>catch</i> construct. The
+tag is evaluated ﬁrst to produce an object called the throw tag; then the result
+form is evaluated, and its results are saved (if the result form produces multiple
+values, then all the values are saved). The most recent outstanding catch whose
+tag matches the throw tag is exited; the saved results are returned as the value(s)
+of the catch. A <i>catch</i> matches only if the catch tag is <i>eq</i> to the throw
+tag.
+                                                                          
+
+                                                                          
+   In the process, dynamic variable bindings are undone back to the point of the
+catch, and any intervening <i>unwind-protect</i> cleanup code is executed. The result
+form is evaluated before the unwinding process commences, and whatever results
+it produces are returned from the catch.
+   If there is no outstanding catcher whose tag matches the throw tag, no
+unwinding of the stack is performed, and an error is signalled. When the error is
+signalled, the outstanding catchers and the dynamic variable bindings are those in
+force at the point of the throw.
+<div class=implementation>
+   <b>Implementation note:</b> These requirements imply that throwing should typically
+make two passes over the control stack. In the ﬁrst pass it simply searches for
+a matching catch. In this search every <i>catch</i> must be considered, but every
+<i>unwind-protect</i> should be ignored. On the second pass the stack is actually
+unwound, one frame at a time, undoing dynamic bindings and outstanding
+<i>unwind-protect</i> constructs in reverse order of creation until the matching catch is
+reached.
+</div>
+<div class=incompatibility>
+   <b>Compatibility note:</b> The name <i>throw</i> comes from MacLisp, but the syntax of
+<i>throw</i> in Common Lisp is diﬀerent. The MacLisp syntax was <i>(throw form tag)</i>, where the
+tag was not evaluated.
+</div>
+</div>
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+   <!--l. 6--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch8.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse44.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse44.html#tailclmse44.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse45.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch7.html#clmse45.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 6--><p class="indent" >   <a 
+ id="tailclmse45.html"></a>  
+</body></html> 

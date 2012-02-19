@@ -1,0 +1,1115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Package System Functions and Variables</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 800--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse64.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse62.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse62.html#tailclmse62.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse63.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch11.html#clmse63.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">11.7   </span> <a 
+ id="x79-11800011.7"></a>Package System Functions and Variables</h3>
+<!--l. 803--><p class="noindent" >Some of the functions and variables in this section are described in previous
+sections but are included here for completeness.
+<div class=obsolete>
+<!--l. 808--><p class="indent" >   It is up to each implementation&#x2019;s compiler to ensure that when a compiled ﬁle
+is loaded, all of the symbols in the ﬁle end up in the same packages that they
+would occupy if the Lisp source ﬁle were loaded. In most compilers, this will be
+accomplished by treating certain package operations as though they are
+surrounded by <i>(eval-when (compile load eval) ...)</i>; see <i>eval-when</i>. These operations
+are <i>make-package</i>, <i>in-package</i>, <i>shadow</i>, <i>shadowing-import</i>, <i>export</i>, <i>unexport</i>,
+<i>use-package</i>, <i>unuse-package</i>, and <i>import</i>. To guarantee proper compilation in all
+Common Lisp implementations, these functions should appear only at top level
+within a ﬁle. As a matter of style, it is suggested that each ﬁle contain
+only one package, and that all of the package setup forms appear near
+the start of the ﬁle. This is discussed in more detail, with examples, in
+section <a 
+href="clmse65.html#x81-12000011.9">11.9<!--tex4ht:ref: PACKAGE-EXAMPLE-SECTION --></a>.
+</div>
+<div class=newer>
+<!--l. 826--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to cancel the speciﬁcations of the
+preceding paragraph in order to support a model of ﬁle compilation in
+which the compiler need never take special note of ordinary function calls;
+only special forms and macros are recognized as aﬀecting the state of the
+compilation process. As part of this change <i>in-package</i> was changed to be a
+macro rather than a function and its functionality was restricted. The
+actions of <i>shadow</i>, <i>shadowing-import</i>, <i>use-package</i>, <i>import</i>, <i>intern</i>, and
+<i>export</i> for compilation purposes may be accomplished with the new macro
+<i>defpackage</i>.
+</div>
+<div class=implementation>
+<!--l. 841--><p class="noindent" ><b>Implementation note:</b> In the past, some Lisp compilers have read the entire ﬁle into
+Lisp before processing any of the forms. Other compilers have arranged for the loader to
+                                                                          
+
+                                                                          
+do all of its intern operations before evaluating any of the top-level forms. Neither of
+these techniques will work in a straightforward way in Common Lisp because of the
+presence of multiple packages.
+</div>
+<!--l. 852--><p class="indent" >   For the functions described here, all optional arguments named package default
+to the current value of <i>*package*</i>. Where a function takes an argument that is
+either a symbol or a list of symbols, an argument of <i>nil</i> is treated as an empty list
+of symbols. Any argument described as a package name may be either a
+string or a symbol. If a symbol is supplied, its print name will be used
+as the package name; if a string is supplied, the user must take care to
+specify the same capitalization used in the package name, normally all
+uppercase.
+<div class=defun>
+<!--l. 861--><p class="noindent" > <i>[Variable]</i>   <b>*package*</b> <a 
+ id="dx79-118001"></a><a 
+ id="x79-118002r172"></a>
+<!--l. 863--><p class="noindent" >The value of this variable must be a package; this package is said to be the current
+package. The initial value of <i>*package*</i> is the <i>user</i> package.
+<div class=newer>
+<!--l. 869--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to specify that the forthcoming ANSI
+Common Lisp will use the package name <i>common-lisp-user</i> instead of
+<i>user</i>.
+</div>
+<!--l. 874--><p class="indent" >   The function <i>load</i> rebinds <i>*package*</i> to its current value. If some form in the
+ﬁle changes the value of <i>*package*</i> during loading, the old value will be restored
+when the loading is completed.
+<div class=newer>
+<!--l. 879--><p class="indent" >   X3J13 voted in October 1988 ⟨<b>?</b>⟩ to require <i>compile-ﬁle</i> to rebind <i>*package*</i>
+to its current value.
+</div>
+</div>
+<div class=defun>
+<!--l. 884--><p class="noindent" > <i>[Function]</i>   <b>make-package</b> <a 
+ id="dx79-118003"></a><a 
+ id="x79-118004r173"></a>   <i>package-name</i>  <b>&#x0026;key</b>  :nicknames  :use
+<!--l. 886--><p class="noindent" >This creates and returns a new package with the speciﬁed package name. As
+described above, this argument may be either a string or a symbol. The
+<i>:nicknames</i> argument must be a list of strings to be used as alternative names for
+the package. Once again, the user may supply symbols in place of the strings, in
+which case the print names of the symbols are used. These names and nicknames
+must not conﬂict with any existing package names; if they do, a correctable error
+is signaled.
+                                                                          
+
+                                                                          
+<!--l. 896--><p class="indent" >   The <i>:use</i> argument is a list of packages or the names (strings or symbols) of
+packages whose external symbols are to be inherited by the new package. These
+packages must already exist. If not supplied, <i>:use</i> defaults to a list of one package,
+the <i>lisp</i> package.
+<div class=newer>
+<!--l. 902--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to specify that the forthcoming ANSI
+Common Lisp will use the package name <i>common-lisp</i> instead of <i>lisp</i>.
+</div>
+<div class=new>
+<!--l. 908--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to change the speciﬁcation of <i>make-package</i>
+so that the default value for the <i>:use</i> argument is unspeciﬁed. Portable code
+should specify <i>:use &#x2019;(&#x0022;COMMON-LISP&#x0022;)</i> explicitly.
+<div class=rationale>
+<!--l. 915--><p class="noindent" ><b>Rationale:</b> Many existing implementations of Common Lisp happen to have violated
+the ﬁrst edition speciﬁcation, providing as the default not only the <i>lisp</i> package but also
+(or instead) a package containing implementation-dependent language extensions. This is
+for good reason: usually it is much more convenient to the user for the default <i>:use</i> list
+to be the entire, implementation-dependent, extended language rather than only the
+facilities speciﬁed in this book. The X3J13 vote simply legitimizes existing
+practice.
+</div>
+</div>
+</div>
+<div class=obsolete>
+<div class=defun>
+<!--l. 932--><p class="noindent" > <i>[Function]</i>   <b>in-package</b> <a 
+ id="dx79-118005"></a><a 
+ id="x79-118006r174"></a>   <i>package-name</i>  <b>&#x0026;key</b>  :nicknames  :use
+<!--l. 934--><p class="noindent" >The <i>in-package</i> function is intended to be placed at the start of a ﬁle
+containing a subsystem that is to be loaded into some package other than
+<i>user</i>.
+<!--l. 939--><p class="indent" >   If there is not already a package named package-name, this function is similar
+to <i>make-package</i>, except that after the new package is created, <i>*package*</i> is set to
+it. This binding will remain in force until changed by the user (perhaps with
+another <i>in-package</i> call) or until the <i>*package*</i> variable reverts to its old value at
+the completion of a <i>load</i> operation.
+<!--l. 946--><p class="indent" >   If there is an existing package whose name is package-name, the assumption is
+that the user is re-loading a ﬁle after making some changes. The existing package
+is augmented to reﬂect any new nicknames or new packages in the <i>:use</i>
+list (with the usual error checking), and <i>*package*</i> is then set to this
+                                                                          
+
+                                                                          
+package.
+</div>
+</div>
+<div class=new>
+<!--l. 955--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to specify that <i>in-package</i> returns the new
+package, that is, the value of <i>*package*</i> after the operation has been
+executed.
+</div>
+<div class=newer>
+<!--l. 962--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to specify that the forthcoming ANSI
+Common Lisp will use the package name <i>common-lisp-user</i> instead of
+<i>user</i>.
+</div>
+<div class=newer>
+<!--l. 968--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to restrict the functionality of <i>in-package</i> and
+to make it a macro. This is an incompatible change.
+<!--l. 972--><p class="indent" >   Making <i>in-package</i> a macro rather than a function means that there is no need
+to require <i>compile-ﬁle</i> to handle it specially. Since <i>defpackage</i> is also deﬁned
+to have side eﬀects on the compilation environment, there is no need
+to require any of the package functions to be treated specially by the
+compiler.
+<div class=defmac>
+<!--l. 980--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> in-package </b> <a 
+ id="dx79-118007"></a><a 
+ id="x79-118008r175"></a>   name
+</td></tr></table>
+<!--l. 981--><p class="indent" >
+</div>
+   This macro causes <i>*package*</i> to be set to the package named name, which
+must be a symbol or string. The name is not evaluated. An error is signaled if the
+package does not already exist. Everything this macro does is also performed at
+compile time if the call appears at top level.
+</div>
+</div>
+<div class=defun>
+<!--l. 991--><p class="noindent" > <i>[Function]</i>   <b>ﬁnd-package</b> <a 
+ id="dx79-118009"></a><a 
+ id="x79-118010r176"></a>   <i>name</i>
+<!--l. 993--><p class="noindent" >The name must be a string that is the name or nickname for a package. This
+                                                                          
+
+                                                                          
+argument may also be a symbol, in which case the symbol&#x2019;s print name is used.
+The package with that name or nickname is returned; if no such package exists,
+<i>ﬁnd-package</i> returns <i>nil</i>. The matching of names observes case (as in
+<i>string=</i>).
+<div class=new>
+<!--l. 1001--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to allow <i>ﬁnd-package</i> to accept a package
+object, in which case the package is simply returned (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1008--><p class="noindent" > <i>[Function]</i>   <b>package-name</b> <a 
+ id="dx79-118011"></a><a 
+ id="x79-118012r177"></a>   <i>package</i>
+<!--l. 1010--><p class="noindent" >The argument must be a package. This function returns the string that names
+that package.
+<div class=new>
+<!--l. 1015--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to allow <i>package-name</i> to accept a package
+name or nickname, in which case the primary name of the package so speciﬁed is
+returned (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+<div class=new>
+<!--l. 1023--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to add a function to delete packages. One
+consequence of this vote is that <i>package-name</i> will return <i>nil</i> instead of a package
+name if applied to a deleted package object. See <i>delete-package</i>.
+</div>
+</div>
+<div class=defun>
+<!--l. 1032--><p class="noindent" > <i>[Function]</i>   <b>package-nicknames</b> <a 
+ id="dx79-118013"></a><a 
+ id="x79-118014r178"></a>   <i>package</i>
+<!--l. 1034--><p class="noindent" >The argument must be a package. This function returns the list of nickname
+strings for that package, not including the primary name.
+<div class=new>
+<!--l. 1039--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to allow <i>package-nicknames</i> to accept a
+package name or nickname, in which case the nicknames of the package so
+speciﬁed are returned (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1047--><p class="noindent" > <i>[Function]</i>   <b>rename-package</b> <a 
+ id="dx79-118015"></a><a 
+ id="x79-118016r179"></a>   <i>package</i>  <i>new-name</i>  <b>&#x0026;optional</b>
+<i>new-nicknames</i>
+<!--l. 1049--><p class="noindent" >The old name and all of the old nicknames of package are eliminated and are
+                                                                          
+
+                                                                          
+replaced by new-name and new-nicknames. The new-name argument is a string or
+symbol; the new-nicknames argument, which defaults to <i>nil</i>, is a list of strings or
+symbols.
+<div class=new>
+<!--l. 1056--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+<div class=new>
+<!--l. 1063--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to specify that <i>rename-package</i> returns
+package.
+</div>
+</div>
+<div class=defun>
+<!--l. 1069--><p class="noindent" > <i>[Function]</i>   <b>package-use-list</b> <a 
+ id="dx79-118017"></a><a 
+ id="x79-118018r180"></a>   <i>package</i>
+<!--l. 1071--><p class="noindent" >A list of other packages used by the argument package is returned.
+<div class=new>
+<!--l. 1075--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1082--><p class="noindent" > <i>[Function]</i>   <b>package-used-by-list</b> <a 
+ id="dx79-118019"></a><a 
+ id="x79-118020r181"></a>   <i>package</i>
+<!--l. 1084--><p class="noindent" >A list of other packages that use the argument package is returned.
+<div class=new>
+<!--l. 1088--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1095--><p class="noindent" > <i>[Function]</i>   <b>package-shadowing-symbols</b> <a 
+ id="dx79-118021"></a><a 
+ id="x79-118022r182"></a>   <i>package</i>
+<!--l. 1097--><p class="noindent" >A list is returned of symbols that have been declared as shadowing symbols in this
+package by <i>shadow</i> or <i>shadowing-import</i>. All symbols on this list are present in
+the speciﬁed package.
+<div class=new>
+<!--l. 1103--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+                                                                          
+
+                                                                          
+<div class=defun>
+<!--l. 1110--><p class="noindent" > <i>[Function]</i>   <b>list-all-packages</b> <a 
+ id="dx79-118023"></a><a 
+ id="x79-118024r183"></a>
+<!--l. 1112--><p class="noindent" >This function returns a list of all packages that currently exist in the Lisp
+system.
+</div>
+<div class=new>
+<div class=defun>
+<!--l. 1119--><p class="noindent" > <i>[Function]</i>   <b>delete-package</b> <a 
+ id="dx79-118025"></a><a 
+ id="x79-118026r184"></a>   <i>package</i>
+<!--l. 1121--><p class="noindent" >X3J13 voted in January 1989 ⟨<b>?</b>⟩ to add the <i>delete-package</i> function, which
+deletes the speciﬁed package from all package system data structures. The package
+argument may be either a package or the name of a package.
+<!--l. 1128--><p class="indent" >   If package is a name but there is currently no package of that name, a
+correctable error is signaled. Continuing from the error makes no deletion attempt
+but merely returns <i>nil</i> from the call to <i>delete-package</i>.
+<!--l. 1133--><p class="indent" >   If package is a package object that has already been deleted, no error is
+signaled and no deletion is attempted; instead, <i>delete-package</i> immediately returns
+<i>nil</i>.
+<!--l. 1137--><p class="indent" >   If the package speciﬁed for deletion is currently used by other packages, a
+correctable error is signaled. Continuing from this error, the eﬀect of the function
+<i>unuse-package</i> is performed on all such other packages so as to remove their
+dependency on the speciﬁed package, after which <i>delete-package</i> proceeds
+to delete the speciﬁed package as if no other package had been using
+it.
+<!--l. 1144--><p class="indent" >   If any symbol had the speciﬁed package as its home package before the call to
+<i>delete-package</i>, then its home package is unspeciﬁed (that is, the contents of its
+package cell are unspeciﬁed) after the <i>delete-package</i> operation has been
+completed. Symbols in the deleted package are not modiﬁed in any other
+way.
+<!--l. 1150--><p class="indent" >   The name and nicknames of the package cease to be recognized package
+names. The package object is still a package, but anonymous; <i>packagep</i> will be
+true of it, but <i>package-name</i> applied to it will return <i>nil</i>.
+<!--l. 1154--><p class="indent" >   The eﬀect of any other package operation on a deleted package object is
+undeﬁned. In particular, an attempt to locate a symbol within a deleted
+package (using <i>intern</i> or <i>ﬁnd-symbol</i>, for example) will have unspeciﬁed
+results.
+<i>
+<!--l. 1159--><p class="indent" >   delete-package</i> returns <i>t</i> if the deletion succeeds, and <i>nil</i> otherwise.
+</div>
+                                                                          
+
+                                                                          
+</div>
+<div class=defun>
+<!--l. 1164--><p class="noindent" > <i>[Function]</i>   <b>intern</b> <a 
+ id="dx79-118027"></a><a 
+ id="x79-118028r185"></a>   <i>string</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1166--><p class="noindent" >The package, which defaults to the current package, is searched for a symbol with
+the name speciﬁed by the string argument. This search will include inherited
+symbols, as described in section <a 
+href="clmse60.html#x76-11500011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>. If a symbol with the speciﬁed name is
+found, it is returned. If no such symbol is found, one is created and is installed in
+the speciﬁed package as an internal symbol (as an external symbol if the package
+is the <i>keyword</i> package); the speciﬁed package becomes the home package of the
+created symbol.
+<div class=newer>
+<!--l. 1179--><p class="indent" >   X3J13 voted in March 1989 ⟨<b>?</b>⟩ to specify that <i>intern</i> may in eﬀect
+perform the search using a copy of the argument string in which some or all
+of the implementation-deﬁned attributes have been removed from the
+characters of the string. It is implementation-dependent which attributes are
+removed.
+</div>
+<!--l. 1187--><p class="indent" >   Two values are returned. The ﬁrst is the symbol that was found or created.
+The second value is <i>nil</i> if no pre-existing symbol was found, and takes on one of
+three values if a symbol was found: <div class=indentdesc>
+              <div><br /><b>
+<i>:internal</i>     </b>The symbol was directly present in the package as an internal
+              symbol.
+              <br /><b>
+<i>:external</i>     </b>The symbol was directly present as an external symbol.
+              <br /><b>
+<i>:inherited</i>    </b>The symbol was inherited via <i>use-package</i> (which implies that
+              the symbol is internal).</div>
+</div>
+<div class=new>
+<!--l. 1203--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+<div class=incompatibility>
+                                                                          
+
+                                                                          
+<!--l. 1210--><p class="noindent" ><b>Compatibility note:</b> Conceptually, <i>intern</i> translates a string to a symbol. In MacLisp
+and several other dialects of Lisp, <i>intern</i> can take either a string or a symbol as its
+argument; in the latter case, the symbol&#x2019;s print name is extracted and used as the string.
+However, this leads to some confusing issues about what to do if <i>intern</i> ﬁnds a symbol
+that is not <i>eq</i> to the argument symbol. To avoid such confusion, Common Lisp requires
+the argument to be a string.
+</div>
+</div>
+<div class=defun>
+<!--l. 1222--><p class="noindent" > <i>[Function]</i>   <b>ﬁnd-symbol</b> <a 
+ id="dx79-118029"></a><a 
+ id="x79-118030r186"></a>   <i>string</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1224--><p class="noindent" >This is identical to <i>intern</i>, but it never creates a new symbol. If a symbol with the
+speciﬁed name is found in the speciﬁed package, directly or by inheritance, the
+symbol found is returned as the ﬁrst value and the second value is as speciﬁed for
+<i>intern</i>. If the symbol is not accessible in the speciﬁed package, both values are
+<i>nil</i>.
+<div class=new>
+<!--l. 1233--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1240--><p class="noindent" > <i>[Function]</i>   <b>unintern</b> <a 
+ id="dx79-118031"></a><a 
+ id="x79-118032r187"></a>   <i>symbol</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1242--><p class="noindent" >If the speciﬁed symbol is present in the speciﬁed package, it is removed from that
+package and also from the package&#x2019;s shadowing-symbols list if it is present
+there. Moreover, if the package is the home package for the symbol, the
+symbol is made to have no home package. Note that in some circumstances
+the symbol may continue to be accessible in the speciﬁed package by
+inheritance. <i>unintern</i> returns <i>t</i> if it actually removed a symbol, and <i>nil</i>
+otherwise.
+<i>
+<!--l. 1252--><p class="indent" >   unintern</i> should be used with caution. It changes the state of the package
+system in such a way that the consistency rules do not hold across the
+change.
+<div class=new>
+<!--l. 1257--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+<div class=incompatibility>
+                                                                          
+
+                                                                          
+<!--l. 1264--><p class="noindent" ><b>Compatibility note:</b> The equivalent of this in MacLisp is <i>remob</i>.
+</div>
+</div>
+<div class=defun>
+<!--l. 1270--><p class="noindent" > <i>[Function]</i>   <b>export</b> <a 
+ id="dx79-118033"></a><a 
+ id="x79-118034r188"></a>   <i>symbols</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1272--><p class="noindent" >The symbols argument should be a list of symbols, or possibly a single symbol.
+These symbols become accessible as external symbols in package (see
+section <a 
+href="clmse60.html#x76-11500011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). <i>export</i> returns <i>t</i>.
+<!--l. 1278--><p class="indent" >   By convention, a call to <i>export</i> listing all exported symbols is placed near the
+start of a ﬁle to advertise which of the symbols mentioned in the ﬁle are intended
+to be used by other programs.
+<div class=new>
+<!--l. 1283--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1290--><p class="noindent" > <i>[Function]</i>   <b>unexport</b> <a 
+ id="dx79-118035"></a><a 
+ id="x79-118036r189"></a>   <i>symbols</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1292--><p class="noindent" >The argument should be a list of symbols, or possibly a single symbol. These
+symbols become internal symbols in package. It is an error to unexport a
+symbol from the <i>keyword</i> package (see section <a 
+href="clmse60.html#x76-11500011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). <i>unexport</i> returns
+<i>t</i>.
+<div class=new>
+<!--l. 1300--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1307--><p class="noindent" > <i>[Function]</i>   <b>import</b> <a 
+ id="dx79-118037"></a><a 
+ id="x79-118038r190"></a>   <i>symbols</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1309--><p class="noindent" >The argument should be a list of symbols, or possibly a single symbol. These
+symbols become internal symbols in package and can therefore be referred to
+without having to use qualiﬁed-name (colon) syntax. <i>import</i> signals a correctable
+error if any of the imported symbols has the same name as some distinct
+symbol already accessible in the package (see section <a 
+href="clmse60.html#x76-11500011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). <i>import</i> returns
+<i>t</i>.
+<div class=newer>
+<!--l. 1320--><p class="indent" >   X3J13 voted in June 1987 ⟨<b>?</b>⟩ to clarify that if any symbol to be imported has
+no home package then <i>import</i> sets the home package of the symbol to the package
+                                                                          
+
+                                                                          
+to which the symbol is being imported.
+</div>
+<div class=new>
+<!--l. 1327--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1334--><p class="noindent" > <i>[Function]</i>   <b>shadowing-import</b> <a 
+ id="dx79-118039"></a><a 
+ id="x79-118040r191"></a>   <i>symbols</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1336--><p class="noindent" >This is like <i>import</i>, but it does not signal an error even if the importation of a
+symbol would shadow some symbol already accessible in the package. In addition
+to being imported, the symbol is placed on the shadowing-symbols list of package
+(see section <a 
+href="clmse61.html#x77-11600011.5">11.5<!--tex4ht:ref: NAME-CONFLICTS-SECTION --></a>). <i>shadowing-import</i> returns <i>t</i>.
+<i>
+<!--l. 1344--><p class="indent" >   shadowing-import</i> should be used with caution. It changes the state of the
+package system in such a way that the consistency rules do not hold across the
+change.
+<div class=new>
+<!--l. 1349--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1356--><p class="noindent" > <i>[Function]</i>   <b>shadow</b> <a 
+ id="dx79-118041"></a><a 
+ id="x79-118042r192"></a>   <i>symbols</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1358--><p class="noindent" >The argument should be a list of symbols, or possibly a single symbol. The print
+name of each symbol is extracted, and the speciﬁed package is searched for a
+symbol of that name. If such a symbol is present in this package (directly, not by
+inheritance), then nothing is done. Otherwise, a new symbol is created with this
+print name, and it is inserted in the package as an internal symbol. The symbol is
+also placed on the shadowing-symbols list of the package (see section <a 
+href="clmse61.html#x77-11600011.5">11.5<!--tex4ht:ref: NAME-CONFLICTS-SECTION --></a>).
+<i>shadow</i> returns <i>t</i>.
+<div class=newer>
+<!--l. 1370--><p class="indent" >   X3J13 voted in March 1988 ⟨<b>?</b>⟩ to change <i>shadow</i> to accept strings as well
+as well as symbols (a string in the symbols list being treated as a print
+name), and to clarify that if a symbol of speciﬁed name is already in the
+package but is not yet on the shadowing-symbols list for that package, then
+<i>shadow</i> does add it to the shadowing-symbols list rather than simply doing
+nothing.
+                                                                          
+
+                                                                          
+</div>
+<i>
+<!--l. 1379--><p class="indent" >   shadow</i> should be used with caution. It changes the state of the package
+system in such a way that the consistency rules do not hold across the
+change.
+<div class=new>
+<!--l. 1384--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1391--><p class="noindent" > <i>[Function]</i>   <b>use-package</b> <a 
+ id="dx79-118043"></a><a 
+ id="x79-118044r193"></a>   <i>packages-to-use</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1393--><p class="noindent" >The packages-to-use argument should be a list of packages or package names, or
+possibly a single package or package name. These packages are added to the
+use-list of package if they are not there already. All external symbols in the
+packages to use become accessible in package as internal symbols (see
+section <a 
+href="clmse60.html#x76-11500011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). It is an error to try to use the <i>keyword</i> package. <i>use-package</i> returns
+<i>t</i>.
+<div class=new>
+<!--l. 1404--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 1411--><p class="noindent" > <i>[Function]</i>   <b>unuse-package</b> <a 
+ id="dx79-118045"></a><a 
+ id="x79-118046r194"></a>   <i>packages-to-unuse</i>  <b>&#x0026;optional</b>  <i>package</i>
+<!--l. 1413--><p class="noindent" >The packages-to-unuse argument should be a list of packages or package names, or
+possibly a single package or package name. These packages are removed from the
+use-list of package. <i>unuse-package</i> returns <i>t</i>.
+<div class=new>
+<!--l. 1420--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+</div>
+<div class=new>
+<!--l. 1428--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to add a macro <i>defpackage</i> to the language
+to make it easier to create new packages, alleviating the burden on the
+programmer to perform the various setup operations in exactly the correct
+sequence.
+                                                                          
+
+                                                                          
+<div class=defmac>
+<!--l. 1436--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> defpackage </b> <a 
+ id="dx79-118047"></a><a 
+ id="x79-118048r195"></a>   deﬁned-package-name  {<i>option</i>}∗
+</td></tr></table>
+<!--l. 1437--><p class="indent" >
+</div>
+   This creates a new package, or modiﬁes an existing one, whose name is
+deﬁned-package-name. The deﬁned-package-name may be a string or a symbol; if
+it is a symbol, only its print name matters, and not what package, if any, the
+symbol happens to be in. The newly created or modiﬁed package is returned as
+the value of the <i>defpackage</i> form.
+   Each standard option is a list of a keyword (the name of the option) and
+associated arguments. No part of a <i>defpackage</i> form is evaluated. Except for the
+<i>:size</i> option, more than one option of the same kind may occur within the same
+<i>defpackage</i> form.
+   The standard options for <i>defpackage</i> are as follows. In every case, any option
+argument called package-name or symbol-name may be a string or a symbol; if it
+is a symbol, only its print name matters, and not what package, if any, the symbol
+happens to be in.
+<div class=flushdesc>
+  <div><br /><b>
+<i>(:size integer)</i>                                                             </b>
+This speciﬁes approximately the number of symbols expected to be in the
+package. This is purely an eﬃciency hint to the storage allocator, so that
+implementations using hash tables as part of the package data structure (the
+usual technique) will not have to incrementally expand the package as new
+symbols are added to it (for example, as a large ﬁle is read while “in” that
+package).
+  <br /><b>
+<i>(:nicknames {<i>package-name</i>}∗ )</i>                                           </b>
+The speciﬁed names become nicknames of the package being deﬁned. If any
+of the speciﬁed nicknames already refers to an existing package, a continuable
+error is signaled exactly as for the function <i>make-package</i>.
+                                                                          
+
+                                                                          
+  <br /><b>
+<i>(:shadow {<i>symbol-name</i>}∗ )</i>                                               </b>
+Symbols with the speciﬁed names are created as shadows in the package
+being deﬁned, just as with the function <i>shadow</i>.
+  <br /><b>
+<i>(:shadowing-import-from package-name {<i>symbol-name</i>}∗ )</i>                  </b>
+Symbols  with  the  speciﬁed  names  are  located  in  the  speciﬁed  package.
+These symbols are imported into the package being deﬁned, shadowing other
+symbols if necessary, just as with the function <i>shadowing-import</i>. In no case
+will symbols be created in a package other than the one being deﬁned; a
+continuable error is signaled if for any symbol-name there is no symbol of
+that name accessible in the package named package-name.
+  <br /><b>
+<i>(:use {<i>package-name</i>}∗ )</i>                                                  </b>
+The  package  being  deﬁned  is  made  to  “use”  (inherit  from)  the  packages
+speciﬁed by this option, just as with the function <i>use-package</i>. If no <i>:use</i>
+option is supplied, then a default list is assumed as for <i>make-package</i>.
+<!--l. 1493--><p class="noindent" >X3J13   voted   in   January   1989   ⟨<b>?</b>⟩ to   change   the   speciﬁcation   of
+<i>make-package</i> so that the default value for the <i>:use</i> argument is unspeciﬁed.
+This  change  aﬀects  <i>defpackage</i>  as  well.  Portable  code  should  specify
+<i>(:use &#x2019;(&#x0022;COMMON-LISP&#x0022;))</i> explicitly.
+  <br /><b>
+<i>(:import-from package-name {<i>symbol-name</i>}∗ )</i>                            </b>
+Symbols with the speciﬁed names are located in the speciﬁed package. These
+symbols are imported into the package being deﬁned, just as with the function
+<i>import</i>. In no case will symbols be created in a package other than the one
+being deﬁned; a continuable error is signaled if for any symbol-name there is
+no symbol of that name accessible in the package named package-name.
+  <br /><b>
+<i>(:intern {<i>symbol-name</i>}∗ )</i>                                                </b>
+Symbols with the speciﬁed names are located or created in the package being
+deﬁned, just as with the function <i>intern</i>. Note that the action of this option
+may be aﬀected by a <i>:use</i> option, because an inherited symbol will be used
+in preference to creating a new one.
+                                                                          
+
+                                                                          
+  <br /><b>
+<i>(:export {<i>symbol-name</i>}∗ )</i>                                                </b>
+Symbols  with  the  speciﬁed  names  are  located  or  created  in  the  package
+being  deﬁned  and  then  exported,  just  as  with  the  function  <i>export</i>.  Note
+that the action of this option may be aﬀected by a <i>:use</i>, <i>:import-from</i>, or
+<i>:shadowing-import-from</i> option, because an inherited or imported symbol will
+be used in preference to creating a new one.</div>
+</div>
+<!--l. 1525--><p class="noindent" >The order in which options appear in a <i>defpackage</i> form does not matter; part of
+the convenience of <i>defpackage</i> is that it sorts out the options into the
+correct order for processing. Options are processed in the following order:
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">1.  <i>:shadow</i> and <i>:shadowing-import-from</i>
+</td></tr></table>
+<!--l. 1530--><p class="indent" >                                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">2.  <i>:use</i></td></tr></table>
+<!--l. 1531--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">3.  <i>:import-from</i> and <i>:intern</i></td></tr></table>
+<!--l. 1532--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">4.  <i>:export</i></td></tr></table>
+<!--l. 1534--><p class="indent" >
+</div>
+<!--l. 1535--><p class="noindent" >Shadows are established ﬁrst in order to avoid spurious name conﬂicts when use links
+are established. Use links must occur before importing and interning so that those
+operations may refer to normally inherited symbols rather than creating new ones.
+Exports are performed last so that symbols created by any of the other
+options, in particular, shadows and imported symbols, may be exported.
+Note that exporting an inherited symbol implicitly imports it ﬁrst (see
+section <a 
+href="clmse60.html#x76-11500011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>).
+<!--l. 1544--><p class="indent" >   If no package named deﬁned-package-name already exists, <i>defpackage</i> creates
+it. If such a package does already exist, then no new package is created. The
+existing package is modiﬁed, if possible, to reﬂect the new deﬁnition. The results
+are undeﬁned if the new deﬁnition is not consistent with the current state of the
+package.
+<!--l. 1551--><p class="indent" >   An error is signaled if more than one <i>:size</i> option appears.
+<!--l. 1553--><p class="indent" >   An error is signaled if the same <i>symbol-name</i> argument (in the sense of
+comparing names with <i>string=</i>) appears more than once among the arguments
+to all the <i>:shadow</i>, <i>:shadowing-import-from</i>, <i>:import-from</i>, and <i>:intern</i>
+                                                                          
+
+                                                                          
+options.
+<!--l. 1558--><p class="indent" >   An error is signaled if the same <i>symbol-name</i> argument (in the sense of
+comparing names with <i>string=</i>) appears more than once among the arguments to
+all the <i>:intern</i> and <i>:export</i> options.
+<!--l. 1562--><p class="indent" >   Other kinds of name conﬂicts are handled in the same manner that
+the underlying operations <i>use-package</i>, <i>import</i>, and <i>export</i> would handle
+them.
+<!--l. 1566--><p class="indent" >   Implementations may support other <i>defpackage</i> options. Every implementation
+should signal an error on encountering a <i>defpackage</i> option it does not
+support.
+<!--l. 1570--><p class="indent" >   The function <i>compile-ﬁle</i> should treat top-level <i>defpackage</i> forms in the same
+way it would treat top-level calls to package-aﬀecting functions (as described at
+the beginning of section <a 
+href="#x79-11800011.7">11.7<!--tex4ht:ref: PACKAGE-FUNCTIONS-SECTION --></a>).
+<!--l. 1575--><p class="indent" >   Here is an example of a call to <i>defpackage</i> that “plays it safe” by using only
+strings as names. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(cl:defpackage &#x0022;MY-VERY-OWN-PACKAGE&#x0022;
+</td></tr></table>
+<!--l. 1578--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:size 496)</td></tr></table>
+<!--l. 1579--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:nicknames &#x0022;MY-PKG&#x0022; &#x0022;MYPKG&#x0022; &#x0022;MVOP&#x0022;)</td></tr></table>
+<!--l. 1580--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:use &#x0022;COMMON-LISP&#x0022;)</td></tr></table>
+<!--l. 1581--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:shadow &#x0022;CAR&#x0022; &#x0022;CDR&#x0022;)</td></tr></table>
+<!--l. 1582--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:shadowing-import-from &#x0022;BRAND-X-LISP&#x0022; &#x0022;CONS&#x0022;)</td></tr></table>
+<!--l. 1583--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:import-from &#x0022;BRAND-X-LISP&#x0022; &#x0022;GC&#x0022; &#x0022;BLINK-FRONT-PANEL-LIGHTS&#x0022;)</td></tr></table>
+<!--l. 1584--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:export &#x0022;EQ&#x0022; &#x0022;CONS&#x0022; &#x0022;MY-VERY-OWN-FUNCTION&#x0022;))</td></tr></table>
+<!--l. 1586--><p class="indent" >
+</div>
+</div>
+<!--l. 1587--><p class="noindent" >The preceding <i>defpackage</i> example is designed to operate correctly even if the
+package current when the form is read happens not to “use” the <i>common-lisp</i>
+package. (Note the use in this example of the nickname <i>cl</i> for the <i>common-lisp</i>
+package.) Moreover, neither reading in nor evaluating this <i>defpackage</i> form will
+ever create any symbols in the current package. Note too the use of uppercase
+letters in the strings.
+<!--l. 1595--><p class="indent" >   Here, for the sake of contrast, is a rather similar use of <i>defpackage</i> that “plays
+the whale” by using all sorts of permissible syntax. <div class=lisp> <div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defpackage my-very-own-package
+</td></tr></table>
+<!--l. 1599--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:export :EQ common-lisp:cons my-very-own-function)</td></tr></table>
+<!--l. 1600--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:nicknames &#x0022;MY-PKG&#x0022; #:MyPkg)</td></tr></table>
+<!--l. 1601--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:use &#x0022;COMMON-LISP&#x0022;)</td></tr></table>
+<!--l. 1602--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:shadow &#x0022;CAR&#x0022;)</td></tr></table>
+<!--l. 1603--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:size 496)</td></tr></table>
+<!--l. 1604--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:nicknames mvop)</td></tr></table>
+<!--l. 1605--><p class="indent" >       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:import-from &#x0022;BRAND-X-LISP&#x0022; &#x0022;GC&#x0022; Blink-Front-Panel-Lights)</td></tr></table>
+<!--l. 1606--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:shadow common-lisp::cdr)</td></tr></table>
+<!--l. 1607--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (:shadowing-import-from &#x0022;BRAND-X-LISP&#x0022; CONS))</td></tr></table>
+<!--l. 1609--><p class="indent" >
+</div>
+</div>
+<!--l. 1610--><p class="noindent" >This example has exactly the same eﬀect on the newly created package but may
+create useless symbols in other packages. The use of explicit package tags is
+particularly confusing; for example, this <i>defpackage</i> form will cause the symbol
+<i>cdr</i> to be shadowed in the new package; it will not be shadowed in the
+package <i>common-lisp</i>. The fact that the name “<i>CDR</i>” was speciﬁed by a
+package-qualiﬁed reference to a symbol in the <i>common-lisp</i> package is a red
+herring. The moral is that the syntactic ﬂexibility of <i>defpackage</i>, as in other
+parts of Common Lisp, yields considerable convenience when used with
+commonsense competence, but unutterable confusion when used with Malthusian
+profusion.
+<div class=implementation>
+<!--l. 1624--><p class="noindent" ><b>Implementation note:</b> An implementation of <i>defpackage</i> might choose to transform all
+the package-name and symbol-name arguments into strings at macro expansion time,
+rather than at the time the resulting expansion is executed, so that even if source code is
+expressed in terms of strange symbols in the <i>defpackage</i> form, the binary ﬁle resulting
+from compiling the source code would contain only strings. The purpose of this is simply
+to minimize the creation of useless symbols in production code. This technique is
+permitted as an implementation strategy but is not a behavior required by the
+speciﬁcation of <i>defpackage</i>.
+</div>
+<!--l. 1638--><p class="indent" >   Note that <i>defpackage</i> is not capable by itself of deﬁning mutually recursive
+packages, for example two packages each of which uses the other. However,
+nothing prevents one from using <i>defpackage</i> to perform much of the initial setup
+                                                                          
+
+                                                                          
+and then using functions such as <i>use-package</i>, <i>import</i>, and <i>export</i> to complete the
+links.
+<!--l. 1645--><p class="indent" >   The purpose of <i>defpackage</i> is to encourage the user to put the entire deﬁnition
+of a package and its relationships to other packages in a single place. It may also
+encourage the designer of a large system to place the deﬁnitions of all
+relevant packages into a single ﬁle (say) that can be loaded before loading
+or compiling any code that depends on those packages. Such a ﬁle, if
+carefully constructed, can simply be loaded into the <i>common-lisp-user</i>
+package.
+<!--l. 1653--><p class="indent" >   Implementations and programming environments may also be better able to
+support the programming process (if only by providing better error checking)
+through global knowledge of the intended package setup.
+</div>
+</div>
+<div class=defun>
+<!--l. 1659--><p class="noindent" > <i>[Function]</i>   <b>ﬁnd-all-symbols</b> <a 
+ id="dx79-118049"></a><a 
+ id="x79-118050r196"></a>   <i>string-or-symbol</i>
+<!--l. 1661--><p class="noindent" ><i>ﬁnd-all-symbols</i> searches every package in the Lisp system to ﬁnd every symbol
+whose print name is the speciﬁed string. A list of all such symbols found is
+returned. This search is case-sensitive. If the argument is a symbol, its print name
+supplies the string to be searched for.
+</div>
+<div class=defmac>
+<!--l. 1672--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> do-symbols </b> <a 
+ id="dx79-118051"></a><a 
+ id="x79-118052r197"></a>   (var  [ <i>package [ <i>result-form</i>] </i>]  )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 1674--><p class="indent" >
+</div>
+   <i>do-symbols</i> provides straightforward iteration over the symbols of a
+package. The body is performed once for each symbol accessible in the
+package, in no particular order, with the variable var bound to the symbol.
+Then result-form (a single form, not an implicit <i>progn</i>) is evaluated, and
+the result is the value of the <i>do-symbols</i> form. (When the result-form
+is evaluated, the control variable var is still bound and has the value
+<i>nil</i>.) If the result-form is omitted, the result is <i>nil</i>. <i>return</i> may be used
+to terminate the iteration prematurely. If execution of the body aﬀects
+which symbols are contained in the package, other than possibly to remove
+                                                                          
+
+                                                                          
+the symbol currently the value of var by using <i>unintern</i>, the eﬀects are
+unpredictable.
+<div class=new>
+   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+<div class=new>
+   X3J13 voted in March 1988 ⟨<b>?</b>⟩ to specify that the body of a <i>do-symbols</i> form
+may be executed more than once for the same accessible symbol, and users should
+take care to allow for this possibility.
+   The point is that the same symbol might be accessible via more than one
+chain of inheritance, and it is implementationally costly to eliminate such
+duplicates. Here is an example: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq *a* (make-package &#x2019;a))      ;Implicitly uses package <i>common-lisp</i>
+</td></tr></table>
+<!--l. 1706--><p class="indent" >
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq *b* (make-package &#x2019;b))      ;Implicitly uses package <i>common-lisp</i></td></tr></table>
+<!--l. 1707--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq *c* (make-package &#x2019;c :use &#x2019;(a b)))</td></tr></table>
+<!--l. 1708--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1709--><p class="indent" >       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(do-symbols (x *c*) (print x))    ;Symbols in package <i>common-lisp</i></td></tr></table>
+<!--l. 1710--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                  ; might be printed once or twice here</td></tr></table>
+<!--l. 1712--><p class="indent" >
+</div>
+</div>
+<!--l. 1714--><p class="noindent" >X3J13 voted in January 1989 ⟨<b>?</b>⟩ to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-920007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div> <div class=new> Note that the <i>loop</i> construct provides a kind of <i>for</i> clause that can iterate over
+the symbols of a package (see chapter <a 
+href="clmch26.html#x162-23500026">26<!--tex4ht:ref: LOOP --></a>).
+</div>
+</div>
+<div class=defmac>
+<!--l. 1725--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> do-external-symbols </b> <a 
+ id="dx79-118053"></a><a 
+ id="x79-118054r198"></a>   (var  [ <i>package [ <i>result</i>] </i>]  )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 1727--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+   <i>do-external-symbols</i> is just like <i>do-symbols</i>, except that only the external
+symbols of the speciﬁed package are scanned. <div class=new> The clariﬁcation voted by X3J13 in
+March 1988 for <i>do-symbols</i> ⟨<b>?</b>⟩, regarding redundant executions of the body for
+the same symbol, applies also to <i>do-external-symbols</i>.
+</div>
+<div class=new>
+   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+<div class=new>
+   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-920007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>
+</div>
+<div class=defmac>
+<!--l. 1753--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> do-all-symbols </b> <a 
+ id="dx79-118055"></a><a 
+ id="x79-118056r199"></a>   (var  [ <i>result-form</i>]  )  {<i>declaration</i>}∗  {<i>tag|statement</i>}∗
+</td></tr></table>
+<!--l. 1755--><p class="indent" >
+</div>
+   This is similar to <i>do-symbols</i> but executes the body once for every symbol
+contained in every package. (This will not process every symbol whatsoever,
+because a symbol not accessible in any package will not be processed. Normally,
+uninterned symbols are not accessible in any package.) It is not in general the case
+that each symbol is processed only once, because a symbol may appear in many
+packages.
+<div class=new>
+   The clariﬁcation voted by X3J13 in March 1988 for <i>do-symbols</i> ⟨<b>?</b>⟩, regarding
+redundant executions of the body for the same symbol, applies also to
+<i>do-all-symbols</i>.
+</div>
+<div class=new>
+   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that the package argument may be
+either a package object or a package name (see section <a 
+href="clmse58.html#x74-11300011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
+</div>
+<div class=new>
+                                                                          
+
+                                                                          
+   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-920007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>
+</div>
+<div class=new>
+<!--l. 1787--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to add a new macro <i>with-package-iterator</i> to
+the language.
+<div class=defmac>
+<!--l. 1792--><p class="noindent" ><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> with-package-iterator </b> <a 
+ id="dx79-118057"></a><a 
+ id="x79-118058r200"></a>   (mname package-list  {<i>symbol − type</i>}+  )  {<i>form</i>}∗
+</td></tr></table>
+<!--l. 1794--><p class="indent" >
+</div>
+   The name mname is bound and deﬁned as if by <i>macrolet</i>, with the body forms
+as its lexical scope, to be a “generator macro” such that each invocation of
+<i>(mname)</i> will return a symbol and that successive invocations will eventually
+deliver, one by one, all the symbols from the packages that are elements of the list
+that is the value of the expression package-list (which is evaluated exactly
+once).
+   Each element of the package-list value may be either a package or the name of
+a package. As a further convenience, if the package-list value is itself a package or
+the name of a package, it is treated as if a singleton list containing that value had
+been provided. If the package-list value is <i>nil</i>, it is considered to be an empty list
+of packages.
+   At each invocation of the generator macro, there are two possibilities. If there
+is yet another unprocessed symbol, then four values are returned: <i>t</i>, the symbol, a
+keyword indicating the accessibility of the symbol within the package (see below),
+and the package from which the symbol was accessed. If there are no more
+unprocessed symbols in the list of packages, then one value is returned:
+<i>nil</i>.
+   When the generator macro returns a symbol as its second value, the fourth
+value is always one of the packages present or named in the package-list
+value, and the third value is a keyword indicating accessibility: <i>:internal</i>
+means present in the package and not exported; <i>:external</i> means present
+and exported; and <i>:inherited</i> means not present (thus not shadowed)
+but inherited from some package used by the package that is the fourth
+value.
+                                                                          
+
+                                                                          
+   Each symbol-type in an invocation of <i>with-package-iterator</i> is not evaluated.
+More than one may be present; their order does not matter. They indicate the
+accessibility types of interest. A symbol is not returned by the generator macro
+unless its actual accessibility matches one of the symbol-type indicators. The
+standard symbol-type indicators are <i>:internal</i>, <i>:external</i>, and <i>:inherited</i>, but
+implementations are permitted to extend the syntax of <i>with-package-iterator</i> by
+recognizing additional symbol accessibility types. An error is signaled if no
+symbol-type is supplied, or if any supplied symbol-type is not recognized by the
+implementation.
+   The order in which symbols are produced by successive invocations of the
+generator macro is not necessarily correlated in any way with the order of the
+packages in the package-list. When more than one package is in the package-list,
+symbols accessible from more than one package may be produced once or more
+than once. Even when only one package is speciﬁed, symbols inherited in
+multiple ways via used packages may be produced once or more than
+once.
+   The implicit interior state of the iteration over the list of packages and the
+symbols within them has dynamic extent. It is an error to invoke the generator
+macro once the <i>with-package-iterator</i> form has been exited.
+   Any number of invocations of <i>with-package-iterator</i> and related macros may be
+nested, and the generator macro of an outer invocation may be called from within
+an inner invocation (provided, of course, that its name is visible or otherwise
+made available).
+   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-920007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+<div class=rationale>
+   <b>Rationale:</b> This facility is a bit more ﬂexible in some ways than <i>do-symbols</i> and
+friends. In particular, it makes it possible to implement <i>loop</i> clauses for iterating over
+packages in a way that is both portable and eﬃcient (see chapter <a 
+href="clmch26.html#x162-23500026">26<!--tex4ht:ref: LOOP --></a>).
+</div>
+</div>
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 1876--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse64.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse62.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse62.html#tailclmse62.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse63.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch11.html#clmse63.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 1876--><p class="indent" >   <a 
+ id="tailclmse63.html"></a>  
+</body></html> 

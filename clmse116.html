@@ -1,0 +1,681 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Input Functions</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 3497--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse117.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse115.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse115.html#tailclmse115.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse116.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch22.html#clmse116.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">22.2   </span> <a 
+ id="x143-19400022.2"></a>Input Functions</h3>
+<!--l. 3499--><p class="noindent" >The input functions are divided into two groups: those that operate on streams of
+characters and those that operate on streams of binary data.
+<!--l. 3503--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">22.2.1   </span> <a 
+ id="x143-19500022.2.1"></a>Input from Character Streams</h4>
+<!--l. 3506--><p class="noindent" >Many character input functions take optional arguments called input-stream,
+eof-error-p, and eof-value. The input-stream argument is the stream from which to
+obtain input; if unsupplied or <i>nil</i> it defaults to the value of the special variable
+<i>*standard-input*</i>. One may also specify <i>t</i> as a stream, meaning the value of the
+special variable <i>*terminal-io*</i>.
+<!--l. 3515--><p class="indent" >   The eof-error-p argument controls what happens if input is from a ﬁle (or any
+other input source that has a deﬁnite end) and the end of the ﬁle is reached. If
+eof-error-p is true (the default), an error will be signaled at end of ﬁle. If it is
+false, then no error is signaled, and instead the function returns eof-value. <div class=new> X3J13
+voted in January 1989 ⟨<b>?</b>⟩ to clarify that an eof-value argument may be any Lisp
+datum whatsoever.
+</div>
+<!--l. 3529--><p class="indent" >   Functions such as <i>read</i> that read the representation of an object rather than a
+single character will always signal an error, regardless of eof-error-p, if the ﬁle
+ends in the middle of an object representation. For example, if a ﬁle does not
+contain enough right parentheses to balance the left parentheses in it, <i>read</i> will
+complain. If a ﬁle ends in a symbol or a number immediately followed by
+end-of-ﬁle, <i>read</i> will read the symbol or number successfully and when called
+again will see the end-of-ﬁle and only then act according to eof-error-p.
+Similarly, the function <i>read-line</i> will successfully read the last line of a
+ﬁle even if that line is terminated by end-of-ﬁle rather than the newline
+character. If a ﬁle contains ignorable text at the end, such as blank lines and
+comments, <i>read</i> will not consider it to end in the middle of an object. Thus an
+                                                                          
+
+                                                                          
+eof-error-p argument controls what happens when the ﬁle ends between
+objects.
+<!--l. 3548--><p class="indent" >   Many input functions also take an argument called recursive-p. If speciﬁed
+and not <i>nil</i>, this argument speciﬁes that this call is not a “top-level” call
+to <i>read</i> but an imbedded call, typically from the function for a macro
+character. It is important to distinguish such recursive calls for three
+reasons.
+<!--l. 3554--><p class="indent" >   First, a top-level call establishes the context within which the <i>#n=</i> and <i>#n#</i>
+syntax is scoped. Consider, for example, the expression <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(cons &#x2019;#3=(p q r) &#x2019;(x y . #3#))
+</td></tr></table>
+<!--l. 3559--><p class="indent" >
+</div>
+</div>
+<!--l. 3560--><p class="noindent" >If the single-quote macro character were deﬁned in this way: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-macro-character #<tt>\</tt>&#x2019;
+</td></tr></table>
+<!--l. 3562--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     #&#x2019;(lambda (stream char)</td></tr></table>
+<!--l. 3563--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                         (declare (ignore char))</td></tr></table>
+<!--l. 3564--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                         (list &#x2019;quote (read stream))))</td></tr></table>
+<!--l. 3566--><p class="indent" >
+</div>
+</div>
+<!--l. 3567--><p class="noindent" >then the expression could not be read properly, because there would be no way to
+know when <i>read</i> is called recursively by the ﬁrst occurrence of <i>&#x2019;</i> that the label
+<i>#3=</i> would be referred to later in the containing expression. There would be no
+way to know because <i>read</i> could not determine that it was called by a
+macro-character function rather than from “top level.” The correct way to
+deﬁne the single quote macro character uses the recursive-p argument: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-macro-character #<tt>\</tt>&#x2019;
+</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 3576--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     #&#x2019;(lambda (stream char)</td></tr></table>
+<!--l. 3577--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                         (declare (ignore char))</td></tr></table>
+<!--l. 3578--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                         (list &#x2019;quote (read stream t nil t))))</td></tr></table>
+<!--l. 3580--><p class="indent" >
+</div>
+</div>
+<!--l. 3582--><p class="indent" >   Second, a recursive call does not alter whether the reading process is to
+preserve whitespace or not (as determined by whether the top-level call was to
+<i>read</i> or <i>read-preserving-whitespace</i>). Suppose again that the single quote had the
+ﬁrst, incorrect, macro-character deﬁnition shown above. Then a call to
+<i>read-preserving-whitespace</i> that read the expression <i>&#x2019;foo </i> would fail to preserve the
+space character following the symbol <i>foo</i> because the single-quote macro-character
+function calls <i>read</i>, not <i>read-preserving-whitespace</i>, to read the following
+expression (in this case <i>foo</i>). The correct deﬁnition, which passes the value <i>t</i> for
+the recursive-p argument to <i>read</i>, allows the top-level call to determine whether
+whitespace is preserved.
+<!--l. 3595--><p class="indent" >   Third, when end-of-ﬁle is encountered and the eof-error-p argument is not <i>nil</i>,
+the kind of error that is signaled may depend on the value of recursive-p. If
+recursive-p is not <i>nil</i>, then the end-of-ﬁle is deemed to have occurred within the
+middle of a printed representation; if recursive-p is <i>nil</i>, then the end-of-ﬁle may be
+deemed to have occurred between objects rather than within the middle of
+one.
+<div class=defun>
+<!--l. 3603--><p class="noindent" > <i>[Function]</i>   <b>read</b> <a 
+ id="dx143-195001"></a><a 
+ id="x143-195002r695"></a>   <b>&#x0026;optional</b>  <i>input-stream</i> <i>eof-error-p</i> <i>eof-value</i>
+<i>recursive-p</i>
+<!--l. 3605--><p class="noindent" ><i>read</i> reads in the printed representation of a Lisp object from input-stream, builds
+a corresponding Lisp object, and returns the object.
+<!--l. 3610--><p class="indent" >   Note that when the variable <i>*read-suppress*</i> is not <i>nil</i>, then <i>read</i> reads in a
+printed representation as best it can, but most of the work of interpreting the
+representation is avoided (the intent being that the result is to be discarded
+anyway). For example, all extended tokens produce the result <i>nil</i> regardless of
+their syntax.
+</div>
+<div class=defun>
+<!--l. 3618--><p class="noindent" > <i>[Variable]</i>   <b>*read-default-ﬂoat-format*</b> <a 
+ id="dx143-195003"></a><a 
+ id="x143-195004r696"></a>
+<!--l. 3620--><p class="noindent" >The value of this variable must be a type speciﬁer symbol for a speciﬁc
+ﬂoating-point format; these include <i>short-ﬂoat</i>, <i>single-ﬂoat</i>, <i>double-ﬂoat</i>, and
+                                                                          
+
+                                                                          
+<i>long-ﬂoat</i> and may include implementation-speciﬁc types as well. The default
+value is <i>single-ﬂoat</i>.
+<i>
+<!--l. 3627--><p class="indent" >   *read-default-ﬂoat-format*</i> indicates the ﬂoating-point format to be used for
+reading ﬂoating-point numbers that have no exponent marker or have <i>e</i> or <i>E</i>
+for an exponent marker. (Other exponent markers explicitly prescribe
+the ﬂoating-point format to be used.) The printer also uses this variable
+to guide the choice of exponent markers when printing ﬂoating-point
+numbers.
+</div>
+<div class=defun>
+<!--l. 3636--><p class="noindent" > <i>[Function]</i>   <b>read-preserving-whitespace</b> <a 
+ id="dx143-195005"></a><a 
+ id="x143-195006r697"></a>   <b>&#x0026;optional</b>  <i>in-stream</i> <i>eof-error-p</i>
+<i>eof-value</i> <i>recursive-p</i>
+<!--l. 3638--><p class="noindent" >Certain printed representations given to <i>read</i>, notably those of symbols and
+numbers, require a delimiting character after them. (Lists do not, because the
+close parenthesis marks the end of the list.) Normally <i>read</i> will throw away the
+delimiting character if it is a whitespace character; but <i>read</i> will preserve the
+character (using <i>unread-char</i>) if it is syntactically meaningful, because it may be
+the start of the next expression.
+<div class=new>
+<!--l. 3648--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify the interaction of <i>unread-char</i> with
+echo streams. These changes indirectly aﬀect the echoing behavior of
+<i>read-preserving-whitespace</i>.
+</div>
+<!--l. 3655--><p class="indent" >   The function <i>read-preserving-whitespace</i> is provided for some specialized
+situations where it is desirable to determine precisely what character terminated
+the extended token.
+<!--l. 3659--><p class="indent" >   As an example, consider this macro-character deﬁnition: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun slash-reader (stream char)
+</td></tr></table>
+<!--l. 3661--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (declare (ignore char))</td></tr></table>
+<!--l. 3662--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (do ((path (list (read-preserving-whitespace stream))</td></tr></table>
+<!--l. 3663--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (cons (progn (read-char stream nil nil t)</td></tr></table>
+<!--l. 3664--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                          (read-preserving-whitespace</td></tr></table>
+<!--l. 3665--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                             stream))</td></tr></table>
+<!--l. 3666--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                   path)))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 3667--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      ((not (char= (peek-char nil stream nil nil t) #<tt>\</tt>/))</td></tr></table>
+<!--l. 3668--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (cons &#x2019;path (nreverse path)))))</td></tr></table>
+<!--l. 3669--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-macro-character #<tt>\</tt>/ #&#x2019;slash-reader)</td></tr></table>
+<!--l. 3671--><p class="indent" >
+</div>
+</div>
+<!--l. 3672--><p class="noindent" >(This is actually a rather dangerous deﬁnition to make because expressions such as <i>(/
+x 3)</i> will no longer be read properly. The ability to reprogram the reader syntax is
+very powerful and must be used with caution. This redeﬁnition of <i>/</i> is shown here
+purely for the sake of example.)
+<!--l. 3678--><p class="indent" >   Consider now calling <i>read</i> on this expression: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(zyedh /usr/games/zork /usr/games/boggle)
+</td></tr></table>
+<!--l. 3681--><p class="indent" >
+</div>
+</div>
+<!--l. 3682--><p class="noindent" >The <i>/</i> macro reads objects separated by more <i>/</i> characters; thus <i>/usr/games/zork</i> is
+intended to be read as <i>(path usr games zork)</i>. The entire example expression
+should therefore be read as <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(zyedh (path usr games zork) (path usr games boggle))
+</td></tr></table>
+<!--l. 3687--><p class="indent" >
+</div>
+</div>
+<!--l. 3688--><p class="noindent" >However, if <i>read</i> had been used instead of <i>read-preserving-whitespace</i>, then after the
+reading of the symbol <i>zork</i>, the following space would be discarded; the next call
+to <i>peek-char</i> would see the following <i>/</i>, and the loop would continue, producing
+this interpretation: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(zyedh (path usr games zork usr games boggle))
+</td></tr></table>
+<!--l. 3695--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<!--l. 3696--><p class="noindent" >On the other hand, there are times when whitespace should be discarded. If a
+command interpreter takes single-character commands, but occasionally reads a
+Lisp object, then if the whitespace after a symbol is not discarded it might be
+interpreted as a command some time later after the symbol had been
+read.
+<!--l. 3702--><p class="indent" >   Note that <i>read-preserving-whitespace</i> behaves exactly like <i>read</i> when the
+recursive-p argument is not <i>nil</i>. The distinction is established only by calls with
+recursive-p equal to <i>nil</i> or omitted.
+</div>
+<div class=defun>
+<!--l. 3707--><p class="noindent" > <i>[Function]</i>   <b>read-delimited-list</b> <a 
+ id="dx143-195007"></a><a 
+ id="x143-195008r698"></a>   <i>char</i>  <b>&#x0026;optional</b>  <i>input-stream</i>
+<i>recursive-p</i>
+<!--l. 3709--><p class="noindent" >This reads objects from stream until the next character after an object&#x2019;s
+representation (ignoring whitespace characters and comments) is char. (The char
+should not have whitespace syntax in the current readtable.) A list of the objects
+read is returned.
+<!--l. 3716--><p class="indent" >   To be more precise, <i>read-delimited-list</i> looks ahead at each step for the next
+non-whitespace character and peeks at it as if with <i>peek-char</i>. If it is char, then
+the character is consumed and the list of objects is returned. If it is a constituent
+or escape character, then <i>read</i> is used to read an object, which is added to the end
+of the list. If it is a macro character, the associated macro function is called; if the
+function returns a value, that value is added to the list. The peek-ahead process is
+then repeated.
+<div class=new>
+<!--l. 3727--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify the interaction of <i>peek-char</i> with
+echo streams. These changes indirectly aﬀect the echoing behavior of the function
+<i>read-delimited-list</i>.
+</div>
+<!--l. 3734--><p class="indent" >   This function is particularly useful for deﬁning new macro characters. Usually
+it is desirable for the terminating character char to be a terminating macro
+character so that it may be used to delimit tokens; however, <i>read-delimited-list</i>
+makes no attempt to alter the syntax speciﬁed for char by the current readtable.
+The user must make any necessary changes to the readtable syntax explicitly. The
+following example illustrates this.
+<!--l. 3742--><p class="indent" >   Suppose you wanted <i>#<tt>{</tt>a b c ... z<tt>}</tt></i> to be read as a list of all pairs of the
+elements a, b, c, <i>...</i>, z; for example: <div class=lisp> <div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">#<tt>{</tt>p q z a<tt>}</tt>  reads as  ((p q) (p z) (p a) (q z) (q a) (z a))
+</td></tr></table>
+<!--l. 3747--><p class="indent" >
+</div>
+</div>
+<!--l. 3748--><p class="noindent" >This can be done by specifying a macro-character deﬁnition for <i>#<tt>{</tt></i> that does
+two things: read in all the items up to the <i><tt>}</tt></i>, and construct the pairs.
+<i>read-delimited-list</i> performs the ﬁrst task.
+<div class=new>
+<!--l. 3754--><p class="indent" >   Note that <i>mapcon</i> allows the mapped function to examine the items of the list
+after the current one, and that <i>mapcon</i> uses <i>nconc</i>, which is all right because
+<i>mapcar</i> will produce fresh lists.
+</div>
+                                                                          
+
+                                                                          
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun |#<tt>{</tt>-reader| (stream char arg)
+</td></tr></table>
+<!--l. 3763--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (declare (ignore char arg))</td></tr></table>
+<!--l. 3764--><p class="indent" >                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (mapcon #&#x2019;(lambda (x)</td></tr></table>
+<!--l. 3765--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (mapcar #&#x2019;(lambda (y) (list (car x) y)) (cdr x)))</td></tr></table>
+<!--l. 3766--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (read-delimited-list #<tt>\</tt><tt>}</tt> stream t)))</td></tr></table>
+<!--l. 3767--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3768--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-dispatch-macro-character #<tt>\</tt># #<tt>\</tt><tt>{</tt> #&#x2019;|#<tt>{</tt>-reader|)</td></tr></table>
+<!--l. 3769--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 3770--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-macro-character #<tt>\</tt><tt>}</tt> (get-macro-character #<tt>\</tt>) <i>nil</i>))</td></tr></table>
+<!--l. 3772--><p class="indent" >
+</div>
+</div>
+<!--l. 3773--><p class="noindent" >(Note that <i>t</i> is speciﬁed for the recursive-p argument.)
+<!--l. 3775--><p class="indent" >   It is necessary here to give a deﬁnition to the character <i><tt>}</tt></i> as well to prevent it
+from being a constituent. If the line <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-macro-character #<tt>\</tt><tt>}</tt> (get-macro-character #<tt>\</tt>) <i>nil</i>))
+</td></tr></table>
+<!--l. 3780--><p class="indent" >
+</div>
+</div>
+<!--l. 3781--><p class="noindent" >shown above were not included, then the <i><tt>}</tt></i> in <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">#<tt>{</tt>p q z a<tt>}</tt>
+</td></tr></table>
+<!--l. 3784--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 3785--><p class="noindent" >would be considered a constituent character, part of the symbol named <i>a<tt>}</tt></i>. One could
+correct for this by putting a space before the <i><tt>}</tt></i>, but it is better simply to use the
+call to <i>set-macro-character</i>.
+<!--l. 3790--><p class="indent" >   Giving <i><tt>}</tt></i> the same deﬁnition as the standard deﬁnition of the character <i>)</i> has
+the twin beneﬁt of making it terminate tokens for use with <i>read-delimited-list</i> and
+also making it illegal for use in any other context (that is, attempting to read a
+stray <i><tt>}</tt></i> will signal an error).
+<!--l. 3796--><p class="indent" >   Note that <i>read-delimited-list</i> does not take an eof-error-p (or eof-value)
+argument. The reason is that it is always an error to hit end-of-ﬁle during the
+operation of <i>read-delimited-list</i>.
+</div>
+<div class=defun>
+<!--l. 3802--><p class="noindent" > <i>[Function]</i>   <b>read-line</b> <a 
+ id="dx143-195009"></a><a 
+ id="x143-195010r699"></a>   <b>&#x0026;optional</b>  <i>input-stream</i> <i>eof-error-p</i> <i>eof-value</i>
+<i>recursive-p</i>
+<!--l. 3804--><p class="noindent" ><i>read-line</i> reads in a line of text terminated by a newline. It returns the line as a
+character string (without the newline character). This function is usually
+used to get a line of input from the user. A second returned value is a
+ﬂag that is false if the line was terminated normally, or true if end-of-ﬁle
+terminated the (non-empty) line. If end-of-ﬁle is encountered immediately (that
+is, appears to terminate an empty line), then end-of-ﬁle processing is
+controlled in the usual way by the eof-error-p, eof-value, and recursive-p
+arguments.
+<!--l. 3814--><p class="indent" >   The corresponding output function is <i>write-line</i>.
+</div>
+<div class=defun>
+<!--l. 3817--><p class="noindent" > <i>[Function]</i>   <b>read-char</b> <a 
+ id="dx143-195011"></a><a 
+ id="x143-195012r700"></a>   <b>&#x0026;optional</b>  <i>input-stream</i> <i>eof-error-p</i> <i>eof-value</i>
+<i>recursive-p</i>
+<!--l. 3819--><p class="noindent" ><i>read-char</i> inputs one character from input-stream and returns it as a character
+object.
+<!--l. 3823--><p class="indent" >   The corresponding output function is <i>write-char</i>.
+<div class=new>
+<!--l. 3826--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify the interaction of <i>read-char</i> with
+echo streams (as created by <i>make-echo-stream</i>). A character is echoed from the
+input stream to the associated output stream the ﬁrst time it is seen. If a
+character is read again because of an intervening <i>unread-char</i> operation, the
+character is not echoed again when read for the second time or any subsequent
+time.
+</div>
+                                                                          
+
+                                                                          
+</div>
+<div class=defun>
+<!--l. 3836--><p class="noindent" > <i>[Function]</i>   <b>unread-char</b> <a 
+ id="dx143-195013"></a><a 
+ id="x143-195014r701"></a>   <i>character</i>  <b>&#x0026;optional</b>  <i>input-stream</i>
+<!--l. 3838--><p class="noindent" ><i>unread-char</i> puts the character onto the front of input-stream. The character must
+be the same character that was most recently read from the input-stream. The
+input-stream “backs up” over this character; when a character is next read from
+input-stream, it will be the speciﬁed character followed by the previous contents of
+input-stream. <i>unread-char</i> returns <i>nil</i>.
+<!--l. 3846--><p class="indent" >   One may apply <i>unread-char</i> only to the character most recently read from
+input-stream. Moreover, one may not invoke <i>unread-char</i> twice consecutively
+without an intervening <i>read-char</i> operation. The result is that one may back up
+only by one character, and one may not insert any characters into the input
+stream that were not already there.
+<div class=new>
+<!--l. 3853--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify that one also may not invoke
+<i>unread-char</i> after invoking <i>peek-char</i> without an intervening <i>read-char</i> operation.
+This is consistent with the notion that <i>peek-char</i> behaves much like <i>read-char</i>
+followed by <i>unread-char</i>.
+</div>
+<div class=rationale>
+<!--l. 3862--><p class="noindent" ><b>Rationale:</b> This is not intended to be a general mechanism, but rather an eﬃcient
+mechanism for allowing the Lisp reader and other parsers to perform one-character
+lookahead in the input stream. This protocol admits a wide variety of eﬃcient
+implementations, such as simply decrementing a buﬀer pointer. To have to specify the
+character in the call to <i>unread-char</i> is admittedly redundant, since at any given time
+there is only one character that may be legally speciﬁed. The redundancy is intentional,
+again to give the implementation latitude.
+</div>
+<div class=new>
+<!--l. 3876--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify the interaction of <i>unread-char</i> with
+echo streams (as created by <i>make-echo-stream</i>). When a character is “unread”
+from an echo stream, no attempt is made to “unecho” the character. However, a
+character placed back into an echo stream by <i>unread-char</i> will not be re-echoed
+when it is subsequently re-read by <i>read-char</i>.
+</div>
+</div>
+<!--l. 3886--><p class="indent" >
+                                                                          
+
+                                                                          
+<div class=defun>
+<!--l. 3888--><p class="noindent" > <i>[Function]</i>   <b>peek-char</b> <a 
+ id="dx143-195015"></a><a 
+ id="x143-195016r702"></a>   <b>&#x0026;optional</b>  <i>peek-type</i> <i>input-stream</i> <i>eof-error-p</i>
+<i>eof-value</i> <i>recursive-p</i>
+<!--l. 3890--><p class="noindent" >What <i>peek-char</i> does depends on the peek-type, which defaults to <i>nil</i>.
+With a peek-type of <i>nil</i>, <i>peek-char</i> returns the next character to be read
+from input-stream, without actually removing it from the input stream.
+The next time input is done from input-stream, the character will still
+be there. It is as if one had called <i>read-char</i> and then <i>unread-char</i> in
+succession.
+<!--l. 3899--><p class="indent" >   If peek-type is <i>t</i>, then <i>peek-char</i> skips over whitespace characters (but not
+comments) and then performs the peeking operation on the next character. This
+is useful for ﬁnding the (possible) beginning of the next printed representation of
+a Lisp object. The last character examined (the one that starts an object) is not
+removed from the input stream.
+<!--l. 3908--><p class="indent" >   If peek-type is a character object, then <i>peek-char</i> skips over input characters
+until a character that is <i>char=</i> to that object is found; that character is left in the
+input stream.
+<div class=new>
+<!--l. 3914--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to clarify the interaction of <i>peek-char</i> with
+echo streams (as created by <i>make-echo-stream</i>). When a character from an echo
+stream is only peeked at, it is not echoed at that time. The character remains in
+the input stream and may be echoed when read by <i>read-char</i> at a later time.
+Note, however, that if the peek-type is not <i>nil</i>, then characters skipped over
+(and therefore consumed) by <i>peek-char</i> are treated as if they had been
+read by <i>read-char</i>, and will be echoed if <i>read-char</i> would have echoed
+them.
+</div>
+</div>
+<div class=defun>
+<!--l. 3926--><p class="noindent" > <i>[Function]</i>   <b>listen</b> <a 
+ id="dx143-195017"></a><a 
+ id="x143-195018r703"></a>   <b>&#x0026;optional</b>  <i>input-stream</i>
+<!--l. 3928--><p class="noindent" >The predicate <i>listen</i> is true if there is a character immediately available from
+input-stream, and is false if not. This is particularly useful when the stream
+obtains characters from an interactive device such as a keyboard. A call to
+<i>read-char</i> would simply wait until a character was available, but <i>listen</i> can sense
+whether or not input is available and allow the program to decide whether or not
+to attempt input. On a non-interactive stream, the general rule is that <i>listen</i> is
+true except when at end-of-ﬁle.
+</div>
+                                                                          
+
+                                                                          
+<div class=defun>
+<!--l. 3940--><p class="noindent" > <i>[Function]</i>   <b>read-char-no-hang</b> <a 
+ id="dx143-195019"></a><a 
+ id="x143-195020r704"></a>   <b>&#x0026;optional</b>  <i>input-stream</i> <i>eof-error-p</i>
+<i>eof-value</i> <i>recursive-p</i>
+<!--l. 3942--><p class="noindent" >This function is exactly like <i>read-char</i>, except that if it would be necessary to
+wait in order to get a character (as from a keyboard), <i>nil</i> is immediately
+returned without waiting. This allows one to eﬃciently check for input
+availability and get the input if it is available. This is diﬀerent from the <i>listen</i>
+operation in two ways. First, <i>read-char-no-hang</i> potentially reads a character,
+whereas <i>listen</i> never inputs a character. Second, <i>listen</i> does not distinguish
+between end-of-ﬁle and no input being available, whereas <i>read-char-no-hang</i>
+does make that distinction, returning eof-value at end-of-ﬁle (or signaling
+an error if no eof-error-p is true) but always returning <i>nil</i> if no input is
+available.
+</div>
+<div class=defun>
+<!--l. 3958--><p class="noindent" > <i>[Function]</i>   <b>clear-input</b> <a 
+ id="dx143-195021"></a><a 
+ id="x143-195022r705"></a>   <b>&#x0026;optional</b>  <i>input-stream</i>
+<!--l. 3960--><p class="noindent" >This clears any buﬀered input associated with input-stream. It is primarily useful
+for clearing type-ahead from keyboards when some kind of asynchronous error has
+occurred. If this operation doesn&#x2019;t make sense for the stream involved, then
+<i>clear-input</i> does nothing. <i>clear-input</i> returns <i>nil</i>.
+</div>
+<div class=defun>
+<!--l. 3968--><p class="noindent" > <i>[Function]</i>   <b>read-from-string</b> <a 
+ id="dx143-195023"></a><a 
+ id="x143-195024r706"></a>   <i>string</i>  <b>&#x0026;optional</b>  <i>eof-error-p</i> <i>eof-value</i>
+<b>&#x0026;key</b>  :start  :end  :preserve-whitespace
+<!--l. 3970--><p class="noindent" >The characters of string are given successively to the Lisp reader, and the Lisp
+object built by the reader is returned. Macro characters and so on will all take
+eﬀect.
+<!--l. 3975--><p class="indent" >   The arguments <i>:start</i> and <i>:end</i> delimit a substring of string beginning at the
+character indexed by <i>:start</i> and up to but not including the character indexed by
+<i>:end</i>. By default <i>:start</i> is <i>0</i> (the beginning of the string) and <i>:end</i> is <i>(length
+string)</i>. This is the same as for other string functions.
+<!--l. 3981--><p class="indent" >   The ﬂag <i>:preserve-whitespace</i>, if provided and not <i>nil</i>, indicates that the
+operation should preserve whitespace as for <i>read-preserving-whitespace</i>. It defaults
+to <i>nil</i>.
+<!--l. 3985--><p class="indent" >   As with other reading functions, the arguments eof-error-p and eof-value
+control the action if the end of the (sub)string is reached before the operation is
+completed; reaching the end of the string is treated as any other end-of-ﬁle
+event.
+                                                                          
+
+                                                                          
+<i>
+<!--l. 3991--><p class="indent" >   read-from-string</i> returns two values: the ﬁrst is the object read, and the second
+is the index of the ﬁrst character in the string not read. If the entire string was
+read, the second result will be either the length of the string or one greater than
+the length of the string. The parameter <i>:preserve-whitespace</i> may aﬀect this
+second value.
+<div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(read-from-string &#x0022;(a b c)&#x0022;)  ⇒ (a b c) and 7
+</td></tr></table>
+<!--l. 4000--><p class="indent" >
+</div>
+</div>
+</div>
+<div class=defun>
+<!--l. 4003--><p class="noindent" > <i>[Function]</i>   <b>parse-integer</b> <a 
+ id="dx143-195025"></a><a 
+ id="x143-195026r707"></a>   <i>string</i>  <b>&#x0026;key</b>  :start  :end  :radix  :junk-allowed
+<!--l. 4005--><p class="noindent" >This function examines the substring of string delimited by <i>:start</i> and <i>:end</i> (which
+default to the beginning and end of the string). It skips over whitespace characters
+and then attempts to parse an integer. The <i>:radix</i> parameter defaults to <i>10</i> and
+must be an integer between 2 and 36.
+<!--l. 4012--><p class="indent" >   If <i>:junk-allowed</i> is not <i>nil</i>, then the ﬁrst value returned is the value of the
+number parsed as an integer or <i>nil</i> if no syntactically correct integer was
+seen.
+<!--l. 4017--><p class="indent" >   If <i>:junk-allowed</i> is <i>nil</i> (the default), then the entire substring is scanned. The
+returned value is the value of the number parsed as an integer. An error is
+signaled if the substring does not consist entirely of the representation of an
+integer, possibly surrounded on either side by whitespace characters.
+<!--l. 4023--><p class="indent" >   In either case, the second value is the index into the string of the delimiter
+that terminated the parse, or it is the index beyond the substring if the parse
+terminated at the end of the substring (as will always be the case if <i>:junk-allowed</i>
+is false).
+<!--l. 4028--><p class="indent" >   Note that <i>parse-integer</i> does not recognize the syntactic radix-speciﬁer preﬁxes
+<i>#O</i>, <i>#B</i>, <i>#X</i>, and <i>#nR</i>, nor does it recognize a trailing decimal point. It permits
+only an optional sign (<i>+</i> or <i>-</i>) followed by a non-empty sequence of digits in the
+speciﬁed radix.
+</div>
+                                                                          
+
+                                                                          
+   <h4 class="subsectionHead"><span class="titlemark">22.2.2   </span> <a 
+ id="x143-19600022.2.2"></a>Input from Binary Streams</h4>
+<!--l. 4038--><p class="noindent" >Common Lisp currently speciﬁes only a very simple facility for binary input: the
+reading of a single byte as an integer.
+<div class=defun>
+<!--l. 4041--><p class="noindent" > <i>[Function]</i>   <b>read-byte</b> <a 
+ id="dx143-196001"></a><a 
+ id="x143-196002r708"></a>   <i>binary-input-stream</i>  <b>&#x0026;optional</b>  <i>eof-error-p</i>
+<i>eof-value</i>
+<!--l. 4043--><p class="noindent" ><i>read-byte</i> reads one byte from the binary-input-stream and returns it in the form
+of an integer.
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 4048--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse117.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse115.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse115.html#tailclmse115.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse116.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch22.html#clmse116.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 4048--><p class="indent" >   <a 
+ id="tailclmse116.html"></a>  
+</body></html> 

@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>The Top-Level Loop</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 253--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch21.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse110.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse110.html#tailclmse110.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse111.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch20.html#clmse111.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">20.2   </span> <a 
+ id="x136-18100020.2"></a>The Top-Level Loop</h3>
+<!--l. 255--><p class="noindent" >Normally one interacts with Lisp through a “top-level <i>read</i>-<i>eval</i>-<i>print</i> loop,” so
+called because it is the highest level of control and consists of an endless loop that
+reads an expression, evaluates it, and prints the results. One has an eﬀect
+on the state of the Lisp system only by invoking actions that have side
+eﬀects.
+<!--l. 262--><p class="indent" >   The precise nature of the top-level loop for Common Lisp is purposely not
+rigorously speciﬁed here so that implementors can experiment to improve
+the user interface. For example, an implementor may choose to require
+line-at-a-time input, or may provide a fancy editor or complex graphics-display
+interface. An implementor may choose to provide explicit prompts for input,
+or may choose (as MacLisp does) not to clutter up the transcript with
+prompts.
+<!--l. 272--><p class="indent" >   The top-level loop is required to trap all throws and recover gracefully. It is
+also required to print all values resulting from evaluation of a form, perhaps on
+separate lines. If a form returns zero values, as little as possible should be
+printed.
+<!--l. 277--><p class="indent" >   The following variables are maintained by the top-level loop as a limited safety
+net, in case the user forgets to save an interesting input expression or output
+value. (Note that the names of some of these variables violate the convention that
+names of global variables begin and end with an asterisk.) These are intended
+primarily for user interaction, which is why they have short names. Use of these
+variables should be avoided in programs.
+<div class=defun>
+<!--l. 284--><p class="noindent" > <i>[Variable]</i>   <b>+</b> <a 
+ id="dx136-181001"></a><a 
+ id="x136-181002r625"></a>  <br 
+class="newline" /><i>[Variable]</i>   <b>++</b> <a 
+ id="dx136-181003"></a><a 
+ id="x136-181004r626"></a>  <br 
+class="newline" /><i>[Variable]</i>   <b>+++</b> <a 
+ id="dx136-181005"></a><a 
+ id="x136-181006r627"></a>
+<!--l. 288--><p class="noindent" >While a form is being evaluated by the top-level loop, the variable <i>+</i> is bound to
+the previous form read by the loop. The variable <i>++</i> holds the previous value of
+<i>+</i> (that is, the form evaluated two interactions ago), and <i>+++</i> holds the previous
+value of <i>++</i>.
+                                                                          
+
+                                                                          
+</div>
+<div class=defun>
+<!--l. 296--><p class="noindent" > <i>[Variable]</i>   <b>-</b> <a 
+ id="dx136-181007"></a><a 
+ id="x136-181008r628"></a>
+<!--l. 298--><p class="noindent" >While a form is being evaluated by the top-level loop, the variable <i>-</i> is bound to
+the form itself; that is, it is the value about to be given to <i>+</i> once this interaction
+is done. <div class=new>Notice of correction. In the ﬁrst edition, the name of the variable <i>-</i> was
+inadvertently omitted.
+</div>
+</div>
+<div class=defun>
+<!--l. 311--><p class="noindent" > <i>[Variable]</i>   <b>*</b> <a 
+ id="dx136-181009"></a><a 
+ id="x136-181010r629"></a>  <br 
+class="newline" /><i>[Variable]</i>   <b>**</b> <a 
+ id="dx136-181011"></a><a 
+ id="x136-181012r630"></a>  <br 
+class="newline" /><i>[Variable]</i>   <b>***</b> <a 
+ id="dx136-181013"></a><a 
+ id="x136-181014r631"></a>
+<!--l. 315--><p class="noindent" >While a form is being evaluated by the top-level loop, the variable <i>*</i> is bound to
+the result printed at the end of the last time through the loop; that is, it is
+the value produced by evaluating the form in <i>+</i>. If several values were
+produced, <i>*</i> contains the ﬁrst value only; <i>*</i> contains <i>nil</i> if zero values were
+produced. The variable <i>**</i> holds the previous value of <i>*</i> (that is, the
+result printed two interactions ago), and <i>***</i> holds the previous value of
+<i>**</i>.
+<!--l. 326--><p class="indent" >   If the evaluation of <i>+</i> is aborted for some reason, then the values associated
+with <i>*</i>, <i>**</i>, and <i>***</i> are not updated; they are updated only if the printing of
+values is at least begun (though not necessarily completed).
+</div>
+<div class=defun>
+<!--l. 332--><p class="noindent" > <i>[Variable]</i>   <b>/</b> <a 
+ id="dx136-181015"></a><a 
+ id="x136-181016r632"></a>  <br 
+class="newline" /><i>[Variable]</i>   <b>//</b> <a 
+ id="dx136-181017"></a><a 
+ id="x136-181018r633"></a>  <br 
+class="newline" /><i>[Variable]</i>   <b>///</b> <a 
+ id="dx136-181019"></a><a 
+ id="x136-181020r634"></a>
+<!--l. 336--><p class="noindent" >While a form is being evaluated by the top-level loop, the variable <i>/</i> is bound to a
+list of the results printed at the end of the last time through the loop; that is, it is
+a list of all values produced by evaluating the form in <i>+</i>. The value of <i>*</i>
+should always be the same as the car of the value of <i>/</i>. The variable <i>//</i>
+holds the previous value of <i>/</i> (that is, the results printed two interactions
+ago), and <i>///</i> holds the previous value of <i>//</i>. Therefore the value of <i>**</i>
+should always be the same as the car of <i>//</i>, and similarly for <i>***</i> and
+<i>///</i>.
+<!--l. 347--><p class="indent" >   If the evaluation of <i>+</i> is aborted for some reason, then the values associated
+with <i>/</i>, <i>//</i>, and <i>///</i> are not updated; they are updated only if the printing of
+                                                                          
+
+                                                                          
+values is at least begun (though not necessarily completed).
+</div>
+<!--l. 353--><p class="indent" >   As an example of the processing of these variables, consider the following
+possible transcript, where <i>&#x003E;</i> is a prompt by the top-level loop for user input: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">&#x003E;(cons - -)                      </td><td  
+class="tabbing">;Interaction 1
+</td></tr></table>
+<!--l. 358--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">((CONS - -) CONS - -)      </td><td  
+class="tabbing">;Cute, huh?</td></tr></table>
+<!--l. 359--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 360--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">&#x003E;(values)                        </td><td  
+class="tabbing">;Interaction 2</td></tr></table>
+<!--l. 361--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                                ;Nothing to print</td></tr></table>
+<!--l. 362--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">&#x003E;(cons &#x2019;a &#x2019;b)                    </td><td  
+class="tabbing">;Interaction 3</td></tr></table>
+<!--l. 363--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">(A . B)                           </td><td  
+class="tabbing">;There is a single value</td></tr></table>
+<!--l. 364--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 365--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">&#x003E;(hairy-loop)<tt>̂</tt>G               </td><td  
+class="tabbing">;Interaction 4</td></tr></table>
+<!--l. 366--><p class="indent" >                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">### QUIT to top level.    </td><td  
+class="tabbing">;(User aborts the computation.)</td></tr></table>
+<!--l. 367--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 368--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">&#x003E;(ﬂoor 13 4)                    </td><td  
+class="tabbing">;Interaction 5</td></tr></table>
+<!--l. 369--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:216;" 
+class="tabbing">3                                   </td><td  
+class="tabbing">;There are two values</td></tr></table>
+<!--l. 370--><p class="indent" >                                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">1</td></tr></table>
+<!--l. 372--><p class="indent" >
+</div>
+</div>
+<!--l. 373--><p class="noindent" >At this point we have: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"><!--tex4ht:inline--><div class="tabular"><table width="100%"><tr><td align="left" >+++  ⇒ (cons &#x2019;a &#x2019;b) </td><td align="left" >***  ⇒ NIL   </td><td align="left" >///  ⇒ ()        </td>
+</tr><tr><td align="left" >++  ⇒ (hairy-loop)   </td><td align="left" >**  ⇒ (A . B)</td><td align="left" >//  ⇒ ((A . B))</td>
+</tr><tr><td align="left" >+  ⇒ (ﬂoor 13 4)      </td><td align="left" >*  ⇒ 3          </td><td align="left" >/  ⇒ (3 1)       </td></tr></table>                      </div>
+</td></tr></table><!--l. 380--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+   <!--l. 6--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch21.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse110.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse110.html#tailclmse110.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse111.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch20.html#clmse111.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 6--><p class="indent" >   <a 
+ id="tailclmse111.html"></a>  
+</body></html> 

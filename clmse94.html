@@ -1,0 +1,414 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Array Creation</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 38--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse95.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch17.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch17.html#tailclmch17.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse94.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch17.html#clmse94.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">17.1   </span> <a 
+ id="x116-15800017.1"></a>Array Creation</h3>
+                                                                          
+
+                                                                          
+<!--l. 40--><p class="noindent" >Do not be daunted by the many options of the function <i>make-array</i>. All that is
+required to construct an array is a list of the dimensions; most of the options are
+for relatively esoteric applications.
+<div class=defun>
+<!--l. 45--><p class="noindent" > <i>[Function]</i>   <b>make-array</b> <a 
+ id="dx116-158001"></a><a 
+ id="x116-158002r557"></a>   <i>dimensions</i>  <b>&#x0026;key</b>  :element-type  :initial-element
+:initial-contents  :adjustable  :ﬁll-pointer  :displaced-to  :displaced-index-oﬀset
+<!--l. 47--><p class="noindent" >This is the primitive function for making arrays. The dimensions argument should
+be a list of non-negative integers that are to be the dimensions of the array; the
+length of the list will be the dimensionality of the array. Each dimension must be
+smaller than <i>array-dimension-limit</i>, and the product of all the dimensions
+must be smaller than <i>array-total-size-limit</i>. Note that if dimensions is <i>nil</i>,
+then a zero-dimensional array is created. For convenience when making a
+one-dimensional array, the single dimension may be provided as an integer rather
+than as a list of one integer.
+<!--l. 59--><p class="indent" >   An implementation of Common Lisp may impose a limit on the rank
+of an array, but this limit may not be smaller than 7. Therefore, any
+Common Lisp program may assume the use of arrays of rank 7 or less. The
+implementation-dependent limit on array rank is reﬂected in <i>array-rank-limit</i>.
+<!--l. 65--><p class="indent" >   The keyword arguments for <i>make-array</i> are as follows:
+<div class=flushdesc>
+<!--l. 68--><p class="indent" >
+  <div><br /><b>
+<i>:element-type</i>                                                             </b>
+This argument should be the name of the type of the elements of the array;
+an array is constructed of the most specialized type that can nevertheless
+accommodate elements of the given type. The type <i>t</i> speciﬁes a general array,
+one whose elements may be any Lisp object; this is the default type.
+<div class=new>
+<!--l. 78--><p class="indent" >  X3J13 voted in January 1989 ⟨<b>?</b>⟩ to change <i>typep</i> and <i>subtypep</i> so that the
+specialized <i>array</i> type speciﬁer means the same thing for discrimination purposes
+as for declaration purposes: it encompasses those arrays that can result by
+specifying element-type as the element type to the function <i>make-array</i>. Therefore
+we may say that if type is the <i>:element-type</i> argument, then the result
+will be an array of type <i>(array type)</i>; put another way, for any type A, <div class=lisp>
+<div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(typep (make-array ... :element-type &#x2019;A ...)
+</td></tr></table>
+<!--l. 90--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       &#x2019;(array A)))</td></tr></table>
+<!--l. 92--><p class="indent" >
+</div>
+</div>
+<!--l. 93--><p class="noindent" >is always true. See <i>upgraded-array-element-type</i>.
+</div>
+  <br /><b>
+<i>:initial-element</i>                                                           </b>
+This argument may be used to initialize each element of the array. The
+value must be of the type speciﬁed by the <i>:element-type</i> argument. If the
+<i>:initial-element</i> option is omitted, the initial values of the array elements are
+undeﬁned (unless the <i>:initial-contents</i> or <i>:displaced-to</i> option is used). The
+<i>:initial-element</i> option may not be used with the <i>:initial-contents</i> or <i>:displaced-to</i>
+option.
+  <br /><b>
+<i>:initial-contents</i>                                                           </b>This
+argument may be used to initialize the contents of the array. The value is a nested
+structure of sequences. If the array is zero-dimensional, then the value speciﬁes
+the single element. Otherwise, the value must be a sequence whose length is equal
+to the ﬁrst dimension; each element must be a nested structure for an array
+whose dimensions are the remaining dimensions, and so on. For example: <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-array &#x2019;(4 2 3)
+</td></tr></table>
+<!--l. 116--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            :initial-contents</td></tr></table>
+<!--l. 117--><p class="indent" >                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            &#x2019;(((a b c) (1 2 3))</td></tr></table>
+<!--l. 118--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              ((d e f) (3 1 2))</td></tr></table>
+<!--l. 119--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              ((g h i) (2 3 1))</td></tr></table>
+<!--l. 120--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              ((j k l) (0 0 0))))</td></tr></table>
+<!--l. 122--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<!--l. 123--><p class="noindent" >The numbers of levels in the structure must equal the rank of the array. Each leaf of
+the nested structure must be of the type speciﬁed by the <i>:type</i> option. If the
+<i>:initial-contents</i> option is omitted, the initial values of the array elements are
+undeﬁned (unless the <i>:initial-element</i> or <i>:displaced-to</i> option is used). The
+<i>:initial-contents</i> option may not be used with the <i>:initial-element</i> or <i>:displaced-to</i>
+option.
+  <br /><b>
+<i>:adjustable</i>                                                                </b>This
+argument, if speciﬁed and not <i>nil</i>, indicates that it must be possible to alter the
+array&#x2019;s size dynamically after it is created. This argument defaults to
+<i>nil</i>.
+<div class=newer>
+<!--l. 138--><p class="indent" >  X3J13 voted in June 1989 ⟨<b>?</b>⟩ to clarify that if this argument is non-<i>nil</i> then
+the predicate <i>adjustable-array-p</i> will necessarily be true when applied to the
+resulting array; but if this argument is <i>nil</i> (or omitted) then the resulting array
+may or may not be adjustable, depending on the implementation, and therefore
+<i>adjustable-array-p</i> may be correspondingly true or false of the resulting
+array. Common Lisp provides no portable way to create a non-adjustable
+array, that is, an array for which <i>adjustable-array-p</i> is guaranteed to be
+false.
+</div>
+  <br /><b>
+<i>:ﬁll-pointer</i>                                                               </b>This
+argument speciﬁes that the array should have a ﬁll pointer. If this option is
+speciﬁed and not <i>nil</i>, the array must be one-dimensional. The value is used to
+initialize the ﬁll pointer for the array. If the value <i>t</i> is speciﬁed, the length
+of the array is used; otherwise the value must be an integer between 0
+(inclusive) and the length of the array (inclusive). This argument defaults to
+<i>nil</i>.
+  <br /><b>
+<i>:displaced-to</i>                                                              </b>This
+argument, if speciﬁed and not <i>nil</i>, speciﬁes that the array will be a displaced
+array. The argument must then be an array; <i>make-array</i> will create an indirect or
+                                                                          
+
+                                                                          
+shared array that shares its contents with the speciﬁed array. In this case the
+<i>:displaced-index-oﬀset</i> option may be useful. It is an error if the array given as
+the <i>:displaced-to</i> argument does not have the same <i>:element-type</i> as the
+array being created. The <i>:displaced-to</i> option may not be used with the
+<i>:initial-element</i> or <i>:initial-contents</i> option. This argument defaults to
+<i>nil</i>.
+  <br /><b>
+<i>:displaced-index-oﬀset</i>                                                     </b>This
+argument may be used only in conjunction with the <i>displaced-to</i> option. It must
+be a non-negative integer (it defaults to zero); it is made to be the index-oﬀset of
+the created shared array.
+<!--l. 181--><p class="indent" >  When an array A is given as the <i>:displaced-to</i> argument to <i>make-array</i> when
+creating array B, then array B is said to be displaced to array A. Now the total
+number of elements in an array, called the total size of the array, is calculated as
+the product of all the dimensions (see <i>array-total-size</i>). It is required that the
+total size of A be no smaller than the sum of the total size of B plus the oﬀset n
+speciﬁed by the <i>:displaced-index-oﬀset</i> argument. The eﬀect of displacing is that
+array B does not have any elements of its own but instead maps accesses to itself
+into accesses to array A. The mapping treats both arrays as if they were
+one-dimensional by taking the elements in row-major order, and then maps
+an access to element k of array B to an access to element k+n of array
+A.</div>
+</div>
+<!--l. 198--><p class="indent" >   If <i>make-array</i> is called with each of the <i>:adjustable</i>, <i>:ﬁll-pointer</i>, and
+<i>:displaced-to</i> arguments either unspeciﬁed or <i>nil</i>, then the resulting array is
+guaranteed to be a simple array (see section <a 
+href="clmse7.html#x14-290002.5">2.5<!--tex4ht:ref: ARRAY-TYPE-SECTION --></a>).
+<div class=newer>
+<!--l. 205--><p class="indent" >   X3J13 voted in June 1989 ⟨<b>?</b>⟩ to clarify that if one or more of the <i>:adjustable</i>,
+<i>:ﬁll-pointer</i>, and <i>:displaced-to</i> arguments is true, then whether the resulting array
+is simple is unspeciﬁed.
+</div>
+<!--l. 212--><p class="indent" >   Here are some examples of the use of <i>make-array</i>: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Create a one-dimensional array of ﬁve elements.
+</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 214--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-array 5)</td></tr></table>
+<!--l. 215--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 216--><p class="indent" >          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Create a two-dimensional array, 3 by 4, with four-bit elements.</td></tr></table>
+<!--l. 217--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-array &#x2019;(3 4) <i>:element-type</i> &#x2019;(mod 16))</td></tr></table>
+<!--l. 218--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 219--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Create an array of single-ﬂoats.</td></tr></table>
+<!--l. 220--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(make-array 5 <i>:element-type</i> &#x2019;single-ﬂoat))</td></tr></table>
+<!--l. 221--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 222--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Making a shared array.</td></tr></table>
+<!--l. 223--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq a (make-array &#x2019;(4 3)))</td></tr></table>
+<!--l. 224--><p class="indent" >                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq b (make-array 8 :displaced-to a</td></tr></table>
+<!--l. 225--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      :displaced-index-oﬀset 2))</td></tr></table>
+<!--l. 226--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Now it is the case that:</td></tr></table>
+<!--l. 227--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 0)  ≡ (aref a 0 2)</td></tr></table>
+<!--l. 228--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 1)  ≡ (aref a 1 0)</td></tr></table>
+<!--l. 229--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 2)  ≡ (aref a 1 1)</td></tr></table>
+<!--l. 230--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 3)  ≡ (aref a 1 2)</td></tr></table>
+<!--l. 231--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 4)  ≡ (aref a 2 0)</td></tr></table>
+<!--l. 232--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 5)  ≡ (aref a 2 1)</td></tr></table>
+<!--l. 233--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 6)  ≡ (aref a 2 2)</td></tr></table>
+<!--l. 234--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (aref b 7)  ≡ (aref a 3 0)</td></tr></table>
+<!--l. 236--><p class="indent" >
+</div>
+</div>
+<!--l. 237--><p class="noindent" >The last example depends on the fact that arrays are, in eﬀect, stored in row-major
+order for purposes of sharing. Put another way, the indices for the elements of an
+array are ordered lexicographically.
+<div class=incompatibility>
+<!--l. 243--><p class="noindent" ><b>Compatibility note:</b> Both Lisp Machine Lisp, as described in reference <span class="cite">[<a 
+href="clmli5.html#XBLUE-LISPM">55</a>]</span>, and
+Fortran <span class="cite">[<a 
+href="clmli5.html#XDRAFT-FORTRAN-77">15</a>, <a 
+href="clmli5.html#XANSI-FORTRAN-77">3</a>]</span> store arrays in column-major order.
+</div>
+</div>
+<div class=defun>
+<!--l. 251--><p class="noindent" > <i>[Constant]</i>   <b>array-rank-limit</b> <a 
+ id="dx116-158003"></a><a 
+ id="x116-158004r558"></a>
+<!--l. 253--><p class="noindent" >The value of <i>array-rank-limit</i> is a positive integer that is the upper exclusive
+bound on the rank of an array. This bound depends on the implementation but
+will not be smaller than 8; therefore every Common Lisp implementation
+                                                                          
+
+                                                                          
+supports arrays whose rank is between 0 and 7 (inclusive). (Implementors are
+encouraged to make this limit as large as practicable without sacriﬁcing
+performance.)
+</div>
+<div class=defun>
+<!--l. 263--><p class="noindent" > <i>[Constant]</i>   <b>array-dimension-limit</b> <a 
+ id="dx116-158005"></a><a 
+ id="x116-158006r559"></a>
+<!--l. 265--><p class="noindent" >The value of <i>array-dimension-limit</i> is a positive integer that is the upper exclusive
+bound on each individual dimension of an array. This bound depends on the
+implementation but will not be smaller than 1024. (Implementors are
+encouraged to make this limit as large as practicable without sacriﬁcing
+performance.)
+<div class=new>
+<!--l. 274--><p class="indent" >   X3J13 voted in January 1989 ⟨<b>?</b>⟩ to specify that the value of <i>array-dimension-limit</i>
+must be of type <i>ﬁxnum</i>. This in turn implies that all valid array indices will be
+ﬁxnums.
+</div>
+</div>
+<div class=defun>
+<!--l. 283--><p class="noindent" > <i>[Constant]</i>   <b>array-total-size-limit</b> <a 
+ id="dx116-158007"></a><a 
+ id="x116-158008r560"></a>
+<!--l. 285--><p class="noindent" >The value of <i>array-total-size-limit</i> is a positive integer that is the upper exclusive
+bound on the total number of elements in an array. This bound depends on the
+implementation but will not be smaller than 1024. (Implementors are
+encouraged to make this limit as large as practicable without sacriﬁcing
+performance.)
+<!--l. 293--><p class="indent" >   The actual limit on array size imposed by the implementation may
+vary according to the <i>:element-type</i> of the array; in this case the value of
+<i>array-total-size-limit</i> will be the smallest of these individual limits.
+</div>
+<div class=defun>
+<!--l. 299--><p class="noindent" > <i>[Function]</i>   <b>vector</b> <a 
+ id="dx116-158009"></a><a 
+ id="x116-158010r561"></a>   <b>&#x0026;rest</b>  objects
+<!--l. 301--><p class="noindent" >The function <i>vector</i> is a convenient means for creating a simple general
+vector with speciﬁed initial contents. It is analogous to the function <i>list</i>. <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(vector a<sub>1</sub> a<sub>2</sub> ... a<sub>n</sub>)
+</td></tr></table>
+<!--l. 306--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ≡ (make-array (list n) :element-type t</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 307--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             :initial-contents (list a<sub>1</sub> a<sub>2</sub> ... a<sub>n</sub>))</td></tr></table>
+<!--l. 309--><p class="indent" >
+</div>
+</div>
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 312--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse95.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch17.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch17.html#tailclmch17.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse94.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch17.html#clmse94.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 312--><p class="indent" >   <a 
+ id="tailclmse94.html"></a>  
+</body></html> 

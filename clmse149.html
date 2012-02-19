@@ -1,0 +1,416 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Pretty Printing Dispatch Tables</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,charset=utf-8,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-02-20 00:42:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+</head><body 
+>
+   <!--l. 937--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch28.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse148.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse148.html#tailclmse148.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse149.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch27.html#clmse149.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">27.6   </span> <a 
+ id="x181-25900027.6"></a>Pretty Printing Dispatch Tables</h3>
+<!--l. 939--><p class="noindent" >When <i>*print-pretty*</i> is not <i>nil</i>, the pprint dispatch table in the variable
+<i>*print-pprint-dispatch*</i> controls how objects are printed. The information in this
+table takes precedence over all other mechanisms for specifying how to print
+objects. In particular, it overrides user-deﬁned <i>print-object</i> methods and print
+functions for structures. However, if there is no speciﬁcation for how to pretty
+print a particular kind of object, it is then printed using the standard mechanisms
+as if <i>*print-pretty*</i> were <i>nil</i>.
+<!--l. 947--><p class="indent" >   A pprint dispatch table is a mapping from keys to pairs of values. The keys are
+type speciﬁers. The values are functions and numerical priorities. Basic insertion
+and retrieval is done based on the keys with the equality of keys being tested by
+<i>equal</i>. The function to use when pretty printing an object is chosen by ﬁnding the
+highest priority function in <i>*print-pprint-dispatch*</i> that is associated with a type
+speciﬁer that matches the object.
+<div class=defun>
+<!--l. 955--><p class="noindent" > <i>[Function]</i>   <b>copy-pprint-dispatch</b> <a 
+ id="dx181-259001"></a><a 
+ id="x181-259002r901"></a>   <b>&#x0026;optional</b>  <i>table</i>
+<!--l. 957--><p class="noindent" >A copy is made of table, which defaults to the current pprint dispatch table. If
+table is <i>nil</i>, a copy is returned of the initial value of <i>*print-pprint-dispatch*</i>.
+</div>
+<div class=defun>
+<!--l. 963--><p class="noindent" > <i>[Function]</i>   <b>pprint-dispatch</b> <a 
+ id="dx181-259003"></a><a 
+ id="x181-259004r902"></a>   <i>object</i>  <b>&#x0026;optional</b>  <i>table</i>
+<!--l. 965--><p class="noindent" >This retrieves the highest priority function from a pprint table that is
+associated with a type speciﬁer in the table that matches object. The
+function is chosen by ﬁnding all the type speciﬁers in table that match
+the object and selecting the highest priority function associated with
+any of these type speciﬁers. If there is more than one highest priority
+function, an arbitrary choice is made. If no type speciﬁers match the object,
+a function is returned that prints object with <i>*print-pretty*</i> bound to
+<i>nil</i>.
+<!--l. 975--><p class="indent" >   As a second return value, <i>pprint-dispatch</i> returns a ﬂag that is <i>t</i> if a matching
+type speciﬁer was found in table and <i>nil</i> if not.
+                                                                          
+
+                                                                          
+<!--l. 978--><p class="indent" >   Table (which defaults to <i>*print-pprint-dispatch*</i>) must be a pprint dispatch
+table. Table can be <i>nil</i>, in which case retrieval is done in the initial value of
+<i>*print-pprint-dispatch*</i>.
+<!--l. 982--><p class="indent" >   When <i>*print-pretty*</i> is <i>t</i>, <i>(write object :stream s)</i> is equivalent to
+<i>(funcall (pprint-dispatch object) s object)</i>.
+</div>
+<div class=defun>
+<!--l. 986--><p class="noindent" > <i>[Function]</i>   <b>set-pprint-dispatch</b> <a 
+ id="dx181-259005"></a><a 
+ id="x181-259006r903"></a>   <i>type</i>  <i>function</i>  <b>&#x0026;optional</b>  <i>priority</i>
+<i>table</i>
+<!--l. 988--><p class="noindent" >This puts an entry into a pprint dispatch table and returns <i>nil</i>. The type must
+be a valid type speciﬁer and is the key of the entry. The ﬁrst action of
+<i>set-pprint-dispatch</i> is to remove any pre-existing entry associated with type. This
+guarantees that there will never be two entries associated with the same type
+speciﬁer in a given pprint dispatch table. Equality of type speciﬁers is tested by
+<i>equal</i>.
+<!--l. 997--><p class="indent" >   Two values are associated with each type speciﬁer in a pprint dispatch table: a
+function and a priority. The function must accept two arguments: the stream to
+send output to and the object to be printed. The function should pretty print the
+object on the stream. The function can assume that object satisﬁes type. The
+function should obey <i>*print-readably*</i>. Any values returned by the function are
+ignored.
+<!--l. 1005--><p class="indent" >   The priority (which defaults to 0) must be a non-complex number. This
+number is used as a priority to resolve conﬂicts when an object matches more
+than one entry. An error is signaled if priority fails to be a non-complex
+number.
+<!--l. 1010--><p class="indent" >   The table (which defaults to the value of <i>*print-pprint-dispatch*</i>)
+must be a pprint dispatch table. The speciﬁed entry is placed in this
+table.
+<!--l. 1013--><p class="indent" >   It is permissible for function to be <i>nil</i>. In this situation, there will be no type
+entry in table after <i>set-pprint-dispatch</i> is evaluated.
+<!--l. 1017--><p class="indent" >   To facilitate the use of pprint dispatch tables for controlling the
+pretty printing of Lisp code, the type-speciﬁer argument of the function
+<i>set-pprint-dispatch</i> is allowed to contain the form <i>(cons</i> car-type cdr-type<i>)</i>.
+This form indicates that the corresponding object must be a cons whose
+car satisﬁes the type speciﬁer car-type and whose cdr satisﬁes the type
+speciﬁer cdr-type. The cdr-type can be omitted, in which case it defaults to
+<i>t</i>.
+</div>
+                                                                          
+
+                                                                          
+<!--l. 1027--><p class="indent" >   The initial value of <i>*print-pprint-dispatch*</i> is implementation-dependent.
+However, the initial entries all use a special class of priorities that are less than
+every priority that can be speciﬁed using <i>set-pprint-dispatch</i>. This guarantees that
+pretty printing functions speciﬁed by users will override everything in the initial
+value of <i>*print-pprint-dispatch*</i>.
+<!--l. 1034--><p class="indent" >   Consider the following examples. The ﬁrst form restores <i>*print-pprint-dispatch*</i>
+to its initial value. The next two forms then specify a special way of pretty
+printing ratios. Note that the more speciﬁc type speciﬁer has to be associated
+with a higher priority. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq *print-pprint-dispatch*
+</td></tr></table>
+<!--l. 1039--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (copy-pprint-dispatch nil))</td></tr></table>
+<!--l. 1040--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1041--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun div-print (s r colon? atsign?)</td></tr></table>
+<!--l. 1042--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (declare (ignore colon? atsign?))</td></tr></table>
+<!--l. 1043--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format s &#x0022;(/ <tt>~</tt>D <tt>~</tt>D)&#x0022; (numerator (abs r)) (denominator r)))</td></tr></table>
+<!--l. 1044--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1045--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-pprint-dispatch &#x2019;ratio (formatter &#x0022;#.<tt>~</tt>/div-print/&#x0022;))</td></tr></table>
+<!--l. 1046--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1047--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-pprint-dispatch &#x2019;(and ratio (satisﬁes minusp))</td></tr></table>
+<!--l. 1048--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (formatter &#x0022;#.(- <tt>~</tt>/div-print/)&#x0022;)</td></tr></table>
+<!--l. 1049--><p class="indent" >                                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  5)</td></tr></table>
+<!--l. 1050--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1051--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(pprint &#x2019;(1/3 -2/3)) prints: (#.(/ 1 3) #.(- (/ 2 3)))</td></tr></table>
+<!--l. 1053--><p class="indent" >
+</div>
+</div>
+<!--l. 1055--><p class="indent" >   The following two forms illustrate the speciﬁcation of pretty printing
+functions for particular types of Lisp code. The ﬁrst form illustrates how
+to specify the traditional method for printing quoted objects using “<i>&#x2019;</i>”
+syntax. Note the care taken to ensure that data lists that happen to begin
+with <i>quote</i> will be printed readably. The second form speciﬁes that lists
+beginning with the symbol <i>my-let</i> should print the same way that lists
+beginning with <i>let</i> print when the initial pprint dispatch table is in eﬀect. <div class=lisp>
+<div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-pprint-dispatch &#x2019;(cons (member quote))
+</td></tr></table>
+<!--l. 1063--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  #&#x2019;(lambda (s list)</td></tr></table>
+<!--l. 1064--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (if (and (consp (cdr list)) (null (cddr list)))</td></tr></table>
+<!--l. 1065--><p class="indent" >                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (funcall (formatter &#x0022;&#x2019;<tt>~</tt>W&#x0022;) s (cadr list))</td></tr></table>
+<!--l. 1066--><p class="indent" >                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (pprint-ﬁll s list)))))</td></tr></table>
+<!--l. 1067--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1068--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-pprint-dispatch &#x2019;(cons (member my-let))</td></tr></table>
+<!--l. 1069--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (pprint-dispatch &#x2019;(let) nil))</td></tr></table>
+<!--l. 1070--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1071--><p class="indent" >
+</div>
+</div>
+<!--l. 1073--><p class="indent" >   The next example speciﬁes a default method for printing lists that do
+not correspond to function calls. Note that, as shown in the deﬁnition of
+<i>pprint-tabular</i> above, <i>pprint-linear</i>, <i>pprint-ﬁll</i>, and <i>pprint-tabular</i> are deﬁned with
+optional colon and atsign arguments so that they can be used as pprint dispatch
+functions as well as <i><tt>~</tt>/.../</i> functions. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-pprint-dispatch
+</td></tr></table>
+<!--l. 1079--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  &#x2019;(cons (not (and symbol (satisﬁes fboundp))))</td></tr></table>
+<!--l. 1080--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  #&#x2019;pprint-ﬁll</td></tr></table>
+<!--l. 1081--><p class="indent" >                                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  -5)</td></tr></table>
+<!--l. 1083--><p class="indent" >
+</div>
+</div>
+<!--l. 1084--><p class="noindent" >With a line length of 9, <i>(pprint &#x2019;(0 b c d e f g h i j k))</i> prints: <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(0 b c d
+</td></tr></table>
+<!--l. 1086--><p class="indent" >                                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> e f g h</td></tr></table>
+<!--l. 1087--><p class="indent" >                                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> i j k)</td></tr></table>
+<!--l. 1089--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<!--l. 1091--><p class="indent" >   This ﬁnal example shows how to deﬁne a pretty printing function for a user
+deﬁned data structure. <div class=lisp> <div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defstruct family mom kids)
+</td></tr></table>
+<!--l. 1094--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1095--><p class="indent" >                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(set-pprint-dispatch &#x2019;family</td></tr></table>
+<!--l. 1096--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  #&#x2019;(lambda (s f)</td></tr></table>
+<!--l. 1097--><p class="indent" >            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (format s &#x0022;<tt>~</tt><tt>@</tt>&#x003C;#&#x003C;<tt>~</tt>;<tt>~</tt>W and <tt>~</tt>2I<tt>~</tt><tt>_</tt><tt>~</tt>/pprint-ﬁll/<tt>~</tt>;&#x003E;<tt>~</tt>:&#x003E;&#x0022;</td></tr></table>
+<!--l. 1099--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (family-mom f) (family-kids f))))</td></tr></table>
+<!--l. 1101--><p class="indent" >
+</div>
+</div>
+<!--l. 1103--><p class="indent" >   The pretty printing function for the structure <i>family</i> speciﬁes how
+to adjust the layout of the output so that it can ﬁt aesthetically into a
+variety of line widths. In addition, it obeys the printer control variables
+<i>*print-level*</i>, <i>*print-length*</i>, <i>*print-lines*</i>, <i>*print-circle*</i>, <i>*print-shared*</i>, and
+<i>*print-escape*</i>, and can tolerate several diﬀerent kinds of malformity in the data
+structure. The output below shows what is printed out with a right margin
+of 25, <i>*print-pretty*</i> <i>t</i>, <i>*print-escape*</i> <i>nil</i>, and a malformed <i>kids</i> list. <div class=lisp>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(write (list &#x2019;principal-family
+</td></tr></table>
+<!--l. 1112--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (make-family :mom &#x0022;Lucy&#x0022;</td></tr></table>
+<!--l. 1113--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                          :kids &#x2019;(&#x0022;Mark&#x0022; &#x0022;Bob&#x0022; . &#x0022;Dan&#x0022;)))</td></tr></table>
+<!--l. 1114--><p class="indent" >             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       :right-margin 25 :pretty T :escape nil :miser-width nil)</td></tr></table>
+<!--l. 1115--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1116--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(PRINCIPAL-FAMILY</td></tr></table>
+<!--l. 1117--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> #&#x003C;Lucy and</td></tr></table>
+<!--l. 1118--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     Mark Bob . Dan&#x003E;)</td></tr></table>
+<!--l. 1120--><p class="indent" >
+</div>
+                                                                          
+
+                                                                          
+</div>
+<!--l. 1122--><p class="indent" >   Note that a pretty printing function for a structure is diﬀerent from the
+structure&#x2019;s print function. While print functions are permanently associated with
+a structure, pretty printing functions are stored in pprint dispatch tables and can
+be rapidly changed to reﬂect diﬀerent printing needs. If there is no pretty printing
+function for a structure in the current print dispatch table, the print function (if
+any) is used instead.
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+<!--l. 14--><p class="indent" >   Daniel G. Bobrow, Linda G. DeMichiel, Richard P. Gabriel,
+Sonya E. Keene, Gregor Kiczales, and David A. Moon
+                                                                          
+
+                                                                          
+   <!--l. 17--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmch28.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse148.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse148.html#tailclmse148.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse149.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch27.html#clmse149.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 17--><p class="indent" >   <a 
+ id="tailclmse149.html"></a>  
+</body></html> 
