@@ -9,7 +9,7 @@
 The mechanism that executes Lisp programs is called the evaluator.
 More precisely, the evaluator accepts a form and performs the
 computation specified by the form.  This mechanism is made available
-to the user through the function \cd{eval}.
+to the user through the function \cdf{eval}.
 
 The evaluator is typically implemented as an interpreter
 that traverses the given form recursively, performing each step
@@ -18,7 +18,7 @@ required, however.  A permissible alternative approach is
 for the evaluator first to completely compile the form into
 machine-executable code and then invoke the resulting code.
 This technique virtually eliminates incompatibilities
-between interpreted and compiled code but also renders the \cd{evalhook}
+between interpreted and compiled code but also renders the \cdf{evalhook}
 mechanism relatively useless.
 Various mixed strategies are also possible.  All of these approaches
 should produce the same results when executing a correct program
@@ -30,10 +30,10 @@ document the evaluation strategy for each implementation.
 
 \section{Run-Time Evaluation of Forms}
 
-The function \cd{eval} is the main user interface to the evaluator.
+The function \cdf{eval} is the main user interface to the evaluator.
 Hooks are provided for user-supplied debugging routines
 to obtain control during the execution of an interpretive evaluator.
-The functions \cd{evalhook} and \cd{applyhook} provide alternative
+The functions \cdf{evalhook} and \cdf{applyhook} provide alternative
 interfaces to the evaluator mechanism for use by these debugging routines.
 
 \begin{defun}[Function]
@@ -41,26 +41,26 @@ eval form
 
 The {\it form} is evaluated in the current dynamic environment and
 a null lexical environment.  Whatever results from the evaluation
-is returned from the call to \cd{eval}.
+is returned from the call to \cdf{eval}.
 
-Note that when you write a call to \cd{eval} {\it two} levels
+Note that when you write a call to \cdf{eval} {\it two} levels
 of evaluation occur on the argument form you write.
 First the argument form is evaluated, as for arguments to any function,
 by the usual argument evaluation mechanism
-(which involves an implicit use of \cd{eval}).  Then the argument
-is passed to the \cd{eval} function, where another evaluation occurs.
+(which involves an implicit use of \cdf{eval}).  Then the argument
+is passed to the \cdf{eval} function, where another evaluation occurs.
 For example:
 \begin{lisp}
 (eval (list 'cdr (car '((quote (a . b)) c)))) \EV\ b
 \end{lisp}
 The argument form \cd{(list 'cdr (car '((quote (a . b)) c)))} is evaluated
 in the usual way to produce the argument \cd{(cdr (quote (a . b)))};
-this is then given to \cd{eval} because \cd{eval} is being called explicitly,
-and \cd{eval} evaluates its argument \cd{(cdr (quote (a . b)))} to produce \cd{b}.
+this is then given to \cdf{eval} because \cdf{eval} is being called explicitly,
+and \cdf{eval} evaluates its argument \cd{(cdr (quote (a . b)))} to produce \cdf{b}.
 
 If all that is required for some application is
 to obtain the current dynamic value of a given symbol, the function
-\cd{symbol-value} may be more efficient than \cd{eval}.
+\cdf{symbol-value} may be more efficient than \cdf{eval}.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -73,12 +73,12 @@ to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
 *evalhook* \\
 *applyhook*
 
-If the value of \cd{*evalhook*} is not {\false}, then \cd{eval} behaves
+If the value of \cd{*evalhook*} is not {\false}, then \cdf{eval} behaves
 in a special way.  The non-{\false} value of \cd{*evalhook*} should be a function
 that takes two arguments, a form and an environment;
 this is called the {\it eval hook function}.
 When a form is to be evaluated (any form at all, even a number or a symbol),
-whether implicitly or via an explicit call to \cd{eval}, no attempt
+whether implicitly or via an explicit call to \cdf{eval}, no attempt
 is made to evaluate the form.
 Instead, the hook function is invoked and is passed the form to be evaluated
 as its first argument.  The hook function is then responsible for
@@ -87,7 +87,7 @@ to be the result of evaluating the form.
 
 The variable \cd{*applyhook*} is similar to \cd{*evalhook*} but is used
 when a function is about to be applied to arguments.
-If the value of \cd{*applyhook*} is not {\false}, then \cd{eval} behaves
+If the value of \cd{*applyhook*} is not {\false}, then \cdf{eval} behaves
 in a special way.
 \begin{obsolete}
 The non-{\false} value of \cd{*applyhook*} should be a function
@@ -115,10 +115,10 @@ as its first and second arguments.  The hook function is then responsible for
 evaluating the form; whatever is returned by the hook function is assumed
 to be the result of evaluating the form.
 The apply hook function is used only for application of ordinary functions
-within \cd{eval}.  It is not used for applications via \cd{apply} or
-\cd{funcall}, for applications by such functions as \cd{map} or
-\cd{reduce}, or for invocation of macro-expansion functions
-by either \cd{eval} or \cd{macroexpand}.
+within \cdf{eval}.  It is not used for applications via \cdf{apply} or
+\cdf{funcall}, for applications by such functions as \cdf{map} or
+\cdf{reduce}, or for invocation of macro-expansion functions
+by either \cdf{eval} or \cdf{macroexpand}.
 
 \begin{newer}
 X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to specify
@@ -130,14 +130,14 @@ but this may have been an oversight.
 A proposal was submitted to X3J13 in September 1989 to specify
 that the value of \cd{*evalhook*} or \cd{*applyhook*} is first coerced to a
 function before being called.  If this proposal is accepted,
-the value of either variable may be \cd{nil}, any other symbol,
-a lambda-expression, or any object of type \cd{function}.
+the value of either variable may be \cdf{nil}, any other symbol,
+a lambda-expression, or any object of type \cdf{function}.
 \end{newer}
 
 The last argument passed to either kind of hook function contains information
 about the lexical environment in an implementation-dependent format.
 These arguments are suitable for the functions
-\cd{evalhook}, \cd{applyhook}, and \cd{macroexpand}.
+\cdf{evalhook}, \cdf{applyhook}, and \cdf{macroexpand}.
 
 When either kind of hook function is invoked, both of the variables
 \cd{*evalhook*}
@@ -145,12 +145,12 @@ and \cd{*applyhook*} are rebound to the value {\nil} around the invocation
 of the hook function.  This is so that the hook function will not be
 invoked recursively on evaluations and applications that occur
 in the course of executing the code of the hook function.
-The functions \cd{evalhook}
-and \cd{applyhook} are useful for performing recursive evaluations
+The functions \cdf{evalhook}
+and \cdf{applyhook} are useful for performing recursive evaluations
 and applications within the hook function.
 
 The hook feature is provided as an aid to debugging.
-The \cd{step} facility is implemented using this hook.
+The \cdf{step} facility is implemented using this hook.
 
 If a non-local exit causes a throw back to the top level
 of Lisp, perhaps because an error could not
@@ -162,11 +162,11 @@ automatically reset to {\false} as a safety feature.
 evalhook form evalhookfn applyhookfn &optional env \\
 applyhook function args evalhookfn applyhookfn &optional env
 
-The functions \cd{evalhook} and \cd{applyhook} are provided to make it
+The functions \cdf{evalhook} and \cdf{applyhook} are provided to make it
 easier to exploit the hook feature.
 
-In the case of \cd{evalhook}, the {\it form} is evaluated.
-In the case of \cd{applyhook}, the {\it function} is applied to the
+In the case of \cdf{evalhook}, the {\it form} is evaluated.
+In the case of \cdf{applyhook}, the {\it function} is applied to the
 list of arguments {\it args}.  In either case,
 for the duration of the operation
 the variable \cd{*evalhook*} is bound to {\it evalhookfn}, and
@@ -175,17 +175,17 @@ Furthermore, the {\it env} argument
 is used as the lexical environment for the operation;
 {\it env} defaults to the null environment.
 The check for a hook function is {\it bypassed} for the evaluation
-of the {\it form} itself (for \cd{evalhook}) or for the application
-of the {\it function} to the {\it args} itself (for \cd{applyhook}),
+of the {\it form} itself (for \cdf{evalhook}) or for the application
+of the {\it function} to the {\it args} itself (for \cdf{applyhook}),
 but not for subsidiary evaluations and applications
 such as evaluations of subforms.  It is this one-shot bypass that makes
-\cd{evalhook} and \cd{applyhook} so useful.
+\cdf{evalhook} and \cdf{applyhook} so useful.
 
 \begin{new}
 X3J13 voted in January 1989
 \issue{APPLYHOOK-ENVIROMENT}
 to eliminate the optional {\it env}
-parameter to \cd{applyhook}, because it is not (and cannot)
+parameter to \cdf{applyhook}, because it is not (and cannot)
 be useful.  Any function that can be applied carries its own
 environment and does not need another environment to be specified
 separately.
@@ -193,7 +193,7 @@ This was a flaw in the first edition.
 \end{new}
 
 Here is an example of a very simple tracing routine that uses just the
-\cd{evalhook} feature.
+\cdf{evalhook} feature.
 \begin{lisp}
 (defvar *hooklevel* 0) \\
  \\
@@ -234,18 +234,18 @@ Using these routines, one might see the following interaction:
 \begin{defun}[Function]
 constantp object
 
-If the predicate \cd{constantp} is true of an object,
+If the predicate \cdf{constantp} is true of an object,
 then that object, when considered as a form to
 be evaluated, always evaluates to the same thing;
 it is a constant.
 This includes self-evaluating objects such as numbers, characters,
 strings, bit-vectors, and keywords, as well as all constant symbols
-declared by \cd{defconstant},
-such as \cd{nil}, \cd{t}, and \cd{pi}.
-In addition, a list whose {\it car} is \cd{quote},
+declared by \cdf{defconstant},
+such as \cdf{nil}, \cdf{t}, and \cdf{pi}.
+In addition, a list whose {\it car} is \cdf{quote},
 such as \cd{(quote foo)}, is considered to be a constant.
 
-If \cd{constantp} is false of an object, then
+If \cdf{constantp} is false of an object, then
 that object, considered as a form,
 might or might not always evaluate to the same thing.
 \end{defun}
@@ -253,7 +253,7 @@ might or might not always evaluate to the same thing.
 \section{The Top-Level Loop}
 
 Normally one interacts with Lisp through a ``top-level
-\cd{read}-\cd{eval}-\cd{print} loop,'' so called because
+\cdf{read}-\cdf{eval}-\cdf{print} loop,'' so called because
 it is the highest level of control and consists of an endless
 loop that reads an expression, evaluates it, and prints the
 results.  One has an effect on the state of the Lisp system
@@ -297,12 +297,12 @@ of \cd{++}.
 -
 
 While a form is being evaluated by the top-level loop,
-the variable \cd{-} is bound to the form itself; that is,
+the variable \cdf{-} is bound to the form itself; that is,
 it is the value about to be given to \cd{+} once this interaction
 is done.
 \begin{new}%CORR
 {\it Notice of correction.}
-In the first edition, the name of the variable \cd{-} was
+In the first edition, the name of the variable \cdf{-} was
 inadvertently omitted.
 \end{new}
 
