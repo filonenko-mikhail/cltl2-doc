@@ -41,7 +41,7 @@ the two names are joined with a hyphen and the presence or absence
 of a hyphen before the final \cd{p} is not changed.  For example,
 the predicate \cd{string-lessp} has no hyphen before the \cd{p}
 because it is the string version of \cdf{lessp} (a MacLisp function
-that has been renamed \cd{<} in Common Lisp).  The name \cd{string-less-p}
+that has been renamed \cdf{<} in Common Lisp).  The name \cd{string-less-p}
 would incorrectly imply that it is a predicate that tests for a kind
 of object called a \cdf{string-less}, and the name \cd{stringlessp}
 would connote a predicate that tests whether something has no strings
@@ -60,7 +60,7 @@ Common Lisp использует единое соглашение для исп
 помощью дефиса, и наличие или отсутствие перед завершающим \cd{p} не
 изменяется. Например, предикат \cd{string-lessp} не содержит дефиса перед
 \cd{p}, потому что это строковая версия \cd{lessp} (MacLisp функция, которая
-была переименована в \cd{<} в Common Lisp'е). Имя \cd{string-less-p} было бы
+была переименована в \cdf{<} в Common Lisp'е). Имя \cd{string-less-p} было бы
 некорректно указывающим на то, что это предикат проверяющий тип объекта
 называемого \cd{string-less}, а имя \cd{stringlessp} имело бы смысл того, что
 проверяет, отсутствие строк в чем-либо. 
@@ -204,6 +204,23 @@ result combinations:
 {\false}\>{\false}\>\cdf{subtypep} could not determine the relationship
 \end{tabbing}
 
+Аргументы должны быть спецификаторами типов, но только те которые могут
+использоваться и для \cdf{typep}.
+Два спецификатора типа сравниваются. Данные предикат истенен, если
+тип \textit{type1} точно является () подтипом типа \textit{type2}.
+Если результат {\false}, тогда тип \textit{type1} может быть, а может и не быть
+подтипом типа \textit{type2} (иногда это невозможно оределить, особенно когда
+используется тип \cdf{satisfies}).
+Второе возвращаемое значение указывает на точность результата. Если оно является
+истиной, значит первое значение указывает на точную принадлежность типов. Таким
+образом возможны следующие комбинации результатов:
+\begin{tabbing}
+~~~~~~~~\=~~~~~~~~\=\kill
+{\true}\>{\true}\>\textit{type1} точно является подтипом \textit{type2} \\
+{\false}\>{\true}\>\textit{type1} точно не является подтипом \textit{type2} \\
+{\false}\>{\false}\>\cdf{subtypep} не может определить отношение
+\end{tabbing}
+
 \begin{new}
 X3J13 voted in January 1989
 \issue{SUBTYPEP-TOO-VAGUE}
@@ -252,7 +269,7 @@ Of course, this also applies to such type specifiers as \cdf{vector}
 and \cdf{simple-array}
 (see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
 
-If \textit{A} and \textit{B} are type specifiers (other than \cd{*}, which technically
+If \textit{A} and \textit{B} are type specifiers (other than \cdf{*}, which technically
 is not a type specifier anyway), then \cd{(array~\textit{A})}
 and \cd{(array~\textit{B})} represent the same type in a given implementation
 if and only if they denote arrays
@@ -274,7 +291,7 @@ is the same type as
 
 The \cdf{complex} type specifier is treated in a similar but subtly different
 manner.
-If \textit{A} and \textit{B} are two type specifiers (but not \cd{*}, which technically
+If \textit{A} and \textit{B} are two type specifiers (but not \cdf{*}, which technically
 is not a type specifier anyway), then \cd{(complex~\textit{A})}
 and \cd{(complex~\textit{B})} represent the same type in a given implementation
 if and only if they refer to complex numbers
@@ -320,9 +337,11 @@ general.
 \end{new}
 \end{defun}
 
-\subsection{Specific Data Type Predicates}
+\subsection{Specific Data Type Predicates Специальные предикаты типов}
 
 The following predicates test for individual data types.
+
+Следующие предикаты осуществляют проверку определенных типов данных.
 
 \begin{defun}[Function]
 null object
@@ -336,6 +355,15 @@ can therefore express \textit{intent} by the choice of function name.
 \begin{lisp}
 (null x) \EQ\ (typep x 'null) \EQ\ (eq x '{\emptylist})
 \end{lisp}
+
+\cdf{null} является истиной, если аргумент является {\emptylist}, иначе является
+ложью. Похожая опреация производится \cdf{not}, однако \cdf{not} испольуется для
+инвертации булевых значение, тогда как \cdf{null} используется для проверки
+того, пустой ли список. Таким образом программист может выразить цели выбрав
+нужное имя функции.
+\begin{lisp}
+(null x) \EQ\ (typep x 'null) \EQ\ (eq x '{\emptylist})
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -343,6 +371,18 @@ symbolp object
 
 \cdf{symbolp} is true if its argument is a symbol,
 and otherwise is false.
+\begin{lisp}
+(symbolp x) \EQ\ (typep x 'symbol)
+\end{lisp}
+
+\cdf{symbolp} is true if its argument is a symbol,
+and otherwise is false.
+\begin{lisp}
+(symbolp x) \EQ\ (typep x 'symbol)
+\end{lisp}
+
+\cdf{symbolp} является истиной, если ее аргумент является символом, в противном
+случае является ложью.
 \begin{lisp}
 (symbolp x) \EQ\ (typep x 'symbol)
 \end{lisp}
@@ -365,6 +405,14 @@ Note that \cd{(atom '{\emptylist})} is true, because {\emptylist}$\;\equiv\;${\n
 (atom x) \EQ\ (typep x 'atom) \EQ\ (not (typep x 'cons))
 \end{lisp}
 
+Предикат \cdf{atom} является истиной, если аргумент не является cons-ячейкой, в
+противном случае является ложью.
+Следует отметить \cd{(atom '{\emptylist})} являет истиной, потому что
+{\emptylist}$\;\equiv\;${\nil}.
+\begin{lisp}
+(atom x) \EQ\ (typep x 'atom) \EQ\ (not (typep x 'cons))
+\end{lisp}
+
 \beforenoterule
 \begin{incompatibility}
 In some Lisp dialects, notably Interlisp,
@@ -381,6 +429,14 @@ The predicate \cdf{consp} is true if its argument is a cons,
 and otherwise is false.
 Note that the empty list is not a cons, so
 \cd{(consp '{\emptylist})} \EQ\ \cd{(consp '{\nil})} \EV\ {\nil}.
+\begin{lisp}
+(consp x) \EQ\ (typep x 'cons) \EQ\ (not (typep x 'atom))
+\end{lisp}
+
+Предикат \cdf{consp} является истиной, если его аргумент является cons-ячейкой,
+в противном случае является ложью.
+Следует отметить, пустой список не является cons-ячейкой, так 
+\cd{(consp '{\emptylist})} \EQ\ \cd{(consp '{\nil})} \EV\ {\nil}. 
 \begin{lisp}
 (consp x) \EQ\ (typep x 'cons) \EQ\ (not (typep x 'atom))
 \end{lisp}
@@ -408,6 +464,14 @@ is a ``true list'' (one terminated by {\nil}) or a ``dotted list''
 \begin{lisp}
 (listp x) \EQ\ (typep x 'list) \EQ\ (typep x '(or cons null))
 \end{lisp}
+
+\cdf{listp} является истиной, если его аргумент является cons-ячейкой или пустым
+список {\emptylist}, в противном случае является ложью. Она не проверяет
+является ли <<список Ъ (true list)>> (завершающийся {\nil}) или <<dotted>>
+(заверщающийся не-null атомом).
+\begin{lisp}
+(listp x) \EQ\ (typep x 'list) \EQ\ (typep x '(or cons null))
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -418,6 +482,12 @@ and otherwise is false.
 \begin{lisp}
 (numberp x) \EQ\ (typep x 'number)
 \end{lisp}
+
+\cdf{numberp} является истиной, если аргумент любой вид числа, в
+противном случае является ложью.
+\begin{lisp}
+(numberp x) \EQ\ (typep x 'number)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -425,6 +495,12 @@ integerp object
 
 \cdf{integerp} is true if its argument is an integer, and otherwise
 is false.
+\begin{lisp}
+(integerp x) \EQ\ (typep x 'integer)
+\end{lisp}
+
+\textit{integerp} является истиной, если аргумент целое число, в противном
+случае является ложью.
 \begin{lisp}
 (integerp x) \EQ\ (typep x 'integer)
 \end{lisp}
@@ -446,6 +522,12 @@ an integer), and otherwise is false.
 \begin{lisp}
 (rationalp x) \EQ\ (typep x 'rational)
 \end{lisp}
+
+\cdf{rationalp} является истиной, если аргумент рациональное число (дробь или
+целое), в противном случае является ложью.
+\begin{lisp}
+(rationalp x) \EQ\ (typep x 'rational)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -453,6 +535,11 @@ floatp object
 
 \cdf{floatp} is true if its argument is a floating-point number,
 and otherwise is false.
+\begin{lisp}
+(floatp x) \EQ\ (typep x 'float)
+\end{lisp}
+\cdf{floatp} является истиной, если аргумент число с плавающей точкой, в
+противном случае является ложью.
 \begin{lisp}
 (floatp x) \EQ\ (typep x 'float)
 \end{lisp}
@@ -480,6 +567,12 @@ and otherwise is false.
 \begin{lisp}
 (complexp x) \EQ\ (typep x 'complex)
 \end{lisp}
+
+\textit{complexp} является истиной, если аргумент комплексное число, в противном
+случае является ложью.
+\begin{lisp}
+(complexp x) \EQ\ (typep x 'complex)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -487,6 +580,12 @@ characterp object
 
 \cdf{characterp} is true if its argument is a character,
 and otherwise is false.
+\begin{lisp}
+(characterp x) \EQ\ (typep x 'character)
+\end{lisp}
+
+\cdf{characterp} является истиной, если аргумент строковый символ, иначе
+является ложью.
 \begin{lisp}
 (characterp x) \EQ\ (typep x 'character)
 \end{lisp}
@@ -500,6 +599,11 @@ and otherwise is false.
 \begin{lisp}
 (stringp x) \EQ\ (typep x 'string)
 \end{lisp}
+
+\cdf{stringp} является истиной, если аргумент строка, иначе является ложью.
+\begin{lisp}
+(stringp x) \EQ\ (typep x 'string)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -507,6 +611,11 @@ bit-vector-p object
 
 \cdf{bit-vector-p} is true if its argument is a bit-vector,
 and otherwise is false.
+\begin{lisp}
+(bit-vector-p x) \EQ\ (typep x 'bit-vector)
+\end{lisp}
+
+\cdf{bit-vector-p} является истиной, если аргумет битовый вектор, иначе является ложью.
 \begin{lisp}
 (bit-vector-p x) \EQ\ (typep x 'bit-vector)
 \end{lisp}
@@ -520,6 +629,11 @@ and otherwise is false.
 \begin{lisp}
 (vectorp x) \EQ\ (typep x 'vector)
 \end{lisp}
+
+\cdf{vectorp} является истиной, если аргумент вектор, иначе является ложью.
+\begin{lisp}
+(vectorp x) \EQ\ (typep x 'vector)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -527,6 +641,12 @@ simple-vector-p object
 
 \cdf{vectorp} is true if its argument is a simple general vector,
 and otherwise is false.
+\begin{lisp}
+(simple-vector-p x) \EQ\ (typep x 'simple-vector)
+\end{lisp}
+
+\cdf{vectorp} является истиной, если аргумент простой общий вектор, иначе
+является ложью.
 \begin{lisp}
 (simple-vector-p x) \EQ\ (typep x 'simple-vector)
 \end{lisp}
@@ -540,6 +660,12 @@ and otherwise is false.
 \begin{lisp}
 (simple-string-p x) \EQ\ (typep x 'simple-string)
 \end{lisp}
+
+\cdf{simple-string-p} является истиной, если аргумент простая строка, иначе
+является ложью.
+\begin{lisp}
+(simple-string-p x) \EQ\ (typep x 'simple-string)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -547,6 +673,12 @@ simple-bit-vector-p object
 
 \cdf{simple-bit-vector-p} is true if its argument is a simple bit-vector,
 and otherwise is false.
+\begin{lisp}
+(simple-bit-vector-p x) \EQ\ (typep x 'simple-bit-vector)
+\end{lisp}
+
+\cdf{simple-bit-vector-p} является истиной, если аргумент простой битовый
+вектор, иначе является ложью.
 \begin{lisp}
 (simple-bit-vector-p x) \EQ\ (typep x 'simple-bit-vector)
 \end{lisp}
@@ -560,6 +692,11 @@ and otherwise is false.
 \begin{lisp}
 (arrayp x) \EQ\ (typep x 'array)
 \end{lisp}
+
+\cdf{arrayp} является истиной, если аргумент массив, иначе является ложью.
+\begin{lisp}
+(arrayp x) \EQ\ (typep x 'array)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -567,6 +704,12 @@ packagep object
 
 \cdf{packagep} is true if its argument is a package,
 and otherwise is false.
+\begin{lisp}
+(packagep x) \EQ\ (typep x 'package)
+\end{lisp}
+
+\cdf{packagep} является истиной, если аргумент является пакетом, иначе является
+ложью.
 \begin{lisp}
 (packagep x) \EQ\ (typep x 'package)
 \end{lisp}
@@ -605,6 +748,12 @@ and otherwise is false.
 \begin{lisp}
 (compiled-function-p x) \EQ\ (typep x 'compiled-function)
 \end{lisp}
+
+\cdf{compiled-function-p} является истиной, если аргумент скомпилированный
+объект кода,  иначе является ложью.
+\begin{lisp}
+(compiled-function-p x) \EQ\ (typep x 'compiled-function)
+\end{lisp}
 \end{defun}
 
 \begin{obsolete}
@@ -616,13 +765,20 @@ and otherwise is false.
 \begin{lisp}
 (commonp x) \EQ\ (typep x 'common)
 \end{lisp}
+
+\cdf{commonp} является истиной, если аргумент какой-либо стандартный тип данных
+Common Lisp'а, иначе является ложью.
+\begin{lisp}
+(commonp x) \EQ\ (typep x 'common)
+\end{lisp}
 \end{defun}
 \end{obsolete}
 
 \begin{newer}
 X3J13 voted in March 1989
 \issue{COMMON-TYPE}
-to remove the predicate \cdf{commonp} (and the type \cdf{common}) from the language.
+to remove the predicate \cdf{commonp} (and the type \cdf{common}) from the
+language.
 \end{newer}
 
 \medskip
@@ -632,7 +788,12 @@ See also \cdf{standard-char-p}, \cdf{string-char-p},
 \cdf{readtablep},
 \cdf{hash-table-p}, and \cdf{pathnamep}.
 
-\section{Equality Predicates}
+Смотрите также \cdf{standard-char-p}, \cdf{string-char-p},
+\cdf{streamp}, \cdf{random-state-p},
+\cdf{readtablep},
+\cdf{hash-table-p} и \cdf{pathnamep}.
+
+\section{Equality Predicates Предикаты равенства}
 
 Common Lisp provides a spectrum of predicates for testing for equality of
 two objects: \cdf{eq} (the most specific), \cdf{eql}, \cdf{equal}, and \cdf{equalp}
@@ -644,6 +805,16 @@ and case differences when comparing characters.
 If two objects satisfy any one of these equality predicates,
 then they also satisfy all those that are more general.
 
+Common Lisp предоставляет спектр предикатов для проверки равенства двух
+объектов:  \cdf{eq} (наиболее частный), \cdf{eql}, \cdf{equal} и \cdf{equalp}
+(наиболее общий). \cdf{eq} и \cdf{equal} имеют значения традиционные в
+Lisp'е. \cdf{eql} был добавлен, потому что он часто необходим, и \cdf{equalp}
+был добавлен преимущественно, как версия \cdf{equal}, которая игнорирует
+различия типов при сравнении двух чисел и различия регистров при сравнении
+строковых символов.
+Если два объекта удовлетворяют любому из этих предикатов, то они
+также удовлетворяют всем тем, которые носят более общий характер.
+
 \begin{defun}[Function]
 eq x y
 
@@ -652,12 +823,18 @@ if and only if \textit{x} and \textit{y} are the same identical object.
 (Implementationally, \textit{x} and \textit{y} are usually
 \cdf{eq} if and only if they address the same identical memory location.)
 
+\cd{(eq \textit{x} \textit{y})} является истиной тогда и только тогда, когда,
+\textit{x} и \textit{y} являются идентичными объектами.
+(В реализациях, \textit{x} и \textit{y} обычно равны \cdf{eq} тогда и только
+тогда, когда обращаются к одной ячейке памяти.)
+
 It should be noted that things that print the same are not necessarily \cdf{eq}
 to each other.  Symbols with the same print name usually are \cdf{eq} to
 each other because of the use of the \cdf{intern} function.
 However, numbers with the same value
 need not be \cdf{eq}, and two similar lists are usually not \cdf{eq}.
 For example:
+
 \begin{lisp}
 (eq 'a 'b) {\rm is false.} \\
 (eq 'a 'a) {\rm is true.} \\
@@ -677,6 +854,34 @@ For example:
 (eq "Foo" (copy-seq "Foo")) {\rm is false.} \\
 (eq "FOO" "foo") {\rm is false.}
 \end{lisp}
+
+Необходимо отметить, что вещи, которые выводят одно и то же, необязательно равны
+\cdf{eql} друг другу. Символы с одинаковым именем обычно равны \cdf{eq} друг
+другу, потому что используется функция \cdf{intern}.
+Однако, одинаковые значения чисел могут быть не равны \cdf{eq}, и два похожих
+списка обычно не равны \cdf{eq}.
+Например:
+
+\begin{lisp}
+(eq 'a 'b) \textrm{ложь} \\
+(eq 'a 'a) \textrm{истина} \\
+(eq 3 3) \textrm{может быть истина или ложь, в зависимости от реализации} \\
+(eq 3 3.0) \textrm{ложь} \\
+(eq 3.0 3.0) \textrm{может быть истина или ложь, в зависимости от реализации} \\
+(eq \#c(3 -4) \#c(3 -4)) \\
+~~\textrm{может быть истина или ложь, в зависимости от реализации} \\
+(eq \#c(3 -4.0) \#c(3 -4)) \textrm{ложь} \\
+(eq (cons 'a 'b) (cons 'a 'c)) \textrm{ложь} \\
+(eq (cons 'a 'b) (cons 'a 'b)) \textrm{ложь} \\
+(eq '(a . b) '(a . b)) \textrm{может быть истина или ложь} \\
+(progn (setq x (cons 'a 'b)) (eq x x)) \textrm{истина} \\
+(progn (setq x '(a . b)) (eq x x)) \textrm{истина} \\
+(eq \#{\Xbackslash}A \#{\Xbackslash}A) \textrm{может быть истина или ложь, в зависимости от реализации} \\
+(eq "Foo" "Foo") \textrm{может быть истина или ложь} \\
+(eq "Foo" (copy-seq "Foo")) \textrm{ложь} \\
+(eq "FOO" "foo") \textrm{ложь}
+\end{lisp}
+
 In Common Lisp, unlike some other Lisp dialects, the implementation
 is permitted to make ``copies'' of
 characters and numbers at any time.  (This permission is granted
@@ -686,8 +891,19 @@ Common Lisp makes no guarantee that \cdf{eq} will be true even when both
 its arguments are ``the same thing'' if that thing is a character or number.
 For example:
 \begin{lisp}
-(let ((x 5)) (eq x x)) {\rm might be true or false.}
+(let ((x 5)) (eq x x)) \textrm{might be true or false.}
 \end{lisp}
+
+В Common Lisp'е, в отличие от других деалектов, реализация в любое время может
+создавать <<копии>> строковых символов и чисел. (Это сделано для возможности в
+повышении производительности во многих общих случаях.) Из этого следует правило,
+что Common Lisp не гарантирует для строковых символов и чисел то, что \cdf{eq}
+будет истенен, когда оба аргумента являются <<одним и тем же>>.
+Например:
+\begin{lisp}
+(let ((x 5)) (eq x x)) \textrm{может быть истиной или ложью}
+\end{lisp}
+
 The predicate \cdf{eql} is the same as \cdf{eq}, except that if the
 arguments are characters or numbers of the same type then their
 values are compared.  Thus \cdf{eql} tells whether two objects
@@ -695,6 +911,14 @@ are \textit{conceptually} the same, whereas \cdf{eq} tells whether two
 objects are \textit{implementationally} identical.  It is for this reason
 that \cdf{eql}, not \cdf{eq}, is the default comparison predicate
 for the sequence functions defined in chapter~\ref{KSEQUE}.
+
+Предикат \cdf{eql} означает то же, что и \cdf{eq}, за исключением того, что если
+аргументы являются строковыми символами или числами одинакового типа, тогда
+сравниваются их значения. Таким образом \cdf{eql} говорит, являются ли два объекта
+<<концептуально (conceptually)>> одинаковыми, тогда как \cdf{eq} указывает, являются ли два
+объекта <<реализационно (implementationally)>> одинаковыми. По этой причине
+сравнительным предикатом для функций работы с последовательностями, описанными в
+главе~\ref{KSEQUE}, является \cdf{eql}, а не \cdf{eq}.
 
 \beforenoterule
 \begin{implementation}
@@ -747,39 +971,78 @@ or if they are character objects
 that represent the same character.
 For example:
 \begin{lisp}
-(eql 'a 'b) {\rm is false.} \\
-(eql 'a 'a) {\rm is true.} \\
-(eql 3 3) {\rm is true.} \\
-(eql 3 3.0) {\rm is false.} \\
-(eql 3.0 3.0) {\rm is true.} \\
-(eql \#c(3 -4) \#c(3 -4)) {\rm is true.} \\
-(eql \#c(3 -4.0) \#c(3 -4)) {\rm is false.} \\
-(eql (cons 'a 'b) (cons 'a 'c)) {\rm is false.} \\
-(eql (cons 'a 'b) (cons 'a 'b)) {\rm is false.} \\
-(eql '(a . b) '(a . b)) {\rm might be true or false.} \\
-(progn (setq x (cons 'a 'b)) (eql x x)) {\rm is true.} \\
-(progn (setq x '(a . b)) (eql x x)) {\rm is true.} \\
-(eql \#{\Xbackslash}A \#{\Xbackslash}A) {\rm is true.} \\
-(eql "Foo" "Foo") {\rm might be true or false.} \\
-(eql "Foo" (copy-seq "Foo")) {\rm is false.} \\
-(eql "FOO" "foo") {\rm is false.}
+(eql 'a 'b) \textrm{is false.} \\
+(eql 'a 'a) \textrm{is true.} \\
+(eql 3 3) \textrm{is true.} \\
+(eql 3 3.0) \textrm{is false.} \\
+(eql 3.0 3.0) \textrm{is true.} \\
+(eql \#c(3 -4) \#c(3 -4)) \textrm{is true.} \\
+(eql \#c(3 -4.0) \#c(3 -4)) \textrm{is false.} \\
+(eql (cons 'a 'b) (cons 'a 'c)) \textrm{is false.} \\
+(eql (cons 'a 'b) (cons 'a 'b)) \textrm{is false.} \\
+(eql '(a . b) '(a . b)) \textrm{might be true or false.} \\
+(progn (setq x (cons 'a 'b)) (eql x x)) \textrm{is true.} \\
+(progn (setq x '(a . b)) (eql x x)) \textrm{is true.} \\
+(eql \#{\Xbackslash}A \#{\Xbackslash}A) \textrm{is true.} \\
+(eql "Foo" "Foo") \textrm{might be true or false.} \\
+(eql "Foo" (copy-seq "Foo")) \textrm{is false.} \\
+(eql "FOO" "foo") \textrm{is false.}
 \end{lisp}
+
+Предикат \cdf{eql} является истиной, если его аргументы равны \cdf{eq}, или 
+если это числого одинакового типа и с одинаковыми значениями, или если это
+одинаковые строковые символы.
+Например:
+\begin{lisp}
+(eql 'a 'b) \textrm{ложь} \\
+(eql 'a 'a) \textrm{истина} \\
+(eql 3 3) \textrm{истина} \\
+(eql 3 3.0) \textrm{ложь} \\
+(eql 3.0 3.0) \textrm{истина} \\
+(eql \#c(3 -4) \#c(3 -4)) \textrm{истина} \\
+(eql \#c(3 -4.0) \#c(3 -4)) \textrm{ложь} \\
+(eql (cons 'a 'b) (cons 'a 'c)) \textrm{ложь} \\
+(eql (cons 'a 'b) (cons 'a 'b)) \textrm{ложь} \\
+(eql '(a . b) '(a . b)) \textrm{может быть истиной или ложью} \\
+(progn (setq x (cons 'a 'b)) (eql x x)) \textrm{истина} \\
+(progn (setq x '(a . b)) (eql x x)) \textrm{истина} \\
+(eql \#{\Xbackslash}A \#{\Xbackslash}A) \textrm{истина} \\
+(eql "Foo" "Foo") \textrm{может быть истиной или ложью} \\
+(eql "Foo" (copy-seq "Foo")) \textrm{ложь} \\
+(eql "FOO" "foo") \textrm{ложь}
+\end{lisp}
+
 Normally \cd{(eql 1.0s0 1.0d0)} would be false, under the assumption
 that \cd{1.0s0} and \cd{1.0d0} are of distinct data types.
 However, implementations that do not provide four distinct floating-point
 formats are permitted to ``collapse'' the four formats into some
 smaller number of them; in such an implementation \cd{(eql 1.0s0 1.0d0)}
-might be true.  The predicate \cd{=} will compare
+might be true.  The predicate \cdf{=} will compare
 the values of two numbers even if the numbers are of different types.
+
+Обычно \cd{(eql 1.0s0 1.0d0)} будет ложью, так как \cd{1.0s0} и \cd{1.0d0} не
+принадлежат одному типу данных. Однако реализация может не реализовывать полный
+набор чисел с плавающей точкой, поэтому в такой ситуации \cd{(eql 1.0s0 1.0d0)}
+может быть истиной. Предикат \cdf{=} будет сравнивать знчения двух чисел, даже
+если числа принадлежат разным типам.
 
 If an implementation supports positive and negative zeros as distinct
 values (as in the IEEE proposed standard floating-point format),
 then \cd{(eql 0.0 -0.0)} will be false.  Otherwise, when the syntax
 \cd{-0.0} is read it will be interpreted as the value \cd{0.0},
-and so \cd{(eql 0.0 -0.0)} will be true.  The predicate \cd{=}
+and so \cd{(eql 0.0 -0.0)} will be true.  The predicate \cdf{=}
 differs from \cdf{eql} in that \cd{(= 0.0 -0.0)} will always be true,
-because \cd{=} compares the mathematical values of its operands,
+because \cdf{=} compares the mathematical values of its operands,
 whereas \cdf{eql} compares the representational values, so to speak.
+
+Если реализация поддерживает положительный и отрицательный нули, как различные
+значения (так IEEE стандарт предлагает реализовывать формат числа с плавающей
+точкой), тогда \cd{(eql 0.0 -0.0)} будет ложью. В противном случае, когда
+синтаксис \cd{-0.0} интепретируется, как значение \cd{0.0}, тогда \cd{(eql 0.0
+  -0.0)} будет истиной. Предикат \cdf{=} отличается от \cdf{eql}, в том что
+\cd{(= 0.0 -0.0)} будет всегда истинно, потому что \cdf{=} сравнивает
+математические значения операндов, тогда как \cdf{eql} сравнивает, так сказать,
+репрезентативные (representational) значения. FIXME.
 
 Two complex numbers are considered to be \cdf{eql}
 if their real parts are \cdf{eql} and their imaginary parts are \cdf{eql}.
@@ -796,18 +1059,36 @@ is always automatically reduced by the rule of complex
 canonicalization to the integer \cd{5},
 just as the apparent ratio \cd{20/4} is always simplified to \cd{5}.
 
+Два комплексных числа будут равны \cdf{eql}, если их действительные части равны
+\cd{eql} и мнимые части равны \cdf{eql}.
+Например, \cd{(eql \#C(4 5) \#C(4 5))} является истиной и
+\cd{(eql \#C(4 5) \#C(4.0 5.0))} является ложью.
+Следует отметить, что \cd{(eql \#C(5.0 0.0) 5.0)} ложь,
+а \cd{(eql \#C(5 0) 5)} истина.
+В случае с \cd{(eql \#C(5.0 0.0) 5.0)}
+два аргумента принадлежат разным типам и не равны \cdf{eql},
+Однако, в случае \cd{(eql \#C(5 0) 5)},
+\cd{\#C(5 0)} не является комплексным числом, и автоматически преобразуется, по
+правилу канонизации комплексных чисел, в целое \cd{5}, так как дробное число
+\cd{20/4} всегда упрощается до \cd{5}.
+
 The case of \cd{(eql "Foo" "Foo")} is discussed above in the description
 of \cdf{eq}.  While \cdf{eql} compares the values of numbers and
 characters, it does not compare the contents of strings.  To compare
 the characters of two strings, one should use \cdf{equal}, \cdf{equalp},
 \cd{string=}, or \cdf{string-equal}.
 
+Cлучай \cd{(eql "Foo" "Foo")} обсуждался выше в описании \cdf{eq}. Тогда как
+\cdf{eql} сравнивает значения чисел и строковых символов, он не сравнивает
+содержимое строк. Сравнение символов двух строк может быть выполнено с помощью
+\cdf{equal}, \cdf{equalp}, \cdf{string=} или \cdf{string-equal}.
+
 \beforenoterule
 \begin{incompatibility}
 The Common Lisp function \cdf{eql} is similar to the
 Interlisp function \cdf{eqp}.  However, \cdf{eql} considers \cd{3} and
 \cd{3.0} to be different, whereas \cdf{eqp} considers them to be the same;
-\cdf{eqp} behaves like the Common Lisp \cd{=} function, not like \cdf{eql},
+\cdf{eqp} behaves like the Common Lisp \cdf{=} function, not like \cdf{eql},
 when both arguments are numbers.
 \end{incompatibility}
 \afternoterule
@@ -820,6 +1101,10 @@ The \cdf{equal} predicate is true if its arguments are structurally similar
 (isomorphic) objects.  A rough rule of thumb is that two objects
 are \cdf{equal} if and only if their printed representations are the same.
 
+Предикат \cdf{equal} является истиной, если его аргументы это структурно похожие
+(изоморфные) объекты. Грубое правило такое, что два объекта равны \cdf{equal}
+тогда и только тогда, когда одинаково их выводимое представление.
+
 Numbers and characters are compared as for \cdf{eql}.
 Symbols are compared as for \cdf{eq}.  This method
 of comparing symbols can violate the rule
@@ -827,13 +1112,27 @@ of thumb for \cdf{equal} and printed representations,
 but only in the infrequently occurring case of two distinct
 symbols with the same print name.
 
+Числа и строковые символы сравниваются также как и в \cdf{eql}.
+Символы сравниваются как в \cdf{eq}. Этот метод сравнения символов может
+нарушать правило и сравнении выводимого представления, в случае если различия
+двух символов с одинаковым выводимым представлением.
+
 Certain objects that have components are \cdf{equal} if they are of the same
 type and corresponding components are \cdf{equal}.
 This test is implemented in a recursive manner and may fail to
 terminate for circular structures.
 
+Объекты, которые содержат другие элементы, будут равны \cdf{equal}, если они
+принадлежат одному типу и содержащиеся элементы равны \cdf{equal}.
+Эта проверка реализована в рекурсивном стиле и может быть зациклиться на
+закольцованных структурах.
+
 For conses, \cdf{equal} is defined recursively as
-the two \textit{car}'s being \cdf{equal} and the two \textit{cdr}'s being \cdf{equal}.
+the two \textit{car}'s being \cdf{equal} and the two \textit{cdr}'s being
+\cdf{equal}.
+
+Для cons-ячеек, \cdf{equal} определен рекурсивно, как сравнение \cd{equal}
+сначала \textit{car} элементов, а затем \textit{cdr}.
 
 Two arrays are \cdf{equal} only if they are \cdf{eq},
 with one exception:
@@ -843,6 +1142,15 @@ the number of elements examined by \cdf{equal}.
 Uppercase and lowercase letters in strings are considered by
 \cdf{equal} to be distinct.  (In contrast, \cdf{equalp} ignores
 case distinctions in strings.)
+
+Два массива равны \cdf{equal} только, если они равны \cdf{eq}, с одним
+исключением:
+строки и битовые вектора сравниваются поэлементно.
+Если какой-либо аргумент или оба содержат указатель заполнения (fill pointer),
+данный указатель ограничит количество проверяемых с помощью \cd{equal}
+элементов.
+Буквы верхнего и нижнего регистров в строках рацениваются предикатом \cdf{equal}
+как разные. (А \cdf{equalp} игнорирует различие в регистрах в строках.) 
 
 \beforenoterule
 \begin{incompatibility}
@@ -863,6 +1171,11 @@ in strings appearing in components depends on the file
 name conventions of the file system.)  Pathnames
 that are \cdf{equal} should be functionally equivalent.
 
+Два объекта имени файла (pathname objects) равны \cdf{equal} тогда и только
+тогда, когда все элементы (хост, устройство, и т.д.) равны. (Будут ли равны
+буквы разных регистров зависит от файловой системы.) Имена файлов, которые равны
+\cdf{equal}, должны быть функционально эквивалентны.
+
 \begin{new}
 X3J13 voted in June 1989
 \issue{EQUAL-STRUCTURE}
@@ -874,25 +1187,49 @@ data objects are compared as if by \cdf{eq}.
 \end{new}
 
 \begin{lisp}
-(equal 'a 'b) {\rm is false.} \\
-(equal 'a 'a) {\rm is true.} \\
-(equal 3 3) {\rm is true.} \\
-(equal 3 3.0) {\rm is false.} \\
-(equal 3.0 3.0) {\rm is true.} \\
-(equal \#c(3 -4) \#c(3 -4)) {\rm is true.} \\
-(equal \#c(3 -4.0) \#c(3 -4)) {\rm is false.} \\
-(equal (cons 'a 'b) (cons 'a 'c)) {\rm is false.} \\
-(equal (cons 'a 'b) (cons 'a 'b)) {\rm is true.} \\
-(equal '(a . b) '(a . b)) {\rm is true.} \\
-(progn (setq x (cons 'a 'b)) (equal x x)) {\rm is true.} \\
-(progn (setq x '(a . b)) (equal x x)) {\rm is true.} \\
-(equal \#{\Xbackslash}A \#{\Xbackslash}A) {\rm is true.} \\
-(equal "Foo" "Foo") {\rm is true.} \\
-(equal "Foo" (copy-seq "Foo")) {\rm is true.} \\
-(equal "FOO" "foo") {\rm is false.}
+(equal 'a 'b) \textrm{is false.} \\
+(equal 'a 'a) \textrm{is true.} \\
+(equal 3 3) \textrm{is true.} \\
+(equal 3 3.0) \textrm{is false.} \\
+(equal 3.0 3.0) \textrm{is true.} \\
+(equal \#c(3 -4) \#c(3 -4)) \textrm{is true.} \\
+(equal \#c(3 -4.0) \#c(3 -4)) \textrm{is false.} \\
+(equal (cons 'a 'b) (cons 'a 'c)) \textrm{is false.} \\
+(equal (cons 'a 'b) (cons 'a 'b)) \textrm{is true.} \\
+(equal '(a . b) '(a . b)) \textrm{is true.} \\
+(progn (setq x (cons 'a 'b)) (equal x x)) \textrm{is true.} \\
+(progn (setq x '(a . b)) (equal x x)) \textrm{is true.} \\
+(equal \#{\Xbackslash}A \#{\Xbackslash}A) \textrm{is true.} \\
+(equal "Foo" "Foo") \textrm{is true.} \\
+(equal "Foo" (copy-seq "Foo")) \textrm{is true.} \\
+(equal "FOO" "foo") \textrm{is false.}
 \end{lisp}
 To compare a tree of conses using \cdf{eql}
 (or any other desired predicate) on the leaves, use \cdf{tree-equal}.
+
+\begin{lisp}
+(equal 'a 'b) \textrm{ложь} \\
+(equal 'a 'a) \textrm{истина} \\
+(equal 3 3) \textrm{истина} \\
+(equal 3 3.0) \textrm{ложь} \\
+(equal 3.0 3.0) \textrm{истина} \\
+(equal \#c(3 -4) \#c(3 -4)) \textrm{истина} \\
+(equal \#c(3 -4.0) \#c(3 -4)) \textrm{ложь} \\
+(equal (cons 'a 'b) (cons 'a 'c)) \textrm{ложь} \\
+(equal (cons 'a 'b) (cons 'a 'b)) \textrm{истина} \\
+(equal '(a . b) '(a . b)) \textrm{истина} \\
+(progn (setq x (cons 'a 'b)) (equal x x)) \textrm{истина} \\
+(progn (setq x '(a . b)) (equal x x)) \textrm{истина} \\
+(equal \#{\Xbackslash}A \#{\Xbackslash}A) \textrm{истина} \\
+(equal "Foo" "Foo") \textrm{истина} \\
+(equal "Foo" (copy-seq "Foo")) \textrm{истина} \\
+(equal "FOO" "foo") \textrm{ложь}
+\end{lisp}
+To compare a tree of conses using \cdf{eql}
+(or any other desired predicate) on the leaves, use \cdf{tree-equal}.
+Для сравнения дерева cons-ячеек применяя \cdf{eql} (или любой другой желаемый
+предикат) для листьев, используйте \cdf{tree-equal}.
+
 \end{defun}
 
 \begin{defun}[Function]
@@ -905,12 +1242,26 @@ if they are numbers and have the same numerical value,
 even if they are of different types;
 or if they have components that are all \cdf{equalp}.
 
+Два объекта равны \cdf{equalp}, если они равны \cdf{equal},
+если они строковые символы и удовлетворяют предикату \cdf{char-equal}, который
+игнорирует регистр и другие атрибуты символов,
+если они числа и имеют одинаковое значение, даже если числа разных типов,
+если они включает в себя элементы, которые также равны \cdf{equalp}.
+
 Objects that have components are \cdf{equalp} if they are of the same
 type and corresponding components are \cdf{equalp}.
 This test is implemented in a recursive manner and may fail to
 terminate for circular structures.
 For conses, \cdf{equalp} is defined recursively as
-the two \textit{car}'s being \cdf{equalp} and the two \textit{cdr}'s being \cdf{equalp}.
+the two \textit{car}'s being \cdf{equalp} and the two \textit{cdr}'s being
+\cdf{equalp}.
+
+Объекты, которые включают в себя элементы, равны \cdf{equalp}, если они
+принадлежат одному типу и содержащиеся элементы равны \cdf{equalp}.
+Проверка осуществляется в рекурсивном стиле и может не завершится на
+заколцованных структурах.
+Для cons-ячеек, предикат \cdf{equalp} определен рекурсивно и сравнивает сначала
+\textit{car} элементы, а затем \textit{cdr}.
 
 Two arrays are \cdf{equalp} if and only if they have the same
 number of dimensions, the dimensions match,
@@ -925,8 +1276,20 @@ of strings and ignores the alphabetic case of characters,
 case distinctions are therefore also ignored when \cdf{equalp} compares
 strings.
 
+Два массива равны \cdf{equalp} тогда и только тогда, когда они имеют одинаковое
+количество измерений, и размеры измерений совпадают, и все элементы равны
+\cdf{equalp}. Специализация массива не сравнивается. Например,
+строка и общий массив, случилось так, имеют одинаковые строковые символы,
+тогда они будут равны \cdf{equalp} (но определенно не равны \cdf{equal}).
+Если какой-либо аргумент содержит указатель заполнения, этот указатель
+ограничивает число сравниваемых элементов. Так как \cdf{equalp} сравнивает
+строки побуквенно, и не различает разных регистров букв, то сравнение строк регистронезависимо.
+
 Two symbols can be \cdf{equalp} only if they are \cdf{eq}, that is, the same
 identical object.
+
+Два символа могут быть равны \cdf{equalp} только тогда, когда они \cdf{eq},
+т.е. являеются идентичными объектами.
 
 \begin{new}
 X3J13 voted in June 1989
@@ -936,7 +1299,7 @@ of hash tables (see below), and to
 clarify that otherwise \cdf{equalp} never recursively
 descends any structure or data type other than the ones explicitly
 described above: conses, arrays (including bit-vectors and strings), and pathnames.
-Numbers are compared for numerical equality (see \cd{=}),
+Numbers are compared for numerical equality (see \cdf{=}),
 characters are compared as if by \cdf{char-equal}, and all other
 data objects are compared as if by \cdf{eq}.
 
@@ -1000,26 +1363,45 @@ a true equivalence relation on numbers.
 \end{new}
 
 \begin{lisp}
-(equalp 'a 'b) {\rm is false.} \\
-(equalp 'a 'a) {\rm is true.} \\
-(equalp 3 3) {\rm is true.} \\
-(equalp 3 3.0) {\rm is true.} \\
-(equalp 3.0 3.0) {\rm is true.} \\
-(equalp \#c(3 -4) \#c(3 -4)) {\rm is true.} \\
-(equalp \#c(3 -4.0) \#c(3 -4)) {\rm is true.} \\
-(equalp (cons 'a 'b) (cons 'a 'c)) {\rm is false.} \\
-(equalp (cons 'a 'b) (cons 'a 'b)) {\rm is true.} \\
-(equalp '(a . b) '(a . b)) {\rm is true.} \\
-(progn (setq x (cons 'a 'b)) (equalp x x)) {\rm is true.} \\
-(progn (setq x '(a . b)) (equalp x x)) {\rm is true.} \\
-(equalp \#{\Xbackslash}A \#{\Xbackslash}A) {\rm is true.} \\
-(equalp "Foo" "Foo") {\rm is true.} \\
-(equalp "Foo" (copy-seq "Foo")) {\rm is true.} \\
-(equalp "FOO" "foo") {\rm is true.}
+(equalp 'a 'b) \textrm{is false.} \\
+(equalp 'a 'a) \textrm{is true.} \\
+(equalp 3 3) \textrm{is true.} \\
+(equalp 3 3.0) \textrm{is true.} \\
+(equalp 3.0 3.0) \textrm{is true.} \\
+(equalp \#c(3 -4) \#c(3 -4)) \textrm{is true.} \\
+(equalp \#c(3 -4.0) \#c(3 -4)) \textrm{is true.} \\
+(equalp (cons 'a 'b) (cons 'a 'c)) \textrm{is false.} \\
+(equalp (cons 'a 'b) (cons 'a 'b)) \textrm{is true.} \\
+(equalp '(a . b) '(a . b)) \textrm{is true.} \\
+(progn (setq x (cons 'a 'b)) (equalp x x)) \textrm{is true.} \\
+(progn (setq x '(a . b)) (equalp x x)) \textrm{is true.} \\
+(equalp \#{\Xbackslash}A \#{\Xbackslash}A) \textrm{is true.} \\
+(equalp "Foo" "Foo") \textrm{is true.} \\
+(equalp "Foo" (copy-seq "Foo")) \textrm{is true.} \\
+(equalp "FOO" "foo") \textrm{is true.}
+\end{lisp}
+
+\begin{lisp}
+(equalp 'a 'b) \textrm{ложь} \\
+(equalp 'a 'a) \textrm{истина} \\
+(equalp 3 3) \textrm{истина} \\
+(equalp 3 3.0) \textrm{истина} \\
+(equalp 3.0 3.0) \textrm{истина} \\
+(equalp \#c(3 -4) \#c(3 -4)) \textrm{истина} \\
+(equalp \#c(3 -4.0) \#c(3 -4)) \textrm{истина} \\
+(equalp (cons 'a 'b) (cons 'a 'c)) \textrm{ложь} \\
+(equalp (cons 'a 'b) (cons 'a 'b)) \textrm{истина} \\
+(equalp '(a . b) '(a . b)) \textrm{истина} \\
+(progn (setq x (cons 'a 'b)) (equalp x x)) \textrm{истина} \\
+(progn (setq x '(a . b)) (equalp x x)) \textrm{истина} \\
+(equalp \#{\Xbackslash}A \#{\Xbackslash}A) \textrm{истина} \\
+(equalp "Foo" "Foo") \textrm{истина} \\
+(equalp "Foo" (copy-seq "Foo")) \textrm{истина} \\
+(equalp "FOO" "foo") \textrm{истина}
 \end{lisp}
 \end{defun}
 
-\section{Logical Operators}
+\section{Logical Operators Логические операторы}
 
 Common Lisp provides three operators on Boolean values: \cdf{and}, \cdf{or},
 and \cdf{not}.  Of these, \cdf{and} and \cdf{or}
@@ -1027,6 +1409,13 @@ are also control structures because their arguments are evaluated
 conditionally.
 The function \cdf{not} necessarily examines its single argument, and so
 is a simple function.
+
+Common Lisp предоставляет три логических операторы для булевых значений:
+\cdf{and}, \cdf{or} и \cdf{not} (и, или, не, соответственно). \cdf{and} и
+\cdf{or} являются контролирующими структурами, потому что их аргументы
+вычисляются в зависимости от условия.
+Функции \cdf{not} необходимо инвертировать ее один аргумент, поэтому она может
+быть простой функцией.
 
 \begin{defun}[Function]
 not x
@@ -1038,6 +1427,14 @@ It therefore inverts its argument considered as a Boolean value.
 of clarity.  As a matter of style,
 it is customary to use \cdf{null} to check whether something is the empty list
 and to use \cdf{not} to invert the sense of a logical value.
+
+\cdf{not} возвращает {\true}, если \textit{x} является {\false}, иначе
+возвращает {\false}.
+Таким образом она инвертирует аргумент как булево значение.
+
+\cdf{null} то же, что и \cdf{not}, обе функции включены для ясности. По
+соглашению принято использовать \cdf{null}, когда надо проверить пустой ли
+список, и \cdf{not}, когда надо инвертировать булево значение.
 \end{defun}
 
 \begin{defmac}
@@ -1058,18 +1455,42 @@ An example follows.
 ~~~~~~~~~(eq (elt a-simple-vector n) 'foo)) \\
 ~~~~(princ "Foo!"))
 \end{lisp}
-The above expression prints \cd{Foo!} if element \cdf{n} of \cdf{a-simple-vector}
-is the symbol \cdf{foo}, provided also that \cdf{n} is indeed a valid index
+The above expression prints \cd{Foo!} if element \cd{n} of \cd{a-simple-vector}
+is the symbol \cd{foo}, provided also that \cdf{n} is indeed a valid index
 for \cdf{a-simple-vector}.  Because \cdf{and} guarantees left-to-right testing
-of its parts, \cdf{elt} is not called if \cdf{n} is out of range.
+of its parts, \cdf{elt} is not called if \cd{n} is out of range.
+
+\cd{(and \textit{form1} \textit{form2} ... )} последовательно слева направо
+вычисляет формы. Если какая-либо форма \textit{formN} вычислилась в {\false},
+тогд немедленно возвращается значение {\nil} без выполнения оставшихся форм. Если все
+формы кроме последней вычисляются в не-{\false} значение, \cdf{and} возвращает
+то, что вернула последняя форма.
+Таким образом, \cdf{and} может использоваться, как для логических операций, где
+{\flase} обозначает ложь и не-{\false} значения истину, так и для условных
+выражений.
+Например:
+\begin{lisp}
+(if (and (>= n 0) \\
+~~~~~~~~~(< n (length a-simple-vector)) \\
+~~~~~~~~~(eq (elt a-simple-vector n) 'foo)) \\
+~~~~(princ "Foo!"))
+\end{lisp}
+Выражение выше выводит \cd{Foo!}, если \cd{n}-ый элемент вектора
+\cd{a-simple-vector} является символом \cd{foo}, проверяя при этом вхождния
+\cd{n} в границы вектора \cd{a-simple-vector}. \cdf{elt} не будет вызвано с
+аргументом \cd{n} выходящим за границы вектора, так как \cdf{and} гарантирует
+ленивую проверку аргументов слева направо.
 
 To put it another way,
 the \cdf{and} special form does \textit{short-circuit} Boolean evaluation,
-like the {\bf and then} operator in Ada
-and what in some Pascal-like languages is called {\bf cand} (for ``conditional
+like the \textbf{and then} operator in Ada
+and what in some Pascal-like languages is called \textbf{cand} (for ``conditional
 and''); the Lisp \cdf{and} special form is
-unlike the Pascal or Ada {\bf and} operator,
+unlike the Pascal or Ada \textbf{and} operator,
 which always evaluates both arguments.
+
+Специальная форма Lisp'а \cdf{and} отличается тем, что не
+обязательно вычисляет все аргументы.
 
 In the previous example writing
 \begin{lisp}
@@ -1082,11 +1503,35 @@ would accomplish the same thing.  The difference is purely stylistic.
 Some programmers never use expressions containing side effects
 within \cdf{and}, preferring to use \cdf{if} or \cdf{when} for that purpose.
 
+Запись предыдущего примера
+\begin{lisp}
+(and (>= n 0) \\
+~~~~~(< n (length a-simple-vector)) \\
+~~~~~(eq (elt a-simple-vector n) 'foo) \\
+~~~~~(princ "Foo!"))
+\end{lisp}
+будет выполнять ту же функцию. Разница в них только стилистическая. Некоторые
+программисты никогда не используют в форме \cdf{and} выражения с побочными
+эффектами, предпочитая для этих целей использовать \cdf{if} или \cdf{when}. 
+
 From the general definition, one can deduce that
 \cd{(and \textit{x})} \EQ\ \textit{x}.  Also,
 \cd{(and)} evaluates to {\true}, which is an identity for this operation.
 
+Из общего определения можно сделать дедуктивный вывод о том, что 
+\cd{(and \textit{x})} \EQ\ \textit{x}. Также \cd{(and)} выполняется в {\true},
+который тождественнен этой операции.
+
 One can define \cdf{and} in terms of \cdf{cond} in this way:
+\begin{lisp}
+(and \textit{x} \textit{y} \textit{z} ... \textit{w}) \EQ\ (cond \=((not \textit{x}) {\false}) \\
+\>((not \textit{y}) {\false}) \\
+\>((not \textit{z}) {\false}) \\
+\>$\ldots$ \\
+\>({\true} \textit{w}))
+\end{lisp}
+
+Можно определить \cdf{and} в терминах \cdf{cond} таким образом:
 \begin{lisp}
 (and \textit{x} \textit{y} \textit{z} ... \textit{w}) \EQ\ (cond \=((not \textit{x}) {\false}) \\
 \>((not \textit{y}) {\false}) \\
@@ -1100,6 +1545,12 @@ more appropriate than \cdf{and} for conditional purposes.
 If it is necessary to test whether a predicate is true
 of all elements of a list or vector (element 0 \textit{and} element 1 \textit{and}
 element 2 \textit{and} $\ldots$), then the function \cdf{every} may be useful.
+
+Смотрите \cdf{id} и \cdf{when}, которые иногда являются стилистически более
+удобными, чем \cdf{and} в целях ветвления.
+Если необходимо проверить истинность предиката для всех элементов списка или
+вектора (element 0 \textit{and} element 1 \textit{and}
+element 2 \textit{and} $\ldots$), можно использовать функцию \cdf{every}.
 \end{defmac}
 
 \begin{defmac}
@@ -1116,19 +1567,40 @@ Therefore in general \cdf{or} can be used both for logical operations,
 where {\false} stands for \textit{false} and non-{\false} values stand for \textit{true},
 and as a conditional expression.
 
+\cd{(or \textit{form1} \textit{form2} ... )} последовательно выполняет каждую
+форму слева направо. Если какая-либо непоследняя форма выполняется в что-либо
+отличное от {\false}, \cdf{or} немендленно возвращает это не-{\false} значение
+без выполнения оставшихся форм. Если все формы кроме последней, вычисляются в
+{\false}, \cdf{or} возвращает то, что вернула последняя форма.
+Таким образом \cdf{or} может быть использована как для логических операций, 
+в который {\false} обозначает ложь, и не-{\false} истину,
+так и для условного выполнения форм.
+
 To put it another way,
 the \cdf{or} special form does \textit{short-circuit} Boolean evaluation,
-like the {\bf or else} operator in Ada
-and what in some Pascal-like languages is called {\bf cor} (for ``conditional
+like the \textbf{or else} operator in Ada
+and what in some Pascal-like languages is called \textbf{cor} (for ``conditional
 or''); the Lisp \cdf{or} special form is
-unlike the Pascal or Ada {\bf or} operator,
+unlike the Pascal or Ada \textbf{or} operator,
 which always evaluates both arguments.
+
+Специальная форма Lisp'а \cdf{or} тем, что не обязательно вычисляет все
+аргументы. 
 
 From the general definition, one can deduce that
 \cd{(or \textit{x})} \EQ\ \textit{x}.  Also,
 \cd{(or)} evaluates to {\nil}, which is the identity for this operation.
 
+Из общего определения, можно сделать дедуктивный вывод о том, что \cd{(or
+  \textit{x})} \EQ\ \textit{x}. Также, \cd{(or)} выполняется в {\nil}, который
+тождественнен этой операции.
+
 One can define \cdf{or} in terms of \cdf{cond} in this way:
+\begin{lisp}
+(or \textit{x} \textit{y} \textit{z} ... \textit{w}) \EQ\ (cond (\textit{x}) (\textit{y}) (\textit{z}) ... ({\true} \textit{w}))
+\end{lisp}
+
+Можно определить \cdf{or} в терминах \cdf{cond} таким образом:
 \begin{lisp}
 (or \textit{x} \textit{y} \textit{z} ... \textit{w}) \EQ\ (cond (\textit{x}) (\textit{y}) (\textit{z}) ... ({\true} \textit{w}))
 \end{lisp}
@@ -1138,4 +1610,10 @@ stylistically more appropriate than \cdf{or} for conditional purposes.
 If it is necessary to test whether a predicate is true of
 one or more elements of a list or vector (element 0 \textit{or} element 1 \textit{or}
 element 2 \textit{or} $\ldots$), then the function \cdf{some} may be useful.
+
+Смотрите \cdf{id} и \cdf{unless}, которые иногда являются стилистически более
+удобными, чем \cdf{or} в целях ветвления.
+Если необходимо проверить истинность предиката для всех элементов списка или
+вектора (element 0 \textit{or} element 1 \textit{or}
+element 2 \textit{or} $\ldots$), можно использовать функцию \cdf{some}.
 \end{defmac}
