@@ -96,50 +96,39 @@
 \newenvironment{lisp}{\stepcounter{lispcounter}
   \begin{tabbing}}{\end{tabbing}}
 
-\def\@defunstart{
-  \noindent
-  \leavevmode
+\def\@defunstart{\noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
   \begingroup
   \catcode`&=11}
 
-\def\defun{%
-  \@ifstar{\@defunstart\@ifnextchar[{\@defuntyped}{\@defununtyped}}
-  {\@defunstart\@ifnextchar[{\@defuntyped}{\@defununtyped}}}
+% The addvspace used to be "plus 4pt" but that was not enough stretch relative to \parskip.
+\def\defun{\@ifstar{\@defunstart{}\@ifnextchar[{\@defuntyped}{\@defununtyped}}{\relax\@defunstart    %Margin macros know this amount
+   \@ifnextchar[{\@defuntyped}{\@defununtyped}}}
 
 
-\def\@showdefuntype{\textit{[\@defuntype\/]}\relax
+\def\@showdefuntype{\emph{[\@defuntype\/]}\relax
   \let\@defuntype\@defunsecondtype}
 
 \def\@defununtyped{\let\@defunshow=\relax \@defun}
+\def\@defuntyped[#1]{\def\@defuntype{#1}\let\@defunsecondtype\@defuntype
+                     \let\@defunshow=\@showdefuntype
+                     \@ifnextchar[{\@defuntypedtwice}{\@defun}}
+\def\@defuntypedtwice[#1]{\def\@defunsecondtype{#1}\let\@defunshow=\@showdefuntype
+                          \@defun}
 
-\def\@defuntyped[#1]{%
-  \def\@defuntype{#1}
-  \let\@defunsecondtype\@defuntype
-  \let\@defunshow=\@showdefuntype
-  \@ifnextchar[{\@defuntypedtwice}{\@defun}}
+\def\@defun{\@ifnextchar?{\@defunname}{\@defunname}}	% Skips spaces before name 
 
-\def\@defuntypedtwice[#1]{
-  \def\@defunsecondtype{#1}
-  \let\@defunshow=\@showdefuntype 
-  \@defun}
-
-\def\@defun{\@ifnextchar?{\@defunname}{\@defunname}}	% Skips spaces before
-                                % name 
 \def\enddefun{\par
-  \typeout{enddefun currentdefun}
-  \@ifstar{}{}
-}    %Margin macros know this amount
+  %%\message{end{defun} for \currentdefun}%For debugging
+  \@ifstar{}{}}    %Margin macros know this amount
 % Used to be "plus 2pt" but that was not enough stretch relative to \parskip.
 
 % 1: entry
 % \@defuntype: \lowercase{category}
-\def\@defunname#1 {%
-  \@defunshow
-  \typeout{defunname}
-  \typeout{1: #1} 
-  \typeout{ type:  \lowercase{\@defuntype}}
-  \textbf{#1}
+\def\@defunname#1 {\@defunshow
+%  \typeout{defunname}\typeout{ 1: #1}\typeout{ type: \lowercase{\@defuntype}}
   \@defunindex#1:\par{\@defuntype}\relax
+  %%\message{begin{defun} for #1}\global\def\defun@name{#1}%For debugging
+  \textbf{ #1}
   \ifdim 1\wd0 < 1.3in\relax
      \def\@defunbreak{ }\relax
      \let\@firstdefunbreak=~\relax
@@ -157,22 +146,16 @@
 % 2: empty
 % 3: \lowercase{category}
 \def\@defunindex#1:#2\par#3{%
-%  \typeout{defunindex}\typeout{ 1: #1}\typeout{ 2: #2}\typeout{ 3: #3}%
+  \typeout{defunindex}\typeout{ 1: #1}\typeout{ 2: #2}\typeout{ 3: #3}%
   \def\@tempa{}\def\thing{#2}\ifx\thing\@tempa
   \@idefunindex{}#1:\par{#3}\else \@idefunindex{#1:}#2\par{#3}\fi}
 % 1: empty
 % 2: entry
 % 3: \lowercase{category}
 \def\@idefunindex#1#2:\par#3{%
-  \typeout{idefunindex}\typeout{ 1: #1}\typeout{ 2: #2}\typeout{ 3: #3}%
-  % Индексируем
-  \index{#2!#3}%
-    % Наращиваем счетчик секций с функциями, для того чтобы последующий label
-  % ссылался на этот счетчик.
-  \refstepcounter{defuncounter}
-  % Отметка для кросссылок в тексте
-  \label{#2}
-}
+%  \typeout{idefunindex}\typeout{ 1: #1}\typeout{ 2: #2}\typeout{ 3: #3}%
+  \index{symbols}{#2!#3}\refstepcounter{defuncounter}\label{#2}}%{{#2 }{\noexpand\noexpand\noexpand\cf #1#2\ \noexpand\noexpand\noexpand\rm #3}}}
+
 
 \def\@newlinecheck#1#2{\def\@tempa{#1}\def\@tempb{\\}\ifx\@tempa\@tempb \\*\let\@tempd\@defunname
   \else \def\@tempd{#2}\fi \@tempd}
@@ -182,13 +165,11 @@
 
 
 \def\@defunreqmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenreqarg}{\@defunreqarg}}}}
-%\def\@defunreqarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\hbox{\it #1\/}\@defunreqmode}}
-\def\@defunreqarg#1 {\@newlinecheck{#1}{\@hairydefunbreak \textit{#1\/} \@defunreqmode}}
-%\def\@defunparenreqarg(#1 #2) {\@hairydefunbreak(\hbox{\it #1\/}~#2)\@defunreqmode}  %CLOS methods
-\def\@defunparenreqarg(#1 #2) {\@hairydefunbreak(t \textit{#1\/} ~#2)\@defunreqmode}  %CLOS methods
+\def\@defunreqarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1\/}\@defunreqmode}}
+\def\@defunparenreqarg(#1 #2) {\@hairydefunbreak(\textit{#1\/}~#2)\@defunreqmode}  %CLOS methods
 
 \def\@defunrestmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@defunrestarg}}}
-\def\@defunrestarg#1 {\@newlinecheck{#1}{\penalty\@m\ #1 \@defunrestmode}}
+\def\@defunrestarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1\/}\@defunrestmode}}
 
 \def\@defunoptionalmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenoptionalarg}{\@defunoptionalarg}}}}
 \def\@defunoptionalarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1\/}\@defunoptionalmode}}
@@ -198,99 +179,70 @@
   \cf \else \it \fi \else \cf \fi #1#2})}
 
 \def\@defunkeymode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenkeyarg}{\@defunkeyarg}}}}
-\def\@defunkeyarg#1 {\@newlinecheck{#1}{\penalty\@m\@defunkeywordbreak #1 \@defunkeymode}}
-\def\@defunparenkeyarg(#1 #2) {\penalty\@m~(\textit{#1} ~\@defuninitvalue#2)\@defunkeymode}
+\def\@defunkeyarg#1 {\@newlinecheck{#1}{\@defunkeywordbreak\textit{#1\/}\@defunkeymode}}
+\def\@defunparenkeyarg(#1 #2) {~(#1~\@defuninitvalue#2)\@defunkeymode}
 
-\def\@defunkeyword &#1 {\@defunkeywordbreak \textbf{\&#1} \csname @defun#1mode\endcsname}
-\def\@defundone\par{%
-  \par
-  \endgroup
-  \nobreak
-  \noindent
- }
+\def\@defunkeyword &#1 {\@defunkeywordbreak\&#1 \csname @defun#1mode\endcsname
+}
 
+\def\@defundone\par{\par\endgroup
+   %%\edef\currentdefun{\defun@name}%For debugging
+   \nobreak\noindent}
+
+
+%% Macros, special forms
 \begingroup
-\catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
-\catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13
+%\catcode`\[=13 \catcode`\]=13
+%\catcode`$=13 \catcode`$=13
+\catcode`\<=13 \catcode`\>=13 %\catcode`\|=13
+\catcode`\?=13
 \global\def\@defmacstart#1{\relax
-  \noindent
-  \leavevmode     % Need this to trigger the \everypar for margin rules.
+%  \noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
   \begingroup
-  %\samepage  
-  %\topsep 0pt
-  \catcode`&=11
-  \def\@lbracehack{{$\,\lbrace$}\@backslashsetup\begin{itshape}}\relax
-  \def\@rbracehack{\end{itshape}
-       \@ifnextchar*{\@rbracesuper}{\@ifnextchar+{\@rbracesuper}{\/$\rbrace\,$\@backslashsetup}}}\relax
-  \def[{{$\,\lbrack$}\@backslashsetup\begin{itshape}}\relax
-  \def]{\end{itshape}$\/\rbrack\,$\@backslashsetup}\relax
-  \def<{{$\,\dlbrack$}\@backslashsetup\begin{itshape}}\relax
-  \def>{\end{itshape}$\/\drbrack\,$\@backslashsetup}\relax
-  \def({\texttt{\char40}\@backslashsetup}\relax
-  \def){\texttt{\char41}\@backslashsetup}\relax
-  \def|{{$\char124$}}\relax
-  \def?{{$\downarrow$}}\relax
-  \def\@finishdefmac{
-    \end{tabbing}
-    \endgroup
-    \everypar{}\noindent
-    }\relax
-  \expandafter\def\@carret{\expandafter\@ifnextchar\@carret
-     {\@finishdefmac\@gobblecr}{\@backslashsetup}}\relax
+   \catcode`&=11
+   \def\@lbracehack{\typeout{mark8}{\,\{}\@backslashsetup}\relax
+   \def\@rbracehack{\typeout{mark9}
+        \@ifnextchar*{\@rbracesuper}{\@ifnextchar+{\@rbracesuper}{\/\}\,\@backslashsetup}}}\relax
+  % %\def[{{$\,\lbrack$}\=\pushtabs\+\@backslashsetup}\relax
+  % %\def]{\-\poptabs$\/\rbrack\,$\@backslashsetup}\relax
+  \def<{\typeout{mark6}{\,[[}\@backslashsetup}\relax
+  \def>{\typeout{mark7}\/]]\,\@backslashsetup}\relax
+  % \def({{\cf \char40}\=\pushtabs\+\@backslashsetup}\relax
+  % \def){\-\poptabs{\cf \char41}\@backslashsetup}\relax
+  %\def|{{$\char124$}}\relax
+   \def?{{$\downarrow$}}\relax
+   \def\@finishdefmac{\typeout{mark11}
+     %\-
+     \end{tabbing}\endgroup
+     \typeout{mark13}
+     \everypar{}
+     \typeout{mark12}
+     \noindent}\relax
+   \expandafter\def\@carret{\expandafter\@ifnextchar\@carret
+     {\@finishdefmac\@gobblecr}{\@tabcr*
+       \@backslashsetup}}\relax
   \@defunhackbraces
-  \def\@backslashsetup{\def\\{\@backslashsetup
-				\@dodefmacname{#1}}
-                            }\relax
-  \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
-  \catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13 \catcode`\^^M=13
+  \def\@backslashsetup{\def\\{\typeout{mark10}\@tabcr*
+      \@backslashsetup
+      \@dodefmacname{#1}}}\relax
+  % \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
+  \catcode`\<=13 \catcode`\>=13 %\catcode`\|=13 
+  \catcode`\?=13 \catcode`\^^M=13
+  \typeout{mark2}
   \def\!##1!{\cd{##1}}\relax
   \begin{tabbing}
-    \@backslashsetup\@margineveryparguts
+  \@backslashsetup\@margineveryparguts
   \@dodefmacname{#1}}
 \endgroup
-% \begingroup
-% \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
-% \catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13
-% \global\def\@defmacstart#1{\relax
-% %  \noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
-%   \begingroup
-%   %\samepage  
-%   %\topsep 0pt
-%   \catcode`&=11
-%   \def\@lbracehack{{$\,\lbrace$}\=\pushtabs\+\@backslashsetup\begin{itshape}}\relax
-%   \def\@rbracehack{\end{itshape}\-\poptabs
-%        \@ifnextchar*{\@rbracesuper}{\@ifnextchar+{\@rbracesuper}{\/$\rbrace\,$\@backslashsetup}}}\relax
-%   \def[{{$\,\lbrack$}\=\pushtabs\+\@backslashsetup\begin{itshape}}\relax
-%   \def]{\end{itshape}\-\poptabs$\/\rbrack\,$\@backslashsetup}\relax
-%   \def<{{$\,\dlbrack$}\=\pushtabs\+\@backslashsetup\begin{itshape}}\relax
-%   \def>{\end{itshape}\-\poptabs$\/\drbrack\,$\@backslashsetup}\relax
-%   \def({\texttt{\char40}\=\pushtabs\+\@backslashsetup}\relax
-%   \def){\-\poptabs\texttt{\char41}\@backslashsetup}\relax
-%   \def|{{$\char124$}}\relax
-%   \def?{{$\downarrow$}}\relax
-%   \def\@finishdefmac{\-\poptabs\end{tabbing}
-%     \endgroup
-%     \everypar{}\noindent}\relax
-%   \expandafter\def\@carret{\expandafter\@ifnextchar\@carret
-%      {\@finishdefmac\@gobblecr}{\@tabcr*\@backslashsetup}}\relax
-%   \@defunhackbraces
-%   \def\@backslashsetup{\def\\{\-\poptabs\@tabcr*\@backslashsetup
-% 				\@dodefmacname{#1}}}\relax
-%   \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
-%   \catcode`\<=13 \catcode`\>=13 \catcode`\|=13 \catcode`\?=13 \catcode`\^^M=13
-%   \def\!##1!{\cd{##1}}\relax
-%   \begin{tabbing}\@backslashsetup\@margineveryparguts
-%   \@dodefmacname{#1}}
-% \endgroup
-\def\@rbracesuper#1{{\/$\rbrace^{#1}\,$}\@backslashsetup}
+\def\@rbracesuper#1{{\/\}#1\,}\@backslashsetup}
 
 
-\def\Mopt#1{{$\,\lbrack$}\textit{#1\/}{$\rbrack\,$}}
-\def\Mchoice#1{{$\,\dlbrack$}\textit{#1\/}{$\drbrack\,$}}
-\def\Mstar#1{{$\,\lbrace$}\textit{#1\/}{$\rbrace^*\,$}}
-\def\Mplus#1{{$\,\lbrace$}\textit{#1\/}{$\rbrace^+\,$}}
-\def\Mgroup#1{{$\,\lbrace$}\textit{#1\/}{$\rbrace\,$}}
-\def\Mor{{$|$}}
+\def\Mopt#1{\,[\textit{#1\/}]\,}
+\def\Mchoice#1{\,[[\textit{#1\/}]]\,}
+\def\Mstar#1{\,\{\textit{#1\/}\}*\,}
+\def\Mplus#1{\,\{\textit{#1\/}\}+\,}
+\def\Mgroup#1{\,\{\textit{#1\/}\}\,}
+\def\Mor{|}
 \def\Mind#1{$\downarrow$\textit{#1\/}}
 
 % The following is taken from /usr/local/lib/tex/macros/latex.tex
@@ -319,25 +271,28 @@
 \def\defloop{\@defmacbegin{Loop clause}}
 \let\enddefloop\enddefun
 
-\def\@defmacbegin#1{
-  \@ifstar{\@defmacstart{#1}}{\@defmacstart{#1}}}
+\def\@defmacbegin#1{\@ifstar{\@defmacstart{#1}}{\@defmacstart{#1}}}
 
 {\catcode`\^^M=13\global\def\@carret{
 }\global\def\@defmacnamecrgobble#1
 {\@defmacname{#1}}}
 
-\def\@dodefmacname#1{\expandafter\@ifnextchar\@carret
-   {\@defmacnamecrgobble{#1}}{\@defmacname{#1}}}
+\def\@dodefmacname#1{
+  \typeout{mark3}
+  \cf\expandafter\@ifnextchar\@carret
+  {\@defmacnamecrgobble{#1}}{\@defmacname{#1}}}
 
 \def\@defmacname#1#2 {
-  \typeout{defmacname #1: #2 }\relax
-  %\setbox0\hbox{\hskip1.5em$\lbrack$\it#1\/$\rbrack$}\relax
-  \textit{[#1\/]}\relax
-  %\leavevmode\hbox to 0pt{\hbox to \textwidth{\hss\box0}\hss}{\cf #2\ }\=\pushtabs\+\@backslashsetup
-  \textbf{ #2\ }\@backslashsetup
+  \typeout{#1: #2 }\relax
+  \emph{[#1\/]}\relax
+  \typeout{mark4}
+  \leavevmode
+  \textbf{ #2 }%\=\pushtabs\+
+  \@backslashsetup
+  \typeout{mark5}
   \@defunindex#2:\par{#1}
-  %\it
-}
+  \typeout{mark1}
+  }
 
 \bgroup
 \catcode`\<=1 \catcode`\>=2 \catcode`\{=13 \catcode`\}=13
@@ -346,6 +301,7 @@
 
 \catcode`@=12		% Restore character codes
 \catcode`&=4
+
 
 %[End]
 
@@ -377,10 +333,9 @@
 % is needed to prevent vertical mode from swallowing the \null.
 %%%\def\cd#1{\leavevmode{\cf \null#1}}
 %\def\cd{\leavevmode\begingroup\cf\@cd} 
-\def\cd{\@cd}
-%\def\@cd#1{\null#1\endgroup}
-
-\def\@cd#1{\textit{\null #1}}
+\def\cd{\leavevmode\begingroup\@cd}
+\def\@cd#1{\null#1\endgroup}
+%\def\@cd#1{\textit{\null #1}}
 
 \def\cdf{\@cdf}
 
@@ -393,92 +348,37 @@
      {#1}%
      {\hyperref[#1]{#1}}}%
 
-\if@permutemonospace
-  \typeout{PERMUTE}
-  \def\undo@permute{\catcode"2D=12  %hyphen
-                    \catcode"27=12  %quote
-                    \catcode"3D=12  %equals
-                   }
-  \ifchiron
-    \def\Xhyphen{{\tt\char"2D}}
-  \else
-    \def\Xhyphen{{\tt\char"2D}}       % use endash for hyphen
-  \fi
-  % use acute of next larger size for quote
-  \def\Xquote{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"27\else\char"27\fi}\hss}\dp0=0pt\box0}}
-  % use grave of next larger size for backquote
-  \def\Xbq{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"60\else\char"60\fi}\hss}\dp0=0pt\box0}}
-  % use tilde of next larger size for asciitilde
-  \def\Xtilde{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"7E\else\char"7E\fi}\hss}\dp0=0pt\box0}}
-  % use circumflex of next larger size for asciicircumflex
-  \def\Xcircumflex{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"5E\else\char"5E\fi}\hss}\dp0=0pt\box0}}
-  \def\Xsharp{\hbox{\tt\hbox to 0pt{\char35\hss}\hbox to 0pt
-                       {\raise0.189ex\hbox{\char45}\hss}\lower0.189ex\hbox{\char45}}}
-  % Make equals sign from two em dashes
-  \def\Xequal{\hbox{\tt\hbox to 0pt
-                       {\raise0.189ex\hbox{\ifchiron\char"A3\else\char"55\fi}\hss}\relax
-                        \lower0.189ex\hbox{\ifchiron\char"A3\else\char"55\fi}}}
-  \def\index@hyphen{-}
-  \def\index@quote{'}
-  \def\index@equal{=}
-  {\catcode"2D=13  %hyphen
-   \catcode"27=13  %quote
-   \catcode"3D=13  %equals
-   \global\def\index@permute{\let-\index@hyphen
-                             \let'\index@quote
-                             \let=\index@equal}
-   \global\def\@permute{\catcode"2D 13  %hyphen
-                        \catcode"27 13  %quote
-                        \catcode"3D 13  %equals
-                        \let-\Xhyphen
-                        \let'\Xquote
-                        \let=\Xequal
-                        \let\#\Xsharp
-                        \def\rm{\undo@permute\protect\prm}\relax
-                        \def\it{\undo@permute\protect\pit}\relax
-                        \def\bf{\undo@permute\protect\pbf}\relax
-                       }
-  }
-  \def\cf{\@permute\tt\frenchspacing}
-\else
-  \def\Xtilde{\texttt{\char"7E}}
-  \def\Xbq{\texttt{\char"60}}
-  \def\Xquote{\texttt{\char"27}}
-  \def\Xequal{\texttt{\char"3D}}
-  \def\Xcircumflex{\texttt{\char"5E}}
-  \def\cf{} %\frenchspacing}
-\fi
+
+\def\Xtilde{\char"7E}
+\def\Xbq{\char"60}
+\def\Xquote{\char"27}
+\def\Xequal{\char"3D}
+\def\Xcircumflex{\char"5E}
+\def\cf{} %\frenchspacing}
+
 \ifchiron
-  \def\Xarrowright{\texttt{\char"A2}}
-  \def\Xarrowdown{\texttt{\char"A4}}
+  \def\Xarrowright{\char"A2}
+  \def\Xarrowdown{\char"A4}
 \else
-   \def\Xarrowright{\begin{math} \Rightarrow \end{math}}
-   \def\Xarrowdown{\begin{math} \Downarrow \end{math}}
+   \def\Xarrowright{$ \Rightarrow $}
+   \def\Xarrowdown{$ \Downarrow $}
 \fi
-\def\Xatsign{\texttt{\char"40}}
-\def\Xbackslash{\texttt{\char"5C}}
-\def\Xunderscore{\texttt{\char"5F}}
-\def\Xlbracket{\texttt{\char"5B}}
-\def\Xrbracket{\texttt{\char"5D}}
-\def\Xlbrace{\texttt{\char"7B}}
-\def\Xrbrace{\texttt{\char"7D}}
+\def\Xatsign{\char"40}
+\def\Xbackslash{\char"5C}
+\def\Xunderscore{\char"5F}
+\def\Xlbracket{\char"5B}
+\def\Xrbracket{\char"5D}
+\def\Xlbrace{\char"7B}
+\def\Xrbrace{\char"7D}
 \def\dlbrack{\lbrack\lbrack}
 \def\drbrack{\rbrack\rbrack}
-\def\Xdquote{\texttt{\char"22}}
+\def\Xdquote{\char"22}
 
 \def\EV{$\Rightarrow$}
 \def\EX{$\rightarrow$}
 \def\EQ{$\equiv$}
 
-\newcommand{\indexterm}[1]{\index{#1}}
+\newcommand{\indexterm}[1]{\index{symbols}{#1}}
 
 %\def\empty{\cd{(}\cd{)}}
 \def\emptylist{\cd{(}\cd{)}}
@@ -537,18 +437,16 @@
 }
 
 
-\def\issue#1{{$\langle$}\@ifundefined{i@#1}{\textbf{?}\@warning
-   {Issue `#1' on page \thepage \space undefined}}{\csname
-       i@#1\endcsname}{$\rangle$}\if@draft
-  \actualmarginfrob{\setbox0=\hbox{\parbox[t]{12pc}{\raggedright\rm
-         Issue \cf #1}}\ht0=0pt\dp0=0pt\box0}\fi}
+\def\issue#1{\index{issues}{#1}}% {$\langle$}\@ifundefined{i@#1}{\textbf{?}
+%\@warning{Issue `#1' on page \thepage \space undefined}}
+%    {\csnamei@#1\endcsname}{$\rangle$}}
 
-\def\issueitem#1{\@ifnextchar[{\@issueitem{#1}{:}}{\@issueitem{#1}{}[]}}
+%\def\issueitem#1{\@ifnextchar[{\@issueitem{#1}{:}}{\@issueitem{#1}{}[]}}
 
-\def\@issueitem#1#2[#3]{\item\if@filesw \immediate\write\@auxout
-       {\string\issuecite{#1}{\the\c@enumi}}\fi
-       \cd{#1#2#3~~}\unskip}
-\def\issuecite#1#2{\global\@namedef{i@#1}{#2}}
+%\def\@issueitem#1#2[#3]{\item\if@filesw \immediate\write\@auxout
+%       {\string\issuecite{#1}{\the\c@enumi}}\fi
+%       \cd{#1#2#3~~}\unskip}
+%\def\issuecite#1#2{\global\@namedef{i@#1}{#2}}
 
 \def\prefaceword{\noindent{\sc p{\kern1pt}r{\kern1pt}e{\kern1pt}f{\kern1pt}a{\kern1pt}c{\kern1pt}e{\kern1pt}:} }
 
@@ -707,7 +605,7 @@
 \def\dbltopfraction{.7}
 \def\dblfloatpagefraction{.5}
 \long\def\@makecaption#1#2{
-\noindent {\small {\bf #1:} #2}\par\addvspace{12pt}
+\noindent {\small \textbf{ #1:} #2}\par\addvspace{12pt}
 %   \setbox\@tempboxa\hbox{#1: #2}
 %   \ifdim \wd\@tempboxa >\hsize \unhbox\@tempboxa\par \else \hbox
 %   to\hsize{\hfil\box\@tempboxa\hfil} 

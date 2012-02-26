@@ -11,12 +11,11 @@ cltl2.pdf : output/clm.pdf
 
 PDFLATEX=pdflatex -file-line-error -interaction nonstopmode -output-directory output clm | wc -l
 
-output/clm.pdf : output/clm.ind
+output/clm.pdf : output/*.idx
 	$(PDFLATEX)
 
-%.ind : %.idx
-	makeindex -o $@ $<
-
-output/clm.idx : *.tex
+output/*.idx : *.tex
 	mkdir -p output
 	$(PDFLATEX)
+	makeindex -o output/symbols.ind symbols.idx
+	makeindex -o output/issues.ind issues.idx
