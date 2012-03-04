@@ -1037,7 +1037,7 @@ global definition of a \cdf{setf} expansion function for \cdf{cadr}.
 \end{newer}
 \end{defun}
 
-\section{Generalized Variables}
+\section{Generalized Variables Обобщенные переменные}
 \label{SETF-SECTION}
 
 In Lisp, a variable can remember one piece of data,
@@ -1050,6 +1050,16 @@ that can remember one piece of data, no matter how that location is
 named.  Examples of such storage locations are the \emph{car} and \emph{cdr} of
 a cons, elements of an array, and components of a structure.
 
+В Lisp'е, переменная может запоминть одну часть данных, а точнее, один Lisp
+объект. 
+Главные операции над переменной это получить ее значение и задать ей другое
+значение. Их часто называют операциями \emph{доступа} и
+\emph{изменения}. Концепция переменных с именем в виде символа может быть
+обобщена до того, что любое место может сохранять в себе части данных вне
+зависимости от того, как данное место именуется. Примерами таких мест хранения
+являются \emph{car} и \emph{cdr} элементы cons-ячейки, элементы массива, и
+компоненты структуры.
+
 For each kind of generalized variable, typically there are two functions
 that implement the conceptual \emph{access} and \emph{update} operations.
 For a variable, merely mentioning the name of the variable accesses it,
@@ -1058,6 +1068,14 @@ The function \cdf{car} accesses the \emph{car} of a cons,
 and the function \cdf{rplaca} updates it.
 The function \cdf{symbol-value} accesses the dynamic value of a variable
 named by a given symbol, and the function \cdf{set} updates it.
+
+Для каждого вида обобщенных переменных существуют две функции, которые реализуют
+операции \emph{доступа} и \emph{изменения}.
+Для переменных это имя переменной для доступа, а для изменения специальная форма \cdf{setq}.
+Функция \cdf{car} получает доступ к \emph{car} элементу cons-ячейки, а функция
+\cdf{rplaca} изменяет этот элемент ячейки.
+Функция \cdf{symbol-value} получает динамическое значение переменной именованной
+некоторым символом, а функция \cdf{set} изменяет эту переменную.
 
 Rather than thinking about two distinct functions that respectively
 access and update a storage location somehow deduced from their
@@ -1074,11 +1092,25 @@ the name of a variable (which is also a form that accesses it) into a
 form that updates it.  The uniformity of this approach is illustrated in
 the following table.
 
+Вместо того, чтобы думать о двух разных функциях, которые соответственно
+получают доступ и изменяют некоторое место хранения в зависимости от своих
+аргументов, мы может думать просто о вызове функции доступа с некоторыми
+аргументами, как о \emph{имени} данного места хранения. Таким образом, просто
+\cd{x} является именем места хранения (переменной), \cd{(car x)} имя для
+\emph{car} элементы для некоторой cons-ячейки (которая в свою очередь именуется
+символом \cd{x}). Теперь вместо того, чтобы запоминать по две функции для
+каждого вида обобщенных переменных (например \cdf{rplaca} для \cdf{car}), мы
+адаптировали единый синтаксис для изменения некоторого места хранения с помощью
+макроса \cdf{setf}. Это аналогично способу, где мы используем специальную
+форму \cdf{setq} для преобразования имени переменной (которая является также
+формой для доступа к ней) в форму, которая изменяет переменную
+FIXME. Эта универсальной отображения в следующей таблице.
+
 \begin{flushleft}
 \begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
 \textrm{Access Function}&\textrm{Update Function}&\textrm{Update Using \cdf{setf}} \\
 \hlinesp
-\cdf{x}&\cd{(setq x datum)}&\cd{(setf x datum)} \\
+\cd{x}&\cd{(setq x datum)}&\cd{(setf x datum)} \\
 \cd{(car x)}&\cd{(rplaca x datum)}&\cd{(setf (car x) datum)} \\
 \cd{(symbol-value x)}&\cd{(set x datum)}&\cd{(setf (symbol-value x) datum)} \\
 \hline
@@ -1087,12 +1119,32 @@ the following table.
 \cdf{setf} is actually a macro that examines an access form and
 produces a call to the corresponding update function.
 
+\begin{flushleft}
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
+\textrm{Функция доступа}&\textrm{Функция изменения}&\textrm{Изменения с помощью \cdf{setf}} \\
+\hlinesp
+\cd{x}&\cd{(setq x datum)}&\cd{(setf x datum)} \\
+\cd{(car x)}&\cd{(rplaca x datum)}&\cd{(setf (car x) datum)} \\
+\cd{(symbol-value x)}&\cd{(set x datum)}&\cd{(setf (symbol-value x) datum)} \\
+\hline
+\end{tabular*}
+\end{flushleft}
+\cdf{setf} это макрос, который анализирует форму доступа, и производит вызов
+соответствующей функции изменения.
+
 Given the existence of \cdf{setf} in Common Lisp, it is not necessary to have
 \cdf{setq}, \cdf{rplaca}, and \cdf{set}; they are redundant.  They
 are retained in Common Lisp because of their historical importance in Lisp.
 However, most other update functions (such as \cdf{putprop}, the update
 function for \cdf{get}) have been eliminated from Common Lisp
 in the expectation that \cdf{setf} will be uniformly used in their place.
+
+С появление в Common Lisp'е \cdf{setf}, необходимость в \cdf{setq}, \cdf{rplaca}
+и \cdf{set} отпала. Они оставлены в Common Lisp из-за их исторической важности в
+Lisp'е.
+Однако, большинство других функций изменения (например \cdf{putprop}, функция
+изменения для \cdf{get}) были устранены из Common Lisp'а в расчете на то, что
+везде на их месте будет использоваться \cdf{setf}.
 
 \begin{defmac}
 setf {place newvalue}*
@@ -1103,6 +1155,13 @@ it to produce a corresponding form to \emph{update} the location.
 A call to the \cdf{setf} macro therefore
 expands into an update form that stores the result of evaluating
 the form \emph{newvalue} into the place referred to by the access form.
+
+\cd{(setf \emph{place} \emph{newvalue})} принимает форму \emph{place}, которая
+при своем вычислении получает доступ к объекту в некотором месте хранения и
+<<инвертирует>> эту форму в соответствующую форму \emph{изменения}.
+Таким образом вызов макроса \cdf{setf} разворачивается в форму изменения,
+которая сохраняет результат вычисления формы \emph{newvalue} в место хранения,
+на которое ссылалась форма доступа.
 
 If more than one \emph{place}-\emph{newvalue} pair is specified,
 the pairs are processed sequentially; that is,
@@ -1121,10 +1180,32 @@ is precisely equivalent to
 \end{lisp}
 For consistency, it is legal to write \cd{(setf)}, which simply returns {\nil}.
 
+Если пар \emph{place}-\emph{newvale} указано более одной, эти пары
+обрабатываются последовательно. Таким образом:
+\begin{lisp}
+(setf \emph{place1} \emph{newvalue1} \\
+~~~~~~\emph{place2} \emph{newvalue2}) \\
+~~~~~~... \\
+~~~~~~\emph{placen} \emph{newvaluen})
+\end{lisp}
+эквивалентно
+\begin{lisp}
+(setf \emph{place1} \emph{newvalue1} \\
+~~~~~~\emph{place2} \emph{newvalue2}) \\
+~~~~~~... \\
+~~~~~~\emph{placen} \emph{newvaluen})
+\end{lisp}
+Следует отметить, что запись \cd{(setf)} является корректной и возвращает {\nil}.
+
 The form \emph{place} may be any one of the following:
+
+Форма \emph{place} может быть одной из следующих:
 \begin{itemize}
 \item
 The name of a variable (either lexical or dynamic).
+
+\item
+Имя переменной (лексической и динамической).
 
 \item
 A function call form whose first element is the name of
@@ -1154,25 +1235,10 @@ X3J13 voted in March 1988 \issue{AREF-1D}
 to add \cdf{row-major-aref} to this list.
 \end{new}
 
-%??? \begin{newer}
-%X3J13 voted in June 1988 \issue{COMMON-LISP-OBJECT-SYSTEM}
-%to add \cdf{class-name} to this list.
-%\end{newer}
-
 \begin{newer}
 X3J13 voted in June 1989 \issue{DEFINE-COMPILER-MACRO}
 to add \cdf{compiler-macro-function} to this list.
 \end{newer}
-
-%??? \begin{newer}
-%X3J13 voted in June 1989 \issue{READ-CASE-SENSITIVITY}
-%to add \cdf{readtable-case} to this list.
-%\end{newer}
-
-%??? \begin{newer}
-%X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL}
-%to add \cdf{logical-pathname-translations} to this list.
-%\end{newer}
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{FUNCTION-NAME} to clarify that this
@@ -1181,8 +1247,35 @@ definition and not to a locally defined function or macro.
 \end{newer}
 
 \item
+Формой вызова функции, у которой первый элемент принадлежит множеству указанному
+в следующей таблице:
+
+\begin{flushleft}
+\begin{tabular}{@{}llll@{}}
+\cdf{aref}&\cdf{car}&\cdf{svref}& \\
+\cdf{nth}&\cdf{cdr}&\cdf{get}& \\
+\cdf{elt}&\cdf{caar}&\cdf{getf}&\cdf{symbol-value} \\
+\cdf{rest}&\cdf{cadr}&\cdf{gethash}&\cdf{symbol-function} \\
+\cdf{first}&\cdf{cdar}&\cdf{documentation}&\cdf{symbol-plist} \\
+\cdf{second}&\cdf{cddr}&\cdf{fill-pointer}&\cdf{macro-function} \\
+\cdf{third}&\cdf{caaar}&\cdf{caaaar}&\cdf{cdaaar} \\
+\cdf{fourth}&\cdf{caadr}&\cdf{caaadr}&\cdf{cdaadr} \\
+\cdf{fifth}&\cdf{cadar}&\cdf{caadar}&\cdf{cdadar} \\
+\cdf{sixth}&\cdf{caddr}&\cdf{caaddr}&\cdf{cdaddr} \\
+\cdf{seventh}&\cdf{cdaar}&\cdf{cadaar}&\cdf{cddaar} \\
+\cdf{eighth}&\cdf{cdadr}&\cdf{cadadr}&\cdf{cddadr} \\
+\cdf{ninth}&\cdf{cddar}&\cdf{caddar}&\cdf{cdddar} \\
+\cdf{tenth}&\cdf{cdddr}&\cdf{cadddr}&\cdf{cddddr}
+\end{tabular}
+\end{flushleft}
+
+\item
 A function call form whose first element is the name of
 a selector function constructed by \cdf{defstruct}.
+
+\item
+Формой вызова функции, у которой первый элемент является именем
+функции-селектора созданной с помощью \cdf{defstruct}.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{FUNCTION-NAME} to clarify that this
@@ -1269,6 +1362,26 @@ definition and not to a locally defined function or macro.
 \end{newer}
 
 \item
+Форма вызова функции, первый элемент которой является именем одной из
+следующих функций при условии, что указанный аргумент этой функции в свою
+очередь является формой \emph{place}. 
+in this case the new \emph{place} has stored back into it the
+result of applying the specified ``update'' function
+(which is in each of these cases not a true update function): FIXME
+
+\begin{flushleft}
+\begin{tabular}{@{}lll@{}}
+Function Name&Argument That Is a \emph{place}&Update Function Used \\
+\hlinesp
+\cdf{char-bit}&first&\cdf{set-char-bit} \\
+\cdf{ldb}&second&\cdf{dpb} \\
+\cdf{mask-field}&second&\cdf{deposit-field} \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+
+\item
 A \cdf{the} type declaration form, in which case the declaration is
 transferred to the \emph{newvalue} form, and the resulting \cdf{setf} form is
 analyzed.  For example,
@@ -1276,6 +1389,17 @@ analyzed.  For example,
 (setf (the integer (cadr x)) (+ y 3))
 \end{lisp}
 is processed as if it were
+\begin{lisp}
+(setf (cadr x) (the integer (+ y 3)))
+\end{lisp}
+
+\item
+Форма декларации типа \cdf{the}, в таком случае декларация переносится на форму
+\emph{newvalue}, и анализируется результирующая \cdf{setf} форма. Например:
+\begin{lisp}
+(setf (the integer (cadr x)) (+ y 3))
+\end{lisp}
+будет обработана как
 \begin{lisp}
 (setf (cadr x) (the integer (+ y 3)))
 \end{lisp}
@@ -1454,6 +1578,15 @@ as there are store variables; extra values are ignored
 and missing values default to \cdf{nil},
 as is usual in situations involving multiple values.
 \end{newer}
+
+\cdf{psetf} подобен \cdf{setf} за исключением того, что если указано пар
+\emph{place}-\emph{newvalue} более одной, то присваивание местам новых значений
+происходит параллельно. Если говорить точнее, то все подформы, которые должны
+быть вычислены, вычисляются слева направо. После выполнения всех вычислений,
+выполняются все присваивания в неопределенном порядке.
+(Неопределенный порядок влияет на поведениее в случае, если более одной формы
+\emph{place} ссылаются на одно и то же место.)
+\cdf{psetf} всегда возвращает {\false}.
 \end{defmac}
 
 \begin{defmac}
@@ -1507,7 +1640,7 @@ For example:
 ~~~\textrm{and now} x \EV\ (a b z d)
 \end{lisp}
 Moreover, for certain \emph{place} forms \cdf{shiftf} may be
-significantly more efficient than the \cd{prog1} version.
+significantly more efficient than the \cdf{prog1} version.
 
 \begin{newer}
 X3J13 voted in June 1989 \issue{SETF-MULTIPLE-STORE-VARIABLES}
@@ -2138,8 +2271,7 @@ For \cd{(subseq \emph{seq} \emph{s} \emph{e})}:
 \end{itemize}
 
 \begin{defmac}
-define-setf-method access-fn lambda-list
-                   <{declaration}* | doc-string> {\,form}*
+define-setf-method access-fn lambda-list <{declaration}* | doc-string> {\,form}*
 
 This defines how
 to \cdf{setf} a generalized-variable reference that is of the form
@@ -2356,7 +2488,7 @@ macros that modify a \cdf{setf} \emph{place} (for example,
 \cdf{incf}, \cdf{decf}, \cdf{pop}, and \cdf{rotatef}) obey this convention.
 \end{newer}
 
-\section{Function Invocation}
+\section{Function Invocation Вызов функции}
 
 The most primitive form for function invocation in Lisp of course
 has no name; any list that has no other interpretation
@@ -2364,10 +2496,18 @@ as a macro call or special form is taken to be a function call.
 Other constructs are provided for less common but
 nevertheless frequently useful situations.
 
+Наиболее примитивная форма вызова функции в Lisp'е, конечно, не имеет
+имени. Любой список, который не интпретируется как макровызов или вызов
+специальной формы, рассматривается как вызов функции.
+Другие конструкции предназначены для менее распространенных, но тем не менее
+полезных ситуаций.
+
 \begin{defun}[Function]
 apply function arg &rest more-args
 
 This applies \emph{function} to a list of arguments.
+
+\\ Функция применяет функцию \emph{function} к списку аргументов.
 \begin{obsolete}
 The \emph{function} may be a
 compiled-code object, or a lambda-expression, or a symbol; in the latter
@@ -2410,6 +2550,34 @@ This can be very useful in conjunction with the \cd{\&allow-other-keys} feature:
 (foo 4 :initial-contents '(a b c d) :double t) \\
 ~~~\EV\ \#(a b c d a b c d)
 \end{lisp}
+
+
+Все аргументы, кроме \emph{function} передаются в применяемую функцию.
+Если последний аргумент список, то он присоединяется в конец к списку первых
+аргументов. Например:
+\begin{lisp}
+(setq f '+) (apply f '(1 2)) \EV\ 3 \\
+(setq f \#'-) (apply f '(1 2)) \EV\ -1 \\
+(apply \#'max 3 5 '(2 7 3)) \EV\ 7 \\
+(apply 'cons '((+ 2 3) 4)) {\EV} \\
+~~~~~~~~((+ 2 3) . 4)	\emph{not} (5 . 4) \\
+(apply \#'+ '()) \EV\ 0
+\end{lisp}
+Следует отметить, что если функция принимает именованные аргументы, ключевые
+символы должны быть перечислены в списке аргументов так же, как и обычные
+значения:
+\begin{lisp}
+(apply \#'(lambda (\cd{\&key} a b) (list a b)) '(:b 3)) \EV\ ({\nil} 3)
+\end{lisp}
+Это бывает очень полезным в связке с возможностью \cd{\&allow-other-keys}:
+\begin{lisp}
+(defun foo (size \cd{\&rest} keys \cd{\&key} double \cd{\&allow-other-keys}) \\
+~~(let ((v (apply \#'make-array size :allow-other-keys t keys))) \\
+~~~~(if double (concatenate (type-of v) v v) v))) \\
+ \\
+(foo 4 :initial-contents '(a b c d) :double t) \\
+~~~\EV\ \#(a b c d a b c d)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -2420,6 +2588,13 @@ applies the function \emph{fn} to the arguments
 \emph{a1}, \emph{a2}, ..., \emph{an}.
 The \emph{fn} may not
 be a special form or a macro; this would not be meaningful.
+
+\cd{(funcall \emph{fn} \emph{a1} \emph{a2} ... \emph{an})}
+применяет функция \emph{fn} к аргументам 
+\emph{a1}, \emph{a2}, ..., \emph{an}.
+\emph{fn} не может быть специальной формой или макросом, это не имело бы
+смысла. 
+
 
 \begin{newer}
 X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to allow the \emph{fn}
@@ -2439,6 +2614,16 @@ The difference between \cdf{funcall} and an ordinary function call is that
 the function is obtained by ordinary Lisp evaluation rather than
 by the special interpretation of the function position that normally
 occurs.
+
+Например:
+\begin{lisp}
+(cons 1 2) \EV\ (1 . 2) \\
+(setq cons (symbol-function '+)) \\
+(funcall cons 1 2) \EV\ 3
+\end{lisp}
+Различие \cdf{funcall} и обычным вызовом функции в том, что функция
+получается с помощью обычных Lisp вычислений, а не с помощью специальной
+интерпретации первой позиции в списке формы.
 
 \beforenoterule
 \begin{incompatibility}
@@ -2461,14 +2646,26 @@ without sacrificing performance.)
 The value of \cdf{call-arguments-limit} must be at
 least as great as that of \cdf{lambda-parameters-limit}.
 See also \cdf{multiple-values-limit}.
+
+Значение \cdf{call-arguments-limit} положительное целое, которое отображает
+невключительно максимальное количество аргументов, которые могут быть переданы в
+функцию. Эта граница зависит от реализации, но не может быть меньше 50.
+(Разработчикам предлагается сделать этот предел большим на сколько это возможно
+без ущерба для производительности.)
+Значение \cdf{call-argument-limit} должен быть как минимум равнятся
+\cdf{lambda-parameters-limit}.
+Смотрите также \cdf{multiple-values-limit}.
 \end{defun}
 
 
-\section{Simple Sequencing}
+\section{Simple Sequencing Последовательное выполнение}
 
 Each of the constructs in this section simply evaluates all the
 argument forms in order.  They differ only in what results
 are returned.
+
+Все конструкции в данном разделе выполняют все формы аргументов в прямой
+последовательности. Различие заключается только в возвращаемых ими результатах.
 
 \begin{defspec}
 progn {\,form}*
@@ -2493,17 +2690,36 @@ If the last form of the \cdf{progn} returns multiple values, then those
 multiple values are returned by the \cdf{progn} form.  If there are no forms
 for the \cdf{progn}, then the result is {\false}.  These rules generally hold for
 implicit \cdf{progn} forms as well.
+
+Конструкция \cdf{progn} принимает некоторое количество форм и последовательно
+вычисляет их слева направо. Значения всех кроме последней формы
+игнорируется. Результатом формы \cdf{progn} становиться то, что вернула
+последняя форма.
+Можно сказать, что все формы кроме последней выполняются для побочных эффектов,
+а последняя форма для значения.
+
+\cdf{progn} является примитивной управляющей структурой для <<составных
+выражений>>, как блоки \textbf{begin}-\textbf{end} в Algol'ных языках.
+Много Lisp'овых конструкций является <<неявным \cdf{progn}>>:
+так как часть их синтаксиса допускает запись нескольких форм,
+которые будут выполнены последовательно и возвращен будет результат последней
+формы.
+
+Если последняя форма \cdf{progn} возвращает несколько значение, тогда все они
+будут возвращены из формы \cdf{progn}. Если форм в \cdf{progn} нет вообще, то
+результатом будет {\false}. Эти правила сохраняются также и для неявного
+\cdf{progn}.
 \end{defspec}
 
 \begin{defmac}
 prog1 first {\,form}*
 
-\cd{prog1} is similar to \cdf{progn}, but it returns the value of
+\cdf{prog1} is similar to \cdf{progn}, but it returns the value of
 its \emph{first} form.  All the argument forms are executed sequentially;
 the value of the first form is saved while all the others are executed
 and is then returned.
 
-\cd{prog1} is most commonly used to evaluate an expression with side
+\cdf{prog1} is most commonly used to evaluate an expression with side
 effects and to return a value that must be computed \emph{before} the side
 effects happen.
 For example:
@@ -2513,30 +2729,51 @@ For example:
 alters the \emph{car} of \cdf{x} to be \cdf{foo} and returns the old \emph{car}
 of \cdf{x}.
 
-\cd{prog1} always returns a single value, even if the first form
+\cdf{prog1} always returns a single value, even if the first form
 tries to return multiple values.
 As a consequence,
 \cd{(prog1 \emph{x})} and \cd{(progn \emph{x})} may behave differently
-if \emph{x} can produce multiple values.  See \cd{multiple-value-prog1}.
+if \emph{x} can produce multiple values.  See \cdf{multiple-value-prog1}.
 A point of style:
-although \cd{prog1} can be used to force exactly a single value to
+although \cdf{prog1} can be used to force exactly a single value to
 be returned, it is conventional to use the
 function \cdf{values} for this purpose.
+
+\cdf{prog1} похожа на \cdf{progn} за исключением того, что он возвращает
+результат \emph{первой} формы. Все формы-аргументы выполняются
+последовательно. Значение первой формы сохраняется, затем выполняются все формы,
+и, наконец, возвращается сохраненное значение.
+
+\cdf{prog1} чаще всего используется, когда необходимо вычислить выражение с
+побочными эффектами и возвращаемое значение должно быть вычислено \emph{до}
+побочных эффектов.
+Например:
+\begin{lisp}
+(prog1 (car x) (rplaca x 'foo))
+\end{lisp}
+изменяет \emph{car} от \cd{x} на \cd{foo} и возвращает старое значение.
+
+\cdf{prog1} всегда возвращает одно значение, даже если первая форма возвращает
+несколько значений.
+В следствие, \cd{(prog1 \emph{x})} и \cd{(progn \emph{x})} могут вести себя
+по-разному, \emph{x} возвращает несколько значений. Смотрите \cdf{multiple-value-prog1}.
+И хотя \cdf{prog1} может использоваться для явного указания возврата только
+одного значения, для этих целей лучше использовать функцию \cdf{values}.
 \end{defmac}
 
 \begin{defmac}
 prog2 first second {\,form}*
 
-\cd{prog2} is similar to \cd{prog1}, but it returns the value of
+\cdf{prog2} is similar to \cdf{prog1}, but it returns the value of
 its \emph{second} form.  All the argument forms are executed sequentially;
 the value of the second form
 is saved while all the other forms are executed and is then returned.
-\cd{prog2} is provided mostly for historical compatibility.
+\cdf{prog2} is provided mostly for historical compatibility.
 \begin{lisp}
 (prog2 \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (progn \emph{a} (prog1 \emph{b} \emph{c} ... \emph{z}))
 \end{lisp}
 Occasionally it is desirable to perform one side effect, then a value-producing
-operation, then another side effect.  In such a peculiar case, \cd{prog2}
+operation, then another side effect.  In such a peculiar case, \cdf{prog2}
 is fairly perspicuous.
 For example:
 \begin{lisp}
@@ -2544,16 +2781,31 @@ For example:
 \`;\textrm{value is that of \cdf{process-the-file}}
 \end{lisp}
 
-\cd{prog2}, like \cd{prog1},
+\cdf{prog2}, like \cdf{prog1},
 always returns a single value, even if the second form
 tries to return multiple values.  As a consequence of this,
 \cd{(prog2 \emph{x} \emph{y})} and \cd{(progn \emph{x} \emph{y})} may behave differently
 if \emph{y} can produce multiple values.
+
+\cdf{prog2} похожа на \cdf{prog1}, но она возращает значение ее \emph{второй}
+формы. Все формы-аргументы выполняются последовательно. Значение второй формы
+сохраняется и возвращается после выполнения остальных форм.
+\cdf{prog2} представлена по большей части по историческим причинам.
+\begin{lisp}
+(prog2 \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (progn \emph{a} (prog1 \emph{b} \emph{c} ... \emph{z}))
+\end{lisp}
+Иногда необходимо получить один побочный эффект, затем полезный результат, затем
+другой побочный эффекта. В таком случае \cdf{prog2} полезна.
+Например:
+\begin{lisp}
+(prog2 (open-a-file) (process-the-file) (close-the-file)) \\
+\`;\textrm{возвращаемое значение \cdf{process-the-file}}
+\end{lisp}
 \end{defmac}
 
 
 
-\section{Establishing New Variable Bindings}
+\section{Establishing New Variable Bindings Установка новых связываний переменных}
 \label{VAR-BINDING-SECTION}
 
 During the invocation of
@@ -2564,14 +2816,26 @@ parameters of the lambda-expression.  These bindings initially
 have values determined by the parameter-binding protocol discussed
 in section~\ref{LAMBDA-EXPRESSIONS-SECTION}.
 
+В течение вызова функции представленной лямбда-выражением (или замыканием
+лямбда-выражения возвращенным функцией \cdf{function}),
+для переменных параметров лямбда-выражения устанавливаются новые связывания. Эти
+связывания первоначально имеют значения установленные с помощью протокола
+связывания параметров, описанного в~\ref{LAMBDA-EXPRESSIONS-SECTION}.
+
 The following constructs may also be used to establish bindings of variables,
 both ordinary and functional.
+
+Для установки связываний переменных, обычных и функциональных, также полезны
+следующие конструкции.
 
 \begin{defspec}
 let ({var | (var value)}*) {declaration}* {\,form}*
 
 A \cdf{let} form can be used to execute a series of forms
 with specified variables bound to specified values.
+
+Форма \cdf{let} может быть использована для связи множества переменных со
+значениями соответствующего множества форм.
 
 More precisely, the form
 \begin{lisp}
@@ -2600,6 +2864,34 @@ The \cdf{let} form returns what evaluating \emph{bodyn} produces (if the
 body is empty, which is fairly useless, \cdf{let} returns {\false} as its value).
 The bindings of the variables have lexical scope and indefinite extent.
 
+Если быть точнее, форма
+\begin{lisp}
+(let ((\emph{var1} \emph{value1}) \\
+~~~~~~(\emph{var2} \emph{value2}) \\
+~~~~~~... \\
+~~~~~~(\emph{varm} \emph{valuem})) \\
+~~\emph{declaration1} \\
+~~\emph{declaration2} \\
+~~... \\
+~~\emph{declarationp} \\
+~~\emph{body1} \\
+~~\emph{body2} \\
+~~... \\
+~~\emph{bodyn})
+\end{lisp}
+сначала последовательно выполняет выражения \emph{value1}, \emph{value2} и т.д.,
+сохраняя результаты.
+Затем все переменные \emph{varj} параллельно привязываются к сохраненным
+значениям. Каждое связывание будет является лексическим, кроме тех, для которых
+указана декларация \cdf{special}.
+Затем последовательно выполняются выражения \emph{bodyk}. Все из значения, кроме
+последнего, игнорируются (другими словами, тело \cdf{let} является неявным
+\cdf{progn}).
+Форма \cdf{let} возвращает значение \emph{bodyn} (если тело пустое, что в
+принципе бесполезно, то \cdf{let} возвращает {\false}).
+Связывания переменных имеют лексическую область видимости и неограниченную
+продолжительность.
+
 Instead of a list \cd{(\emph{varj} \emph{valuej})}, one may write simply
 \emph{varj}.  In this case \emph{varj} is initialized to {\false}.  As a matter
 of style, it is recommended that \emph{varj} be written only when that
@@ -2620,11 +2912,35 @@ and is set to a value of the declared type \cdf{integer}, nevertheless
 \cdf{x} momentarily takes on the value {\nil} in violation of the type
 declaration.
 
+Вместо списка \cd{(\emph{varj} \emph{valuej})}, можно записать просто
+\emph{varj}. В таком случае \emph{varj} инициализируется значением {\false}.
+В целях хорошего стиля рекомендуется, записывать \emph{varj} только, если в нее
+будет что-нибудь записано (с помощью \cdf{setq} например), перед первым
+использованием. 
+Если важно, чтобы первоначальное значение было {\false}, вместо некоторого
+неопределенного значения,
+тогда будет лучше записть \cd{(\emph{varj} {\false})} или \cd{(\emph{varj}
+  '{\emptylist})}, если значение должно обозначать пустой список. Обратите
+внимание, что код
+\begin{lisp}
+(let (x) \\
+~~(declare (integer x)) \\
+~~(setq x (gcd y z)) \\
+~~...)
+\end{lisp}
+неправильный. Так как \emph{x} объявлен без первоначального значения и также
+объявлено, что \emph{x} это целое число, то произойдет исключение, так как
+\emph{x} при связывании получает {\nil} значение, которое не принадлежит
+целочисленному типу.
+
 Declarations may appear at the beginning of the body of a \cdf{let}.
 See \cdf{declare}.
 
+Декларации могут использоваться в начале тела \cdf{let}. Смотрите \cdf{declare}.
+
 \begin{newer}
 See also \cdf{destructuring-bind}.
+Смотрите также \cdf{destructuring-bind}.
 \end{newer}
 
 \begin{new}
@@ -2778,6 +3094,24 @@ the program text.
 \cdf{progv} is particularly useful for writing interpreters for languages
 embedded in Lisp; it provides a handle on the mechanism for binding
 dynamic variables.
+
+\cdf{progv} является специальной формой, которая позволяет создавать связывания
+одной и более динамических переменных, чьи имена устанавливаются во время
+выполнения. Последовательность форм (неявный \cdf{progn})
+выполняется с динамическими переменными, что имена в списке \emph{symbols}
+связаны с соответствующими значениями в списке \emph{values}.
+(Если значений меньше, чем переменных, то соотвествующие переменные получают
+соотвествующие значения, а оставшиеся остаются без значений. Смотрите
+\cdf{makunbound}. Если значений больше, чем переменных, они игнорируются.)
+Результатом \cdf{progv} является результат последней формы. Связывания
+динамических переменных упраздняются при выходе из формы \cdf{progv}. Списки
+переменных и значений это вычисляемые значения. Это то, что отличает \cdf{progv}
+от, например, \cdf{let}, в которой именя переменных указываются явно в тексте
+программы.
+
+\cdf{progv} полезна, в частности, для написания интерпертаторов языков
+встраиваемых в Lisp. Она предоставляет управление механизмом связывания
+динамических переменных.
 \end{defspec}
 
 \begin{defspec}
@@ -2807,6 +3141,23 @@ and finally a body.
 ~~(safesqrt (apply \#'+ (map 'list \#'safesqrt longlist))))
 \end{lisp}
 
+\cdf{flet} может быть использована для определения локальных именованных
+функций. Внутри тела формы \cdf{flet}, имена функций, совпадающие с именами
+определенными в \cdf{flet}, ссылаются на локально определенные функции, а не на
+глобальные определения функции с теми же именами.
+
+Может быть определено любое количество функций. Каждое определение
+осуществляется формате, как в форме \cdf{defun}: сначала имя, затем список
+параметров (который может содержать \cd{\&optional}, \cd{\&rest} или \cd{\&key}
+параметры), затем необязательные декларации и строка документации, и, наконец,
+тело.
+\begin{lisp}
+(flet ((safesqrt (x) (sqrt (abs x)))) \\*
+~~;; Функция safesqrt используется в двух местах. \\*
+~~(safesqrt (apply \#'+ (map 'list \#'safesqrt longlist))))
+\end{lisp}
+
+
 The \cdf{labels} construct is identical in form to the \cdf{flet} construct.
 These constructs differ
 in that the scope of the defined function names for \cdf{flet}
@@ -2832,10 +3183,41 @@ the same construction using \cdf{labels} would not have that effect.
 ~~~~(expt0 n k 1)))
 \end{lisp}
 
+Конструкция \cdf{labels} идентична по форме конструкции \cdf{flet}.
+Эти конструкции различаются в том, что область видимости определенных функций
+для \cdf{flet} заключена только в теле, тогда как видимость в \cdf{labels}
+охватывает даже определения этих функций. Это значит, что \cdf{labels} может
+быть использована для определения взаимно рекурсивных функций, а \cdf{flet} не
+может. Это различие бывает полезно. Использование \cdf{flet} может локально
+переопределить глобальную функцию, и новое определение может ссылаться на
+глобальное. Однако такая же конструкция \cdf{labels} не будет обладать этим
+свойством.
+\begin{lisp}
+(defun integer-power (n k)~~~~~~~; Быстрое возведение \\*
+~~(declare (integer n))~~~~~~~~~~; целого числа в степень \\*
+~~(declare (type (integer 0 *) k)) \\
+~~(labels ((expt0 (x k a) \\*
+~~~~~~~~~~~~~(declare (integer x a) (type (integer 0 *) k)) \\*
+~~~~~~~~~~~~~(cond ((zerop k) a) \\*
+~~~~~~~~~~~~~~~~~~~((evenp k) (expt1 (* x x) (floor k 2) a)) \\*
+~~~~~~~~~~~~~~~~~~~(t (expt0 (* x x) (floor k 2) (* x a))))) \\
+~~~~~~~~~~~(expt1 (x k a) \\*
+~~~~~~~~~~~~~(declare (integer x a) (type (integer 1 *) k)) \\*
+~~~~~~~~~~~~~(cond ((evenp k) (expt1 (* x x) (floor k 2) a)) \\*
+~~~~~~~~~~~~~~~~~~~(t (expt0 (* x x) (floor k 2) (* x a)))))) \\*
+~~~~(expt0 n k 1)))
+\end{lisp}
+
+
 \cdf{macrolet} is similar in form to \cdf{flet} but defines local macros,
 using the same format used by \cdf{defmacro}.
 The names established by \cdf{macrolet} as names for macros are
 lexically scoped.
+
+\cdf{macrolet} похожа на форму \cdf{flet}, но определяет локальные макросы,
+используя тот же формат записи, что и \cdf{defmacro}.
+Имена для макросов, установленные с помощью \cdf{macrolet}, имеют лексическую
+область видимости.
 
 \begin{new}
 I have observed that, while most Common Lisp users pronounce \cdf{macrolet}
@@ -2850,6 +3232,11 @@ Macros often must be expanded at ``compile time'' (more generally,
 at a time before the program itself is executed), and so
 the run-time values of variables are not available to macros
 defined by \cdf{macrolet}.
+
+Макросы часто должны быть развернуты во <<время компиляции>> (общими словами,
+во время перед тем, как сама программа будет выполнена), таким образом, значения
+переменных во время выполнения не доступны для макросов, определенных с помощью
+\cdf{macrolet}.
 
 \begin{obsolete}
 The precise rule is that the macro-expansion
@@ -2904,6 +3291,38 @@ The body of the \cdf{macrolet} becomes
 after macro expansion.  The occurrences of \cdf{x} and \cdf{flag} legitimately
 refer to the parameters of the function \cdf{foo} because those parameters are
 visible at the site of the macro call which produced the expansion.
+
+Однако, сущности, имеющие лексическую область видимости, \emph{видны} внутри
+тела формы \cdf{macrolet} и \emph{видны} в коде, который является результатом
+развертывания макровызова. Следующий пример должен помочь в понимании:
+\begin{lisp}
+;;; Пример macrolet. \\*
+\\*
+(defun foo (x flag) \\*
+~~(macrolet ((fudge (z) \\*
+~~~~~~~~~~~~~~~~;;\textrm{Параметры \cd{x} и \cdf{flag} в данной точке} \\*
+~~~~~~~~~~~~~~~~;; \textrm{недоступны; ссылка на \cd{flag} была бы} \\*
+~~~~~~~~~~~~~~~~;; \textrm{одноименную глобальную переменную.} \\*
+~~~~~~~~~~~~~~~~{\Xbq}(if flag \\
+~~~~~~~~~~~~~~~~~~~~~(* ,z ,z) \\
+~~~~~~~~~~~~~~~~~~~~~,z))) \\
+~~~~;;\textrm{Параметры \cd{x} и \cd{flag} доступны здесь.} \\*
+~~~~(+ x \\*
+~~~~~~~(fudge x) \\*
+~~~~~~~(fudge (+ x 1)))))
+\end{lisp}
+Тело данного примера после разворачивания макросов превращается в
+\begin{lisp}
+(+ x \\*
+~~~(if flag \\*
+~~~~~~~(* x x) \\*
+~~~~~~~x)) \\*
+~~~(if flag \\*
+~~~~~~~(* (+ x 1) (+ x 1)) \\*
+~~~~~~~(+ x 1)))
+\end{lisp}
+\cd{x} и \cd{flag} легитимно ссылаются на параметры функции
+\cd{foo}, потому что эти параметры видимы в месте макровызова.
 
 \begin{newer}
 X3J13 voted in March 1988 \issue{FLET-IMPLICIT-BLOCK}
@@ -3048,7 +3467,7 @@ see section~\ref{DECLARE-SYNTAX-SECTION}.
 \end{defspec}
 \end{new}
 
-\section{Conditionals}
+\section{Conditionals Условные операторы}
 
 The traditional conditional construct in Lisp is \cdf{cond}.
 However, \cdf{if} is much simpler and is directly comparable
@@ -3056,6 +3475,12 @@ to conditional constructs in other programming languages,
 so it is considered to be primitive in Common Lisp and is described first.
 Common Lisp also provides the dispatching constructs \cdf{case} and \cdf{typecase},
 which are often more convenient than \cdf{cond}.
+
+Традиционная условная конструкция в Lisp'е это \cdf{cond}.
+Однако, \cdf{if} гораздо проще и очень похожа на условные конструкции в других
+языках программирования. Она сделана примитивом в Common Lisp'е.
+Common Lisp также предоставляет конструкции диспетчеризации (распределения)
+\cdf{case} и \cdf{typecase}, которые часто более удобны, чем \cdf{cond}.
 
 \begin{defspec}
 if test then [else]
@@ -4554,10 +4979,10 @@ For example:
 \begin{defspec}
 multiple-value-prog1 form {\,form}*
 
-\cd{multiple-value-prog1} evaluates the first \emph{form} and saves all the values
+\cdf{multiple-value-prog1} evaluates the first \emph{form} and saves all the values
 produced by that form.  It then evaluates the other \emph{form}s
 from left to right, discarding their values.  The values produced
-by the first \emph{form} are returned by \cd{multiple-value-prog1}.  See \cd{prog1},
+by the first \emph{form} are returned by \cdf{multiple-value-prog1}.  See \cdf{prog1},
 which always returns a single value.
 \end{defspec}
 
@@ -4766,8 +5191,8 @@ such a catch produces multiple values.
 \item[\emph{Miscellaneous situations}]\leavevmode
 \begin{itemize}
 \item
-\cd{multiple-value-prog1} passes back multiple values from its first
-subform.  However, \cd{prog1} always returns a single value.
+\cdf{multiple-value-prog1} passes back multiple values from its first
+subform.  However, \cdf{prog1} always returns a single value.
 
 \item
 \cdf{unwind-protect} returns multiple values if the form it protects
@@ -4780,8 +5205,8 @@ multiple values.
 \end{flushdesc}
 
 Among special forms that \emph{never} pass back multiple values are
-\cd{prog1},
-\cd{prog2}, \cdf{setq}, and \cdf{multiple-value-setq}.
+\cdf{prog1},
+\cdf{prog2}, \cdf{setq}, and \cdf{multiple-value-setq}.
 The conventional way to force only one value to be returned from a form \cdf{x}
 is to write \cd{(values x)}.
 
