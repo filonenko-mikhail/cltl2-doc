@@ -6628,9 +6628,28 @@ The correct way to code this is as follows:
 ~~~~(setq *access-count* old-count)))
 \end{lisp}
 
-Этот пример говорит о том, что вызов \cdf{stop-motor} корректен, даже если
+Этот пример допускает то, что вызов \cdf{stop-motor} корректен, даже если
 мотор еще не был запущен. Помните, что ошибка или прерывание может осуществить
-выход перед тем, как будет проведена инициализация.
+выход перед тем, как будет проведена инициализация. Любой код по восстановлению
+состояния должен правильно работать вне зависимости от того, где произошла
+ошибка.
+Например, следующий код неправильный:
+\begin{lisp}
+(unwind-protect \\*
+~~(progn (incf *access-count*) \\*
+~~~~~~~~~(perform-access)) \\*
+~~(decf *access-count*))
+\end{lisp}
+Если выход случиться перед тем, как выполниться операция \cdf{incf}, то
+выполнение \cdf{decf} приведет к некорректному значению в \cd{*access-count*}.
+Правильно будет записать этот код так:
+\begin{lisp}
+(let ((old-count *access-count*)) \\
+~~(unwind-protect \\
+~~~~(progn (incf *access-count*) \\
+~~~~~~~~~~~(perform-access)) \\
+~~~~(setq *access-count* old-count)))
+\end{lisp}
 
 As a general rule, \cdf{unwind-protect} guarantees to execute
 the \emph{cleanup-form\/}s before exiting, whether it terminates
@@ -6643,6 +6662,17 @@ form of another \cdf{unwind-protect}.)
 \cdf{unwind-protect} returns whatever results from evaluation of
 the \emph{protected-form} and discards all the results
 from the \emph{cleanup-form\/}s.
+
+Как правило, \cdf{unwind-protect} гарантирует выполнение форм
+\emph{cleanup-form} перед выходом, как в случае нормального выхода, так и в
+случае генерации исключения.
+(Если, однако, выход случился в ходе выполнения форм \emph{cleanup-form},
+никакого специального действия не предпринимается. Формы \emph{cleanup-form} не
+защищаются. Для этого необходимо использовать дополнительные
+конструкции \cdf{unwind-protect}.)
+\cdf{unwind-protect} возвращает результат выполнения защищенной формы
+\emph{protected-form} и игнорирует все результаты выполнения форм чистки
+\emph{cleanup-form}.
 
 It should be emphasized that \cdf{unwind-protect} protects against
 \emph{all} attempts to exit from the protected form,
@@ -6660,6 +6690,22 @@ but also ``lexical exit'' facilities such as \cdf{go} and
 \end{lisp}
 When the \cdf{go} is executed, the call to \cdf{print} is executed first,
 and then the transfer of control to the tag \cdf{out} is completed.
+
+Следует подчеркнуть, что \cdf{unwind-protect} защищает против \emph{всех}
+попыток выйти из защищенной формы, включая не только <<динамический выход>> с
+помощью \cdf{throw}, но и также <<лексический выход>> с помощью \cdf{go} и
+\cdf{return-from}. Рассмотрим следующую ситуацию:
+\begin{lisp}
+(tagbody \\
+~~(let ((x 3)) \\
+~~~~(unwind-protect \\
+~~~~~~(if (numberp x) (go out)) \\
+~~~~~~(print x))) \\
+~out \\
+~~...)
+\end{lisp}
+Когда выполнится \cdf{go}, то сначала выполнится \cdf{print}, а затем перенос управления
+на тег \cd{out} будет завершен.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{EXIT-EXTENT} to clarify the interaction
@@ -6845,12 +6891,15 @@ is actually unwound, one frame at a time, undoing dynamic bindings
 and outstanding \cdf{unwind-protect} constructs in reverse order of creation
 until the matching catch is reached.
 \end{implementation}
+
 \betweennoterule
+
 \begin{incompatibility}
 The name \cdf{throw} comes from MacLisp,
 but the syntax of \cdf{throw} in Common Lisp is different.
 The MacLisp syntax was \cd{(throw \emph{form} \emph{tag})},
 where the \emph{tag} was not evaluated.
 \end{incompatibility}
+
 \afternoterule
 \end{defspec}

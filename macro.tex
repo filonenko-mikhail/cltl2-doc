@@ -3,7 +3,7 @@
 
 \clearpage\def\pagestatus{ULTIMATE}
 
-\chapter{Macros}
+\chapter{Macros Макросы}
 \label{MACROS}
 
 
@@ -15,6 +15,14 @@ are important in the writing of good code: they make it possible to
 write code that is clear and elegant at the user level but that is
 converted to a more complex or more efficient internal form for
 execution.
+
+Функциональность макросов Common Lisp'а позволяет пользователю определять
+произвольные функции, которые преобразуют заданные Lisp'овые формы в другие
+формы, перед тем, как они будут вычислены или скомпилированы. Это делается на
+уровне выражений, а не на уровне строк, как в других языках. При написании
+хорошего кода макросы важны: они предоставляют возможность писать код, которые
+ясен и элегантен на пользовательском уровне, но после преобразования становится
+сложным или более эффективным для выполнения.
 
 When \cdf{eval} is given a list whose \emph{car} is a symbol, it looks
 for local definitions of that symbol (by \cdf{flet}, \cdf{labels},
@@ -30,9 +38,25 @@ see \cdf{macroexpand}.)
 This expansion is then evaluated in place of the original
 form.
 
+Когда \cdf{eval} получает список, у которого \emph{car} элемент является
+символом, она ищет локальные определения для этого символа (\cdf{flet},
+\cdf{labels} и \cdf{macrolet}). Если поиски не увенчались успехом, она ищет
+глобальное определение. Если это глобальное определение является макросом, тогда
+исходный список называется \emph{макровызовом}. С определением будет
+ассоциирована функция двух аргументов, называемая \emph{функцией раскрытия}. 
+Эта функция вызывается с макровызовом в качестве первого аргумента и лексическим
+окружением в качестве второго. Функция должна вернуть новую Lisp'овую форму,
+называемую \emph{раскрытием} макровызова. (На самом деле учавствует более общий
+механизм, смотрите \cdf{macroexpand}.)
+Затем это раскрытие выполняется по месту оригинальной (исходной) формы.
+
 When a function is being compiled, any macros it contains are expanded
 at compilation time.  This means that a macro definition must be seen by the
 compiler before the first use of the macro.
+
+Когда функция компилируется, все макросы, в ней содержащиеся, раскрываются во
+время компиляции. Это значит, что определение макроса должно быть прочитано
+компилятором до его первого использования.
 
 More generally, an implementation of Common Lisp has great latitude in deciding
 exactly when to expand macro calls within a program.  For example,
@@ -43,11 +67,23 @@ being defined.
 (An implementation might even choose always to compile functions defined
 by \cdf{defun}, even when operating in an ``interpretive'' mode.)
 
+В целом, реализация Common Lisp'а имеет большую свободу в выборе того, когда в
+программе раскрываются макровызовы.
+Например, допускается для специальной формы \cdf{defun} раскрытие всех
+внутренних макровызовов в время выполнения формы \cdf{defun} и записи полностью
+раскрытого тела функции, как определение данной функции для дальнейшего
+использования.
+(Реализация может даже выбрать путь, все время компилировать функции
+определенные с помощью \cdf{defun}, даже в режиме <<интерпретации>>.)
+
 Macros should be written so as to depend as little as possible
 on the execution environment to produce a correct expansion.  To ensure
 consistent behavior, it is best to ensure that all macro definitions are
 available, whether to the interpreter or compiler, before any code
 containing calls to those macros is introduced.
+
+Для правильного раскрытия макросы должны быть написаны так, чтобы иметь
+наименьшие зависимости от выполняемого окружения.
 
 In Common Lisp, macros are not functions.
 In particular, macros cannot be used as
