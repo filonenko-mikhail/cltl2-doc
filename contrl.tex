@@ -962,7 +962,7 @@ on the outcome of the test \cd{(eq~a~b)}.
 \begin{lisp}
 (set (if (eq a b) 'c 'd) 'foo)
 \end{lisp}
-установит значение \cd{с} в \cd{foo} или \cd{d} в \cd{foo}, в зависимости от
+установит значение \cd{с} в \cd{foo} или \cdf{do*} в \cd{foo}, в зависимости от
 результата проверки \cd{(eq~a~b)}.
 
 \cdf{set} returns \emph{value} as its result.
@@ -2203,7 +2203,7 @@ An \emph{accessing form}
 \end{itemize}
 
 The temporary variables will be bound to the values of
-the value forms as if by \cd{let*}; that is, the
+the value forms as if by \cdf{let*}; that is, the
 value forms will be evaluated in the order given
 and may refer to the values of earlier value forms
 by using the corresponding variables.
@@ -2946,8 +2946,8 @@ See also \cdf{destructuring-bind}.
 \begin{new}
 X3J13 voted in January 1989
 \issue{VARIABLE-LIST-ASYMMETRY}
-to regularize the binding formats for \cdf{do}, \cd{do*}, \cdf{let},
-\cd{let*}, \cdf{prog}, \cd{prog*}, and \cdf{compiler-let}.
+to regularize the binding formats for \cdf{do}, \cdf{do*}, \cdf{let},
+\cdf{let*}, \cdf{prog}, \cdf{prog*}, and \cdf{compiler-let}.
 The new syntactic definition for \cdf{let} makes the \emph{value} optional:
 
 \begin{defmac}
@@ -2962,10 +2962,14 @@ meaning the same as simply \emph{var}.
 \begin{defspec}
 let* ({var | (var value)}*) {declaration}* {\,form}*
 
-\cd{let*} is similar to \cdf{let}, but the bindings of variables
+\cdf{let*} is similar to \cdf{let}, but the bindings of variables
 are performed sequentially rather than in parallel.  This allows
 the expression for the value of a variable to refer to variables
-previously bound in the \cd{let*} form.
+previously bound in the \cdf{let*} form.
+
+\cdf{let*} похожа на \cdf{let}, но связывания переменных осуществляются
+последовательно, а не параллельно. Это позволяет выражениям для значений
+переменных ссылаться на ранее связанные переменные.
 
 More precisely, the form
 \begin{lisp}
@@ -2987,10 +2991,35 @@ first evaluates the expression \emph{value1}, then binds the variable
 and so on.
 The expressions \emph{bodyj} are then evaluated
 in order; the values of all but the last are discarded
-(that is, the body of a \cd{let*} form is an implicit \cdf{progn}).
-The \cd{let*} form returns the results of evaluating \emph{bodyn} (if the
-body is empty, which is fairly useless, \cd{let*} returns {\false} as its value).
+(that is, the body of a \cdf{let*} form is an implicit \cdf{progn}).
+The \cdf{let*} form returns the results of evaluating \emph{bodyn} (if the
+body is empty, which is fairly useless, \cdf{let*} returns {\false} as its value).
 The bindings of the variables have lexical scope and indefinite extent.
+
+Если точнее, форма
+\begin{lisp}
+(let* ((\emph{var1} \emph{value1}) \\
+~~~~~~~(\emph{var2} \emph{value2}) \\
+~~~~~~~... \\
+~~~~~~~(\emph{varm} \emph{valuem})) \\
+~~\emph{declaration1} \\
+~~\emph{declaration2} \\
+~~... \\
+~~\emph{declarationp} \\
+~~\emph{body1} \\
+~~\emph{body2} \\
+~~... \\
+~~\emph{bodyn})
+\end{lisp}
+сначала вычисляет выражение \emph{value1}, затем с этим значением связывает
+переменную \emph{var1}, затем вычисляет \emph{value2} и связывает с 
+результатом переменную \emph{var2}, и так далее.
+Затем последовательно вычисляются выражения \emph{bodyj}.
+Значения всех выражений, кроме последнего, игнорируются. То есть тело формы
+\cdf{let*} является неявным \cdf{progn}.
+Форма \cdf{let*} возвращает результаты вычисления \emph{bodyn} (если тело
+пустое, что, впринципе, бесполезно, \cdf{let*} возвращает {\false}).
+Связывания переменных имеют лексическую область видимости и неограниченную продолжительность.
 
 Instead of a list \cd{(\emph{varj} \emph{valuej})}, one may write simply \emph{varj}.
 In this case \emph{varj} is initialized to {\false}.  As a matter of style,
@@ -3002,20 +3031,32 @@ some undefined value, then it is clearer to write out
 \cd{(\emph{varj} '{\emptylist})} if the initial value is intended to be an empty
 list.
 
-Declarations may appear at the beginning of the body of a \cd{let*}.
+Вместо списка \cd{(\emph{varj} \emph{valuej})}, можно записать просто
+\emph{varj}.
+В таком случае \emph{varj} будет инициализирована в {\false}. В целях стиля,
+рекомендуется записывать \emph{varj}, только ей будет что-нибудь присвоено с
+помощью \cdf{setq} перед первым использованием.
+Если необходимо инициализировать переменную значением {\nil}, а не
+неопределенным, лучше писать \cd{(\emph{varj} {\false})} для инициализации
+<<ложью>> или \cd{(\emph{varj} '{\emptylist})} для инициализации пустым
+списком.
+
+Declarations may appear at the beginning of the body of a \cdf{let*}.
 See \cdf{declare}.
+
+В начале тела \cd{let*} могут использоваться декларации. Смотрите \cdf{declare}.
 
 \begin{new}
 X3J13 voted in January 1989
 \issue{VARIABLE-LIST-ASYMMETRY}
-to regularize the binding formats for \cdf{do}, \cd{do*}, \cdf{let},
-\cd{let*}, \cdf{prog}, \cd{prog*}, and \cdf{compiler-let}.
-The new syntactic definition for \cd{let*} makes the \emph{value} optional:
+to regularize the binding formats for \cdf{do}, \cdf{do*}, \cdf{let},
+\cdf{let*}, \cdf{prog}, \cdf{prog*}, and \cdf{compiler-let}.
+The new syntactic definition for \cdf{let*} makes the \emph{value} optional:
 
 \begin{defmac}
 let* ({var | (var [value])}*) {declaration}* {\,form}*
 
-This changes \cd{let*} to allow a list \cd{(\emph{var})} to appear,
+This changes \cdf{let*} to allow a list \cd{(\emph{var})} to appear,
 meaning the same as simply \emph{var}.
 \end{defmac}
 \end{new}
@@ -3051,8 +3092,8 @@ Disallowing declarations eliminates the problem.
 
 X3J13 voted in January 1989
 \issue{VARIABLE-LIST-ASYMMETRY}
-to regularize the binding formats for \cdf{do}, \cd{do*}, \cdf{let},
-\cd{let*}, \cdf{prog}, \cd{prog*}, and \cdf{compiler-let}.
+to regularize the binding formats for \cdf{do}, \cdf{do*}, \cdf{let},
+\cdf{let*}, \cdf{prog}, \cdf{prog*}, and \cdf{compiler-let}.
 The new syntactic definition for \cdf{compiler-let} makes the \emph{value} optional:
 
 \begin{defmac}
@@ -3504,6 +3545,25 @@ construct may be stylistically preferable,
 depending on the context.
 If the value is not important, but only the effect, then the \cdf{when}
 construct may be stylistically preferable.
+
+Специальная формы \cdf{if} обозначает то же, что и конструкция
+\textbf{if}-\textbf{then}-\textbf{else} в большинстве других языках
+программирования.
+Сначала выполняется форма \emph{test}. Если резльутат не равен {\false}, тогда
+выбирается форма \emph{then}. Иначе выбирается форма \emph{else}.
+Выбранная ранее форма выполняется, и \cdf{if} возвращает то, что вернула это
+форма.
+\begin{lisp}
+(if \emph{test} \emph{then} \emph{else}) \EQ\ (cond (\emph{test} \emph{then}) ({\true} \emph{else}))
+\end{lisp}
+Но в некоторых ситуациях \cdf{if} оказывается более читабельным.
+
+Форма \emph{else} может быть опущена. В таком случае, если значение формы
+\emph{test} является {\false}, тогда ничего не будет выполнено и возвращаемое
+значение формы \cdf{if} будет {\false}.
+Если в этой ситуации значение формы \cdf{if} важно, тогда в зависимости от
+контекста стилистически удобнее использовать форму \cdf{and}.
+Если значение не важно, тогда удобнее использовать конструкцию \cdf{when}.
 \end{defspec}
 
 \begin{defmac}
@@ -3526,6 +3586,23 @@ As a matter of style,
 and the value of the \cdf{when} form is normally not used.
 If the value is relevant, then it may be
 stylistically more appropriate to use \cdf{and} or \cdf{if}.
+
+\cd{(when \emph{test} \emph{form1} \emph{form2} ... )}
+сначала выполняет \emph{test}. Если результат {\false}, тогда ничего не
+выполняется и возвращается {\false}.
+Иначе, последовательно выполняются формы \emph{form}
+слева направо (как неявный \cdf{progn}), и возвращается значение последней
+формы.
+\begin{lisp}
+(when \emph{p} \emph{a} \emph{b} \emph{c}) \EQ\ (and \emph{p} (progn \emph{a} \emph{b} \emph{c})) \\
+(when \emph{p} \emph{a} \emph{b} \emph{c}) \EQ\ (cond (\emph{p} \emph{a} \emph{b} \emph{c})) \\
+(when \emph{p} \emph{a} \emph{b} \emph{c}) \EQ\ (if \emph{p} (progn \emph{a} \emph{b} \emph{c}) {\false}) \\
+(when \emph{p} \emph{a} \emph{b} \emph{c}) \EQ\ (unless (not \emph{p}) \emph{a} \emph{b} \emph{c})
+\end{lisp}
+В целях хорошего стиля, \cdf{when} обычно используется для выполнения побочных
+эффектов при некоторых условиях, и значение \cdf{when} не используется.
+Если значение все-таки важно, тогда может быть стилистически более подходящи
+функции \cdf{and} или \cdf{if}.
 \end{defmac}
 
 \begin{defmac}
@@ -3547,6 +3624,23 @@ As a matter of style,
 and the value of the \cdf{unless} form is normally not used.
 If the value is relevant, then it may be
 stylistically more appropriate to use \cdf{if}.
+
+\cd{(unless \emph{test} \emph{form1} \emph{form2} ... )}
+сначала выполняет \emph{test}. Если результат \emph{не} {\false}, тогда ничего не
+выполняется и возвращается {\false}.
+Иначе, последовательно выполняются формы \emph{form}
+слева направо (как неявный \cdf{progn}), и возвращается значение последней
+формы.
+\begin{lisp}
+(unless \emph{p} \emph{a} \emph{b} \emph{c}) \EQ\ (cond ((not \emph{p}) \emph{a} \emph{b} \emph{c})) \\
+(unless \emph{p} \emph{a} \emph{b} \emph{c}) \EQ\ (if \emph{p} {\false} (progn \emph{a} \emph{b} \emph{c})) \\
+(unless \emph{p} \emph{a} \emph{b} \emph{c}) \EQ\ (when (not \emph{p}) \emph{a} \emph{b} \emph{c})
+\end{lisp}
+В целях хорошего стиля, \cdf{unless} обычно используется для выполнения побочных
+эффектов при некоторых условиях, и значение \cdf{unless} не используется.
+Если значение все-таки важно, тогда может быть стилистически более подходящая
+функция \cdf{if}.
+
 \end{defmac}
 
 \begin{defmac}
@@ -3568,6 +3662,21 @@ The first clause whose \emph{test} evaluates to non-{\false}
 is selected; all other clauses are ignored, and the consequents
 of the selected clause are evaluated in order (as an implicit \cdf{progn}).
 
+Форма \cdf{cond} содержит некоторое (возможно нулевое) количество подвыражений,
+которые является списками форм.
+Каждое подвыражение содержит форму условия и ноль и более форм для выполнения.
+Например:
+\begin{lisp}
+(cond (\emph{test-1} \emph{consequent-1-1} \emph{consequent-1-2} ...) \\
+~~~~~~(\emph{test-2}) \\
+~~~~~~(\emph{test-3} \emph{consequent-3-1} ...) \\
+~~~~~~... )
+\end{lisp}
+
+Отбирается первое подвыражение, чья форма условия вычисляется в не-{\false}. Все
+остальные подвыражения игнорируются. Формы отобранного подвыражения
+последовательно выполняются (как неявный \cdf{progn}).
+
 More specifically, \cdf{cond} processes its clauses in order from left to
 right.  For each clause, the \emph{test} is evaluated.  If the result is
 {\false}, \cdf{cond} advances to the next clause.  Otherwise, the \emph{cdr} of
@@ -3583,6 +3692,18 @@ then the single (and necessarily non-null) value of the \emph{test} is returned.
 If \cdf{cond} runs out of clauses (every test produced {\false},
 and therefore no clause was selected), the value of the \cdf{cond} form is
 {\false}.
+
+Если быть точнее, \cdf{cond} обрабатывает свои подвыражения слева направо. Для
+каждого подвыражения, вычисляется форма условия. Если результат {\false},
+\cdf{cond} переходит к следующему подвыражению. Если результат {\true},
+\emph{cdr} подвыражения обрабатывается, как список форм. Этот список выполняется
+слева направо, как неявный \cdf{progn}.
+После выполнения списка форм, \cdf{cond} возвращает управление без обработки
+оставщихся подвыражений.
+Специальная форма \cdf{cond} возвращает результат выполнения последней формы из
+списка. Если этот список пустой, тогда возвращается значение формы условия.
+Если \cdf{cond} вернула управление без вычисления какой-либо ветки (все условные
+формы вычислились в {\false}), возвращается значение {\false}.
 
 If it is desired to select the last clause unconditionally if all others
 fail, the standard convention is to use {\true} for the \emph{test}.
@@ -3616,11 +3737,48 @@ as found in many algebraic programming languages:
 \begin{lisp}
 ~~~~~~~~~~~~~~~~~~~~\=~~~~~~~~~~~~~~~~~~~~~\=\kill
 (cond (\emph{p} ...)\>\>\textbf{if} \emph{p} \textbf{then} ... \\
-~~~~~~(\emph{q} ...)\>\hbox to 6pc{\hss\rm roughly\hss}\>\textbf{else} \textbf{if} \emph{q} \textbf{then} ... \\
-~~~~~~(\emph{r} ...)\>\hbox to 6pc{\hss\rm corresponds\hss}\>\textbf{else} \textbf{if} \emph{r} \textbf{then} ... \\
-~~~~~~...\>\hbox to 6pc{\hss\rm to\hss}\>... \\
+~~~~~~(\emph{q} ...)\>\textrm{roughly}\>\textbf{else} \textbf{if} \emph{q} \textbf{then} ... \\
+~~~~~~(\emph{r} ...)\>\textrm{corresponds}\>\textbf{else} \textbf{if} \emph{r} \textbf{then} ... \\
+~~~~~~...\>\textrm{to}\>... \\
 ~~~~~~({\true} ...))\>\>\textbf{else} ...
 \end{lisp}
+
+Для того, чтобы выполнить последнее подвыражение, в случае если раньше ничего не
+выполнилось, можно использовать {\true} для формы условия.
+В целях стиля, если значение \cdf{cond} будет для чего-то использоваться,
+желательно записывать последнее выражение так: \cd{({\true} {\false})}.
+Также вопросом вкуса является запись последнего подвыражения \cdf{cond} как
+<<синглтон>>, в таком случае, используется неявный {\true}.
+(Следует отметить, если \emph{x} может возвращать несколько значений, то
+\cd{(cond ... (\emph{x}))} может вести себя отлично от 
+\cd{(cond ... ({\true} \emph{x}))}. Первое выражение всегда возвращает одно
+выражение, тогда как второе возвращает все то же, что и \emph{x}. В зависимости
+от стиля, можно указывать поведение явно \cd{(cond ... (t (values \emph{x})))},
+используя функцию \cdf{values} для явного указания возврата одного значения.)
+Например:
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\=\kill
+(setq z (cond (a 'foo) (b 'bar)))\>;\textrm{Возможна неопределенность} \\*
+(setq z (cond (a 'foo) (b 'bar) ({\true} {\false})))\>;\textrm{Уже лучше} \\
+(cond (a b) (c d) (e))\>;\textrm{Возможна неопределенность} \\*
+(cond (a b) (c d) ({\true} e))\>;\textrm{Уже лучше} \\*
+(cond (a b) (c d) ({\true} (values e)))\>;\textrm{Неплохо (если необходимо} \\*
+                                       \>;~\textrm{одно значение)} \\
+(cond (a b) (c))\>;\textrm{Возможна неопределенность} \\
+(cond (a b) (t c))\>;\textrm{Уже лучше} \\*
+(if a b c)\>;\textrm{Тоже неплохо}
+Lisp'овая форма \cdf{cond} сравнима с последовательностью
+\textbf{if}-\textbf{then}-\textbf{else}, используемой в большинстве
+алгебраических языках программирования:
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~\=~~~~~~~~~~~~~~~~~~~~~\=\kill
+(cond (\emph{p} ...)\>\>\textbf{if} \emph{p} \textbf{then} ... \\
+~~~~~~(\emph{q} ...)\>\textrm{roughly}\>\textbf{else} \textbf{if} \emph{q} \textbf{then} ... \\
+~~~~~~(\emph{r} ...)\>\textrm{corresponds}\>\textbf{else} \textbf{if} \emph{r} \textbf{then} ... \\
+~~~~~~...\>\textrm{to}\>... \\
+~~~~~~({\true} ...))\>\>\textbf{else} ...
+\end{lisp}
+
 \end{defmac}
 
 \begin{defmac}
@@ -3642,6 +3800,21 @@ and it behaves like \cdf{cond}
 in selecting one clause and then executing all consequents of that clause.
 However, \cdf{case} differs in the mechanism of clause selection.
 
+\cdf{case} условный оператор, который выбирает ветку для выполнения, в
+зависимости от равенства некоторой переменной некоторой константе. Константа
+обычно представляет собой ключевой символ, целое число или строковый символ (но
+может быть и любой другой объект). Вот развернутая форма:
+\begin{lisp}
+(case \emph{keyform} \\
+~~(\emph{keylist-1} \emph{consequent-1-1} \emph{consequent-1-2} ...) \\
+~~(\emph{keylist-2} \emph{consequent-2-1} ...) \\
+~~(\emph{keylist-3} \emph{consequent-3-1} ...) \\
+~~...)
+\end{lisp}
+Структурно \cdf{case} очень похож на \cdf{cond}, и поведение такое же: выбрать
+список форм и выполнить их.
+Однако \cdf{case} отличается механизмом выбора подвыражения.
+
 The first thing \cdf{case} does is to evaluate the form \emph{keyform}
 to produce an object called the \emph{key object}.
 Then \cdf{case} considers
@@ -3653,11 +3826,29 @@ clause are evaluated as an implicit \cdf{progn};
 consequent (or {\false} if there are no consequents in that clause).
 If no clause is satisfied, \cdf{case} returns {\false}.
 
+Сперва \cdf{case} вычисляет форму \emph{keyform} для получения объекта, который
+называется \emph{ключевой объект}.
+Затем \cdf{case} рассматривает все подвыражения. Если \emph{ключевой объект}
+присутствует в списке \emph{keylist} (то есть, если \emph{ключевой объект} равен
+\cdf{eql} хотя бы одному элементу из списка \emph{keylist}), то список форм
+выбранного подвыражения вычисляется, как неявный \cdf{progn}.
+\cdf{case} возвращает то же, что и последняя форма списка (или {\false} если
+список форм был пустой).
+Если ни одно подвыражение не удовлетворило условию, то \cdf{case} возвращает
+{\false}.
+
 The keys in the keylists are \emph{not} evaluated; literal key values
 must appear in the keylists.
 It is an error for the same key to appear in more than one clause;
 a consequence is that the order of the clauses does not affect
 the behavior of the \cdf{case} construct.
+
+Ключи в списке ключей \emph{keylist} \emph{не} выполняются. В данном списке
+должны быть указаны литеральные ключи.
+Если один ключ попадается более чем в одном подвыражении, это считается
+ошибкой.
+Следствием является то, что порядок этих подвыражений не влияет на поведение
+конструкции \cdf{case}.
 
 Instead of a \emph{keylist}, one may write one of the symbols
 {\true} and \cdf{otherwise}.  A clause with such a symbol
@@ -3667,10 +3858,24 @@ See also \cdf{ecase} and \cdf{ccase}, each of which provides
 an implicit \cdf{otherwise} clause to signal an error if no clause
 is satisfied.
 
+Вместо \emph{keylist} можно записать один из символов: {\true} или
+\cdf{otherwise}. Подвыражение с одним из таких символов всегда удовлетворяет
+условию выбора. Такое подвыражение должно быть последним (это исключение из
+правила о произвольности положения подвыражений).
+Смотрите также \cdf{ecase} и \cdf{ccase}, каждая из которых предоставляет
+неявное \cdf{otherwise} подвыражение для сигнализировании об ошибке, если ни
+одно подвыражение не удволетворило условию.
+
 If there is only one key for a clause, then that key may be written
 in place of a list of that key, provided that no ambiguity results.
 Such a ``singleton key'' may not be {\nil} (which is confusable
 with {\emptylist}, a list of no keys), {\true}, \cdf{otherwise}, or a cons.
+
+Если в подвыражении только один ключ, тогда этот ключ может быть записан вместо
+списка.
+Такой <<синглтоновый ключ>> не может быть {\nil} (так как возникают конфликты с
+{\emptylist}, который означает список без ключей), {\true}, \cdf{otherwise} или
+cons-ячейкой.
 
 \beforenoterule
 \begin{incompatibility}
@@ -3707,6 +3912,20 @@ and it behaves like them
 in selecting one clause and then executing all consequents of that clause.
 It differs in the mechanism of clause selection.
 
+\cdf{typecase} условный оператор, который выбирает подвыражение на основе типа
+объекта.
+Развернутая форма:
+\begin{lisp}
+(typecase \emph{keyform} \\*
+~~(\emph{type-1} \emph{consequent-1-1} \emph{consequent-1-2} ...) \\*
+~~(\emph{type-2} \emph{consequent-2-1} ...) \\*
+~~(\emph{type-3} \emph{consequent-3-1} ...) \\
+~~...)
+\end{lisp}
+Структура \cdf{typecase} похожа на \cdf{cond} или \cdf{case}. Поведение также
+схоже в том, что выбирается подвыражение в зависимости от условия.
+Различие заключается в механизме выбора подвыражения.
+
 The first thing \cdf{typecase} does is to evaluate the form \emph{keyform}
 to produce an object called the key object.
 Then \cdf{typecase} considers
@@ -3721,11 +3940,29 @@ and \cdf{typecase} returns what was returned by the last
 consequent (or {\false} if there are no consequents in that clause).
 If no clause is satisfied, \cdf{typecase} returns {\false}.
 
+Сперва \cdf{typecase} вычисляет форму \emph{keyform} для создания объекта,
+называемого ключевым объектом.
+Далее \cdf{typecase} друг за другом рассматривает каждое подвыражение. Форма
+\emph{type}, которая встречается в каждом подвыражении, является спецификатором
+типа. Данный спецификатор не вычисляется, поэтому должен быть литеральным.
+Когда ключевой объект приндалежит некоторый типу, то выделенный список форм
+\emph{consequent} выполняется последовательно (как неявный
+\cdf{progn}). \cdf{typecase} возвращает то, что вернула последняя форма из
+списка (или {\false} если список был пуст).
+Если не одно подвыражение не было выбрано, \cdf{typecase} возвращает {\false}.
+
 As for \cdf{case}, the symbol {\true} or \cdf{otherwise} may be written
 for \emph{type} to indicate that the clause should always be selected.
 See also \cdf{etypecase} and \cdf{ctypecase}, each of which provides
 an implicit \cdf{otherwise} clause to signal an error if no clause
 is satisfied.
+
+Как и для \cdf{case} можно использовать {\true} или \cdf{otherwise} на позиции
+\emph{типа} для задания подвыражений, которые будут выполняться, только если не
+было выполнено других подвыражений.
+Смотрите также \cdf{etypecase} и \cdf{ctypecase}, каждая из которых
+предоставляет неявную ветку \cdf{otherwise} для сигнализировании об ошибке, что
+ни одно подвыражение не удовлетворило условию.
 
 It is permissible for more than one clause to specify a given type,
 particularly if one is a subtype of another; the earliest applicable
@@ -3745,9 +3982,26 @@ For example:
 A Common Lisp compiler may choose to issue a warning if
 a clause cannot be selected because it is completely shadowed by
 earlier clauses.
+
+Допустимо указывать более одного подвыражение, тип условия которого уже является
+подтипом условия другого подвыражения. В таком случае будет выбрано первое
+встретившееся подвыражение. Таким образом в \cdf{typecase}, в отличие от
+\cdf{case}, порядок следования подвыражений влияет на поведение всей
+конструкции.
+\begin{lisp}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\=\kill
+(typecase an-object \\
+~~~(string ...)\>;\textrm{Подвыражение обрабатывает строки} \\
+~~~((array t) ...)\>;\textrm{Подвыражение обрабатывает общие массивы} \\
+~~~((array bit) ...)\>;\textrm{Подвыражение обрабатывает битовые массивы} \\
+~~~(array ...)\>;\textrm{Обрабатывает все остальные массивы} \\
+~~~((or list number) ...)\>;\textrm{Подвыражение обрабатывает списки и числа} \\
+~~~(t ...))\>;\textrm{Подвыражение обрабатывает все остальные объекты}
+\end{lisp}
+
 \end{defmac}
 
-\section{Blocks and Exits}
+\section{Blocks and Exits Блоки и выходы}
 \label{BLOCK-RETURN-SECTION}
 
 The \cdf{block} and \cdf{return-from} constructs provide a structured lexical
@@ -3758,6 +4012,14 @@ exits from the \cdf{block}.  In the most common cases this mechanism is
 more efficient than the dynamic non-local exit facility
 provided by \cdf{catch} and \cdf{throw}, described in
 section~\ref{CATCH-THROW-SECTION}.
+
+Конструкции \cdf{block} и \cdf{return-from} предоставляют функциональность для
+структурированного лексического нелокального выхода. В любом месте лексически
+внутри конструкции \cdf{block}, для мгновенного возврата управления из
+\cdf{block} может быть использована \cdf{return-from} с тем же именем.
+В большинстве случаев этот механизм более эффективный, чем функциональность
+динамического нелокального выхода, предоставляемая формами \cdf{catch} и
+\cdf{throw}, описанными в разделе~\ref{CATCH-THROW-SECTION}.
 
 \begin{defspec}
 block name {\,form}*
@@ -3805,6 +4067,45 @@ to the block in question.
 It is possible for a ``closure'' created by \cdf{function} for
 a lambda-expression to refer to a block name as long as the name
 is lexically apparent.
+
+Конструкция \cdf{block} слева направо выполняет каждую форму \emph{form},
+возвращая то, что возвращает последняя форма.
+Если, однако, в процессе выполнения форм, будет выполнена \cdf{return} или
+\cdf{return-from} с именем \emph{name}, тогда будет возвращен результат заданный
+одной из этих форм, и поток выполнения немедленно выйдет из формы \cdf{block}.
+Таким образом \cdf{block} отличается от \cdf{progn} тем, что последняя никак не
+реагирует на \cdf{return}.
+
+Имя блока не выполяется. Оно должно быть символом.
+Область видимости имени блока лексическая. Из блока можно осуществить выход с
+помощью \cdf{return} или \cdf{return-from}, только если они текстово содержаться
+в блоке. Продолжительность видимости имени динамическая.
+Таким образом из блока во время выполнения можно выйти только один раз, обычно
+или явно с помощью \cdf{return}.
+
+Форма \cdf{defun} неявно помещает тело функции в одноименный блок. 
+Таким образом можно использовать \cdf{return-from} для преждевременного выхода
+из функции в определении \cdf{defun}.
+
+Лексическая область видимости имени блока полноценна и имеет последствия,
+которые могут быть сюрпризом для пользователей и разработчиков других Lisp
+систем.
+Например, \cdf{return-from} в следующем примере в Common Lisp работает так как
+и ожидается:
+\begin{lisp}
+(block loser \\
+~~~(catch 'stuff \\
+~~~~~~(mapcar \#'(lambda (x) (if (numberp x) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(hairyfun x) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(return-from loser {\nil}))) \\
+~~~~~~~~~~~~~~items)))
+\end{lisp}
+В зависимости от ситуации, \cdf{return} в Common Lisp'е может быть не проста.
+\cdf{return} может перескочить ловушки, если это необходимо, для
+рассматриваемого блока.
+Также возможно для <<замыкания>>, созданного с помощью \cdf{function} для
+лямбда-выражения, ссылаться на имя блока на протяжении лексической доступности
+этого блока.
 \end{defspec}
 
 \begin{defspec}
@@ -3826,6 +4127,24 @@ The \cdf{return-from} form itself never returns and cannot have a value;
 it causes results to be returned from a \cdf{block} construct.
 If the evaluation of \emph{result} produces multiple values,
 those multiple values are returned by the construct exited.
+
+\cdf{return-from} используется для возврата из \cdf{block} или из таких
+конструкций, как \cdf{do} и \cdf{prog}, которые неявно устанавливают
+\cdf{block}.
+Имя \emph{name} не выполняется и должно быть символом.
+Конструкция \cdf{block} с этим именем должна лексически охватывать форму
+\cdf{return-from}.
+Каков бы ни был результат вычисления формы \emph{result}, управление немедленно
+возвращается из блока.
+(Если форма \emph{result} опущена, тогда используется значение {\nil}. В целях
+стиля, эта форма обязана использоваться для указания того, что возвращаемое
+значение не имеет ценности.)
+
+Форма \cdf{return-from} сама по себе ничего и никогда не возвращает.
+Она указывает на то, что результат выполнения будет возвращен из конструкции
+\cdf{block}.
+Если вычисление формы \emph{result} приводит к нескольким значение, эти
+несколько значений и будут возвращены и конструкции.
 \end{defspec}
 
 \begin{defmac}
@@ -3836,16 +4155,23 @@ to \cd{(return-from {\nil} \emph{form})}; it returns from a block named {\nil}.
 Blocks established implicitly by iteration constructs such
 as \cdf{do} are named {\nil}, so that \cdf{return} will exit properly from
 such a construct.
+
+\cd{(return \emph{form})} идентично по смыслу 
+\cd{(return-from {\nil} \emph{form})}. Она возвращает управление из блока с
+именем {\nil}.
+Такие блоки с именем {/nil} устанавливаются автоматически в конструкциях циклов,
+таких как \cdf{do}, таким образом \cdf{return} будет производить корректный
+выход из таких конструкций.
 \end{defmac}
 
-\section{Iteration}
+\section{Iteration Цикл}
 \indexterm{iteration}
 
 Common Lisp provides a number of iteration constructs.  The \cdf{loop}
 construct provides a trivial iteration facility; it is little more
 than a \cdf{progn} with a branch from the bottom back to the top.
 The \cdf{do}
-and \cd{do*} constructs provide a general iteration facility
+and \cdf{do*} constructs provide a general iteration facility
 for controlling the variation of several variables on each cycle.
 For specialized iterations
 over the elements of a list or \emph{n} consecutive integers, \cdf{dolist} and
@@ -3856,10 +4182,26 @@ traditional \cdf{prog} construct is a synthesis of \cdf{tagbody},
 Most of the iteration constructs permit statically defined non-local exits
 (see \cdf{return-from} and \cdf{return}).
 
-\subsection{Indefinite Iteration}
+Common Lisp предоставляет некоторые конструкции для циклов. Конструкция
+\cdf{loop} предоставляет простую функциональность. Она слегка больше, чем
+\cdf{progn}, и имеет ветку для переноса управления снизу вверх.
+Конструкции \cdf{do} и \cdf{do*} предоставляют общую функциональность для
+управления на каждом цикле изменением нескольких переменных.
+Для специализированных циклов над элементами списка или \emph{n}
+последовательных чисел предоставляются формы \cdf{dolist} и \cdf{dotimes}.
+Конструкция \cdf{tagbody} наиболее общая конструкция, которая внутри себя
+позволяет использование выражений \cdf{go}. (Традиционная конструкция \cdf{prog}
+--- это синтез \cdf{tagbody}, \cdf{block} и \cdf{let}.)
+Большинство конструкций циклов позволяют определенные статически нелокальные
+выходы (смотрите \cdf{return-from} и \cdf{return}).
+
+\subsection{Indefinite Iteration Бесконечный цикл}
 
 The \cdf{loop} construct is the simplest iteration facility.
 It controls no variables, and simply executes its body repeatedly.
+
+Конструкция \cdf{loop} является наипростейшей функциональностью для итераций.
+Она не управляет переменными, и просто циклично выполняет свое тело.
 
 \begin{defmac}
 loop {\,form}*
@@ -3874,6 +4216,18 @@ explicitly, using \cdf{return} or \cdf{throw}, for example.
 establishes an implicit block named {\nil}.
 Thus \cdf{return} may be used to exit from a \cdf{loop} with specified results.
 
+Каждая форма \emph{form} выполняется последовательно слева направо.
+Когда вычислена последняя форма, тогда вычисляется первая форма и так далее,
+в безостановочном цикле.
+Конструкция \cdf{loop} никогда не возвращает значение. Ее выполнение может быть
+остановлено явно, с помощью \cdf{return} или \cdf{throw}, например.
+
+\cdf{loop}, как и многие конструкции циклов, устанавливает неявный блок с именем
+{\nil}.
+Таким образом, \cdf{return} с заданным результатом может использоваться для
+выхода и \cdf{loop}.
+
+\cdf{loop}
 \begin{obsolete}
 A \cdf{loop} construct has this meaning only if every \emph{form} is
 non-atomic (a list).  The case where some \emph{form} is
@@ -3898,10 +4252,13 @@ to include just such an extension of \cdf{loop}.  See chapter~\ref{LOOP}.
 \end{defmac}
 
 
-\subsection{General Iteration}
+\subsection{General Iteration Общие циклы}
 
-In contrast to \cdf{loop}, \cdf{do} and \cd{do*} provide a powerful
+In contrast to \cdf{loop}, \cdf{do} and \cdf{do*} provide a powerful
 and general mechanism for repetitively recalculating many variables.
+
+В отличие от \cdf{loop}, \cdf{do} и \cdf{do*} предоставляют мощный механизм для
+повторных вычислений большого количества переменных. 
 
 \begin{defmac}
 do ({(var [init [step]])}*)
@@ -3918,6 +4275,15 @@ in specified ways.  They may be used both to generate successive
 values of interest (such as successive integers) or to accumulate results.
 When an end condition is met, the iteration terminates with a specified value.
 
+Специальная форма \cdf{do} представляет общую функциональность цикла, с
+произвольным количеством <<переменных-индексов>>.
+Эти переменные связываются при входе в цикл и параллельно наращиваются, как это
+было задано. Они могут быть использованы, как для генерации необходимых
+последовательных чисел (как, например, последовательные целые числа), так и для
+накопления результата.
+Когда условие окончания цикла успешно выполнилось, тогда цикл завершается с
+заданным значением.
+
 In general, a \cdf{do} loop looks like this:
 \begin{lisp}
 (do ((\emph{var1} \emph{init1} \emph{step1}) \\
@@ -3928,8 +4294,20 @@ In general, a \cdf{do} loop looks like this:
 ~~\Mstar{\emph{declaration}} \\
 ~~. \emph{tagbody})
 \end{lisp}
-A \cd{do*} loop looks exactly the same except that the name \cdf{do} is
-replaced by \cd{do*}.
+A \cdf{do*} loop looks exactly the same except that the name \cdf{do} is
+replaced by \cdf{do*}.
+
+В общем виде \cdf{do} выглядит так:
+\begin{lisp}
+(do ((\emph{var1} \emph{init1} \emph{step1}) \\
+~~~~~(\emph{var2} \emph{init2} \emph{step2}) \\
+~~~~~... \\
+~~~~~(\emph{varn} \emph{initn} \emph{stepn})) \\
+~~~~(\emph{end-test} . \emph{result}) \\
+~~\Mstar{\emph{declaration}} \\
+~~. \emph{tagbody})
+\end{lisp}
+Цикл \cdf{do*} выглядит также, кроме изменения имени с \cdf{do} на \cdf{do*}.
 
 The first item in the form is a list of zero or more index-variable
 specifiers.  Each index-variable specifier is a list of the name of a
@@ -3939,6 +4317,14 @@ If \emph{init} is omitted, it defaults to {\false}.
 If \emph{step} is omitted, the \emph{var} is not changed by the \cdf{do} construct
 between repetitions (though code within the \cdf{do} is free to alter
 the value of the variable by using \cdf{setq}).
+
+Первый элемент формы является списком нуля и более спецификаторов
+переменных-индексов. Каждый спецификатор является списком из имени переменной
+\emph{var}, первоначального значения \emph{init}, и форма приращения
+\emph{step}.
+Если \emph{init} опущен, используется первоначальное значение {\false}.
+Если \emph{step} опущен, \emph{var} не изменяется на итерациях цикла (но может
+изменяться в теле цикла с помощью формы \cdf{setq}).
 
 An index-variable specifier can also be just the name of a variable.
 In this case, the variable has an initial value of {\false} and is
@@ -3953,12 +4339,23 @@ some undefined value, then it is clearer to write out
 \cd{(\emph{varj} '{\emptylist})} if the initial value is intended to be an empty
 list.
 
+Спецификатор переменной-индекса может также быть просто именем переменной.
+В этом случае переменная будет иметь первоначальное значение {\false} и не будет
+изменяться при итерациях цикла.
+В целях стиля, использовать просто имя переменной рекомендуется, только если перед
+первым использованием для нее устанавливается значение с помощью \cdf{setq}.
+Если необходимо чтобы первоначальное значение было {\false}, а не
+неопределенное, то лучше указывать это явно, если нужна ложь так:
+\cd{(\emph{varj} {\false})}
+или если нужен пустой список так:
+\cd{(\emph{varj} '{\emptylist})}.
+
 \begin{new}
 X3J13 voted in January 1989
 \issue{VARIABLE-LIST-ASYMMETRY}
-to regularize the binding formats for \cdf{do}, \cd{do*}, \cdf{let},
-\cd{let*}, \cdf{prog}, \cd{prog*}, and \cdf{compiler-let}.
-In the case of \cdf{do} and \cd{do*} the first edition was inconsistent;
+to regularize the binding formats for \cdf{do}, \cdf{do*}, \cdf{let},
+\cdf{let*}, \cdf{prog}, \cdf{prog*}, and \cdf{compiler-let}.
+In the case of \cdf{do} and \cdf{do*} the first edition was inconsistent;
 the formal syntax fails to reflect the fact that a simple variable
 name may appear, as described in the preceding paragraph.  The
 definitions should read
@@ -3984,18 +4381,35 @@ is bound; hence all the
 \emph{init} forms may refer to the old bindings of all the variables
 (that is, to the values visible before beginning execution of
 the \cdf{do} construct).
-For \cd{do*}, the first \emph{init} form is evaluated, then the first
+For \cdf{do*}, the first \emph{init} form is evaluated, then the first
 \emph{var} is bound to that value, then the second \emph{init} form
 is evaluated, then the second \emph{var} is bound, and so on;
 in general, the \emph{initj} form can refer to the \emph{new} binding \emph{vark}
-if $\emph{k\/}<\emph{j}$, and otherwise to the \emph{old} binding of \emph{vark}.
+if $k<j$, and otherwise to the \emph{old} binding of
+\emph{vark}.
+
+Перед первой итерацией вычисляются все формы \emph{init}, и каждая переменная
+\emph{var} связывается с соотвествующим результатом вычислений \emph{init}.
+Используется именно связывание, а не присвоение. Когда цикл завершается, старые
+значения этих переменных восстанавливаются.
+Для \cdf{do}, \emph{все} формы \emph{init} вычисляется перед тем, как будут
+связаны переменные \emph{var}. Таким образом все формы могут ссылаться на старые
+связывания этих переменных
+(то есть на значения, которые были видимы до начала выполнения конструкции
+\cdf{do}).
+Для \cdf{do*} вычисляется первая форма \emph{init}, затем первая переменная
+связывается с результатом этих вычислений. Затем вычисляется вторая форма
+\emph{init} и вторая переменная \emph{var} связывается с этим значением, и так
+далее.
+В целом, форма \emph{initj} может ссылаться на \emph{новые} связывания
+\emph{vark}, если $k<j$, иначе ссылка происходит на \emph{старое} связывание.
 
 The second element of the loop is a list of an end-testing
 predicate form \emph{end-test} and zero or more \emph{result} forms.
 This resembles a \cdf{cond} clause.
 At the beginning of each iteration, after processing the variables,
 the \emph{end-test} is evaluated.  If the result is
-{\false}, execution proceeds with the body of the \cdf{do} (or \cd{do*}) form.
+{\false}, execution proceeds with the body of the \cdf{do} (or \cdf{do*}) form.
 If the
 result is not {\false}, the \emph{result} forms are evaluated in order
 as an implicit \cdf{progn},
@@ -4006,6 +4420,20 @@ If there are no \emph{result} forms, the value of \cdf{do} is {\false}.
 Note that this is not quite analogous to the treatment of
 clauses in a \cdf{cond} form, because a \cdf{cond} clause
 with no \emph{result} forms returns the (non-{\nil}) result of the test.
+
+Второй элемент конструкции цикла это список из формы предиката-выхода
+\emph{end-test} и нуля и более форм результата \emph{result}.
+Этот элемент напоминает подвыражение \cdf{cond}.
+В начале каждой итерации, после обработки всех переменных, вычисляется форма
+\emph{end-test}. Если результат {\false}, выполняется тело формы \cdf{do} (или
+\cdf{do*}).
+Если результат не {\false}, последовательно вычисляются формы \emph{result}, как
+неявный \cdf{progn},
+и затем \cdf{do} возвращает управление. \cdf{do} возвращает результаты
+вычисления последей формы \emph{result}.
+Если таких форм не быть, значением \cdf{do} становиться {\false}.
+Следует отметить, что аналогия с подвыражениями \cdf{cond} не полная, так как
+\cdf{cond} в этом случае возвращает результат формы условия.
 
 At the beginning of each iteration other than the first, the
 index variables are updated as follows.  All the \emph{step} forms
@@ -4019,14 +4447,35 @@ Because \emph{all} of the \emph{step} forms are evaluated before \emph{any}
 of the variables are altered, a \emph{step} form when evaluated always has
 access to the \emph{old} values of \emph{all} the index variables,
 even if other \emph{step} forms precede it.
-For \cd{do*}, the first \emph{step} form is evaluated, then the
+For \cdf{do*}, the first \emph{step} form is evaluated, then the
 value is assigned to the first \emph{var}, then the second \emph{step} form
 is evaluated, then the value is assigned to the second \emph{var}, and so on;
 the assignment of values to variables is done sequentially,
 as if by \cdf{setq}.
-For either \cdf{do} or \cd{do*},
+For either \cdf{do} or \cdf{do*},
 after the variables have been updated,
-the \emph{end-test} is evaluated as described above, and the iteration continues.
+the \emph{end-test} is evaluated as described above, and the iteration
+continues.
+
+Переменные-индексы изменяются в начале каждой непервой итерации так, как
+написано далее. Слева направо вычисляются все формы \emph{step}, и затем
+результаты присваиваются переменным-индексам.
+Если такой формы \emph{step} для переменной указано не было, то переменная и не
+изменяется.
+Для \cdf{do}, все формы \emph{step} вычисляются перед там, как будут изменены
+переменные. Присваивания переменным осуществляются параллельно, как в
+\cdf{psetq}.
+Так как \emph{все} формы \emph{step} вычисляются перед тем, как будет изменена
+хоть одна переменных, форма \emph{step} при вычислении всегда ссылается на
+старые значения \emph{всех} переменных-индексов, даже если другие формы
+\emph{step} были выполнены.
+Для \cdf{do*}, вычисляется первая форма \emph{step}, затем полученное значение
+присваивается первой переменной-индексом, затем вычисляется вторая форма
+\emph{step}, и полученное значение присваивается второй переменной, и так
+далее. Присваивание происходит последовательно, как в \cdf{setq}.
+И для \cdf{do}, и для \cdf{do*} после того как переменные были изменены,
+вычисляется \emph{end-test} так, как уже было описано выше. Затем продолжаются
+итерации.
 
 If the \emph{end-test} of a \cdf{do} form is \cd{{\false}},
 the test will never succeed.
@@ -4046,6 +4495,25 @@ For example:
 ~~~~~~~~(format t "{\Xtilde}\&Output {\Xtilde}D: {\Xtilde}S" j (process item)))))
 \end{lisp}
 
+Если \emph{end-test} формы \cdf{do} равен \cd{{\false}}, тогда предикат всегда
+ложен.
+Таким образом получается <<бесконечный цикл>>:
+тело \emph{body} \cdf{do} выполняется циклично, переменные-индексы изменяются
+как обычно. (Конструкция \cdf{loop} также является <<бесконечным циклом>>,
+только без переменных-индексов.)
+Бесконечный цикл может быть остановлен использованием \cdf{return},
+\cdf{return-from}, \cdf{go} на более высокий уровень или \cdf{throw}.
+Например:
+\begin{lisp}
+(do ((j 0 (+ j 1))) \\
+~~~~({\false})~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Выполнять вечно} \\
+~~(format t "{\Xtilde}\%Input {\Xtilde}D:" j) \\
+~~(let ((item (read))) \\
+~~~~(if (null item) (return)~~~~~;\textrm{Обрабатывать элементы пока не найден {\false}} \\
+~~~~~~~~(format t "{\Xtilde}\&Output {\Xtilde}D: {\Xtilde}S" j (process item)))))
+\end{lisp}
+
+
 The remainder of the \cdf{do} form constitutes an implicit \cdf{tagbody}.
 Tags may appear within the body of a \cdf{do} loop
 for use by \cdf{go} statements appearing in the body (but such \cdf{go}
@@ -4054,14 +4522,31 @@ or the \emph{result} forms).
 When the end of a \cdf{do} body is reached, the next iteration cycle
 (beginning with the evaluation of \emph{step} forms) occurs.
 
+Оставшаяся часть \cdf{do} оборачивается в неявный \cdf{tagbody}.
+Тэги могут использоваться внутри тела цикла \cdf{do} для того, чтобы затем
+использовать выражения \cdf{go}. На такие выражения \cdf{go} не могут
+использоваться в спецификаторах переменных-индексов, в предикате
+\emph{end-test} и в формах результата \emph{result}.
+Когда управление достигает конца тела цикла \cdf{do}, наступает следующая
+цикл итерации (начинающийся с вычисления форм \emph{step}).
+
 An implicit \cdf{block} named {\nil} surrounds the entire \cdf{do} form.
 A \cdf{return} statement may be used at any point to exit the loop
 immediately.
+
+Неявный \cdf{block} с именем {\nil} окружает всю форму \cdf{do}.
+Выражение \cdf{return} может использоваться в любом месте для немедленного
+выхода из цикла.
 
 \cdf{declare} forms may appear at the beginning of a \cdf{do} body.
 They apply to code in the \cdf{do} body, to the bindings of the \cdf{do}
 variables, to the \emph{init} forms, to the \emph{step} forms,
 to the \emph{end-test}, and to the \emph{result} forms.
+
+Формы \cdf{declare} могут использоваться в начала тела \cdf{do}.
+Они применяются к коду внутри тела \cdf{do}, для связываний переменных-индексов,
+для форм \emph{init}, для форм \emph{step}, для предиката \emph{end-test} и для
+форм результата \emph{result}.
 
 \beforenoterule
 \begin{incompatibility}
@@ -4096,6 +4581,26 @@ iteration, the value of \cdf{oldx} is whatever value \cdf{x} had before
 the \cdf{do} was entered.  On succeeding iterations, \cdf{oldx} contains
 the value that \cdf{x} had on the previous iteration. 
 
+Вот парочка примеров использования \cdf{do}:
+\begin{lisp}
+(do ((i 0 (+ i 1))~~~~~;\textrm{Sets every null element of \cdf{a-vector} to zero} \\*
+~~~~~(n (length a-vector))) \\*
+~~~~((= i n)) \\
+~~(when (null (aref a-vector i)) \\*
+~~~~(setf (aref a-vector i) 0)))
+\end{lisp}
+Конструкция
+\begin{lisp}
+(do ((x e (cdr x)) \\*
+~~~~~(oldx x x)) \\*
+~~~~((null x)) \\*
+~~\emph{body})
+\end{lisp}
+использует параллельное присваивание пременным-индексам. На первой итерации
+значение \cdf{oldx} получает значение \cd{x}, которое было до входа в цикл.
+При выходе из цикла \cd{oldx} будет содержать значение \cd{x}, которое было на
+предыдущей итерации.
+
 Very often an iterative algorithm can be most clearly expressed entirely
 in the \emph{step} forms of a \cdf{do}, and the \emph{body} is empty.
 For example,
@@ -4120,6 +4625,31 @@ is a standard idiom.  Another example:
 Note the use of \cdf{endp} rather than \cdf{null} or \cdf{atom}
 to test for the end of a list; this may result in more robust code.
 
+Очень часто алгоритм цикла может быть по большей части выражен в формах
+\emph{step} и тело при этом останется пустым.
+Например,
+\begin{lisp}
+(do ((x foo (cdr x)) \\*
+~~~~~(y bar (cdr y)) \\*
+~~~~~(z '{\emptylist} (cons (f (car x) (car y)) z))) \\
+~~~~((or (null x) (null y)) \\*
+~~~~~(nreverse z)))
+\end{lisp}
+делает то же, что и \cd{(mapcar \#'f foo bar)}. Следует отметить, что вычисление
+\emph{step} для \cd{z} использует тот факт, что переменные переприсваиваются
+параллельно.
+Тело функции пустое. Наконец, использование \cdf{nreverse} в форме возврата
+результата, переставляет элементы списка для правильного результата. Другой
+пример:
+\begin{lisp}
+(defun list-reverse (list) \\*
+~~~~~~~(do ((x list (cdr x)) \\*
+~~~~~~~~~~~~(y '{\emptylist} (cons (car x) y))) \\*
+~~~~~~~~~~~((endp x) y)))
+\end{lisp}
+Нужно заметить, что используется \cdf{endp} вместо \cdf{null} или \cdf{atom}
+для проверки конца списка. Это дает более надежный алгоритм.
+
 As an example of nested loops, suppose that \cdf{env} holds a list
 of conses.  The \emph{car} of each cons is a list of symbols,
 and the \emph{cdr} of each cons is a list of equal length containing
@@ -4140,6 +4670,27 @@ A lookup function on such a data structure might be
 (Notice the use of indentation in the above example
 to set off the bodies of the \cdf{do} loops.)
 
+В качестве примера вложенных циклов, предположим что \cd{env} содержит список
+cons-ячеек.
+\emph{car} элемента каждой cons-ячейки является списком символов, и \emph{cdr}
+каждой cons-ячейки является списком такой же длины с соответствующими
+значениями.
+Такая структура данных похожа на ассоциативный список, но она в отличие
+разделена на <<кадры>>. Общая структура напоминает грудную клетку.
+Функция поиска по такой структуре может быть такой:
+\begin{lisp}
+(defun ribcage-lookup (sym ribcage) \\*
+~~~~~~~(do ((r ribcage (cdr r))) \\*
+~~~~~~~~~~~((null r) {\false}) \\
+~~~~~~~~~(do ((s (caar r) (cdr s)) \\*
+~~~~~~~~~~~~~~(v (cdar r) (cdr v))) \\*
+~~~~~~~~~~~~~((null s)) \\
+~~~~~~~~~~~(when (eq (car s) sym) \\*
+~~~~~~~~~~~~~(return-from ribcage-lookup (car v))))))
+\end{lisp}
+(Примечание, использование отступов в примере выше выделяет тела вложенных
+циклов.) 
+
 A \cdf{do} loop may be explained in terms of the more primitive constructs
 \cdf{block}, \cdf{return}, \cdf{let}, \cdf{loop}, \cdf{tagbody},
 and \cdf{psetq} as follows:
@@ -4157,28 +4708,63 @@ and \cdf{psetq} as follows:
 ~~~~~~~~~~~~~~~~~... \\*
 ~~~~~~~~~~~~~~~~~\emph{varn} \emph{stepn}))))
 \end{lisp}
-\cd{do*} is exactly like \cdf{do} except that the bindings and steppings
+\cdf{do*} is exactly like \cdf{do} except that the bindings and steppings
 of the variables are performed sequentially rather than in parallel.
 It is as if, in the above explanation,
-\cdf{let} were replaced by \cd{let*} and \cdf{psetq} were replaced
+\cdf{let} were replaced by \cdf{let*} and \cdf{psetq} were replaced
 by \cdf{setq}.
+
+Цикл \cdf{do} может быть выражен в терминах более примитивных конструкций 
+\cdf{block}, \cdf{return}, \cdf{let}, \cdf{loop}, \cdf{tagbody}
+и \cdf{psetq}:
+\begin{lisp}
+(block nil \\*
+~~(let ((\emph{var1} \emph{init1}) \\*
+~~~~~~~~(\emph{var2} \emph{init2}) \\
+~~~~~~~~... \\*
+~~~~~~~~(\emph{varn} \emph{initn})) \\*
+~~~~\Mstar{\emph{declaration}} \\
+~~~~(loop (when \emph{end-test} (return (progn . \emph{result}))) \\*
+~~~~~~~~~~(tagbody . \emph{tagbody}) \\*
+~~~~~~~~~~(psetq \emph{var1} \emph{step1} \\*
+~~~~~~~~~~~~~~~~~\emph{var2} \emph{step2} \\*
+~~~~~~~~~~~~~~~~~... \\*
+~~~~~~~~~~~~~~~~~\emph{varn} \emph{stepn}))))
+\end{lisp}
+\cdf{do*} почти то же, что и \cdf{do} за исключением того, что связывание и
+наращение переменных происходит последовательно, а не праллельно.
+Таким образом, в вышеприведенной конструкции, \cdf{let} будет заменен на
+\cdf{let*} и \cdf{psetq} на \cdf{setq}.
+
 \end{defmac}
 
-\subsection{Simple Iteration Constructs}
+\subsection{Simple Iteration Constructs Простые конструкции циклов}
 
 The constructs \cdf{dolist} and \cdf{dotimes} execute a body of code
 once for each value taken by a single variable.  They are expressible
 in terms of \cdf{do}, but capture very common patterns of use.
 
+Конструкции \cdf{dolist} и \cdf{dotimes} для каждого значения взятого для одной
+переменной выполняют тело один раз. Они хоть и выражаются в терминах \cdf{do},
+но захватывют очень простые шаблоны использования.
+
 Both \cdf{dolist} and \cdf{dotimes} perform
 a body of statements repeatedly.  On each iteration a specified
 variable is bound to an element of interest that the body may
 examine.  \cdf{dolist} examines successive elements of a list,
-and \cdf{dotimes} examines integers from 0 to $\emph{n}-1$
+and \cdf{dotimes} examines integers from 0 to $n-1$
 for some specified positive integer \emph{n}.
+
+И \cdf{dolist} и \cdf{dotimes} циклично выполняют тело. На каждой итерации
+заданная переменная связывается с элементом, которая затем может использоваться
+в теле. \cdf{dolist} использует элементы списка, и \cdf{dotimes} использует
+целые числа от 0 по $n-1$, при некотором указанном положительном целом \emph{n}.
 
 The value of any of these constructs may be specified by an optional result
 form, which if omitted defaults to the value {\false}.
+
+Результат двух этих конструкций может быть указан с помощью опициональной формы
+результата. Если эта форма опущена результат равен {\false}.
 
 The \cdf{return} statement may be used to return
 immediately from a \cdf{dolist} or \cdf{dotimes} form,
@@ -4188,6 +4774,13 @@ surrounds the construct.
 The body of the loop is implicitly a \cdf{tagbody} construct;
 it may contain tags to serve as the targets of \cdf{go} statements.
 Declarations may appear before the body of the loop.
+
+Выражение \cdf{return} может быть использовано для немедленного возврата из форм
+\cdf{dolist} или \cdf{dotimes}, игнорируя все оставшиеся итерации, которые
+должны были быть выполнены. \cdf{block} с именем {\nil} окружает конструкцию.
+Тело цикла неявно обернуто конструкцией \cdf{tagbody}.
+Таким образом тело может содержать теги и \cdf{go} выражения.
+Декларации могут быть указаны перед телом цикла.
 
 \begin{defmac}
 dolist (var listform [resultform])
@@ -4205,13 +4798,31 @@ form.  (When the \emph{resultform} is evaluated, the control variable \emph{var}
 is still bound and has the value {\nil}.)
 If \emph{resultform} is omitted, the result is {\false}.
 
+\cdf{dolist} предоставляет прямой цикл по списку элементов.
+Сначала \cdf{dolist}
+вычисляет форму \emph{listform}, которая должна вернуть список.
+Затем для каждого элемента вычисляется тело цикла. Данный элемент на каждой
+итерации связывается с переменной \emph{var}.
+Затем вычисляется \emph{resultform} (одна форма, \emph{не} неявный \cdf{progn}).
+(Когда вычисляется \emph{resultform}, переменная \emph{var} все еще связана, и
+имеет значение {\nil}.)
+Если \emph{resultform} опущена, то результат равен {\false}.
+
 \begin{lisp}
 (dolist (x '(a b c d)) (prin1 x) (princ " ")) \EV\ {\false} \\
 ~~~\textrm{after printing ``\cd{a b c d }'' (note the trailing space)}
 \end{lisp}
 
+\begin{lisp}
+(dolist (x '(a b c d)) (prin1 x) (princ " ")) \EV\ {\false} \\
+~~~\textrm{вывод <<\cd{a b c d }>> (в том числе пробел в конце)}
+\end{lisp}
+
 An explicit \cdf{return} statement may be used to terminate the loop
 and return a specified value.
+
+Для завершения цикла и возврата заданного значения может использоваться явное
+выражение \cdf{return}.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -4239,8 +4850,25 @@ variable \emph{var} is still bound and has as its value the number of times
 the body was executed.)
 If \emph{resultform} is omitted, the result is {\false}.
 
+\cdf{dotimes} предоставляет цикл над последовательностью целых чисел.
+Выражение
+\cd{(dotimes (\emph{var} \emph{countform} \emph{resultform}) . \emph{progbody})}
+вычисляет форму \emph{countform}, которая должна вернуть целое число. Затем
+тело цикла выполняется по порядку один раз для каждого число от нуля (включительно) до
+\emph{count} (исключая). При этом переменная \emph{var} связывается с текущим
+целым числом. Если значение \emph{countform} отрицательно или равно нулю, тогда
+\emph{progbody} не выполняется ни разу. Наконец выполняется \emph{resultform} (одна форма,
+\emph{не} неявный \cdf{progn}), и полученный результат возвращается из формы
+цикла.
+(Когда \emph{result} вычисляется, переменная-индекс \emph{var} все еще связана и
+содержит количество выполненных итераций.)
+Если \emph{resultform} опущена, то результат равен {\false}.
+
 An explicit \cdf{return} statement may be used to terminate the loop
 and return a specified value.
+
+Для завершения цикла и возврата заданного значения может использоваться
+выражение \cdf{return}.
 
 Here is an example of the use of \cdf{dotimes} in processing strings:
 \begin{lisp}
@@ -4284,10 +4912,57 @@ Here is an example of the use of \cdf{dotimes} in processing strings:
 ~~~"Ja-da, ja-da, ja-da ja-da jing jing jing")) \EV\ {\false}
 \end{lisp}
 
+Пример использования \cdf{dotimes} для обработки строк:
+\begin{lisp}
+;;; True if the specified subsequence of the string is a \\*
+;;; palindrome (reads the same forwards and backwards). \\*
+\\*
+(defun palindromep (string \cd{\&optional} \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~(start 0) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~(end (length string))) \\
+~~(dotimes (k (floor (- end start) 2) {\true}) \\*
+~~~~(unless (char-equal (char string (+ start k)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~(char string (- end k 1))) \\*
+~~~~~~(return {\false})))) \\
+\\
+(palindromep "Able was I ere I saw Elba") \EV\ {\true} \\
+ \\
+(palindromep "A man, a plan, a canal--Panama!") \EV\ {\false} \\
+ \\
+(remove-if-not \#'alpha-char-p~~~~~;\textrm{Удалить знаки препинания} \\*
+~~~~~~~~~~~~~~~"A man, a plan, a canal--Panama!") \\*
+~~~\EV\ "AmanaplanacanalPanama" \\
+ \\
+(palindromep \\*
+~(remove-if-not \#'alpha-char-p \\*
+~~~~~~~~~~~~~~~~"A man, a plan, a canal--Panama!")) \EV\ {\true} \\
+ \\
+(palindromep \\*
+~(remove-if-not \\*
+~~~\#'alpha-char-p \\*
+~~~"Unremarkable was I ere I saw Elba Kramer, nu?")) \EV\ {\true} \\
+ \\
+(palindromep \\*
+~(remove-if-not \\*
+~~~\#'alpha-char-p \\*
+~~~"A man, a plan, a cat, a ham, a yak, \\*
+~~~~~~~~~~~~~~~~~~~a yam, a hat, a canal--Panama!")) \EV\ {\true}
+\\
+(palindromep \\*
+~(remove-if-not \\*
+~~~\#'alpha-char-p \\*
+~~~"Ja-da, ja-da, ja-da ja-da jing jing jing")) \EV\ {\false}
+\end{lisp}
+
 Altering the value of \emph{var} in the body of the loop (by using \cdf{setq},
 for example) will have unpredictable, possibly implementation-dependent
 results.  A Common Lisp compiler may choose to issue a warning if such a variable
 appears in a \cdf{setq}.
+
+Изменение значения переменной \emph{var} в теле цикла (с помощью \cdf{setq}
+например) будет иметь непредсказуемые последствия, возможно зависящие от
+реализации. Компилятор Common Lisp'а может вывести предупреждение о том, что
+переменная-индекс используется в \cdf{setq}.
 
 \beforenoterule
 \begin{incompatibility}
@@ -4300,7 +4975,10 @@ in Common Lisp to the Interlisp \cdf{rptq} construct.
 See also \cdf{do-symbols}, \cdf{do-external-symbols},
 and \cdf{do-all-symbols}.
 
-\subsection{Mapping}
+Смотрите также \cdf{do-symbols}, \cdf{do-external-symbols} и
+\cdf{do-all-symbols}.
+
+\subsection{Mapping Отображение}
 \indexterm{mapping}
 
 Mapping is a type of iteration in which a function is 
@@ -4311,8 +4989,19 @@ There are several options for the way in which the pieces of the list are
 chosen and for what is done with the results returned by the applications of
 the function.
 
+Отображение --- это тип цикла, в котором заданная функция применяется к частям
+одной или более последовательностей. Результатом цикла является
+последовательность, полученная из результатов выполнения это функции.
+Существует несколько опции для указания того, какие части списка будут
+использоваться в цикле, и что будет происходить с результатом применения
+функции.
+
 The function \cdf{map} may be used to map over any kind of sequence.
 The following functions operate only on lists.
+
+Функция \cdf{map} может быть использована для отображения любого типа
+последовательности.
+Следующие же функции оперируют только списками.
 
 \begin{defun}[Function]
 mapcar function list &rest more-lists \\
@@ -4325,6 +5014,11 @@ mapcon function list &rest more-lists
 For each of these mapping functions,
 the first argument is a function and the rest must be lists.
 The function must take as many arguments as there are lists.
+
+Для каждой из этих фунцкий отображения,
+первый аргумент является функцией и оставшиеся аргументы должны быть списками.
+Функция в первом аргументе должно принимать столько аргументов, сколько было
+передано списков в функцию отображения.
 
 \cdf{mapcar} operates on successive elements of the lists.
 First the function is applied to the \emph{car} of each list,
@@ -4340,10 +5034,34 @@ For example:
 (mapcar \#'cons '(a b c) '(1 2 3)) \EV\ ((a . 1) (b . 2) (c . 3))
 \end{lisp}
 
+\cdf{mapcar} последовательно обрабатывает элементы списков.
+Сначала функция применяется к \emph{car} элементу каждого списка,
+затем к \emph{cadr} элементу, и так далее.
+(Лучше всего, чтобы все переданные списки имели одинаковую длину. Если это не
+так, то цикл завершиться, как только закончится самый короткий список, и все
+оставшиеся элементы в других списках будут проигнорированы.)
+Значение, возвращаемое \cdf{mapcar}, является списком результатов
+последовательных вызовов функции из первого параметра.
+Например:
+\begin{lisp}
+(mapcar \#'abs '(3 -4 2 -5 -6)) \EV\ (3 4 2 5 6) \\
+(mapcar \#'cons '(a b c) '(1 2 3)) \EV\ ((a . 1) (b . 2) (c . 3))
+\end{lisp}
+
 \cdf{maplist} is like \cdf{mapcar} except that the function is applied to
 the lists and successive \emph{cdr}'s of those lists rather than to successive
 elements of the lists.
 For example:
+\begin{lisp}
+(maplist \#'(lambda (x) (cons 'foo x)) \\*
+~~~~~~~~~'(a b c d)) \\*
+~~~\EV\ ((foo a b c d) (foo b c d) (foo c d) (foo d))
+\end{lisp}
+
+\cdf{maplist} похожа на \cdf{mapcar} за исключением того, что функция
+применяется к спискам и последующим \emph{cdr} элементам этих списков, а не
+последовательно к элементам спискам.
+Например:
 \begin{lisp}
 (maplist \#'(lambda (x) (cons 'foo x)) \\*
 ~~~~~~~~~'(a b c d)) \\*
@@ -4358,9 +5076,20 @@ For example:
 ~~~;~\textrm{list was the last instance of that element in the input list.}
 \end{lisp}
 
+\begin{lisp}
+(maplist \#'(lambda (x) (if (member (car x) (cdr x)) 0 1))) \\*
+~~~~~~~~~'(a b a c d b c)) \\*
+~~~\EV\ (0 0 1 0 1 1 1) \\*
+~~~;\textrm{Возвращается \cd{1}, если соответсвующий элемент входящего списка} \\*
+~~~;~\textrm{ появлялся последний раз в данном списке.}
+\end{lisp}
+
 \cdf{mapl} and \cdf{mapc} are like \cdf{maplist} and \cdf{mapcar},
 respectively, except that they do not accumulate the results
 of calling the function.
+
+\cdf{mapl} и \cdf{mapc} похожи на \cdf{maplist} и \cdf{mapcar}, соответственно,
+за исключением того, что они не накапливают результаты вызова функций.
 
 \beforenoterule
 \begin{incompatibility}
@@ -4383,6 +5112,11 @@ These functions are used when the function is being called merely for its
 side effects rather than for its returned values.
 The value returned by \cdf{mapl} or \cdf{mapc} is the second argument,
 that is, the first sequence argument.
+
+Эти функци используются, когда функция в первом параметре предназначена для
+побочных эффектов, а не для возвращаемого значения.
+Значение возвращаемое \cdf{mapl} или \cdf{mapc} является вторым аргументом, то
+есть первой последовательностью для отображения.
 
 \cdf{mapcan} and \cdf{mapcon} are like \cdf{mapcar} and \cdf{maplist}, respectively,
 except that they combine the results of
@@ -4408,14 +5142,47 @@ Remember that \cdf{nconc} is a destructive operation, and therefore
 so are \cdf{mapcan} and \cdf{mapcon}; the lists returned by the \emph{function}
 are altered in order to concatenate them.
 
+\cdf{mapcan} и \cdf{mapcon} похожи на \cdf{mapcar} и \cdf{maplist}
+соответственно, за исключением того, что результат создается с помощью функции
+\cdf{nconc}, а не \cdf{list}. То есть, 
+\begin{lisp}
+(mapcon \emph{f} \emph{x1} ... \emph{xn}) \\
+~~~\EQ\ (apply \#'nconc (maplist \emph{f} \emph{x1} ... \emph{xn}))
+\end{lisp}
+Такое же различие между \cdf{mapcan} и \cdf{mapcar}.
+Концептуально, эти функции позволяют функции отображения возвращать переменное
+количество элементов. Таким образом длина результата может быть не равна длине
+входного списка.
+Это, в частности, полезно для возврата нуля или одного элемента:
+\begin{lisp}
+(mapcan \#'(lambda (x) (and (numberp x) (list x))) \\
+~~~~~~~~'(a 1 b c 3 4 d 5)) \\
+~~~\EV\ (1 3 4 5)
+\end{lisp}
+В этом случае функция действует, как фильтр. Это стандартная Lisp'овая идиома
+использования \cdf{mapcan}.
+(Однако, в этом контексте функция \cdf{remove-if-not} также может быть полезна.)
+Помните, что \cdf{nconc} деструктивная операция, следовательно и \cdf{mapcan} и
+\cdf{mapcon} также деструктивны. Список возвращаемый функцией \emph{function}
+изменяется для соединения и возврата результата.
+
 Sometimes a \cdf{do} or a straightforward recursion is preferable to a
 mapping operation;  however, the mapping functions should be used wherever they
-naturally apply because this increases the clarity of the code. 
+naturally apply because this increases the clarity of the code.
+
+Иногда \cdf{do} или прямая последовательная рекурсия удобнее, чем функции
+отображения. Однако, функции отображения должны быть использованы везде, где они
+действительно необходимы, так как они увеличивают ясность кода.
 
 The functional argument to a mapping function must be acceptable
 to \cdf{apply}; it cannot be a macro or the name of a special form.
 Of course, there is nothing wrong with using a function that has \cd{\&optional}
 and \cd{\&rest} parameters as the functional argument.
+
+Функциональный аргумент функции отображения должен быть подходящим для функции
+\cdf{apply}. Он не может быть макросов или именем специальной формы.
+Кроме того, в качестве функционального аргумента можно использовать функцию,
+имеющую \cd{\&optional} и \cd{\&rest} параметры.
 
 \begin{newer}
 X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to allow the \emph{function}
@@ -4432,7 +5199,7 @@ to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
 \end{new}
 \end{defun}
 
-\subsection{The ``Program Feature''}
+\subsection{The ``Program Feature'' Использование <<GOTO>>}
 
 Lisp implementations since Lisp 1.5 have had what was originally
 called ``the program feature,'' as if it were impossible to write
@@ -4445,6 +5212,16 @@ such as \cdf{do}, have bodies with the characteristics of a \cdf{prog}.
 (However, the ability to use \cdf{go} statements within iteration
 constructs is very seldom called upon in practice.)
 
+Реализации Lisp'а начиная с Lisp'а 1.5 содержат то, что изначально называлось
+<<the program feature>>, как будто без этого невозможно писать программы!
+Конструкция \cdf{prog} позволяет писать в Algol- или Fortran- императивном
+стиле, используя выражения \cdf{go}, которые могут ссылаться на теги в теле
+\cdf{prog}. Современный стиль программирования на Lisp'е стремится снизить
+использование \cdf{prog}. Различные конструкции циклов, как \cdf{do}, имеют тели
+с характеристиками \cdf{prog}.
+(Тем не менее, возможность использовать выражения \cdf{go} внутри конструкции
+цикла очень редко используется на практике.)
+
 Three distinct operations are performed by \cdf{prog}: it binds local variables,
 it permits use of the \cdf{return} statement, and it permits use of the \cdf{go}
 statement.
@@ -4452,6 +5229,15 @@ In Common Lisp, these three operations have been separated into three
 distinct constructs: \cdf{let}, \cdf{block}, and \cdf{tagbody}.
 These three constructs may be used independently as building blocks
 for other types of constructs.
+
+\cdf{prog} предоставляет три различные операции:
+связывание локальный переменных,
+использование выражения \cdf{return}
+и использование выражения \cdf{go}.
+В Common Lisp'е эти три операции были разделены на три конструкции:
+\cdf{let}, \cdf{block} и \cdf{tagbody}.
+Эти три конструкции могут использоваться независимо, как строительные кирпичики
+для других типов конструкций.
 
 \begin{defspec}
 tagbody {tag | statement}*
@@ -4468,6 +5254,19 @@ is reached, the \cdf{tagbody} returns {\false}.
 
 If \cd{(go \emph{tag})} is evaluated, control jumps to the part of the body
 labelled with the \emph{tag}.
+
+Часть \cdf{tagbody} после списка переменные называется \emph{телом}.
+Элемент тела может быть символов или целым числом, и называться в этом случае
+\emph{тег}. Также элемент тела может быть списока, и называться в этом случае
+\emph{выражением}.
+
+Каждый элемент тела обрабатывается слева направо.
+\emph{Теги} игнорируются. \emph{Выражения} вычисляются и их результаты
+игнорируются. Если управление достигает конца тела, \cdf{tagbody} возвращает
+{\false}.
+
+Если вычисляется форма \cd{(go \emph{tag})}, управление перемещается на часть
+тела, обозначенную \emph{тегом}.
 
 \beforenoterule
 \begin{incompatibility}
@@ -4488,6 +5287,15 @@ It is permissible for a \cdf{go} to jump to a \cdf{tagbody} that is not
 the innermost \cdf{tagbody} construct containing that \cdf{go};
 the tags established by a \cdf{tagbody} will only shadow other tags
 of like name.
+
+Область видимости тегов, устанавливаемых в \cdf{tagbody}, является лексической. 
+Продолжительность видимости тегов динамическая. Когда управление вышло из
+конструкции \cdf{tagbody}, ссылка \cdf{go} на теги в ее теле невозможны.
+Существует возможность для \cdf{go} прыжка в \cdf{tagbody}, которая не находится
+внутри конструкции \cdf{tagbody}, которая и содержала этот \cdf{go}. То есть
+возможны прыжки в родительский \cdf{tagbody}.
+Теги устанавливаемые \cdf{tagbody} будут только скрывать другие одноименные
+теги.
 
 The lexical scoping of the \cdf{go} targets named by tags is
 fully general and has consequences that may be surprising
@@ -4512,6 +5320,29 @@ to the target.  It is possible for a ``closure'' created by \cdf{function} for
 a lambda-expression to refer to a \cdf{go} target as long as the tag
 is lexically apparent.  See chapter~\ref{SCOPE} for an elaborate
 example of this.
+
+Лексическая область видимости для тегов (целей \cdf{go}) полностью полноправно и
+последствия могут быть сюрпризом для пользователей и разработчиков других Lisp
+систем.
+Например, \cdf{go} в следующем примере, работает в Common Lisp так, как это и
+ожидается:
+\begin{lisp}
+(tagbody \\*
+~~~(catch 'stuff \\*
+~~~~~~(mapcar \#'(lambda (x) (if (numberp x) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(hairyfun x) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(go lose))) \\*
+~~~~~~~~~~~~~~items)) \\
+~~~(return) \\*
+~lose \\*
+~~~(error "I lost big!"))
+\end{lisp}
+В зависимости от ситуации, \cdf{go} в Common Lisp'е не обязательно похож на
+простую машинную иструкцию <<jump>>. Если необходимо, \cdf{go} может
+перепрыгивать ловушки исключений. Возможно так, что <<замыкание>>, созданное с
+помощью \cdf{function}, для лямбда-выражения ссылается на тег (цель \cdf{go})
+так долго, сколько лексически доступен данный тег. Смотрите~\ref{SCOPE} для
+понимания этого примера.
 
 \begin{new}
 There are some holes in this specification (and that of \cdf{go}) that
@@ -4595,13 +5426,44 @@ parallel to the respective results.
 Any \emph{declaration} appearing in the \cdf{prog} is used as if appearing
 at the top of the \cdf{let} body.
 
+Конструкция \cdf{prog} является синтезом \cdf{let}, \cdf{block} и \cdf{tagbody},
+позволяющая связывать переменные, использовать \cdf{return} и \cdf{go} в одной
+конструкции. Обычно конструкция \cdf{prog} выглядит так:
+\begin{lisp}
+(prog (\emph{var1} \emph{var2} (\emph{var3} \emph{init3}) \emph{var4} (\emph{var5} \emph{init5})) \\*
+~~~~~~\Mstar{\emph{declaration}} \\*
+~~~~~~\emph{statement1} \\
+~\emph{tag1} \\*
+~~~~~~\emph{statement2} \\*
+~~~~~~\emph{statement3} \\*
+~~~~~~\emph{statement4} \\
+~\emph{tag2} \\*
+~~~~~~\emph{statement5} \\*
+~~~~~~... \\*
+~~~~~~)
+\end{lisp}
+Список после ключевого символа \cdf{prog} является множеством спецификаторов для
+связывания переменных \emph{var1}, \emph{var2}.
+Этот список обрабатывается так же, как и в выражении \cdf{let}:
+сначала слева направо выполняются все формы \emph{init} (если формы нет, берется
+значение {\false}), и затем переменные параллельно связываются с полученными
+ранее значениями. 
+Возможно использовать \emph{декларации} в начале дела \cdf{prog} так же, как и в
+\cdf{let}.
+
 The body of the \cdf{prog} is executed as if it were a \cdf{tagbody}
 construct; the \cdf{go} statement may be used to transfer control
 to a \emph{tag}.
 
+Тело \cdf{prog} выполняется, как обернутое в \cdf{tagbody}. Таким образом, для
+перемещения управления к \emph{тегу} могут использоваться выражения \cdf{go}.
+
 A \cdf{prog} implicitly establishes a \cdf{block} named {\nil} around
 the entire \cdf{prog} construct, so that \cdf{return} may be used
 at any time to exit from the \cdf{prog} construct.
+
+\cdf{prog} неявно устанавливает вокруг тела \cdf{block} с именем {\nil}. Это
+значит, можно в любое время использовать \cdf{return} для выхода из конструкции \cdf{prog}.
 
 Here is a fine example of what can be done with \cdf{prog}:
 \begin{lisp}
@@ -4638,6 +5500,41 @@ which is accomplished somewhat more perspicuously by
 ~~~~~~(setq z y))))
 \end{lisp}
 
+Вот небольшой пример того, что можно сделать с помощью \cdf{prog}:
+\begin{lisp}
+(defun king-of-confusion (w) \\
+~~"Take a cons of two lists and make a list of conses. \\
+~~~Think of this function as being like a zipper." \\
+~~(prog (x y z)~~~~~;\textrm{Инициализировать \cd{x}, \cd{y}, \cd{z} в {\false}} \\
+~~~~~~~~(setq y (car w) z (cdr w)) \\
+~~~loop \\
+~~~~~~~~(cond ((null y) (return x)) \\
+~~~~~~~~~~~~~~((null z) (go err))) \\
+~~~rejoin \\
+~~~~~~~~(setq x (cons (cons (car y) (car z)) x)) \\
+~~~~~~~~(setq y (cdr y) z (cdr z)) \\
+~~~~~~~~(go loop) \\
+~~~err \\
+~~~~~~~~(cerror "Will self-pair extraneous items" \\
+~~~~~~~~~~~~~~~~"Mismatch - gleep!  ~S" y) \\
+~~~~~~~~(setq z y) \\
+~~~~~~~~(go rejoin)))
+\end{lisp}
+которые делает то же, что и:
+\begin{lisp}
+(defun prince-of-clarity (w) \\
+~~"Take a cons of two lists and make a list of conses. \\
+~~~Think of this function as being like a zipper." \\
+~~(do ((y (car w) (cdr y)) \\
+~~~~~~~(z (cdr w) (cdr z)) \\
+~~~~~~~(x '{\emptylist} (cons (cons (car y) (car z)) x))) \\
+~~~~~~((null y) x) \\
+~~~~(when (null z) \\
+~~~~~~(cerror "Will self-pair extraneous items" \\
+~~~~~~~~~~~~~~"Mismatch - gleep!  ~S" y) \\
+~~~~~~(setq z y))))
+\end{lisp}
+
 The \cdf{prog} construct may be explained in terms of the simpler
 constructs \cdf{block}, \cdf{let}, and \cdf{tagbody} as
 follows:
@@ -4646,17 +5543,35 @@ follows:
 ~~~\EQ\ (block nil (let \emph{variable-list} \Mstar{\emph{declaration}} (tagbody . \emph{body})))
 \end{lisp}
 
-The \cd{prog*} special form is almost the same as \cdf{prog}.  The only
+Конструкция \cdf{prog} может быть выражена в терминах более простых конструкций
+\cdf{block}, \cdf{let} и \cdf{tagbody}:
+\begin{lisp}
+(prog \emph{variable-list} \Mstar{\emph{declaration}} . \emph{body}) \\
+~~~\EQ\ (block nil (let \emph{variable-list} \Mstar{\emph{declaration}} (tagbody . \emph{body})))
+\end{lisp}
+
+The \cdf{prog*} special form is almost the same as \cdf{prog}.  The only
 difference is that the binding and initialization of the temporary
 variables is done \emph{sequentially}, so that the \emph{init} form for each
 one can use the values of previous ones.
-Therefore \cd{prog*} is to \cdf{prog} as \cd{let*} is to \cdf{let}.
+Therefore \cdf{prog*} is to \cdf{prog} as \cdf{let*} is to \cdf{let}.
 For example,
 \begin{lisp}
 (prog* ((y z) (x (car y))) \\
 ~~~~~~~(return x))
 \end{lisp}
 returns the \emph{car} of the value of \cdf{z}.
+
+Специальная форма \cdf{prog*} очень похожа на \cdf{prog}. Одно отличие в том,
+что связывание и инициализация переменных осуществляется \emph{последовательно},
+тем самым форма \emph{init} использовать значения ранее связанных переменных.
+Таким образом \cdf{prog*} относится к \cdf{prog}, как \cdf{let*} к \cdf{let}.
+Например,
+\begin{lisp}
+(prog* ((y z) (x (car y))) \\
+~~~~~~~(return x))
+\end{lisp}
+возвращает \emph{car} элемент значения \cd{z}.
 
 \begin{new}
 I haven't seen \cdf{prog} used very much in the last several years.
@@ -4687,6 +5602,22 @@ the iteration primitives, nested conditional forms, or
 \cdf{return-from}.  If the use of \cdf{go} seems to be unavoidable,
 perhaps the control structure implemented by \cdf{go} should be packaged
 as a macro definition.
+
+Специальная форма \cd{(go \emph{tag})} используется для применения <<goto>>
+внутри конструкции \cdf{tagbody}. \emph{tag} должен быть символов или целым
+числом. \emph{tag} не вычисляется.
+\cdf{go} переносит управление на точку тела, которая была помечена тегом равным
+\cdf{eql} заданному. Если такого тега в теле нет, поиск осуществляется в
+лексически доступном теле другой конструкции \cdf{tagbody}.
+Использоваться \cdf{go} с тегом, которого нет, является ошибкой.
+
+Форма \cdf{go} никогда не возвращает значение.
+
+В целях стиля, рекомендуется дважды подумать, прежде чем использовать
+\cdf{go}. Большинство функций \cdf{go} могут быть заменены циклами, вложенными
+условными формамы или \cdf{return-from}. Если использование \cdf{go} неизбежно,
+рекомендуется управляющую структуру реализованную с помощью \cdf{go} <<упаковать>>
+в определении макроса. 
 \end{defspec}
 
 
@@ -4833,7 +5764,7 @@ mapcon & rassoc-if-not
 \end{table}
 
 
-\section{Multiple Values}
+\section{Multiple Values Возврат и обработка нескольких значений}
 \indexterm{multiple values}
 
 Ordinarily the result of calling a Lisp function is a single Lisp object.
@@ -4844,7 +5775,14 @@ This mechanism is cleaner and more efficient than the usual tricks
 involving returning a list of results or stashing results in global
 variables.
 
-\subsection{Constructs for Handling Multiple Values}
+Обычно результатом вызова Lisp'овой функции является один Lisp'овый объект.
+Однако, иногда для функции удобно вычислить несколько объектов и вернуть их.
+Common Lisp представляет механизм для прямой обработки нескольких значений.
+Механизм удобнее и эффективнее, чем исполнение трюков со списками или
+глобальными переменными.
+
+\subsection{Constructs for Handling Multiple Values Конструкции для обработки
+  нескольких значений}
 
 Normally multiple values are not used.  Special forms are
 required both to \emph{produce} multiple values and to \emph{receive} them.
@@ -4862,6 +5800,22 @@ forms also produce multiple values, but they can be described in terms of
 \cdf{values}.  Some built-in Common Lisp functions, such as \cdf{floor}, return
 multiple values; those that do are so documented.
 
+Обычно не используется несколько значений. Для возврата и обработки нескольких
+значений требуются специальные формы.
+Если вызывающий функцию код не требует нескольких значений, однако вызываемая
+функция их несколько, то для кода берется только первое значение. Все оставшиеся
+значения игнорируются.
+Если вызываемая функция возвращает ноль значений, вызывающий код в качестве
+значения получает {\false}.
+
+\cdf{values} --- это главный примитив для возврата нескольких значений. Он
+принимает любое количество аргументов и возвращает столько же значений. Если
+последняя форма тела функции является \cdf{values} с тремя аргументами, то вызов
+такой функции вернет три значения.
+Другие специальные формы также возвращают несколько значения, но они могут быть
+описаны в терминах \cdf{values}. Некоторые встроенные Common Lisp функции, такая
+как \cdf{floor}, возвращают несколько значений.
+
 The special forms and macros for receiving multiple values are as follows:
 \begin{lisp}
 multiple-value-list \\
@@ -4872,6 +5826,17 @@ multiple-value-setq
 \end{lisp}
 These specify a form to evaluate and an indication of where to put
 the values returned by that form.
+
+Специальные формы обрабатывающие несколько значений представлены ниже:
+\begin{lisp}
+multiple-value-list \\
+multiple-value-call \\
+multiple-value-prog1 \\
+multiple-value-bind \\
+multiple-value-setq
+\end{lisp}
+Они задают форму для вычисления и указывают куда поместить значения возвращаемые
+данной формой.
 
 \begin{defun}[Function]
 values &rest args
@@ -4887,8 +5852,22 @@ For example:
 ~~~\EV\ \#(5.0 0.9272952)
 \end{lisp}
 
+Все аргументы в таком же порядке возвращаются, как значения.
+Например,
+\begin{lisp}
+(defun polar (x y) \\
+~~(values (sqrt (+ (* x x) (* y y))) (atan y x))) \\
+ \\
+(multiple-value-bind (r theta) (polar 3.0 4.0) \\
+~~(vector r theta)) \\
+~~~\EV\ \#(5.0 0.9272952)
+\end{lisp}
+
 The expression \cd{(values)} returns zero values.  This is the standard idiom
 for returning no values from a function.
+
+Выражение \cd{(values)} возвращает ноль значений. Это стандартная идиома для
+возврата из функции нулевого количества значений.
 
 Sometimes it is desirable to indicate explicitly that a function will return
 exactly one value.  For example, the function
@@ -4911,11 +5890,35 @@ its argument forms; as for any function call,
 if any argument form to \cdf{values} produces more than one value, all but the
 first are discarded.
 
+Иногда необходимо указать явно, что функция будет возвращать только одно
+значение. Например, функция
+\begin{lisp}
+(defun foo (x y) \\
+~~(floor (+ x y) y))
+\end{lisp}
+будет возвращать два значения, потому что \cdf{floor} возвращает два
+значения. Может быть второе значение не имеет смысла в данном контексте, или
+есть причины не тратить время на вычисления второго значения. Функция
+\cdf{values} является стандартной идиомой для указания того, что будет
+возвращено только одно значение, как показано в следующем примере.
+\begin{lisp}
+(defun foo (x y) \\
+~~(values (floor (+ x y) y)))
+\end{lisp}
+Это работает, потому что \cdf{values} возвращает только \emph{одно} значения для
+каждой формы аргумента. Если форма аргумента возвращает несколько значений, то
+используется только первое, а остальные игнорируются.
+
 There is absolutely no way in Common Lisp for a caller to distinguish between
 returning a single value in the ordinary manner and returning
 exactly one ``multiple value.''  For example, the values returned
 by the expressions \cd{(+~1~2)} and \cd{(values (+~1~2))} are identical
 in every respect: the single value \cd{3}.
+
+В Common Lisp'е для вызывающго кода нет возможности различить, было ли
+возвращено просто одно значение или было возвращено только одно значение в с
+помощью \cdf{values}. Например значения, возвращенные выражением \cd{(+~1~2)} и 
+\cd{(values (+~1~2))}, идентичны во всех отношениях: они оба просто равны \cd{3}.
 \end{defun}
 
 \begin{defun}[Constant]
@@ -4928,6 +5931,13 @@ but will not be smaller than 20.
 (Implementors are encouraged to make this limit as large as practicable
 without sacrificing performance.)
 See \cdf{lambda-parameters-limit} and \cdf{call-arguments-limit}.
+
+Значение \cdf{multiple-values-limit} является положительным целым числом,
+которое невключительно указывает наибольшее возможное количество возвращаемых
+значений. Это значение зависит от реализации, но не может быть менее 20.
+(Разработчики рекомендуется делать это ограничение как можно большим без потери
+в производительности.)
+Смотрите \cdf{lambda-parameters-limit} и \cdf{call-arguments-limit}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4943,6 +5953,18 @@ In general,
 (values-list \emph{list}) \EQ\ (apply \#'values \emph{list})
 \end{lisp}
 but \cdf{values-list} may be clearer or more efficient.
+
+Все элементы списка \emph{list} будут возвращены как несколько значений.
+Например:
+\begin{lisp}
+(values-list (list a b c)) \EQ\ (values a b c)
+\end{lisp}
+Можно обозначить так,
+\begin{lisp}
+(values-list \emph{list}) \EQ\ (apply \#'values \emph{list})
+\end{lisp}
+но \cdf{values-list} может быть более ясным или эффективным.
+
 \end{defun}
 
 \begin{defmac}
@@ -4956,6 +5978,16 @@ For example:
 \end{lisp}
 \cdf{multiple-value-list} and \cdf{values-list} are therefore inverses
 of each other.
+
+\cdf{multiple-value-list} вычисляет форму \emph{form} и возвращает список из
+того количества значений, которое было возвращено формой.
+Например,
+\begin{lisp}
+(multiple-value-list (floor -3 4)) \EV\ (-1 1)
+\end{lisp}
+Таким образом, \cdf{multiple-value-list} и \cdf{values-list} являются
+антиподами. FIXME
+
 \end{defmac}
 
 \begin{defspec}
@@ -4974,6 +6006,20 @@ For example:
 ~~~\EQ\ (+ 1 2 4 3) \EV\ 10 \\
 (multiple-value-list \emph{form}) \EQ\ (multiple-value-call \#'list \emph{form})
 \end{lisp}
+
+\cdf{multiple-value-call} сначала вычисляет \emph{function} для получения
+функции и затем вычисляет все формы \emph{forms}. Все значения форм \emph{forms}
+собираются вместе (все, а не только первые) и передаются как аргументы
+функции. Результат \cdf{multiple-value-call} является тем, что вернула функция.
+Например:
+\begin{lisp}
+(+ (floor 5 3) (floor 19 4)) \\
+~~~\EQ\ (+ 1 4) \EV\ 5 \\
+(multiple-value-call \#'+ (floor 5 3) (floor 19 4)) \\
+~~~\EQ\ (+ 1 2 4 3) \EV\ 10 \\
+(multiple-value-list \emph{form}) \EQ\ (multiple-value-call \#'list \emph{form})
+\end{lisp}
+
 \end{defspec}
 
 \begin{defspec}
@@ -4984,6 +6030,12 @@ produced by that form.  It then evaluates the other \emph{form}s
 from left to right, discarding their values.  The values produced
 by the first \emph{form} are returned by \cdf{multiple-value-prog1}.  See \cdf{prog1},
 which always returns a single value.
+
+\cdf{multiple-value-prog1} вычисляет первую форму \emph{form} и сохраняет все
+значения, возвращенные данной формой. Затем она слева направо вычисляет оставшиеся
+\emph{формы}, игнорируя их значения. Значения, возвращенные первой формой,
+становяться результатом всей формы \cdf{multiple-value-prog1}. Смотрите
+\cdf{prog1}, которая всегда возвращает одно значение.
 \end{defspec}
 
 \begin{defmac}
@@ -5003,6 +6055,20 @@ For example:
 (multiple-value-bind (x y z) (floor 5 3) (list x y z)) \\
 ~~~\EV\ (1 2 {\false})
 \end{lisp}
+
+Вычисляется \emph{values-form} и каждое значение результата связывается
+соотвественно с переменными указанными в первом параметре.
+Если переменных больше, чем возвращаемых значений, для оставшихся переменных
+используется значение {\false}. Если значений больше, чем переменных, лишние
+значения игнорируются. Переменные связываются со значениями только на время
+выполнения форм тела, которое является неявным \cdf{progn}.
+Например:
+\begin{lisp}
+(multiple-value-bind (x) (floor 5 3) (list x)) \EV\ (1) \\
+(multiple-value-bind (x y) (floor 5 3) (list x y)) \EV\ (1 2) \\
+(multiple-value-bind (x y z) (floor 5 3) (list x y z)) \\
+~~~\EV\ (1 2 {\false})
+\end{lisp}
 \end{defmac}
 
 \begin{defmac}
@@ -5013,6 +6079,12 @@ evaluated, and the variables are \emph{set} (not bound) to the values
 returned by that form.  If there are more variables than values returned,
 extra values of {\false} are assigned to the remaining variables.  If there
 are more values than variables, the excess values are simply discarded.
+
+Аргумент \emph{variables} должен быть списком переменных. Вычисляется форма
+\emph{form} и переменным \emph{присваиваются} (не связываются) значения,
+возвращенные этой формой. Если переменных больше, чем значений, осташимся
+переменным присваивается {\false}. Если значений больше, чем переменных, лишние
+значения игнорируются.
 
 \beforenoterule
 \begin{incompatibility}
@@ -5026,6 +6098,10 @@ worth the incompatibility with Lisp Machine Lisp.
 
 \cdf{multiple-value-setq} always returns a single value, which is the first
 value returned by \emph{form}, or {\false} if \emph{form} produces zero values.
+
+\cdf{multiple-value-setq} всегда возвращает одно значение, которое является
+первым из возвращенных значений формы \emph{form}, или {\false}, если форма
+\emph{form} вернула ноль значений.
 
 \begin{newer}
 X3J13 voted in March 1989
@@ -5072,7 +6148,8 @@ list of all the values of the \emph{form}.
 \end{defmac}
 \end{new}
 
-\subsection{Rules Governing the Passing of Multiple Values}
+\subsection{Rules Governing the Passing of Multiple Values Правила управления
+  возврата нескольких значений}
 
 It is often the case that the value
 of a special form or macro call
@@ -5080,28 +6157,49 @@ is defined to be the value of one of its subforms.
 For example, the
 value of a \cdf{cond} is the value of the last form in the selected clause.
 
+Часто случается так, что значение специальной формы или макроса определено как
+значение одного из подвыражений.
+Например, значение \cdf{cond} является значением последнего подвыражения в
+исполняемой ветке.
+
 In most such cases, if the subform produces multiple values, then the original
 form will also produce all of those values.
 This \emph{passing back} of
 multiple values of course has no effect unless eventually one of the
 special forms for receiving multiple values is reached.
 
+В большинстве таких случаев, если подвыражение возвращает несколько значений,
+тогда и оригинальная форма возвращает все эти значения. Эта \emph{передача
+  значений}, конечно, не будет иметь место, если не была выполнена специальная
+форма для обработки возврата нескольких значений.
+
 To be explicit, multiple values can result from a special form
 under precisely these circumstances:
+
+Неявно несколько значений может быть возвращены из специальных форм в
+соответствие со следующими правилами:
 \goodbreak
 \begin{flushdesc}
-\item[\emph{Evaluation and application}]\leavevmode
+\item[\emph{Evaluation and application Вычисление и применение}]\leavevmode
 \begin{itemize}
 \item
 \cdf{eval} returns multiple values if the form given it to
 evaluate produces multiple values.
 
 \item
+\cdf{eval} возвращает несколько значений, если переданная ему форму при
+вычислении вернула несколько значений.
+
+\item
 \cdf{apply}, \cdf{funcall}, and \cdf{multiple-value-call}
 pass back multiple values from the function applied or called.
+
+\item
+\cdf{apply}, \cdf{funcall} и \cdf{multiple-value-call} передают обратно
+несколько значений из применяемой или вызываемой функции.
 \end{itemize}
 
-\item[\emph{Implicit \cdf{progn} contexts}]\leavevmode
+\item[\emph{Implicit \cdf{progn} contexts В контексте неявного \cdf{progn}}]\leavevmode
 \begin{itemize}
 \item
 The special form \cdf{progn}
@@ -5115,13 +6213,31 @@ in particular those constructed by \cdf{defun},
 Also included are bodies of the constructs
 \cdf{eval-when},
 \cdf{progv}, \cdf{let},
-\cd{let*}, \cdf{when}, \cdf{unless},
+\cdf{let*}, \cdf{when}, \cdf{unless},
 \cdf{block},
 \cdf{multiple-value-bind}, and \cdf{catch},
 as well as clauses in such conditional
 constructs as
 \cdf{case}, \cdf{typecase},
 \cdf{ecase}, \cdf{etypecase}, \cdf{ccase}, and \cdf{ctypecase}.
+
+\item
+Специальная форма \cdf{progn}
+передает обратно несколько значений полученных при вычислении последней
+подформы. В другие ситуациях, называемых <<неявный \cdf{progn}>>, в которых
+вычисляется несколько форм и результаты всех, кроме последней формы,
+игнорируются, также передается обратно несколько значений от формы.
+Такие ситуации включают тело лямбда-выражения, в частности в \cdf{defun},
+\cdf{defmacro} и \cdf{deftype}.
+Также включаются тела конструкций
+\cdf{eval-when},
+\cdf{progv}, \cdf{let},
+\cdf{let*}, \cdf{when}, \cdf{unless},
+\cdf{block},
+\cdf{multiple-value-bind} и \cdf{catch}.
+И также включаются подвыражения условных конструкций 
+\cdf{case}, \cdf{typecase},
+\cdf{ecase}, \cdf{etypecase}, \cdf{ccase} и \cdf{ctypecase}.
 \end{itemize}
 \end{flushdesc}
 
@@ -5138,15 +6254,23 @@ string, most likely \cdf{lambda} is the correct building block to use.)
 \end{new}
 
 \begin{flushdesc}
-\item[\emph{Conditional constructs}]\leavevmode
+\item[\emph{Conditional constructs Условные конструкции}]\leavevmode
 \begin{itemize}
 \item
 \cdf{if} passes back multiple values from whichever subform is selected
 (the \emph{then} form or the \emph{else} form).
 
 \item
+\cdf{if} передает обратно несколько значений из любой выбранной подформы (ветки
+\emph{then} или \emph{else}).
+
+\item
 \cdf{and} and \cdf{or} pass back multiple values from the last subform
 but not from subforms other than the last.
+
+\item
+\cdf{and} и \cdf{or} передают обратно несколько значений из последней подформы,
+но ни из какой другой непоследней подформы.
 
 \item
 \cdf{cond} passes back multiple values from the last subform of
@@ -5157,9 +6281,21 @@ is returned.  This is true even if the singleton clause is
 the last clause of the \cdf{cond}.  It is \emph{not} permitted to
 treat a final clause \cd{(x)} as being the same as \cd{(t x)}
 for this reason; the latter passes back multiple values from the form \cdf{x}.
+
+\item
+\cdf{cond} передает обратно несколько значений из последней подформы неявного
+\cdf{progn} выделенного подвыражения.
+Однако, если выделенное подвыражение является <<синглтоном>>, будет возвращено
+только одно значение (не-{\false} значение предиката).
+Это верно, даже если выражение <<синглтон>> является последним подвыражением
+\cdf{cond}.
+Нельзя рассматривать последнее подвыражение \cdf{(x)}, как будто оно \cd{(t
+  x)}. Последнее подвыражение передает обратно несколько значений из формы
+\cd{x}.
+
 \end{itemize}
 
-\item[\emph{Returning from a block}]\leavevmode
+\item[\emph{Returning from a block Возврат из блока}]\leavevmode
 \begin{itemize}
 \item
 The \cdf{block} construct passes back multiple values from its last subform
@@ -5169,8 +6305,18 @@ passes back multiple values from its subform as the values of the
 terminated \cdf{block}.  Other constructs that create implicit blocks,
 such as
 \cdf{do}, \cdf{dolist}, \cdf{dotimes}, \cdf{prog}, and
-\cd{prog*}, also pass back multiple values specified by
+\cdf{prog*}, also pass back multiple values specified by
 \cdf{return-from} (or \cdf{return}).
+
+\item
+При нормальном завершении конструкция \cdf{block} передает обратно несколько значений из ее последней
+подформы. Если для завершения использовалась \cdf{return-from} (или
+\cdf{return}), тогда \cdf{return-from} передает обратно несколько значений из
+своей подформы, как значения всей конструкции  \cdf{block}. Другие конструкции,
+создающие неявные блоки, такие как 
+\cdf{do}, \cdf{dolist}, \cdf{dotimes}, \cdf{prog} и
+\cdf{prog*}, также передают обратно несколько значений, заданных с помощью 
+\cdf{return-from} (или \cdf{return}).
 
 \item
 \cdf{do} passes back multiple values from
@@ -5178,29 +6324,55 @@ the last form of the exit clause, exactly as if the exit clause
 were a \cdf{cond} clause.  Similarly, \cdf{dolist} and \cdf{dotimes}
 pass back multiple values from the \emph{resultform} if that is executed.
 These situations are all examples of implicit uses of \cdf{return-from}.
+
+\item
+\cdf{do} передает обратно несколько значений из последней формы подвыражения
+выхода, точно также, как если бы подвыражение выхода было подвыражение
+\cdf{cond}.
+Подобным образом действуют \cdf{dolist} и \cdf{dotimes}. Они возвращают
+несколько значений из формы \emph{resultform}, если она была выполнена.
+Эти ситуации также являются примерами явного использования \cdf{return-from}.
+
 \end{itemize}
 
-\item[\emph{Throwing out of a catch}]\leavevmode
+\item[\emph{Throwing out of a catch Выход из catch}]\leavevmode
 \begin{itemize}
 \item
 The \cdf{catch} construct returns multiple values if
 the result form in a \cdf{throw} exiting from
 such a catch produces multiple values.
+
+\item
+Конструкция \cdf{catch} возвращает несколько значений, если результат формы в
+\cdf{throw}, которая осуществляет выход из этого catch, возвращает несколько
+значений.
 \end{itemize}
 
-\item[\emph{Miscellaneous situations}]\leavevmode
+\item[\emph{Miscellaneous situations Остальные ситуации}]\leavevmode
 \begin{itemize}
 \item
 \cdf{multiple-value-prog1} passes back multiple values from its first
 subform.  However, \cdf{prog1} always returns a single value.
 
 \item
+\cdf{multiple-value-prog1} передает обратно несколько значений из его первой
+подформы. Однако, \cdf{prog1} всегда возвращает одно значение.
+
+\item
 \cdf{unwind-protect} returns multiple values if the form it protects
 returns multiple values.
 
 \item
+\cdf{unwind-protect} возвращает несколько значений, если форма, которую он
+защищает, вернула несколько значений.
+
+\item
 \cdf{the} returns multiple values if the form it contains returns
 multiple values.
+
+\item
+\cdf{the} возвращает несколько значений, если в нем содержащаяся форма
+возвращает несколько значений.
 \end{itemize}
 \end{flushdesc}
 
@@ -5210,10 +6382,21 @@ Among special forms that \emph{never} pass back multiple values are
 The conventional way to force only one value to be returned from a form \cdf{x}
 is to write \cd{(values x)}.
 
+\cdf{prog1},
+\cdf{prog2}, \cdf{setq} и \cdf{multiple-value-setq} --- это формы, которые
+\emph{никогда} не передают обратно несколько значений.
+Стандартный метод для явного указания возврата одного значения из формы \cd{x} 
+является запись \cd{(values x)}.
+
 The most important rule about multiple values is:
 \textbf{No matter how many values a form produces,
 if the form is an argument form in a function call,
 then exactly one value (the first one) is used.}
+
+Наиболее важное правило насчет нескольких значений:
+\textbf{Не важно сколько значений возвращает форма, если форма является
+  аргументом в вызове функции, то только одно значение (первое) будет
+  использовано.}
 
 For example, if you write \cd{(cons (floor x))}, then \cdf{cons} will always
 receive \emph{exactly} one argument (which is of course an error),
@@ -5228,7 +6411,20 @@ Similarly, conditional constructs such as \cdf{if} that test the value of a form
 will use exactly one value, the first one, from that form and discard the rest;
 such constructs will use {\false} as the test value if zero values are returned.
 
-\section{Dynamic Non-Local Exits}
+Например, если вы записали \cd{(cons (floor x))}, тогда \cdf{cons} всегда
+получить \emph{только} один аргумент (что, конечно, является ошибкой), хотя и
+\cdf{floor} возвращает два значения. Для того, чтобы поместить оба значения
+\cdf{floor} в \cdf{cons}, можно записать что-то вроде этого:
+\cd{(multiple-value-call \#'cons (floor x))}.
+В обычном вызовае функции, каждый форма аргумента предоставляется только
+\emph{один} аргумент. Если такая форма возвращает ноль значение, в качестве
+аргумента используется {\false}. А если возвращает более одного значения, все
+они, кроме первого, игнорируются.
+Также и условные конструкции, например \cdf{if}, которые проверяют значения
+формы, используют только одно первое значение, остальные игнорируются.
+Такие конструкции будут использовать {\false} если форма вернула ноль значений.
+
+\section{Dynamic Non-Local Exits Динамические нелокальные выходы}
 \label{CATCH-THROW-SECTION}
 \indexterm{non-local exit}
 \indexterm{dynamic exit}
@@ -5251,6 +6447,20 @@ span) of the evaluation of the body of the catch.  This is analogous to
 the distinction between dynamically bound (special) variables and
 lexically bound (local) variables.
 
+Common Lisp предоставляет функциональноссть для выхода из сложного процесса в
+нелокальном, динамических ограниченном стиле. Для этих целей есть два вида
+специальных форм, называемых \emph{catch} и \emph{throw}.
+Форма catch выполняет некоторые подформы так, что если форма throw выполняется в
+ходе этих вычислений, в данной точке вычисления прерываются и форма catch
+немедленно возвращает значение указанное в throw. В отличие от \cdf{block} и
+\cdf{return} (раздел~\ref{BLOCK-RETURN-SECTION}), которые позволяют выйти из
+тела \cdf{block} из любой точки лексически, находящейся внутри тела, catch/throw
+механизм работает, даже если форма throw по тексту не находится внутри тела
+формы catch.
+Throw может использовать только в течение (продолжительности времени) выполнения
+тела catch. Можно провести аналогию между ними, как между динамически
+связываемыми переменными и лексически связываемыми.
+
 \begin{defspec}
 catch tag {\,form}*
 
@@ -5271,14 +6481,37 @@ are immediately returned from the \cdf{catch} expression.
 The catcher established by the \cdf{catch} expression is disestablished
 just before the results are returned.
 
+Специальная форма \cdf{catch} служит мишенью для передачи управления с помощью
+\cdf{throw}.
+Первой выполняется форма \emph{tag} для создания объекта для имени catch.
+Он может быть любым Lisp'овым объектом.
+Затем устанавливается ловушка с тегом, в качестве которого используется этот
+объект.
+Формы \emph{form} выполняются как неявный \cdf{progn},
+и возвращается результат последней формы.
+Однако если во время вычислений будет выполнена форма \cdf{throw} с тегом,
+который равен \cdf{eq} тегу catch, то управление немедленно прерывается и
+возвращается результат указанный в форме throw.
+Ловушка, устанавливаемая с помощью \cdf{catch}, упраздняется перед тем, как
+будет возвращен результат.
+
 The tag is used to match throws with catches.
 \cd{(catch 'foo \emph{form})} will catch a \cd{(throw 'foo \emph{form})} but
 not a \cd{(throw 'bar \emph{form})}.  It is an error if \cdf{throw} is done
 when there is no suitable \cdf{catch} ready to catch it.
 
+Тег используется для соотнесения throws и catches.
+\cd{(catch 'foo \emph{form})} будет перехватывать \cd{(throw 'foo \emph{form})},
+но не будет \cd{(throw 'bar \emph{form})}. Если \cdf{throw} выполнен без
+соотвествующего \cdf{catch}, готового его обработать, то это является ошибкой.
+
 Catch tags are compared using \cdf{eq},
 not \cdf{eql}; therefore numbers and characters
 should not be used as catch tags.
+
+Теги catch сравниваются с использованием \cdf{eq}, а не \cdf{eql}.
+Таким образом числа и строковые символы не могут использоваться в качестве
+тегов.
 
 \beforenoterule
 \begin{incompatibility}
@@ -5323,6 +6556,27 @@ is terminated for whatever reason.  This case is so important
 that Common Lisp provides the special form \cdf{with-open-file} for
 this purpose.)
 
+Иногда необходимо выполнить форму и быть уверенным, что некоторые побочные
+эффекты выполняются после ее завершения.
+Например:
+\begin{lisp}
+(progn (start-motor) \\*
+~~~~~~~(drill-hole) \\*
+~~~~~~~(stop-motor))
+\end{lisp}
+Функциональность нелокальных выходов в Common Lisp создает ситуацию, в которой
+однако данный код может не сработать правильно.
+Если \cd{drill-hole} может бросить исключение в ловушку, находяющуюся выше
+данного \cdf{progn}, то \cd{(stop-motor)} никогда не выполниться.
+Более удобный пример с открытием/закрытием файлов:
+\begin{lisp}
+(prog2 (open-a-file) \\*
+~~~~~~~(process-file) \\*
+~~~~~~~(close-the-file))
+\end{lisp}
+где закрытие файла может не произойти, по причине ошибки в функции
+\cd{process-file}.
+
 In order to allow the example hole-drilling program to work, it can
 be rewritten using \cdf{unwind-protect} as follows:
 \begin{lisp}
@@ -5335,6 +6589,19 @@ be rewritten using \cdf{unwind-protect} as follows:
 \end{lisp}
 If \cdf{drill-hole} does a throw that attempts to quit out of the
 \cdf{unwind-protect}, then \cd{(stop-motor)} will be executed.
+
+Для того, чтобы вышеприведенный код работал корректно, можно переписать его с
+использованием \cdf{unwind-protect}:
+\begin{lisp}
+;; Stop the motor no matter what (even if it failed to start). \\*
+\\*
+(unwind-protect \\*
+~~(progn (start-motor) \\*
+~~~~~~~~~(drill-hole)) \\*
+~~(stop-motor))
+\end{lisp}
+Если \cdf{drill-hole} бросит исключение, которое попытается выйти из блока
+\cdf{unwind-protect}, то \cd{(stop-motor)} будет обязательно выполнена.
 
 This example assumes that it is correct to call \cdf{stop-motor}
 even if the motor has not yet been started.  Remember that
@@ -5360,6 +6627,10 @@ The correct way to code this is as follows:
 ~~~~~~~~~~~(perform-access)) \\
 ~~~~(setq *access-count* old-count)))
 \end{lisp}
+
+Этот пример говорит о том, что вызов \cdf{stop-motor} корректен, даже если
+мотор еще не был запущен. Помните, что ошибка или прерывание может осуществить
+выход перед тем, как будет проведена инициализация.
 
 As a general rule, \cdf{unwind-protect} guarantees to execute
 the \emph{cleanup-form\/}s before exiting, whether it terminates
@@ -5541,6 +6812,27 @@ If there is no outstanding catcher whose tag matches the throw tag,
 no unwinding of the stack is performed, and an error is signalled.
 When the error is signalled, the outstanding catchers and the dynamic
 variable bindings are those in force at the point of the throw.
+
+Специальная форма \cdf{throw} переносит управление к соотвествующей конструкции
+\cdf{catch}.
+Сначала выполняется \emph{tag} для вычисления объекта, называемого тег
+throw. Затем вычисляется форма результата \emph{result}, и этот результат
+сохраняется (если форма \emph{result} возвращает несколько значений, то
+\emph{все} значения сохраняются).
+Управление выходит и самого последнего установленного catch, тег которого
+совпадает с тегом throw. Сохраненные результаты возвращаются, как значения
+конструкции \cdf{catch}.
+Теги catch и throw совпадают, только если они равны \cdf{eq}.
+
+В процессе, связывания динамических переменных упраздняются до точки catch, и
+выполнятся все формы очистки в конструкциях unwind-protect.
+Форма \emph{result} вычисляется перед началом процесса раскручивания, и ее
+значение возвращается из блока catch.
+
+Если внешний блок catch с совпадающим тегом не найден, раскрутка стека не
+происходит и сигнализируется ошибка.
+Когда ошибка сигнализируется, ловушки и динамические связывания переменных
+являются теми, которые были в точке throw.
 
 \beforenoterule
 \begin{implementation}
