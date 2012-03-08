@@ -3,29 +3,54 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Hash Tables}
+\chapter{Hash Tables Хеш-таблицы}
 \label{HASH}
 
 A hash table is a Lisp object that can efficiently map a given
 Lisp object to another Lisp object.
-Each hash table has a set of {\it entries}, each of which associates a
-particular {\it key} with a particular {\it value}.  The basic functions
+Each hash table has a set of \emph{entries}, each of which associates a
+particular \emph{key} with a particular \emph{value}.  The basic functions
 that deal with hash tables can create entries, delete entries, and find
 the value that is associated with a given key.  Finding the value is
 very fast, even if there are many entries, because hashing is used; this
 is an important advantage of hash tables over property lists.
 
-A given hash table can associate only one {\it value} with a given
-{\it key}; if you try to add a second {\it value}, it will replace the
+Хеш-таблица является Lisp'овыми объектом, который может быстро отображать
+заданный Lisp'овый объект в другой Lisp'овый объект. 
+\emph{Wikipedia более понятно излагает: это структура данных, реализующая интерфейс
+ассоциативного массива, а именно, она позволяет хранить пары (ключ, значение) и
+выполнять три операции: операцию добавления новой пары, операцию поиска и
+операцию удаления пары по ключу.}
+Каждая хеш-таблица содержит множество \emph{элементов}, каждый из которых
+содержит \emph{значение} ассоциированное с \emph{ключом}. Базовые функции
+взаимодействия с хеш-таблицей монут создавать элементы (пары ключ-значение),
+удалять элементы и искать значения по заданному ключу. Поиск значения очень
+быстрый, даже при наличии большого количества элементов, потому что используется
+хеширование. Это самое важное преимущество хеш-таблиц перед списками свойств.
+
+A given hash table can associate only one \emph{value} with a given
+\emph{key}; if you try to add a second \emph{value}, it will replace the
 first.  Also, adding a value to a hash table is a destructive operation;
 the hash table is modified.  By contrast, association lists can be
 augmented non-destructively.
 
+Хеш-таблица может связывать только одно \emph{значение} с заданным
+\emph{ключом}. Если вы попробуете добавть второе \emph{значение}, оно заменит
+предыдущее. К тому же, добавление значения в хеш-таблицу является деструктивной
+операцией, в этом случае хеш-таблица модифицируется. Ассоциативные списки же,
+наоборот, могут расширяться недеструктивно.
+
 Hash tables come in three kinds, the difference being whether the keys
 are compared with \cdf{eq}, \cdf{eql}, or \cdf{equal}.  In other words, there
-are hash tables that hash on Lisp {\it objects} (using \cdf{eq} or \cdf{eql})
-and there are hash tables that hash on {\it tree structure}
+are hash tables that hash on Lisp \emph{objects} (using \cdf{eq} or \cdf{eql})
+and there are hash tables that hash on \emph{tree structure}
 (using \cdf{equal}).
+
+Хеш-таблицы существуют в трех видах, различие между ними в том, как сравниваются
+ключи, с помощью \cdf{eq}, \cdf{eql} или \cdf{equal}. Другими словами,
+существуют хеш таблицы с ключами, которые используют Lisp'овые \emph{объекты}
+(\cdf{eq} или \cdf{eql}) и которые используют \emph{древовидные структуры}
+(\cdf{equal}). FIXME
 
 Hash tables are created with the function
 \cdf{make-hash-table}, which takes various options, including
@@ -44,23 +69,45 @@ To remove an entry, use \cdf{remhash}.  Here is a simple example.
 (gethash 'pointy a) \EV\ {\false}
 \end{lisp}
 
+Хеш-таблицы создаются функцией \cdf{make-hash-table}, которая принимает
+различные параметры, включая тип хеш-таблицы (по-умолчанию тип \cdf{eql}).
+Для поиска значения по ключу используйте \cdf{gethash}.
+Новые элементы могут быть добавлены с помощью \cdf{gethash} внутри \cdf{setf}.
+Для удаления элементов используйте \cdf{remhash}. Вот простой пример.
+\begin{lisp}
+(setq a (make-hash-table)) \\
+(setf (gethash 'color a) 'brown) \\
+(setf (gethash 'name a) 'fred) \\
+(gethash 'color a) \EV\ brown \\
+(gethash 'name a) \EV\ fred \\
+(gethash 'pointy a) \EV\ {\false}
+\end{lisp}
+
 In this example, the symbols \cdf{color} and \cdf{name} are being used as
 keys, and the symbols \cdf{brown} and \cdf{fred} are being used as the
 associated values.  The hash table has two items in it, one of which
 associates from \cdf{color} to \cdf{brown}, and the other of which
 associates from \cdf{name} to \cdf{fred}.
 
+В этом примере, символы \cd{color} и \cd{name} используются в качестве ключей, а
+символы \cd{brown} и \cd{fred} в качестве ассоциированных значений. Хеш-таблица
+содержит две пары, в одной ключ \cd{color} связан с \cd{brown}, а в другой
+\cd{name} с \cd{fred}.
+
 Keys do not have to be symbols; they can be any Lisp object.  Similarly,
 values can be any Lisp object.
 
+Ключи необязательно должны быть символами. Они могут быть любыми Lisp'овыми
+объектами. Значения также могут быть любыми Lisp'овыми объектами.
+
 \begin{obsolete}
-When a hash table is first created, it has a {\it size}, which is the
+When a hash table is first created, it has a \emph{size}, which is the
 maximum number of entries it can hold.  Usually the actual capacity of
 the table is somewhat less, since the hashing is not perfectly
 collision-free.  With the maximum possible bad luck, the capacity could
 be very much less, but this rarely happens.  If so many entries are
 added that the capacity is exceeded, the hash table will automatically
-grow, and the entries will be {\it rehashed} (new hash values will be
+grow, and the entries will be \emph{rehashed} (new hash values will be
 recomputed, and everything will be rearranged so that the fast hash
 lookup still works).  This is transparent to the caller; it all happens
 automatically.
@@ -83,7 +130,7 @@ more convenient for the user.
 \begin{incompatibility}
 This hash table facility is compatible with Lisp Machine Lisp.  It
 is similar to the hasharray facility of Interlisp, and some of the
-function names are the same.  However, it is {\it not} compatible with
+function names are the same.  However, it is \emph{not} compatible with
 Interlisp.  The exact details and the order of arguments are designed to
 be consistent with the rest of MacLisp rather than with
 Interlisp.  For instance, the order of arguments to \cdf{maphash} is
@@ -92,10 +139,13 @@ the Interlisp restriction that keys and values may not be {\false}.
 \end{incompatibility}
 \afternoterule
 
-\section{Hash Table Functions}
+\section{Hash Table Functions Функции для хеш-таблиц}
 
 This section documents the functions for hash tables, which
-use {\it objects} as keys and associate other objects with them.
+use \emph{objects} as keys and associate other objects with them.
+
+Данный раздел описывает функции для хеш-таблиц, которые используют
+\emph{объекты} для ключей и ассоциируют другие объекты с этими.
 
 \begin{defun}[Function]
 make-hash-table &key :test :size :rehash-size :rehash-threshold
@@ -105,6 +155,12 @@ The \cd{:test} argument determines how keys are compared;
 it must be one of the three values \cd{\#'eq}, \cd{\#'eql}, or \cd{\#'equal},
 or one of the three symbols \cdf{eq}, \cdf{eql}, or \cdf{equal}.
 If no test is specified, \cdf{eql} is assumed.
+
+Эта функция создает и возвращает новую хеш-таблицу.
+Аргумент \cd{:test} определяет как будут сравниваться ключи.
+Он может быть одним из трех значений \cd{\#'eq}, \cd{\#'eql} или \cd{\#'equal},
+или одним из трех символов \cdf{eq}, \cdf{eql} или \cdf{equal}.
+По-умолчанию используется \cdf{eql}.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -137,6 +193,13 @@ before it overflows and becomes bigger, but this argument does serve
 as a hint to the implementation of approximately
 how many entries you intend to store.
 
+Аргумент \cd{:size} устанавливает первоначальный размер хеш-таблицы в парах.
+(Указанный размер может быть округлен до <<хорошего>> размера, например, до
+первого следующего простого числа.)
+Вы можете не сохранять в таблице столько пар, сколько указали. Этот аргумент
+служит подсказкой для реализации о том, какое примерно число элементов вы будете
+хранить в хеш-таблице.
+
 \begin{new}
 X3J13 voted in January 1989
 \issue{ARGUMENTS-UNDERSPECIFIED}
@@ -159,6 +222,13 @@ it can be a floating-point number greater than 1,
 which is the ratio of the new size to the old size.
 The default value for this argument is implementation-dependent.
 
+Аргумент \cd{:rehash-size} указывает, на сколько увеличить размер хеш-таблицы,
+когда она по размерам достигнет пределов.
+Если это целое число, оно должно быть больше нуля, и будет означать абсолютное
+приращение. Если это число с плавающей точкой, оно должно быть больше 1, и будет
+означать относительное приращение к предыдущему размеру.
+Значение по-умолчанию зависит от реализации.
+
 \begin{obsolete}
 The \cd{:rehash-threshold} argument
 specifies how full the hash table can get before it must grow.
@@ -178,9 +248,21 @@ It may be any \cdf{real} number between \cd{0} and \cd{1}, inclusive.
 It indicates the maximum desired level of hash table occupancy.
 An implementation is permitted to ignore this argument.
 The default value for this argument is implementation-dependent.
+
+Аргумент \cd{:rehash-threshold} указывает, насколько должна наполниться
+хеш-таблица, прежде чем она будет увеличина. Он должен быть числом типа
+\cdf{real} между \cd{0} и \cd{1}, включительно.
+Он показывает максимальный уровень заполнения хеш-таблицы.
+Значение по-умолчанию зависит от реализации.
 \end{newer}
 
 An example of the use of \cdf{make-hash-table}:
+\begin{lisp}
+(make-hash-table :rehash-size 1.5 \\*
+~~~~~~~~~~~~~~~~~:size (* number-of-widgets 43))
+\end{lisp}
+
+Пример использования \cdf{make-hash-table}:
 \begin{lisp}
 (make-hash-table :rehash-size 1.5 \\*
 ~~~~~~~~~~~~~~~~~:size (* number-of-widgets 43))
@@ -195,22 +277,28 @@ and otherwise is false.
 \begin{lisp}
 (hash-table-p x) \EQ\ (typep x 'hash-table)
 \end{lisp}
+
+\cdf{hash-table-p} возвращает истину, если аргумент является хеш-таблицей. Иначе
+возвращает ложь.
+\begin{lisp}
+(hash-table-p x) \EQ\ (typep x 'hash-table)
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
 gethash key hash-table &optional default
 
-\cdf{gethash} finds the entry in {\it hash-table} whose key is {\it key}
+\cdf{gethash} finds the entry in \emph{hash-table} whose key is \emph{key}
 and returns the
-associated value.  If there is no such entry, \cdf{gethash} returns {\it default},
+associated value.  If there is no such entry, \cdf{gethash} returns \emph{default},
 which is {\false} if not specified.
 
 \cdf{gethash} actually returns two values, the second being a predicate
 value that is true if an entry was found, and false if no entry was found.
 
 \cdf{setf} may be used with \cdf{gethash} to make new entries in a hash
-table.  If an entry with the specified {\it key} already exists, it is
-removed before the new entry is added.  The {\it default} argument may be
+table.  If an entry with the specified \emph{key} already exists, it is
+removed before the new entry is added.  The \emph{default} argument may be
 specified to \cdf{gethash} in this context; it is ignored by \cdf{setf}
 but may be useful in such macros as \cdf{incf} that are related to \cdf{setf}:
 \begin{lisp}
@@ -226,33 +314,84 @@ which in turn would be treated as simply
 (setf (gethash a-key table) \\*
 ~~~~~~(+ (gethash a-key table 0) 1))
 \end{lisp}
+
+\cdf{gethash} ищет элемент в хеш-\emph{hash-table}, чей ключ равен \emph{key} и
+возвращает связанное значение. Если элемент не был найден, то возвращается
+значение аргумента \emph{default}, который по-умолчанию равен {\false}.
+
+\cdf{gethash} возвращает два значение. Второе значение является предикатом, и
+истинно, если значение было найдено, и ложно если нет.
+
+\cdf{setf} может использоваться вместе с \cdf{gethash} для создания в
+хеш-таблице новых элементов. Если элемент с заданным ключом \emph{key} уже
+существует, он будет удален перед добавлением. В этом контексте может
+использоваться аргумент \emph{default}, он игнорируется \cdf{setf}, но может
+быть полезным в таких макросах как \cdf{incf}, которые связаны с \cdf{setf}:
+\begin{lisp}
+(incf (gethash a-key table 0))
+\end{lisp}
+обозначает то же, что и 
+\begin{lisp}
+(setf (gethash a-key table 0) \\*
+~~~~~~(+ (gethash a-key table 0) 1))
+\end{lisp}
+что можно преобразовать в
+\begin{lisp}
+(setf (gethash a-key table) \\*
+~~~~~~(+ (gethash a-key table 0) 1))
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
 remhash key hash-table
 
 \cdf{remhash} removes
-any entry for {\it key} in {\it hash-table}.  This is a predicate
+any entry for \emph{key} in \emph{hash-table}.  This is a predicate
 that is true if there was an
 entry or false if there was not.
+
+\cdf{remhash} удаляет любой элемент в хеш-таблице \emph{hash-table} ключ,
+которого равен параметру \emph{key}. Возвращает истину, если элемент был
+удален, и ложь, если элемента уже не существовало.
 \end{defun}
 
 \begin{defun}[Function]
 maphash function hash-table
 
-For each entry in {\it hash-table}, \cdf{maphash} calls
-{\it function} on two arguments:
+For each entry in \emph{hash-table}, \cdf{maphash} calls
+\emph{function} on two arguments:
 the key of the entry and the value of the entry; \cdf{maphash} then returns \cdf{nil}.
 If entries are added to or deleted from the hash table while a \cdf{maphash}
 is in progress, the results are unpredictable, with one exception:
-if the {\it function} calls \cdf{remhash} to remove the entry currently
-being processed by the {\it function}, or performs a \cdf{setf} of
+if the \emph{function} calls \cdf{remhash} to remove the entry currently
+being processed by the \emph{function}, or performs a \cdf{setf} of
 \cdf{gethash} on that entry to change the associated value, then those
 operations will have the intended effect.
 For example:
 \begin{lisp}
 ;;; Alter every entry in MY-HASH-TABLE, replacing the value with \\
 ;;; its square root.  Entries with negative values are removed. \\
+(maphash \#'(lambda (key val) \\
+~~~~~~~~~~~~~(if (minusp val) \\
+~~~~~~~~~~~~~~~~~(remhash key my-hash-table) \\
+~~~~~~~~~~~~~~~~~(setf (gethash key my-hash-table) (sqrt val)))) \\
+~~~~~~~~~my-hash-table)
+\end{lisp}
+
+Для каждого элемента в хеш-таблице \emph{hash-table}, \cdf{maphash} вызывает
+функцию \emph{function} с двумя аргументами:
+ключ элемента и
+значение элемента.
+\cdf{maphash} возвращает \cdf{nil}.
+Если во время выполнения \cdf{maphash} в хеш-таблице добавлялись или удалялись
+ключи, то результат непредсказуем, но есть исключение:
+если функция \emph{function} вызывает \cdf{remhash} для удаления элемента,
+который в эту функцию и был передан, или устанавливает новое значение с помощью
+\cdf{setf} этому элементу, то эти операции будут выполнены правильно.
+Например:
+\begin{lisp}
+;;; Изменение каждого элемента в MY-HASH-TABLE, с заменой на \\
+;;; квадратный корень. Элементы с отрицательными значения удаляются. \\
 (maphash \#'(lambda (key val) \\
 ~~~~~~~~~~~~~(if (minusp val) \\
 ~~~~~~~~~~~~~~~~~(remhash key my-hash-table) \\
@@ -270,16 +409,23 @@ to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
 \begin{defun}[Function]
 clrhash hash-table
 
-This removes all the entries from {\it hash-table}
+This removes all the entries from \emph{hash-table}
 and returns the hash table itself.
+
+Функция удаляет все элемент из хеш-таблицы \emph{hash-table} и возвращает эту
+хеш-таблицу.
 \end{defun}
 
 \begin{defun}[Function]
 hash-table-count hash-table
 
-This returns the number of entries in the {\it hash-table}.
+This returns the number of entries in the \emph{hash-table}.
 When a hash table is first created or has been cleared,
 the number of entries is zero.
+
+Функция возвращает количество элементов в хеш-таблице \emph{hash-table}.
+Когда хеш-таблица только были сделана, или только что очищена, то количество
+элементов равно нулю.
 \end{defun}
 
 
@@ -291,11 +437,11 @@ X3J13 voted in January 1989
 \issue{HASH-TABLE-PACKAGE-GENERATORS}
 to add the macro \cdf{with-hash-table-iterator}.
 
-The name {\it mname} is bound and defined as if by \cdf{macrolet},
-with the body {\it form\/}s as its lexical scope, to be a ``generator macro''
-such that successive invocations \cd{({\it mname})} will
+The name \emph{mname} is bound and defined as if by \cdf{macrolet},
+with the body \emph{form\/}s as its lexical scope, to be a ``generator macro''
+such that successive invocations \cd{(\emph{mname})} will
 return entries, one by one, from the hash table that is the value of the
-expression {\it hash-table} (which is evaluated exactly once).
+expression \emph{hash-table} (which is evaluated exactly once).
 
 At each invocation of the generator macro, there are two possibilities.
 If there is yet another unprocessed entry in the hash table, then
@@ -306,7 +452,7 @@ On the other hand, if there are no more unprocessed entries in the
 hash table, then one value is returned: \cdf{nil}.
 
 The implicit interior state of the iteration over the hash table
-entries has dynamic extent.  While the name {\it mname} has
+entries has dynamic extent.  While the name \emph{mname} has
 lexical scope, it is an error to invoke the generator macro
 once the \cdf{with-hash-table-iterator} form has been exited.
 
@@ -381,32 +527,65 @@ corresponding to the current state of the argument hash table.
 \cdf{hash-table-test} returns the test used for comparing keys.
 If the test is one of the standard test functions, then the result
 will always be a symbol, even if the function itself was specified
-when the {\it hash-table} was created.  For example:
+when the \emph{hash-table} was created.  For example:
 \begin{lisp}
 (hash-table-test (make-hash-table :test \#'equal)) \EV\ equal
 \end{lisp}
 Implementations that extend \cdf{make-hash-table} by providing additional
 possibilities for the \cd{:test} argument may determine how the
 value returned by \cdf{hash-table-test} is related to such additional tests.
+
+Добавлены функции, которые возвращают значения используемые при вызове
+\cdf{make-hash-table}.
+
+\cdf{hash-table-rehash-size} возвращает размер приращения хеш-таблицы.
+
+\cdf{hash-table-rehash-threshold} возвращает текущий уровень заполнения.
+
+\cdf{hash-table-size} возвращает рекомендуемый размер хеш-таблицы.
+
+\cdf{hash-table-test} возвращает функцию сравнения используемую для ключей.
+Если данная функция одна из стандартных, то результат всегда является символом,
+даже если при создании хеш-таблицы было указано иное. Например:
+\begin{lisp}
+(hash-table-test (make-hash-table :test \#'equal)) \EV\ equal
+\end{lisp}
+Реализации, которые расширяют \cdf{make-hash-table} дополнительными функциями
+сравнения для аргумента \cd{:test}, могут определять, как будет возвращено
+значение из \cdf{hash-table-test} для этих дополнительных функций.
 \end{defun} 
 \end{newer}
 
-\section{Primitive Hash Function}
+\section{Primitive Hash Function Функции хеширования}
 
 The function \cdf{sxhash} is a convenient tool for the user who needs
 to create more complicated hashed data structures than are provided by
 \cdf{hash-table} objects.
+
+Функция \cdf{sxhash} является удобным инструментом для пользователя,
+нуждающегося в создании более сложных хешированных структур данных, чем
+предоставляются объектами \cdf{hash-table}.
 
 \begin{defun}[Function]
 sxhash object
 
 \cdf{sxhash} computes a hash code for an object and returns the hash code as
 a non-negative fixnum.  A property of \cdf{sxhash}
-is that \cd{(equal {\it x} {\it y})} implies \cd{(= (sxhash {\it x}) (sxhash {\it y}))}.
+is that \cd{(equal \emph{x} \emph{y})} implies \cd{(= (sxhash \emph{x}) (sxhash \emph{y}))}.
 
 The manner in which the hash code is computed is implementation-dependent
 but independent of the particular ``incarnation'' or ``core image.''
 Hash values produced
 by \cdf{sxhash} may be written out to files, for example, and meaningfully
 read in again into an instance of the same implementation.
+
+\cdf{sxhash} вычисляет хеш для объекта и возвращает этот хеш, как
+неотрицательное число fixnum. Свойство \cdf{sxhash} заключается в том, что
+\cd{(equal \emph{x} \emph{y})} подразумевает \cd{(= (sxhash \emph{x}) (sxhash
+  \emph{y}))}.
+
+Механизм вычисления хеша зависит от реализации, но независим от запущенного
+экземпляра.
+Например, вычисленные \cdf{sxhash} хеши могут быть записаны в файлы, и без
+потери информации прочитаны из них в рамках одной реализации.
 \end{defun}

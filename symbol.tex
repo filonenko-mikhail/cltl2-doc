@@ -4,18 +4,18 @@
 \clearpage\def\pagestatus{ULTIMATE}
 
 
-\chapter{Symbols}
+\chapter{Symbols Символы}
 \label{symbol}
 
 A Lisp symbol is a data object that has three user-visible
 components:
 \begin{itemize}
 \item
-The {\it property list} is a list that effectively provides each symbol
+The \emph{property list} is a list that effectively provides each symbol
 with many modifiable named components.
 
 \item
-The {\it print name} must be a string, which is the sequence of
+The \emph{print name} must be a string, which is the sequence of
 characters used to identify the symbol.  Symbols are of great use
 because a symbol can be located once its name is given
 (typed, say, on a keyboard).
@@ -28,14 +28,38 @@ to specify it is an error to alter a print name.
 \end{newer}
 \begin{itemize}
 \item
-The {\it package cell} must refer to a package object.
+The \emph{package cell} must refer to a package object.
 A package is a data structure
 used to locate a symbol once given the symbol's name.
 A symbol is uniquely identified
 by its name only when considered relative to a package.  A symbol may
-appear in many packages, but it can be {\it owned} by at most one package.
+appear in many packages, but it can be \emph{owned} by at most one package.
 The package cell points to the owner, if any.
 Package cells are discussed along with packages in chapter~\ref{XPACK}.
+\end{itemize}
+
+Lisp'овые символы является объектами данных, которые имеют три элемента, видимых
+для пользователя:
+\begin{itemize}
+\item
+\emph{Список свойств} является списком, который позволяет хранить в символе
+именованные изменяемые данные.
+
+\item
+\emph{Выводимое имя} должно быть строкой, которая является последовательностью
+строковых символов, идентифицирующей символ. Символы несут большую пользу, так
+как они могут быть обозначены просто заданным именем (например, напечатанным на
+клавиатуре).
+Выводимое имя изменять нельзя.
+
+\item
+\emph{Ячейка пакета} должна ссылаться на объект пакета.
+Пакет является структурой данных, используемой для группирования имен символов.
+Символ уникально идентифицируется по имени, только когда рассматривается
+относительно пакета. Символ может встречаться в нескольких пакетах, но
+\emph{родительским} пакетом может быть как максимум только один.
+Ячейка пакета ссылается на родительский пакет, если он есть.
+Ячейки пакетов обсуждаются в главе~\ref{XPACK}.
 \end{itemize}
 
 A symbol may actually have other components for use by the
@@ -48,28 +72,53 @@ However, there are several possible
 implementation strategies, and so such possible components are not
 described here.
 
-\section{The Property List}
+Символ может также содержать другие элементы, которые используются
+реализацией. Еще одна важная функция --- это использование символов в качестве
+имен переменных.  Желательно, чтобы разработчик использовал такие элементы
+символа для реализации семантики переменных. Смотрите \cdf{symbol-value} и
+\cdf{symbol-function}. Однако, существует несколько стратегии реализации, и
+такие возможные элементы символов здесь не описаны.
+
+\section{The Property List Список свойств}
 
 Since its inception, Lisp has associated with each symbol
 a kind of tabular data structure
-called a {\it property list} ({\it plist} for short).  A property list contains
+called a \emph{property list} (\emph{plist} for short).  A property list contains
 zero or more entries; each entry associates with a key
-(called the {\it indicator}), which is typically
-a symbol, an arbitrary Lisp object (called the {\it value} or,
-sometimes, the {\it property}).
+(called the \emph{indicator}), which is typically
+a symbol, an arbitrary Lisp object (called the \emph{value} or,
+sometimes, the \emph{property}).
 There are no duplications among the indicators; a property list may only
 have one property at a time with a given name.  In this way, given
 a symbol and an indicator (another symbol), an associated value can be
 retrieved.
 
+Начиная с самого создания, Lisp для каждого символа ассоциирует табличную
+структуру данных, называемую \emph{список свойств} (для краткости \emph{plist}).
+Список свойств содержит ноль и более элементов. Каждый элемент содержит ключ
+(называемым \emph{индикатором}), который чаще всего является символом, и
+ассоциированным с ним значением (называемым иногда \emph{свойством}), которое
+может быть любым Lisp'овым объектом.
+Среди индикаторов не может быть дубликатов. Список свойств может иметь только
+одно свойство для данного имени. Таким образом, значение может получено с
+помощью двух символов: исходного символа и индикатора.
+
 A property
-list is very similar in purpose to an association list.  The difference
+list is very similar in purpose to an association list. The difference
 is that a property list is an object with a unique identity; the
 operations for adding and removing property-list entries are destructive
 operations that alter the property list rather than making a new one.
 Association lists, on the other hand, are normally augmented
 non-destructively (without side effects) by adding new entries to the
 front (see \cdf{acons} and \cdf{pairlis}).
+
+Список свойств по целевому назначению очень похож на ассоциативный
+список. Различие в том, что список свойств является единственно подлинным
+объектом. Операции добавления и удаления элементов деструктивны, то есть при их
+использовании изменяется старый список, и нового списка свойств не создается.
+Ассоциативные список, наоборот, обычно изменяются недеструктивно (без побочных
+эффектов) с помощью добавления в начало новых элементов (смотрите \cdf{acons} и
+\cdf{pairlis}).
 
 A property list is implemented as a memory cell
 containing a list with an even number (possibly zero) of elements.
@@ -82,13 +131,30 @@ value.  Because property-list functions are given the symbol
 and not the list itself, modifications to the property list
 can be recorded by storing back into the property-list cell of the symbol.
 
+Список свойств реализуется, как ячейка памяти, содержащая список с четным
+(возможно нулевым) количеством аргументов.
+(Обычно эта ячейка памяти является ячейкой списка свойств в символе, но в
+принципе подходит любая ячейка памяти, к которой можно применить \cdf{setf})
+Каждая пара элементов в списке составляет строку.
+Первый в паре это индикатор, а второй --- значение. Так как функции для списка
+свойств используют символ, а не сам список, то изменения этого списка свойств
+может быть записаны сохранением обратно в ячейку списка свойств символа. FIXME
+
 When a symbol is created, its property list is initially empty.
 Properties are created by using \cdf{get} within a \cdf{setf} form.
+
+Когда создается символ, его список свойств пуст. Свойства создаются с помощью
+\cdf{get} внутри формы \cdf{setf}.
 
 Common Lisp does not use a symbol's property list as extensively as earlier
 Lisp implementations did.  Less-used data, such as compiler,
 debugging, and documentation information, is kept on property lists
 in Common Lisp.
+
+Common Lisp не использует список свойств символа так интенсивно, как это делали
+ранние реализации Lisp'а. В Common Lisp'е нечасто используемые данные, такие как
+отладочная информация, информация для компилятора и документация, хранятся в списках
+свойств.
 
 \beforenoterule
 \begin{incompatibility}
@@ -120,16 +186,25 @@ and \cdf{remf}.
 get symbol indicator &optional default
 
 \cdf{get} searches the property list of
-{\it symbol} for an indicator \cdf{eq} to {\it indicator}.
+\emph{symbol} for an indicator \cdf{eq} to \emph{indicator}.
 The first argument must be a symbol.
 If one is found, then the corresponding value is returned;
-otherwise {\it default} is returned.
+otherwise \emph{default} is returned.
 
-If {\it default} is not specified,
-then {\false} is used for {\it default}.
+\cdf{get} ищет в списке свойств символа \emph{symbol} индикатор равный \cdf{eq}
+индикатору \emph{indicator}.
+Первый аргумент должен быть символом.
+Если такое свойство найдено, возвращается ее значение. Иначе возвращается
+значение \emph{default}.
+
+If \emph{default} is not specified,
+then {\false} is used for \emph{default}.
+
+Если \emph{default} не указано, тогда для значения по-умолчанию используется
+{\false}.
 
 Note that there is no way to distinguish an absent property from
-one whose value is {\it default}.
+one whose value is \emph{default}.
 \begin{lisp}
 (get x y) \EQ\ (getf (symbol-plist x) y)
 \end{lisp}
@@ -141,10 +216,23 @@ Then, for example:
 (get 'foo 'zoo) \EV\ {\false}
 \end{lisp}
 
+Следует отметить, что способа отличить значения по-умолчанию и такое же значение
+свойства нет:
+\begin{lisp}
+(get x y) \EQ\ (getf (symbol-plist x) y)
+\end{lisp}
+Допустим, что список свойств символа \cd{foo} является \cd{(bar t baz 3 hunoz
+  "Huh?")}.
+Тогда, например:
+\begin{lisp}
+(get 'foo 'baz) \EV\ 3 \\
+(get 'foo 'hunoz) \EV\ "Huh?" \\
+(get 'foo 'zoo) \EV\ {\false}
+\end{lisp}
 \beforenoterule
 \begin{incompatibility}
 In MacLisp, the first argument to \cdf{get} could
-be a list, in which case the {\it cdr} of the list was treated
+be a list, in which case the \emph{cdr} of the list was treated
 as a so-called ``disembodied property list.''
 The first argument to \cdf{get}
 could also be any other object, in which case \cdf{get} would 
@@ -158,16 +246,15 @@ in Common Lisp by using \cdf{get} with \cdf{setf}.
 \end{incompatibility}
 \afternoterule
 
-
 \cdf{setf} may be used with \cdf{get} to create a new property-value
 pair, possibly replacing an old pair with the same property name.
 For example:
 \begin{lisp}
 (get 'clyde 'species) \EV\ {\false} \\
 (setf (get 'clyde 'species) 'elephant) \EV\ elephant \\
-{\rm and now} (get 'clyde 'species) \EV\ elephant
+\textrm{and now} (get 'clyde 'species) \EV\ elephant
 \end{lisp}
-The {\it default} argument may be
+The \emph{default} argument may be
 specified to \cdf{get} in this context; it is ignored by \cdf{setf} but
 may be useful in such macros as \cdf{push} that are related to \cdf{setf}:
 \begin{lisp}
@@ -184,12 +271,37 @@ which in turn would be treated as simply
 ~~~~~~(cons item (get sym 'token-stack '(initial-item))))
 \end{lisp}
 
+\cdf{setf} может использоваться вместе с \cdf{get} для созданя новой пары
+свойства, возожно замещая старую пару с тем же именем.
+Например:
+\begin{lisp}
+(get 'clyde 'species) \EV\ {\false} \\
+(setf (get 'clyde 'species) 'elephant) \EV\ elephant \\
+\textrm{и теперь} (get 'clyde 'species) \EV\ elephant
+\end{lisp}
+В данном контексте может быть указан аргумент \emph{default}. Он игнорируется в
+\cdf{setf}, но может быть полезен в таких макросах, как \cdf{push}, которые
+связаны с \cdf{setf}:
+\begin{lisp}
+(push item (get sym 'token-stack '(initial-item)))
+\end{lisp}
+означает то же, что и
+\begin{lisp}
+(setf (get sym 'token-stack '(initial-item)) \\
+~~~~~~(cons item (get sym 'token-stack '(initial-item))))
+\end{lisp}
+а если упростить, то
+\begin{lisp}
+(setf (get sym 'token-stack) \\
+~~~~~~(cons item (get sym 'token-stack '(initial-item))))
+\end{lisp}
+
 \begin{newer}
 X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
 to clarify the permissible side effects of certain operations;
-\cd{(setf (get {\it symbol} {\it indicator}) {\it newvalue})}
+\cd{(setf (get \emph{symbol} \emph{indicator}) \emph{newvalue})}
 is required to behave exactly the same as
-\cd{(setf (getf (symbol-plist {\it symbol}) {\it indicator}) {\it newvalue})}.
+\cd{(setf (getf (symbol-plist \emph{symbol}) \emph{indicator}) \emph{newvalue})}.
 \end{newer}
 
 \end{defun}
@@ -197,8 +309,8 @@ is required to behave exactly the same as
 \begin{defun}[Function]
 remprop symbol indicator
 
-This removes from {\it symbol} the property with an indicator \cdf{eq}
-to {\it indicator}.  The property indicator and the corresponding
+This removes from \emph{symbol} the property with an indicator \cdf{eq}
+to \emph{indicator}.  The property indicator and the corresponding
 value are removed by destructively splicing the property
 list.  It returns {\false} if no such property was found,
 or non-{\false} if a property was found.
@@ -218,22 +330,43 @@ returns a non-{\nil} value after altering \cdf{foo}'s property list to be
 (color blue near-to bar)
 \end{lisp}
 
+Эта функция удаляет из символа \emph{symbol} свойство с индикатором, равным
+\cdf{eq} индикатору \emph{indicator}. Индикатор свойства и соответствующее
+значение удаляется из списка деструктивной склейкой списка свойств. Она
+возвращает {\false}, если указанного свойства не было, или не-{\false}, если
+свойство было.
+\begin{lisp}
+(remprop x y) \EQ\ (remf (symbol-plist x) y)
+\end{lisp}
+Например, если список свойств \cd{foo} равен
+\begin{lisp}
+(color blue height 6.3 near-to bar)
+\end{lisp}
+тогда вызов
+\begin{lisp}
+(remprop 'foo 'height)
+\end{lisp}
+вернет значение не-{\nil}, после изменения списка свойств символа \cd{foo} на
+\begin{lisp}
+(color blue near-to bar)
+\end{lisp}
+
 \begin{newer}
 X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
 to clarify the permissible side effects of certain operations;
-\cd{(remprop {\it symbol} {\it indicator})}
+\cd{(remprop \emph{symbol} \emph{indicator})}
 is required to behave exactly the same as
-\cd{(remf (symbol-plist {\it symbol}) {\it indicator})}.
+\cd{(remf (symbol-plist \emph{symbol}) \emph{indicator})}.
 \end{newer}
 \end{defun}
 
 \begin{defun}[Function]
 symbol-plist symbol
 
-This returns the list that contains the property pairs of {\it symbol};
+This returns the list that contains the property pairs of \emph{symbol};
 the contents of the property-list cell are extracted and returned.
 
-Note that using \cdf{get} on the result of \cdf{symbol-plist} does {\it not} work.
+Note that using \cdf{get} on the result of \cdf{symbol-plist} does \emph{not} work.
 One must give the symbol itself to \cdf{get} or else
 use the function \cdf{getf}.
 
@@ -249,36 +382,68 @@ In MacLisp, this function is called \cdf{plist};
 in Interlisp, it is called \cdf{getproplist}.
 \end{incompatibility}
 \afternoterule
+
+Эта функция возвращает список, который содержит пары свойств для символа
+\emph{symbol}. Извлекается содержимое ячейки списка свойств и возвращается в
+качестве результата.
+
+Следует отметить, что использование \cdf{get} с результатом \cdf{symbol-plist}
+\emph{не} будет работать. Необходимо передавать в \cdf{get} символ, или же
+использовать \cdf{getf}.
+
+С \cdf{symbol-plist} может использоваться \cdf{setf} для деструктивной замены
+списка свойств символа. Это относительно опасная операция, так как может
+уничтожить важную информацию, которую, возможно, хранила там реализация.
+Также, позаботтесь о том, чтобы новый список свойств содержал четное количество
+элементов.
 \end{defun}
 
 \begin{defun}[Function]
 getf place indicator &optional default
 
-\cdf{getf} searches the property list stored in {\it place}
-for an indicator \cdf{eq} to {\it indicator}.
+\cdf{getf} searches the property list stored in \emph{place}
+for an indicator \cdf{eq} to \emph{indicator}.
 If one is found, then the corresponding value is returned;
-otherwise {\it default} is returned.  If {\it default} is not specified,
-then {\false} is used for {\it default}.
+otherwise \emph{default} is returned.  If \emph{default} is not specified,
+then {\false} is used for \emph{default}.
 Note that there is no way to distinguish an absent property from
-one whose value is {\it default}.
-Often {\it place} is computed from
+one whose value is \emph{default}.
+Often \emph{place} is computed from
 a generalized variable acceptable to \cdf{setf}.
 
-\cdf{setf} may be used with \cdf{getf}, in which case the {\it place} must
-indeed be acceptable as a {\it place} to \cdf{setf}.  The effect is to
+\cdf{getf} ищет индикатор равный \cdf{eq} \emph{indicator} в списке свойств,
+находящимся в \emph{place}. Если он найден, тогда возвращается соответствующее
+значение. Иначе возвращается \emph{default}. Если \emph{default} не задан, то
+значение по-умолчанию используется {\falsee}.
+Следует отметить, что метода определения, вернулось ли значение по умолчанию или
+это значение свойства, нет.
+Часто \emph{place} вычисляется из обобщенной переменной, принимаемой функцией
+\cdf{setf}.
+
+\cdf{setf} may be used with \cdf{getf}, in which case the \emph{place} must
+indeed be acceptable as a \emph{place} to \cdf{setf}.  The effect is to
 add a new property-value pair, or update an existing pair,
-in the property list kept in the {\it place}.
-The {\it default} argument may be
+in the property list kept in the \emph{place}.
+The \emph{default} argument may be
 specified to \cdf{getf} in this context; it is ignored by \cdf{setf} but
 may be useful in such macros as \cdf{push} that are related to \cdf{setf}.
 See the description of \cdf{get} for an example of this.
+
+\cdf{setf} может использоваться вместе \cdf{getf}, и в этом случае \emph{place}
+должно быть обобщенным, чтобы его можно было передать в \cdf{setf}. Целью
+является добавление новой пары свойства, или изменению уже существующей пары, в
+списке свойств, хранящимся в \emph{place}.
+В данном контексте может быть использован аргумент \emph{default}. Он
+игнорируется функцией \cdf{setf}, но может быть полезен в таких макросах, как
+\cdf{push}, которые связаны с \cdf{setf}.
+Смотрите описание \cdf{get} для примера.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
 to clarify the permissible side effects of certain operations;
 \cdf{setf} used with \cdf{getf} is permitted to perform a \cdf{setf}
-on the {\it place} or on any part, {\it car} or {\it cdr}, of the
-top-level list structure held by that {\it place}.
+on the \emph{place} or on any part, \emph{car} or \emph{cdr}, of the
+top-level list structure held by that \emph{place}.
 \end{newer}
 
 \begin{newer}
@@ -298,21 +463,30 @@ with \cdf{setf}.
 \begin{defmac}
 remf place indicator
 
-This removes from the property list stored in {\it place}
+This removes from the property list stored in \emph{place}
 the property with an indicator \cdf{eq}
-to {\it indicator}.  The property indicator and the corresponding
+to \emph{indicator}.  The property indicator and the corresponding
 value are removed by destructively splicing the property
 list.  \cdf{remf} returns {\false} if no such property was found,
 or some non-{\nil} value if a property was found.
-The form {\it place} may be any generalized variable acceptable to \cdf{setf}.
+The form \emph{place} may be any generalized variable acceptable to \cdf{setf}.
 See \cdf{remprop}.
+
+Эта функция в списке свойств, хранящимся в \emph{place}, удаляет свойства,
+индикатор которого равен \cdf{eq} аргументу \emph{indicator}. Индикатор свойства
+и соответствующее значение удаляется из списка деструктивной
+склейкой. \cdf{remf} возвращает {\false}, если свойства не было в списке, и
+некоторое не-{\nil} значение, если свойство было.
+Форма \emph{place} может быть любой обобщенной переменной, принимаемой
+\cdf{setf}.
+Смотрите \cdf{remprop}.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{REMF-DESTRUCTION-UNSPECIFIED}
 to clarify the permissible side effects of certain operations;
 \cdf{remf} is permitted to perform a \cdf{setf}
-on the {\it place} or on any part, {\it car} or {\it cdr}, of the
-top-level list structure held by that {\it place}.
+on the \emph{place} or on any part, \emph{car} or \emph{cdr}, of the
+top-level list structure held by that \emph{place}.
 \end{newer}
 
 \begin{newer}
@@ -326,40 +500,64 @@ get-properties place indicator-list
 
 \cdf{get-properties} is like \cdf{getf}, except that the second
 argument is a list of indicators.  \cdf{get-properties} searches the
-property list stored in {\it place} for any of the indicators in
-{\it indicator-list} until it finds the first property
+property list stored in \emph{place} for any of the indicators in
+\emph{indicator-list} until it finds the first property
 in the property list whose indicator is one of
-the elements of {\it indicator-list}.  Normally {\it place} is computed from
+the elements of \emph{indicator-list}.  Normally \emph{place} is computed from
 a generalized variable acceptable to \cdf{setf}.
+
+\cdf{get-properties} похожа на \cdf{getf} за исключением того, что второй
+аргумент является списком индикаторов. \cdf{get-properties} ищет первый
+встретившийся индикатор, который есть в списке индикаторов. Обычно \emph{place}
+вычисляется из обобщенной переменной, которая может использоваться в \cdf{setf}.
 
 \cdf{get-properties} returns three values.
 If any property was found, then
 the first two values are the indicator
-and value for the first property whose indicator was in {\it indicator-list},
-and the third is that tail of the property list whose {\it car}
-was the indicator (and whose {\it cadr} is therefore the value).
+and value for the first property whose indicator was in \emph{indicator-list},
+and the third is that tail of the property list whose \emph{car}
+was the indicator (and whose \emph{cadr} is therefore the value).
 If no property was found, all three values are {\nil}.
 Thus the third value serves as a flag indicating success or failure
 and also allows the search to be restarted, if desired, after the property
 was found.
+
+\cdf{get-properties} возвращает три значения.
+Если было найдено свойство, то первые два значения являеются индикатором и
+значением для первого свойства, чей индикатор присутствовал в списке
+\emph{indicator-list}, и третье значение является остатком списка свойств,
+\emph{car} элемент которого был индикатором (и соответственно \emph{cadr}
+элемент --- значением).
+Если ни одного свойства не было найдено, то все три значения равны {\nil}.
+Третье значение является флагом успешности или неудачи, и позволяет продолжить
+поиск свойств в оставшемся списке.
 \end{defun}
 
-\section{The Print Name}
-Every symbol has an associated string called the {\it print name}.
+\section{The Print Name Выводимое имя}
+Every symbol has an associated string called the \emph{print name}.
 This string is used as the external representation of the symbol:
 if the characters in the string are typed in to \cdf{read}
 (with suitable escape conventions for certain characters),
 it is interpreted as a reference to that symbol
 (if it is interned); and if the symbol is printed, \cdf{print} types out the
 print name.
-For more information, see the sections on the {\it reader}
+For more information, see the sections on the \emph{reader}
 (section~\ref{READER})
-and {\it printer} (section~\ref{PRINTER}).
+and \emph{printer} (section~\ref{PRINTER}).
+
+Каждый символ имеет ассоциированную строку, называемую \emph{выводимое имя}.
+Строка используется для вывода отображения символа:
+если символы в строке будут напечатаны в функцию \cdf{read} (с необходимым, где
+надо, экранированием), они будут интерпретированы как ссылка на этот символ
+(если он интернирован). Если символ выводится куда-либо, \cdf{print} печатает
+его выводимое имя.
+Для подробностей, смотрите раздел о \emph{читателе} (раздел~\ref{READER}) и
+\emph{писателе} (раздел~\ref{PRINTER}).
 
 \begin{defun}[Function]
 symbol-name sym
 
-This returns the print name of the symbol {\it sym}.
+This returns the print name of the symbol \emph{sym}.
 For example:
 \begin{lisp}
 (symbol-name 'xyz) \EV\ "XYZ"
@@ -367,6 +565,15 @@ For example:
 It is an extremely bad idea to modify a string being used as the print name of
 a symbol.  Such a modification may tremendously confuse
 the function \cdf{read} and the package system.
+
+Данная функция возвращает выводимое имя для символа \emph{sym}.
+Например:
+\begin{lisp}
+(symbol-name 'xyz) \EV\ "XYZ"
+\end{lisp}
+Это не очень хорошая идея, изменять строку, которая используется, как выводимое
+имя символа. Такое изменение может сильно запутать функцию \cdf{read} и систему
+пакетов.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
@@ -376,11 +583,22 @@ as the print name of a symbol.
 
 \end{defun}
 
-\section{Creating Symbols}
+\section{Creating Symbols Создание символов}
 
 Symbols can be used in two rather different ways.
-An {\it interned} symbol is one that is indexed by its print name
-in a catalogue called a {\it package}.
+An \emph{interned} symbol is one that is indexed by its print name
+in a catalogue called a \emph{package}.
+A request to locate a symbol with that print name results
+in the same (\cdf{eq}) symbol.  Every time input is read with the
+function \cdf{read},
+and that print name appears, it is read as the same symbol.
+This property of symbols makes them appropriate to use as names for
+things and as hooks on which to hang permanent data objects
+(using the property list, for example).
+
+Символы могут использоваться двумя различными способами.
+\emph{Интернированный} символ один из них, который определяется его выводимым
+именем и каталогом, называемым \emph{пакет}.
 A request to locate a symbol with that print name results
 in the same (\cdf{eq}) symbol.  Every time input is read with the
 function \cdf{read},
@@ -396,29 +614,55 @@ that symbol is automatically created.  The function used to ask for
 an interned symbol is \cdf{intern}, or one of the functions
 related to \cdf{intern}.
 
+Интернированные символы обычно создаются автоматически. Во время первого
+обращения к символу в системе пакетов (с помощью \cdf{read}, например), данный
+символ создается автоматически. Для обращения к
+интернированному символу используется функция \cdf{inter}, или другая с ней
+связанная.
+
 Although interned symbols are the most commonly
 used, they will not be discussed further here.  For more information,
 see chapter~\ref{XPACK}.
 
-An {\it uninterned} symbol is a symbol used simply as a data object,
+Несмотря на то, что интернированные символы используются чаще всего, они не
+будут больше здесь рассматриваться. Для подробной информации смотрите
+главу~\ref{XPACK}.
+
+An \emph{uninterned} symbol is a symbol used simply as a data object,
 with no special cataloguing (it belongs to no particular package).
 An uninterned symbol is printed as \cd{\#:} followed by its
 print name.
 The following are some functions for creating uninterned symbols.
 
+\emph{Неинтернированный} символ является символом, используемым в качестве
+объекта данных, без связи с каталогом (он не имеет родительского пакета).
+Неинтернированный символ выводится как \cd{\#:} с последующим выводимым именем.
+
+
 \begin{defun}[Function]
 make-symbol print-name
 
-\cd{(make-symbol {\it print-name})} creates a new uninterned symbol, whose
-print name is the string {\it print-name}.  The value and function bindings will
+\cd{(make-symbol \emph{print-name})} creates a new uninterned symbol, whose
+print name is the string \emph{print-name}.  The value and function bindings will
 be unbound and the property list will be empty.
 
 The string actually installed in the symbol's print-name component
-may be the given string {\it print-name} or may be a copy of it,
+may be the given string \emph{print-name} or may be a copy of it,
 at the implementation's discretion.  The user should not assume
 that \cd{(symbol-name (make-symbol x))} is \cdf{eq} to \cdf{x}, but also
 should not alter a string once it has been given as an argument
 to \cdf{make-symbol}.
+
+
+\cd{(make-symbol \emph{print-name})} создает новый неинтернированный символ, у
+которого выводимое имя является строкой \emph{print-name}. Полученный символ не
+имеет значения функции (unbound) и пустой список свойств.
+
+Строка, переданная в аргументе, может использоваться сразу, либо сначала
+копироваться. Это зависит от реализации.
+Пользователь не может полагаться на то, что \cd{(symbol-name
+  (make-symbol x))} равно \cdf{eq} \cdf{x}, но и также не может изменять строку
+переданную в качестве аргумента для \cdf{make-symbol}.
 
 \beforenoterule
 \begin{implementation}
@@ -433,7 +677,10 @@ it will never be altered.
 copy-symbol sym &optional copy-props
 
 This returns a new uninterned symbol with the same print name
-as {\it sym}.
+as \emph{sym}.
+
+Эта функция возвращает новый неинтернированный символ с тем же выводимым именем,
+что \emph{sym}.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{COPY-SYMBOL-PRINT-NAME}
@@ -446,21 +693,28 @@ will be \cdf{eq}, although they may happen to be \cdf{eq} in some implementation
 \end{newer}
 
 
-If {\it copy-props} is non-{\nil}, then the initial
+If \emph{copy-props} is non-{\nil}, then the initial
 value and function definition of the new symbol will
-be the same as those of {\it sym}, and the property list of
-the new symbol will be a copy of {\it sym}'s.
+be the same as those of \emph{sym}, and the property list of
+the new symbol will be a copy of \emph{sym}'s.
+
+Если \emph{copy-props} не-{\nil}, тогда начальное значение и определение функции
+нового символа будут те же, что и в переданном \emph{sym}, а список свойств будет
+скопирован из исходного символа.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{COPY-SYMBOL-COPY-PLIST}
 to clarify that only the top-level conses of the
-property list are copied; it is as if \cd{(copy-list (symbol-plist {\it sym}))}
+property list are copied; it is as if \cd{(copy-list (symbol-plist \emph{sym}))}
 were used as the property list of the new symbol.
 \end{newer}
 
-If {\it copy-props}
+If \emph{copy-props}
 is {\nil} (the default), then the new symbol will be unbound and undefined, and
 its property list will be empty.
+
+Если \emph{copy-props} является {\nil} (по-умолчанию), тогда новый символ не
+будет связан, не будет иметь определения функции, и список свойств будет пуст.
 \end{defun}
 
 \begin{defun}[Function]
@@ -471,13 +725,19 @@ It returns the new, uninterned symbol.
 
 The invented print name consists of a prefix
 (which defaults to \cdf{G}), followed by the decimal representation of a number.
+
+\cdf{gensym} создает выводимое имя и создает новый символ с этим именем.
+Она возвращает новый неинтернированный символ.
+
+Созданное имя содержит префикс (по-умолчанию \cd{G}), с последующим десятичным
+представлением числа.
 \begin{obsolete}
 The number is increased by 1 every time \cdf{gensym} is called.
 
-If the argument {\it x} is present and is an integer, then {\it x} must be
-non-negative, and the internal counter is set to {\it x} for future use;
+If the argument \emph{x} is present and is an integer, then \emph{x} must be
+non-negative, and the internal counter is set to \emph{x} for future use;
 otherwise the internal counter is incremented.
-If {\it x} is a string, then that string is made the default prefix
+If \emph{x} is a string, then that string is made the default prefix
 for this and future calls to \cdf{gensym}.
 After handling the argument, \cdf{gensym} creates a
 symbol as it would with no argument.
@@ -497,6 +757,11 @@ allow easy distinction by eye between two such symbols.
 The optional argument is rarely supplied.
 The name comes from ``generate symbol,'' and the symbols produced by it
 are often called ``gensyms.''
+
+\cdf{gensym} обычно используется для создания символа, который не виден
+пользователю, и его имя не имеет важности.
+Необязательный аргумент используется нечасто. Имя образовано от <<генерация
+символа>>, и символы созданные, таким образом, часто называются <<gensyms>>.
 
 \beforenoterule
 \begin{incompatibility}
@@ -522,10 +787,13 @@ symbols distinct from all others,
 then the function \cdf{gentemp}
 may be more appropriate to use.
 
+Если необходимо, чтобы сгенерированные символы были интернированными и отличными
+от существующих символов, тогда удобно использовать функцию \cdf{gentemp}.
+
 \begin{newer}
 X3J13 voted in March 1989 \issue{GENSYM-NAME-STICKINESS}
 to alter the specification of \cdf{gensym} so that supplying an
-optional argument (whether a string or a number) does {\it not} alter
+optional argument (whether a string or a number) does \emph{not} alter
 the internal state maintained by \cdf{gensym}.
 Instead, the internal
 counter is made explicitly available as a variable named \cd{*gensym-counter*}.
@@ -552,6 +820,16 @@ but will be a non-negative integer.
 
 The user may assign to or bind this variable at any time, but its value
 must always be a non-negative integer.
+
+Переменная хранит состояние счетчика для функции \cdf{gensym}. \cdf{gensym}
+использует десятичное представление этого значения в качестве части имени
+генерируемого символа, а затем наращивает этот счетчик.
+
+Первоначальное значение этой переменной зависит от реализации, но должно быть
+неотрицательным целым.
+
+Пользователь в любое время может присваивать или связывать это переменную, но
+значение должно быть неотрицательным целым.
 \end{defun}
 \end{newer}
 
@@ -560,21 +838,36 @@ gentemp &optional prefix package
 
 \cdf{gentemp}, like \cdf{gensym}, creates and returns a new symbol.
 \cdf{gentemp} differs from \cdf{gensym} in that it interns the symbol
-(see \cdf{intern}) in the {\it package} (which defaults to the current
-package; see \cd{*package*}).  \cdf{gentemp} guarantees the symbol
+(see \cdf{intern}) in the \emph{package} (which defaults to the current
+package; see \cdf{*package*}).  \cdf{gentemp} guarantees the symbol
 will be a new one not already existing in the package.  It does this
 by using a counter as \cdf{gensym} does, but if the generated symbol
 is not really new, then the process is repeated until a new one is created.
 There is no provision for resetting the \cdf{gentemp} counter.
 Also, the prefix for \cdf{gentemp} is not remembered from one call
-to the next; if {\it prefix} is omitted, the default prefix \cdf{T} is used.
+to the next; if \emph{prefix} is omitted, the default prefix \cdf{T} is used.
+
+\cdf{gentemp}, как и \cdf{gensym}, создает и возвращает новый символ.
+\cdf{gentemp} отличается от \cdf{gensym} в том, что возвращает интернированный
+символ (смотрите \cdf{intern}) в пакете \emph{package} (который по-умолчанию
+является текущим, смотрите \cdf{*package*}). \cdf{gentemp} гарантирует, что
+символ будет новым, и не существовал ранее в указанном пакете. Она также
+использует счетчик, однако если полученный символ уже существует счетчик
+наращивается, и действия повторяются, пока не будет найдено имя еще не
+существующего символа.
+Сбросить счетчик невозможно.
+Кроме того, префикс для \cdf{gentemp} не сохраняется между вызовами. Если
+аргумент \emph{prefix} опущен, то используется значение по-умолчанию \cdf{T}.
 \end{defun}
 
 \begin{defun}[Function]
 symbol-package sym
 
-Given a symbol {\it sym}, \cdf{symbol-package} returns the contents of the
+Given a symbol \emph{sym}, \cdf{symbol-package} returns the contents of the
 package cell of that symbol.  This will be a package object or {\nil}.
+
+Для заданного символа возвращает содержимое ячейки пакета. Результат может быть
+объектом пакета или {\nil}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -586,4 +879,10 @@ symbol is a keyword (that is, belongs to the keyword
 package).  Keywords are those symbols that are written with
 a leading colon.  Every keyword is a constant, in the sense
 that it always evaluates to itself.  See \cdf{constantp}.
+
+Аргумент может быть любым Lisp'овым объектом. Предикат \cdf{keywordp} истенен,
+если аргумент является символом и этот символ является ключевым (значит, что
+принадлежит пакату ключевых символов). Ключевые символы --- это символы, которые
+записываются с двоеточием в начала. Каждый ключевой символ является константой,
+в смысле, что выполняются сами в себя. Смотрите \cdf{constantp}.
 \end{defun}
