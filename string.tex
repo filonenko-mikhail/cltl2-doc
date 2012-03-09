@@ -40,8 +40,8 @@ function \cdf{string} to any argument whose data type is in doubt.
 
 Любая функция, определенная в данной главе, имя которой имеет префикс
 \cdf{string}, в качестве аргумента может принимать символ, при
-условии, что операция не модифицирует этот аргумент;
-использоваться будет выводимое имя символа.
+условии, что операция не модифицирует этот аргумент.
+При этом использоваться будет выводимое имя символа.
 Таким образом операции над последовательностями из строковый символов, не
 являются специализированными версиями обобщенных функций; обобщенные операции
 над последовательностями, описанные в главе~\ref{KSEQUE} не принимают символ в
@@ -54,8 +54,6 @@ Note that this remark, predating the design of the Common Lisp Object System,
 uses the term ``generic'' in a generic sense and not necessarily
 in the technical sense used by CLOS
 (see chapter \ref{DTYPES}).
-
-Следует отметить, что здесь употребление 
 \end{new}
 
 Also, there is a slight non-parallelism in the names of string functions.
@@ -64,8 +62,17 @@ for historical compatibility the suffixes \cdf{equal} and \cdf{=} are used inste
 to indicate case-insensitive and case-sensitive character comparison,
 respectively.
 
+Также, существует небольшая расхождение в именах строковых функций.
+Тогда как суффиксы \cdf{equalp} и \cdf{eql} были бы более подходящими, вместо
+них все же для исторической совместимости используются суффиксы \cdf{equal} и
+\cdf{=}, для указания, соотвественно, регистронезависимого и регистрозависимого
+сравнения строковых символов.
+
 Any Lisp object may be tested for being a string by
 the predicate \cdf{stringp}.
+
+Любой Lisp'овый объект может быть проверен на принадлежность строковому типу с
+помощью предиката \cdf{stringp}.
 
 Note that strings, like all vectors, may have fill pointers
 (though such strings are not necessarily \emph{simple}).
@@ -73,9 +80,17 @@ String operations generally operate only on the active portion of the string
 (below the fill pointer).  See \cdf{fill-pointer} and related
 functions.
 
-\section{String Access}
+Следует отметить, что строки, как и все вектора, могут иметь указатель
+заполнения (хотя такие строки необязательно простыеу).
+Строковые операции в основном взаимодействуют только с активной частью строки
+(перед указателем заполнения). Смотрите \cdf{fill-pointer} и связанные с ним
+функции.
+
+\section{String Access Доступ к строковым символам}
 
 The following functions access a single character element of a string.
+
+Следующие функции предоставляют доступ к одиночным символам в строке.
 
 \begin{defun}[Function]
 char string index \\
@@ -85,6 +100,10 @@ The given \emph{index} must be a non-negative integer less than
 the length of \emph{string}, which must be a
 string.  The character at position \emph{index}
 of the string is returned as a character object.
+
+Указываемый индекс \emph{index} должен быть неотрицательным целым меньшим, чем длина
+строки \emph{string}. Символ из данной позиции строки возвращается, как символьный
+объект. FIXME
 \begin{obsolete}
 (This character will necessarily satisfy the predicate \cdf{string-char-p}.)
 \end{obsolete}
@@ -105,17 +124,40 @@ See \cdf{aref} and \cdf{elt}.  In effect,
 \cdf{setf} may be used with \cdf{char} to destructively replace
 a character within a string.
 
+Как и во всех Common Lisp'овых последовательностях, индексация начинается с
+нуля.
+Например:
+\begin{lisp}
+(char "Floob-Boober-Bab-Boober-Bubs" 0) \EV\ \#{\Xbackslash}F \\
+(char "Floob-Boober-Bab-Boober-Bubs" 1) \EV\ \#{\Xbackslash}l
+\end{lisp}
+Смотрите \cdf{aref} и \cdf{elt}. Фактически, 
+\begin{lisp}
+(char s j) \EQ\ (aref (the string s) j)
+\end{lisp}
+\cdf{setf} может использоваться с \cdf{char} для деструктивной замены символа в
+строке.
+
 For \cdf{char}, the string may be any string;
 for \cdf{schar}, it must be a simple string.
 In some implementations of Common Lisp, the function \cdf{schar} may
 be faster than \cdf{char} when it is applicable.
+
+Для \cdf{char} строка может быть любой.
+Для \cdf{schar} строка должна быть простой.
+В некоторых реализациях Common Lisp'а, функция \cdf{schar} может быть быстрее,
+чем \cdf{char}.
 \end{defun}
 
-\section{String Comparison}
+\section{String Comparison Сравнение строк}
 
 The naming conventions for these functions and for their keyword
 arguments generally follow the conventions for the generic sequence
-functions (see chapter \ref{KSEQUE}).
+functions (see chapter~\ref{KSEQUE}).
+
+Правило именования этих функций и их аргументов следует из правил именования
+общих функций для последовательностей (смотрите главу~\ref{KSEQUE}).
+
 \begin{new}
 Note that this remark, predating the design of the Common Lisp Object System,
 uses the term ``generic'' in a generic sense and not necessarily
@@ -126,11 +168,15 @@ in the technical sense used by CLOS
 \begin{defun}[Function]
 string= string1 string2 &key :start1 :end1 :start2~:end2
 
-\cd{string=} compares two strings and is true if
+\cdf{string=} compares two strings and is true if
 they are the same (corresponding characters are identical)
 but is false if they are not.
-The function \cdf{equal} calls \cd{string=} if
+The function \cdf{equal} calls \cdf{string=} if
 applied to two strings.
+
+\cdf{string=} сравнивает две строки и возвращает истину, если они одинаковые
+(все символы одинаковые), и ложь, если это не так.
+Функция \cdf{equal} вызывает \cdf{string=}, если применяется к двум строкам.
 
 The keyword arguments \cd{:start1} and \cd{:start2} are the places
 in the strings to start the comparison.
@@ -144,19 +190,44 @@ so that by default the entirety of each string is examined.
 These arguments are provided so that substrings can be compared
 efficiently.
 
-\cd{string=} is necessarily false if the (sub)strings
+Именованные аргументы \cd{:start1} и \cd{:start2} указывают на то, с каких
+позиций начинать сравнение.
+Именованные аргументы \cd{:end1} и \cd{:end2} указывают на то, на каких
+позициях заканчивать сравнение.
+Сравнение заканичвается \emph{перед} указанными позициями.
+Аргументы <<start>> по-умолчанию равны нулю (указывают на начало строки), и 
+<<end>> (если опущены или равны {\false}) по-умолчанию указывают на конец
+строки. Таким образом, по-умолчанию строки сравниваются целиком.
+Эти аргументы позволяют удобно сравнивать подстроки.
+
+\cdf{string=} is necessarily false if the (sub)strings
 being compared are of unequal length; that is, if
 \begin{lisp}
 (not (= (- end1 start1) (- end2 start2)))
 \end{lisp}
-is true, then \cd{string=} is false.
+is true, then \cdf{string=} is false.
 
 \begin{lisp}
-(string= "foo" "foo") {\rm is true} \\
-(string= "foo" "Foo") {\rm is false} \\
-(string= "foo" "bar") {\rm is false} \\
+(string= "foo" "foo") \textrm{is true} \\
+(string= "foo" "Foo") \textrm{is false} \\
+(string= "foo" "bar") \textrm{is false} \\
 (string= "together" "frog" :start1 1 :end1 3 :start2 2) \\
-~~~{\rm is true}
+~~~\textrm{is true}
+\end{lisp}
+
+\cdf{string=} возвращает ложь, если сравниваемые (под)строки неодинаковой
+длины. То есть, если 
+\begin{lisp}
+(not (= (- end1 start1) (- end2 start2)))
+\end{lisp}
+истинно, то \cdf{string=} ложно.
+
+\begin{lisp}
+(string= "foo" "foo") \textrm{истина} \\
+(string= "foo" "Foo") \textrm{ложь} \\
+(string= "foo" "bar") \textrm{ложь} \\
+(string= "together" "frog" :start1 1 :end1 3 :start2 2) \\
+~~~\textrm{истина}
 \end{lisp}
 
 \begin{newer}
@@ -166,7 +237,7 @@ to clarify string coercion (see \cdf{string}).
 
 \beforenoterule
 \begin{incompatibility}
-\cd{string=} is called \cdf{strequal} in Interlisp.
+\cdf{string=} is called \cdf{strequal} in Interlisp.
 \end{incompatibility}
 \afternoterule
 \end{defun}
@@ -174,17 +245,24 @@ to clarify string coercion (see \cdf{string}).
 \begin{defun}[Function]
 string-equal string1 string2 &key :start1 :end1 :start2~:end2
 
-\cdf{string-equal} is just like \cd{string=} except that differences
+\cdf{string-equal} is just like \cdf{string=} except that differences
 in case are ignored; two characters are considered to be the same
 if \cdf{char-equal} is true of them.
 For example:
 \begin{lisp}
-(string-equal "foo" "Foo") {\rm is true}
+(string-equal "foo" "Foo") \textrm{is true}
 \end{lisp}
 \begin{newer}
 X3J13 voted in June 1989 \issue{STRING-COERCION}
 to clarify string coercion (see \cdf{string}).
 \end{newer}
+
+\cdf{string-equal} похож на \cdf{string=} за исключением того, что игнорирует
+регистр символов. Два символа равны если \cdf{char-equal} для них истинно.
+Например:
+\begin{lisp}
+(string-equal "foo" "Foo") \textrm{is true}
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -206,7 +284,7 @@ the result is the length of the longest common prefix of the strings.
 A string \emph{a} is less than a string \emph{b} if
 in the first position in which they differ the character of \emph{a}
 is less than the corresponding character of \emph{b} according to
-the function \cd{char<}, or
+the function \cdf{char<}, or
 if string \emph{a} is a proper prefix of string \emph{b}
 (of shorter length and matching in all the characters of \emph{a}).
 
@@ -227,6 +305,30 @@ is an index into \emph{string1}.
 X3J13 voted in June 1989 \issue{STRING-COERCION}
 to clarify string coercion (see \cdf{string}).
 \end{newer}
+
+Эти функции сравнивают две строки лексикографически.
+Если не выполняется условие, что \emph{string1} соответственно меньше, больше,
+меньше либо равно, больше либо равно, не равно чем \emph{string2}, то результат
+{\false}.
+Однако, если условие выполняется, то результатом будет первая позиция символа,
+на которой произошло несовпадение строк.
+Другими словами, результат это длина префикса строки, удовлетворяющего условию.
+
+Строка \emph{a} меньше, чем строка \emph{b}, если в первой позиции, в которой
+они различаются, символ из \emph{a} меньше, чем соотвествующий символ из
+\emph{b} в соответсвии с функцией \cdf{char<}, или строка \emph{a} является
+префиксом строки \emph{b} (меньшей длины и совпадением всех символов). FIXME
+
+Именованные аргументы \cd{:start1} и \cd{:start2} указывают на то, с каких
+позиций начинать сравнение.
+Именованные аргументы \cd{:end1} и \cd{:end2} указывают на то, на каких
+позициях заканчивать сравнение.
+Сравнение заканичвается \emph{перед} указанными позициями.
+Аргументы <<start>> по-умолчанию равны нулю (указывают на начало строки), и 
+<<end>> (если опущены или равны {\false}) по-умолчанию указывают на конец
+строки. Таким образом, по-умолчанию строки сравниваются целиком.
+Эти аргументы позволяют удобно сравнивать подстроки. Индекс, возвращаемый в
+случае несовпадения строк, находится в \emph{string1}. FIXME
 \end{defun}
 
 \begin{defun}[Function]
@@ -236,11 +338,16 @@ string-not-greaterp string1 string2 &key :start1 :end1 :start2~:end2 \\
 string-not-lessp string1 string2 &key :start1 :end1 :start2~:end2 \\
 string-not-equal string1 string2 &key :start1 :end1 :start2~:end2
 
-These are exactly like \cd{string<}, \cd{string>}, \cd{string<=},
-\cd{string>=}, and \cd{string/=}, respectively, except that distinctions between
+These are exactly like \cdf{string<}, \cdf{string>}, \cdf{string<=},
+\cdf{string>=}, and \cdf{string/=}, respectively, except that distinctions between
 uppercase and lowercase letters are ignored.  It is as if
-\cdf{char-lessp} were used instead of \cd{char<}
+\cdf{char-lessp} were used instead of \cdf{char<}
 for comparing characters.
+
+Эти функции такие же, как и соответственно  \cdf{string<}, \cdf{string>}, \cdf{string<=},
+\cdf{string>=} и \cdf{string/=} за исключением того, что различия между
+регистрами букв игнорируются. Для сравнения символов в таком случае вместо
+\cdf{char<} используется \cdf{char-lessp}.
 
 \begin{newer}
 X3J13 voted in June 1989 \issue{STRING-COERCION}
@@ -248,7 +355,7 @@ to clarify string coercion (see \cdf{string}).
 \end{newer}
 \end{defun}
 
-\section{String Construction and Manipulation}
+\section{String Construction and Manipulation Создание и манипулирование строками}
 
 Most of the interesting operations on strings may be performed
 with the generic sequence functions described in chapter \ref{KSEQUE}.
@@ -260,6 +367,10 @@ uses the term ``generic'' in a generic sense and not necessarily
 in the technical sense used by CLOS
 (see chapter \ref{DTYPES}).
 \end{new}
+
+Большинство необходимых операций над строками могут быть выполнены с помощью
+общих функций для последовательностей, описанных в главе~\ref{KSEQUE}.
+Следующие функций производят дополнительные операции специфичные для строк.
 
 \begin{obsolete}
 \begin{defun}[Function]
@@ -310,10 +421,18 @@ X3J13 voted in January 1989
 to clarify that the \emph{size} argument
 must be a non-negative integer less than the value of
 \cdf{array-dimension-limit}.
+
+Функция возвращает простую строку длинной \emph{size}, каждый из символов
+которой равен аргументу \cd{:initial-element}.
+Если аргумент \cd{:initial-element} не задан, тогда строка инициализируется в
+зависимости от реализации.
+
+Аргумент \cd{:element-type} задает тип элементов строки. 
+Строка создается с наиболее специализированным типов элементов, позволяющем
+хранить элементы указанного типа.
+Если \cd{:element-type} опущен, то по-молчанию используется тип \cdf{character}.
 \end{defun}
 \end{newer}
-
-
 
 \begin{defun}[Function]
 string-trim character-bag string \\
@@ -345,6 +464,29 @@ be returned, at the discretion of the implementation.
 X3J13 voted in June 1989 \issue{STRING-COERCION}
 to clarify string coercion (see \cdf{string}).
 \end{newer}
+
+\cdf{string-trim} возвращает подстроку от \emph{string}, с удаленными в начале и
+в конце символами из \emph{character-bag}.
+Функция \cdf{string-left-trim} похожа на предыдущую, но удаляет символы только в
+начале.
+\cdf{string-right-trim} удаляет символы только в
+конце.
+Аргумент \emph{character-bag} может быть любой последовательностью, содержащей
+строковые символы.
+Например:
+\begin{lisp}
+(string-trim '(\#{\Xbackslash}Space \#{\Xbackslash}Tab \#{\Xbackslash}Newline) " garbanzo beans \\
+~~~~~~~~") \EV\ "garbanzo beans" \\
+(string-trim " (*)" " ( *three (silly) words* ) ") \\
+~~~\EV\ "three (silly) words" \\
+(string-left-trim " (*)" " ( *three (silly) words* ) ") \\
+~~~\EV\ "three (silly) words* ) " \\
+(string-right-trim " (*)" " ( *three (silly) words* ) ") \\
+~~~\EV\ " ( *three (silly) words"
+\end{lisp}
+В зависимости от реализации, в случае, если строка не претерпевала модификаций,
+может возвратиться сама строка или ее копия.
+
 \end{defun}
 
 \begin{defun}[Function]
@@ -358,17 +500,42 @@ precisely, each character of the result string is produced by applying
 the function \cdf{char-upcase} to the corresponding character of
 \emph{string}.
 
+\cdf{string-upcase} возвращает сроку, в которой все символы в нижнем регистре
+изменены на соответствующие в верхнем. А точнее, все символы строки получаются
+применением к соотвествующим символам входной строки функции \cdf{char-upcase}.
+
 \cdf{string-downcase} is similar, except that uppercase characters are
 converted to lowercase characters (using \cdf{char-downcase}).
+
+\cdf{string-downcase} похожа на предыдущю функию за исключением того, что
+символы в верхнем регистре заменяются на соответствующие символы в нижнем
+(используя \cdf{char-downcase}).
 
 The keyword arguments \cd{:start} and \cd{:end} delimit the portion
 of the string to be affected.  The result is always of the same length
 as \emph{string}, however.
 
+Именованные аргументы \cd{:start} и \cd{:end} указывают на то, какая часть
+строки будет обрабатываться. Однако, результат всегда той же длины, что и
+входная строка. 
+
 The argument is not destroyed.  However, if no characters in the argument
 require conversion, the result may be either the argument or a copy of it,
 at the implementation's discretion.
 For example:
+\begin{lisp}
+(string-upcase "Dr. Livingstone, I presume?") \\
+~~~\EV\ "DR. LIVINGSTONE, I PRESUME?" \\
+(string-downcase "Dr. Livingstone, I presume?") \\
+~~~\EV\ "dr. livingstone, i presume?" \\
+(string-upcase "Dr. Livingstone, I presume?" \cd{:start} 6 \cd{:end} 10) \\
+~~~\EV\ "Dr. LiVINGstone, I presume?"
+\end{lisp}
+
+Аргумент деструктивно не преобразуется. Однако, если символов для перевода
+регистра в аргументе не оказалось, то на усмотрение реализации результат может
+быть входной строкой или ее копией.
+Например:
 \begin{lisp}
 (string-upcase "Dr. Livingstone, I presume?") \\
 ~~~\EV\ "DR. LIVINGSTONE, I PRESUME?" \\
@@ -398,6 +565,22 @@ For example:
 (string-capitalize "pipe 13a, foo16c") \EV\ "Pipe 13a, Foo16c"
 \end{lisp}
 
+\cdf{string-capitalize} возвращает копию строки \emph{string}, в которой первые
+буквы всех слов возводятся в верхний регистр, а остальные буквы в нижний.
+Слова состоят из алфавитно-цифровых символов, разделенных друг от друга
+неалфавитно-цифровыми символами.
+Например:
+\begin{lisp}
+(string-capitalize " hello ") \EV\ " Hello " \\
+(string-capitalize \\
+~~~~\="occlUDeD cASEmenTs FOreSTAll iNADVertent DEFenestraTION") \\
+\EV\>"Occluded Casements Forestall Inadvertent Defenestration" \\
+(string-capitalize 'kludgy-hash-search) \EV\ "Kludgy-Hash-Search" \\
+(string-capitalize "DON'T!") \EV\ "Don'T!"~~~~~;\emph{not} "Don't!" \\
+(string-capitalize "pipe 13a, foo16c") \EV\ "Pipe 13a, Foo16c"
+\end{lisp}
+
+
 \begin{newer}
 X3J13 voted in June 1989 \issue{STRING-COERCION}
 to clarify string coercion (see \cdf{string}).
@@ -426,6 +609,10 @@ case-modifiable characters as necessary.
 The keyword arguments \cd{:start} and \cd{:end} delimit the portion
 of the string to be affected.  The argument \emph{string} is returned as
 the result.
+
+Эти три функции похожи на \cdf{string-upcase}, \cdf{string-downcase} и
+\cdf{string-capitalize}, но в отличие от последних деструктивно модифицируют
+аргумент \emph{string} изменяя где надо регистр символов.
 \end{defun}
 
 \begin{defun}[Function]
@@ -437,6 +624,11 @@ to such of their arguments as are supposed to be
 strings.
 If \emph{x} is a string, it is returned.
 If \emph{x} is a symbol, its print name is returned.
+
+Большинство строковых фукнций применяют \cdf{string} к своим аргументам.
+Если \emph{x} является строкой, то они и возвращается.
+Если \emph{x} является символом, то возвращается его выводимое имя.
+
 \begin{obsolete}
 If \emph{x} is a string character (a character of type \cdf{string-char}),
 then a string containing that one character is returned.
@@ -459,6 +651,18 @@ to be a string.)
 To get the string representation of a number or any other Lisp
 object, use \cd{prin1-to-string}, \cdf{princ-to-string},
 or \cdf{format}.
+
+В любой другой ситуации, сигнализируется ошибка.
+
+Для преобразования последовательности символов в строку используйте
+\cdf{coerce}.
+(Следует отметить, что \cd{(coerce x 'string)} не сработает, если \cd{x}
+является Lisp'овым символом. И наоборот, \cdf{string} не будет конвертировать
+список или другую последовательность в строку.)
+
+Для получения строкового отображения для числа или любого другого Lisp'ового
+объекта используйте \cdf{prin1-to-string}, \cdf{princ-to-string} или
+\cdf{format}.
 
 \begin{newer}
 X3J13 voted in June 1989 \issue{STRING-COERCION}
