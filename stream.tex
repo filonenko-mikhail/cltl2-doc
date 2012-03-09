@@ -3,7 +3,7 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Streams}
+\chapter{Streams Потоки}
 \label{STREAM}
 
 Streams are objects that serve as sources or sinks of data.
@@ -15,16 +15,36 @@ of Common Lisp data objects, evaluate each object (as a form) as it is read, and
 print representations of the results of
 evaluation to an output character stream.
 
+Потоки является объектами, которые служат в качестве истоников или получателей
+данных.
+Потоки символов (или символьные потоки) возвращают или принимают строковые
+символы.
+Бинарные потоки возвращают или принимают целые числа.
+Обычное действие Common Lisp системы заключается в чтении символов из
+символьного входного потока, распознавании символов как представлений Common
+Lisp'овых объектов данных, вычислении каждого объекта (как формы) и выводе
+результата в выходной символьный поток.
+
+
 Typically streams are connected to files or to an interactive terminal.
 Streams, being Lisp objects, serve as the ambassadors of external
 devices by which input/output is accomplished.
+
+Обычно потоки соединены с файлами или интерактивными терминалами. 
+Потоки, будучи Lisp'овыми объектами, служат соединителями со внешними
+устройствами, с помощью которых осуществляется ввод/вывод информации.
 
 A stream, whether a character stream or a binary
 stream, may be input-only, output-only, or bidirectional.
 What operations may be performed on a stream depends on which of
 the six types of stream it is.
 
-\section {Standard Streams}
+Потоки, символьные или бинарные, могут быть только для чтения, только для
+записи, или для чтения и записи.
+Какие действия могут поизводиться анд потоком зависит от того, к какому из шести
+типов он принадлежит.
+
+\section {Standard Streams Стандартные потоки}
 
 There are several variables whose values are streams used by many
 functions in the Lisp system.  These variables and their uses are
@@ -35,63 +55,100 @@ stream capable of output have names ending with \cdf{-output}.
 Variables expected to hold a
 bidirectional stream have names ending with \cdf{-io}.
 
+В Lisp системе есть несколько переменных, значения которых является потоками,
+используемыми большим количеством функций. Эти переменные и их использование
+описаны ниже. По соглашению, переменные, которые содержат поток для чтения,
+имеют имена заканчивающиеся на \cd{-input}, и переменные, которые содержат поток
+дл записи, имеют имена, заканчивающиеся на \cd{-output}.
+Имена переменных, содержащих потоки и для чтения, и для записи, заканчиваются на
+\cd{-io}.
+
 \begin{defun}[Variable]
 *standard-input*
 
 In the normal Lisp top-level loop, input is read from
-\cd{*standard-input*} (that is, whatever stream is the value of the global
-variable \cd{*standard-input*}).  Many input functions, including
+\cdf{*standard-input*} (that is, whatever stream is the value of the global
+variable \cdf{*standard-input*}).  Many input functions, including
 \cdf{read} and \cdf{read-char}, take a stream argument that defaults to
-\cd{*standard-input*}.
+\cdf{*standard-input*}.
+
+В обычном Lisp'овом цикле взаимодействия с пользователем, входные данные
+читаются из \cdf{*standard-input*} (то есть, из потока, который является
+значением глобальной переменной \cdf{*standard-input*}). Большинство функций,
+включая \cdf{read} и \cdf{read-char}, принимают аргумент --- поток, который
+по-умолчанию \cdf{*standard-input*}. 
 \end{defun}
 
 \begin{defun}[Variable]
 *standard-output*
 
 In the normal Lisp top-level loop, output is sent to
-\cd{*standard-output*} (that is, whatever stream is the value of the global
-variable \cd{*standard-output*}).  Many output functions, including
+\cdf{*standard-output*} (that is, whatever stream is the value of the global
+variable \cdf{*standard-output*}).  Many output functions, including
 \cdf{print} and \cdf{write-char}, take a stream argument that defaults
-to \cd{*standard-output*}.
+to \cdf{*standard-output*}.
+
+В обычном Lisp'овом цикле взаимодействия с пользователем, выходные данные
+посылаются в \cdf{*standard-output*} (то есть, в поток, который является
+значением глобальной переменной \cdf{*standard-output*}). Большинство фунций,
+включая \cdf{print} и \cdf{write-char}, принимают аргумент -- поток, который
+по-умолчанию \cdf{*standard-output*}.
 \end{defun}
 
 \begin{defun}[Variable]
 *error-output*
 
-The value of \cd{*error-output*} is a stream to which error messages
-should be sent.  Normally this is the same as \cd{*standard-output*},
-but \cd{*standard-output*} might be bound to a file and \cd{*error-output*}
+The value of \cdf{*error-output*} is a stream to which error messages
+should be sent.  Normally this is the same as \cdf{*standard-output*},
+but \cdf{*standard-output*} might be bound to a file and \cdf{*error-output*}
 left going to the terminal or to a separate file of error messages.
+
+Значение \cdf{*error-output*} является потоком, в который должны посылаться
+сообщения об ошибках. Обычно значение совпадает с \cdf{*standard-output*}, но
+\cdf{*standard-output*} может быть связан с файлов и \cdf{*error-output*}
+остается направленной на терминал или отдельный файл для сообщений об ошибках.
 \end{defun}
 
 \begin{defun}[Variable]
 *query-io*
 
-The value of \cd{*query-io*} is a stream to be used when
+The value of \cdf{*query-io*} is a stream to be used when
 asking questions of the user.  The question should be output to this
 stream, and the answer read from it.  When
 the normal input to a program may be coming from a file, questions such
 as ``Do you really want to delete all of the files in your directory?'' should
 nevertheless
 be sent directly to the user; and the answer should come from the user,
-not from the data file.  For such purposes \cd{*query-io*} should be
-used instead of \cd{*standard-input*} and \cd{*standard-output*}.
-\cd{*query-io*} is used by such functions
+not from the data file.  For such purposes \cdf{*query-io*} should be
+used instead of \cdf{*standard-input*} and \cdf{*standard-output*}.
+\cdf{*query-io*} is used by such functions
 as \cdf{yes-or-no-p}.
+
+Значение \cdf{*query-io*} является потоком, используемым, когда необходимо
+получить от пользователя ответ на некоторый вопрос. Вопрос должен быть выведен в
+этот поток, и ответ из него прочитан. Когда входной поток для программы может
+производится из файла, вопрос <<Вы действительно хотите удалить все файлы в
+вашей директории?>> никогда не должен посылаться напрямую к пользователю. И
+ответ должен прийти от пользователя, а не из данных файла.
+Поэтому в этих целях, вместо \cdf{*standard-input*} и \cdf{*standard-output*},
+должен использоваться \cdf{*query-io*} с помощью функции \cdf{yes-or-no-p}.
 \end{defun}
 
 \begin{defun}[Variable]
 *debug-io*
 
-The value of \cd{*debug-io*} is a stream to be used for interactive
-debugging purposes.  This is often the same as the value of \cd{*query-io*},
+The value of \cdf{*debug-io*} is a stream to be used for interactive
+debugging purposes.  This is often the same as the value of \cdf{*query-io*},
 but need not be.
+
+Значение \cdf{*debug-io*} является потоком, используемым для интерактивной
+отладки. Частно может совпадать с \cdf{*query-io*}, но это необязательно.
 \end{defun}
 
 \begin{defun}[Variable]
 *terminal-io*
 
-The value of \cd{*terminal-io*} is ordinarily
+The value of \cdf{*terminal-io*} is ordinarily
 the stream that connects to the user's console.
 Typically, writing to this stream would cause the output to appear
 on a display screen, for example, and reading from the stream would
@@ -102,24 +159,44 @@ that standard input functions such as \cdf{read} and \cdf{read-char},
 when used with this stream, would cause ``echoing'' of the input
 into the output side of the stream.  (The means by which this is
 accomplished are of course highly implementation-dependent.)
+
+Значение \cdf{*terminal-io*} является потоком, который соединен с
+пользовательской консолью. Обычно, запись в этот поток выводит данные на экран,
+например, а чтение из потока осуществляет чтение ввода с клавиатуры.
+
+Когда стандартные функции, такие как \cdf{read} и \cdf{read-char} используются с
+этим потоком, то происходит копирование входных данных обратно в поток
+или <<эхо>>. (Способ, с помощью которого это происходит, зависит от реализации.)
 \end{defun}
 
 \begin{defun}[Variable]
 *trace-output*
 
-The value of \cd{*trace-output*} is the stream on which the \cdf{trace}
+The value of \cdf{*trace-output*} is the stream on which the \cdf{trace}
 function prints its output.
+
+Значение \cdf{*trace-output*} является потоком, в который функция \cdf{trace}
+выводит информацию.
 \end{defun}
 
 The variables
-\cd{*standard-input*}, \cd{*standard-output*},
-\cd{*error-\discretionary{}{}{}output*},
-\cd{*trace-\discretionary{}{}{}output*},
-\cd{*query-io*}, and \cd{*debug-io*}
+\cdf{*standard-input*}, \cdf{*standard-output*},
+\cdf{*error-output*},
+\cdf{*trace-output*},
+\cdf{*query-io*}, and \cdf{*debug-io*}
 are initially bound to synonym streams that pass all
-operations on to the stream that is the value of \cd{*terminal-io*}.
+operations on to the stream that is the value of \cdf{*terminal-io*}.
 (See \cdf{make-synonym-stream}.)
 Thus any operations performed on those streams will go to the terminal.
+
+Переменные \cdf{*standard-input*}, \cdf{*standard-output*},
+\cdf{*error-output*},
+\cdf{*trace-output*},
+\cdf{*query-io*} и \cdf{*debug-io*}
+первоначально связаны с потоками-синонимами, которые направляют все операции в
+поток \cdf{*terminal-io*}.
+(Смотрите \cdf{make-synonym-stream}.)
+Таким образом все проделанные операции на этих потоках отобразятся на терминале.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -128,34 +205,34 @@ to replace the requirements of the preceding
 paragraph with the following new requirements:
 
 The seven standard stream variables,
-\cd{*standard-input*}, \cd{*standard-output*}, \cd{*query-io*},
-\cd{*debug-io*}, \cd{*terminal-io*},
-\cd{*error-\discretionary{}{}{}output*}, and
-\cd{*trace-\discretionary{}{}{}output*},
+\cdf{*standard-input*}, \cdf{*standard-output*}, \cdf{*query-io*},
+\cdf{*debug-io*}, \cdf{*terminal-io*},
+\cdf{*error-output*}, and
+\cdf{*trace-output*},
 are initially bound to open streams.  (These will be called
-{\it the standard initial streams}.)
+\textit{the standard initial streams}.)
 
 The streams that are the initial values of
-\cd{*standard-input*}, \cd{*query-io*}, \cd{*debug-io*}, and \cd{*terminal-io*}
+\cdf{*standard-input*}, \cdf{*query-io*}, \cdf{*debug-io*}, and \cdf{*terminal-io*}
 must support input.
 
 The streams that are the initial values of
-\cd{*standard-\discretionary{}{}{}output*},
-\cd{*error-\discretionary{}{}{}output*},
-\cd{*trace-output*}, \cd{*query-io*}, \cd{*debug-io*}, and \cd{*terminal-io*}
+\cdf{*standard-output*},
+\cdf{*error-output*},
+\cdf{*trace-output*}, \cdf{*query-io*}, \cdf{*debug-io*}, and \cdf{*terminal-io*}
 must support output.
 
 None of the standard initial streams (including the one to which
-\cd{*terminal-io*} is initially bound) may be a synonym, either directly
+\cdf{*terminal-io*} is initially bound) may be a synonym, either directly
 or indirectly, for any of the standard stream variables
-except \cd{*terminal-io*}.  For example, the initial value of
-\cd{*trace-output*} may be a synonym stream for \cd{*terminal-io*}
-but not a synonym stream for \cd{*standard-output*} or \cd{*query-io*}.
+except \cdf{*terminal-io*}.  For example, the initial value of
+\cdf{*trace-output*} may be a synonym stream for \cdf{*terminal-io*}
+but not a synonym stream for \cdf{*standard-output*} or \cdf{*query-io*}.
 (These are examples of direct synonyms.)  As another example,
-\cd{*query-io*} may be a two-way stream or echo stream whose
-input component is a synonym for \cd{*terminal-io*},
-but its input component may not be a synonym for \cd{*standard-input*}
-or \cd{*debug-io*}.  (These are examples of indirect synonyms.)
+\cdf{*query-io*} may be a two-way stream or echo stream whose
+input component is a synonym for \cdf{*terminal-io*},
+but its input component may not be a synonym for \cdf{*standard-input*}
+or \cdf{*debug-io*}.  (These are examples of indirect synonyms.)
 
 Any or all of the standard initial streams may be direct or indirect
 synonyms for one or more common implementation-dependent streams.
@@ -170,11 +247,17 @@ standard stream variable (that is, unworkable circularities are
 avoided) without unduly restricting implementation flexibility.
 \end{new}
 
-No user program should ever change the value of \cd{*terminal-io*}.  A program
+No user program should ever change the value of \cdf{*terminal-io*}.  A program
 that wants (for example) to divert output to a file should do so by binding
-the value of \cd{*standard-output*}; that way error messages sent to
-\cd{*error-output*} can still get to the user by going through \cd{*terminal-io*},
+the value of \cdf{*standard-output*}; that way error messages sent to
+\cdf{*error-output*} can still get to the user by going through \cdf{*terminal-io*},
 which is usually what is desired.
+
+Пользовательская программа не должна изменять значение
+\cdf{*terminal-io*}. Программа, которая, например, хочет перенаправить вывод в файл,
+должна изменить значение переменной \cdf{*standard-output*}. В таком случае,
+сообщения об ошибках будут продолжать посылаться в \cdf{*error-output*}, а
+следовательно в \cdf{*terminal-io*}, и пользователи сможет их увидеть.
 
 \section {Creating New Streams}
 
@@ -188,7 +271,7 @@ make-synonym-stream symbol
 \cdf{make-synonym-stream} creates and returns
 a synonym stream.
 Any operations on the new stream will be performed on the stream
-that is then the value of the dynamic variable named by the {\it symbol}.
+that is then the value of the dynamic variable named by the \textit{symbol}.
 If the value of the variable should change or be bound,
 then the synonym stream will operate on the new stream.
 
@@ -197,7 +280,7 @@ X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
 \cd{make-\discretionary{}{}{}synonym-stream} is always a stream of type \cdf{synonym-stream}.
-Note that the type of a synonym stream is {\it always} \cdf{synonym-stream},
+Note that the type of a synonym stream is \textit{always} \cdf{synonym-stream},
 regardless of the type of the stream for which it is a synonym.
 \end{new}
 \end{defun}
@@ -206,15 +289,15 @@ regardless of the type of the stream for which it is a synonym.
 make-broadcast-stream &rest streams
 
 This returns a stream that works only in the output direction.  Any output
-sent to this stream will be sent to all of the {\it streams} given.
+sent to this stream will be sent to all of the \textit{streams} given.
 The set of
 operations that may be performed on the new stream is the intersection
 of those for the given streams.  The results returned by a stream
 operation are the values resulting from
-performing the operation on the last stream in {\it streams}; the
+performing the operation on the last stream in \textit{streams}; the
 results of performing the operation on all preceding streams are
 discarded.
-If no {\it streams} are given as arguments, then the result
+If no \textit{streams} are given as arguments, then the result
 is a ``bit sink''; all output to the resulting stream is discarded.
 
 \begin{new}
@@ -229,9 +312,9 @@ to specify that the result of
 make-concatenated-stream &rest streams
 
 This returns a stream that works only in the input direction.
-Input is taken from the first of the {\it streams} until it reaches
+Input is taken from the first of the \textit{streams} until it reaches
 end-of-file; then that stream is discarded, and input is taken
-from the next of the {\it streams}, and so on.  If no arguments
+from the next of the \textit{streams}, and so on.  If no arguments
 are given, the result is a stream with no content; any input attempt
 will result in end-of-file.
 
@@ -246,8 +329,8 @@ to specify that the result of
 \begin{defun}[Function]
 make-two-way-stream input-stream output-stream
 
-This returns a bidirectional stream that gets its input from {\it input-stream}
-and sends its output to {\it output-stream}.
+This returns a bidirectional stream that gets its input from \textit{input-stream}
+and sends its output to \textit{output-stream}.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -260,9 +343,9 @@ to specify that the result of
 \begin{defun}[Function]
 make-echo-stream input-stream output-stream
 
-This returns a bidirectional stream that gets its input from {\it input-stream}
-and sends its output to {\it output-stream}.  In addition, all
-input taken from {\it input-stream} is echoed to {\it output-stream}.
+This returns a bidirectional stream that gets its input from \textit{input-stream}
+and sends its output to \textit{output-stream}.  In addition, all
+input taken from \textit{input-stream} is echoed to \textit{output-stream}.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -279,7 +362,7 @@ to clarify the interaction of
 (See the descriptions of those functions for details.)
 
 X3J13 explicitly noted that the bidirectional streams that are the initial
-values of \cd{*query-io*}, \cd{*debug-io*}, and \cd{*terminal-io*},
+values of \cdf{*query-io*}, \cdf{*debug-io*}, and \cdf{*terminal-io*},
 even though they may have some echoing behavior, conceptually
 are not necessarily the products of calls to \cdf{make-echo-stream}
 and therefore are not subject to the new rules about echoing on echo
@@ -293,7 +376,7 @@ make-string-input-stream string &optional start end
 
 This returns an input stream.
 The input stream will supply, in order, the characters in the substring
-of {\it string} delimited by {\it start} and {\it end}; after the last
+of \textit{string} delimited by \textit{start} and \textit{end}; after the last
 character has been supplied, the stream will then be at end-of-file.
 
 \begin{new}
@@ -350,8 +433,8 @@ of the stream, if no such previous call has been made).
 \begin{defmac}
 with-open-stream (var stream) {declaration}* {\,form}*
 
-The form {\it stream} is evaluated and must produce a stream.
-The variable {\it var} is bound with the stream as its value,
+The form \textit{stream} is evaluated and must produce a stream.
+The variable \textit{var} is bound with the stream as its value,
 and then the forms of the body are executed
 as an implicit \cdf{progn}; the results of evaluating
 the last form are returned as the value of the \cdf{with-open-stream} form.
@@ -373,10 +456,10 @@ to specify that the stream created by
 with-input-from-string (var string {keyword value}*)
       {declaration}* {\,form}*
 
-The body is executed as an implicit \cdf{progn} with the variable {\it var}
+The body is executed as an implicit \cdf{progn} with the variable \textit{var}
 bound to a character input stream that supplies successive characters from
-the value of the form {\it string}.  \cdf{with-input-from-string}
-returns the results from the last {\it form} of the body.
+the value of the form \textit{string}.  \cdf{with-input-from-string}
+returns the results from the last \textit{form} of the body.
 
 The input stream is automatically closed on exit from
 the \cd{with-\discretionary{}{}{}input-\discretionary{}{}{}from-string} form,
@@ -394,23 +477,23 @@ The following keyword options may be used:
 \begin{quotation}
 \begin{flushdesc}
 \item[\cd{:index}]
-The form after the \cd{:index} keyword should be a {\it place}
+The form after the \cd{:index} keyword should be a \textit{place}
 acceptable to \cdf{setf}.  If the \cdf{with-input-from-string} form
-is exited normally, then the {\it place} will have stored into it the
-index into the {\it string} indicating the first character not read
+is exited normally, then the \textit{place} will have stored into it the
+index into the \textit{string} indicating the first character not read
 (the length of the string if all characters were used).
-The {\it place} is not updated as reading progresses, but only at the
+The \textit{place} is not updated as reading progresses, but only at the
 end of the operation. 
 
 \item[\cd{:start}]
 The \cd{:start} keyword takes an argument indicating, in the manner
 usual for sequence functions, the beginning of
-a substring of {\it string} to be used.
+a substring of \textit{string} to be used.
 
 \item[\cd{:end}]
 The \cd{:end} keyword takes an argument indicating, in the manner
 usual for sequence functions, the end of
-a substring of {\it string} to be used.
+a substring of \textit{string} to be used.
 \end{flushdesc}
 \end{quotation}
 
@@ -436,20 +519,20 @@ to restrict user side effects; see section \ref{STRUCTURE-TRAVERSAL-SECTION}.
 \begin{defmac}
 with-output-to-string (var [string]) {declaration}* {\,form}*
 
-The body is executed as an implicit \cdf{progn} with the variable {\it var}
+The body is executed as an implicit \cdf{progn} with the variable \textit{var}
 bound to a character output stream.  All output to that stream
 is saved in a string.  This may be done in one of two ways.
 
-If no {\it string} argument is provided, then
+If no \textit{string} argument is provided, then
 the value of
 \cdf{with-output-from-string} is a string containing all the collected output.
 
-If {\it string} is specified, it must be a string with a fill pointer;
+If \textit{string} is specified, it must be a string with a fill pointer;
 the output is incrementally appended to the string,
 as if using \cdf{vector-push-extend} if the string is adjustable,
 and otherwise as if using \cdf{vector-push}.
 In this case \cdf{with-output-to-string}
-returns the results from the last {\it form} of the body.
+returns the results from the last \textit{form} of the body.
 
 In either case,
 the output stream is automatically closed on exit from
@@ -467,16 +550,16 @@ to let \cdf{with-output-to-string} take an \cd{:element-type} argument.
 with-output-to-string (var [string [\!:element-type! type]])
                       {declaration}* {\,form}*
 
-One may specify \cdf{nil} instead of a string as the {\it string}
+One may specify \cdf{nil} instead of a string as the \textit{string}
 and use the \cd{:element-type} argument to specify what characters
-must be accepted by the created stream.  If no {\it string} argument
+must be accepted by the created stream.  If no \textit{string} argument
 is provided, or if it is \cdf{nil} and no \cd{:element-type} is specified,
 the created stream must accept all characters.
 
 X3J13 voted in October 1988
 \issue{WITH-OUTPUT-TO-STRING-APPEND-STYLE}
 to specify that
-if {\it string} is specified, it must be a string with a fill pointer;
+if \textit{string} is specified, it must be a string with a fill pointer;
 the output is incrementally appended to the string (as if by use of
 \cdf{vector-push-extend}).
 
@@ -558,7 +641,7 @@ output operations, and otherwise is false.
 stream-element-type stream
 
 A type specifier is returned to indicate what objects
-may be read from or written to the argument {\it stream}, which must be a stream.
+may be read from or written to the argument \textit{stream}, which must be a stream.
 Streams created by \cdf{open} will have an element type
 restricted to a subset of \cdf{character} or \cdf{integer},
 but in principle a stream may conduct transactions using any
@@ -583,7 +666,7 @@ but if \cdf{close} is called on a closed stream, it succeeds without
 error and returns an unspecified value.
 (The rationale for not specifying the value returned for a closed stream
 is that in some implementations closing certain streams does not really
-have an effect on them---for example, closing the \cd{*terminal-io*}
+have an effect on them---for example, closing the \cdf{*terminal-io*}
 stream might not ``really'' close it---and it is not desirable to force
 such implementations to keep otherwise unnecessary state.  Portable programs
 will of course not rely on such behavior.)
@@ -612,7 +695,7 @@ to clarify the effect of closing various
 kinds of streams.  First some terminology:
 \begin{itemize}
 \item
-A {\it composite} stream is one that was returned by a call to
+A \textit{composite} stream is one that was returned by a call to
 \cd{make-\discretionary{}{}{}synonym-\discretionary{}{}{}stream},
 \cdf{make-broadcast-stream},
 \cdf{make-concatenated-stream},
@@ -620,14 +703,14 @@ A {\it composite} stream is one that was returned by a call to
 or \cd{make-\discretionary{}{}{}echo-stream}.
 
 \item
-The {\it constituents} of a composite stream are the streams that were given
+The \textit{constituents} of a composite stream are the streams that were given
 as arguments to the function that constructed it or, in the case of
 \cd{make-\discretionary{}{}{}synonym-stream}, the stream that is the \cdf{symbol-value} of
 the symbol that was given as an argument.  (The constituent of
 a synonym stream may therefore vary over time.)
 
 \item
-A {\it constructed} stream is either a composite stream or one returned
+A \textit{constructed} stream is either a composite stream or one returned
 by a call to \cdf{make-string-input-stream}, \cdf{make-string-output-stream},
 \cd{with-\discretionary{}{}{}input-\discretionary{}{}{}from-\discretionary{}{}{}string}, or
 \cdf{with-output-to-string}.
@@ -697,7 +780,7 @@ output stream.
 synonym-stream-symbol synonym-stream
 
 The argument must be of type \cdf{synonym-stream}.  This function returns
-the symbol for whose value the {\it synonym-stream} is a synonym.
+the symbol for whose value the \textit{synonym-stream} is a synonym.
 \end{defun}
 
 
@@ -718,7 +801,7 @@ interactive-stream-p stream
 
 X3J13 voted in June 1989 \issue{STREAM-CAPABILITIES} to add the
 predicate \cdf{interactive-stream-p}, which returns \cdf{t}
-if the {\it stream\/} is interactive and otherwise returns \cdf{nil}.
+if the \textit{stream\/} is interactive and otherwise returns \cdf{nil}.
 A \cd{type-\discretionary{}{}{}error} error is signalled if the argument is not of type \cdf{stream}.
 
 The precise meaning of \cdf{interactive-stream-p} is implementation-dependent
@@ -736,7 +819,7 @@ expect to receive input that might depend on the prompt.
 rather than quickly returning a character or an end-of-file
 indication.
 \end{itemize}
-The value of \cd{*terminal-io*} might or might not be interactive.
+The value of \cdf{*terminal-io*} might or might not be interactive.
 \end{defun}
 \end{newer}
 
@@ -747,7 +830,7 @@ stream-external-format stream
 X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL} to add the
 function \cdf{stream-external-format}, which returns a
 specifier for the implementation-recognized scheme used for
-representing characters in the argument {\it stream}.
+representing characters in the argument \textit{stream}.
 See the \cd{:external-format} argument to \cdf{open}.
 \end{defun}
 \end{newer}
