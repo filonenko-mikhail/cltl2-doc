@@ -210,7 +210,7 @@ The seven standard stream variables,
 \cdf{*error-output*}, and
 \cdf{*trace-output*},
 are initially bound to open streams.  (These will be called
-\textit{the standard initial streams}.)
+\emph{the standard initial streams}.)
 
 The streams that are the initial values of
 \cdf{*standard-input*}, \cdf{*query-io*}, \cdf{*debug-io*}, and \cdf{*terminal-io*}
@@ -259,11 +259,15 @@ which is usually what is desired.
 сообщения об ошибках будут продолжать посылаться в \cdf{*error-output*}, а
 следовательно в \cdf{*terminal-io*}, и пользователи сможет их увидеть.
 
-\section {Creating New Streams}
+\section {Creating New Streams Создание новых потоков}
 
 Perhaps the most important constructs for creating new streams
 are those that open files; see \cdf{with-open-file} and \cdf{open}.
 The following functions construct streams without reference to a file system.
+
+Пожалуй самые важные конструкции для создания новых потоков это то, которые
+открывают файлы. Смотрите \cdf{with-open-file} и \cdf{open}.
+Следущие функции создают потоки без ссылок на файловую систему.
 
 \begin{defun}[Function]
 make-synonym-stream symbol
@@ -271,16 +275,22 @@ make-synonym-stream symbol
 \cdf{make-synonym-stream} creates and returns
 a synonym stream.
 Any operations on the new stream will be performed on the stream
-that is then the value of the dynamic variable named by the \textit{symbol}.
+that is then the value of the dynamic variable named by the \emph{symbol}.
 If the value of the variable should change or be bound,
 then the synonym stream will operate on the new stream.
+
+\cdf{make-synonym-stream} создает и возвращает поток-синоним.
+Любые операции на новом потоке будут проделаны на потоке, являющемся значением
+динамической переменной с именем \emph{symbol}.
+Если значение этой переменной изменится или будет пересвязано, то поток-синоним
+будет воздействовать на новый установленный поток.
 
 \begin{new}
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
 \cd{make-\discretionary{}{}{}synonym-stream} is always a stream of type \cdf{synonym-stream}.
-Note that the type of a synonym stream is \textit{always} \cdf{synonym-stream},
+Note that the type of a synonym stream is \emph{always} \cdf{synonym-stream},
 regardless of the type of the stream for which it is a synonym.
 \end{new}
 \end{defun}
@@ -289,22 +299,34 @@ regardless of the type of the stream for which it is a synonym.
 make-broadcast-stream &rest streams
 
 This returns a stream that works only in the output direction.  Any output
-sent to this stream will be sent to all of the \textit{streams} given.
+sent to this stream will be sent to all of the \emph{streams} given.
 The set of
 operations that may be performed on the new stream is the intersection
 of those for the given streams.  The results returned by a stream
 operation are the values resulting from
-performing the operation on the last stream in \textit{streams}; the
+performing the operation on the last stream in \emph{streams}; the
 results of performing the operation on all preceding streams are
 discarded.
-If no \textit{streams} are given as arguments, then the result
+If no \emph{streams} are given as arguments, then the result
 is a ``bit sink''; all output to the resulting stream is discarded.
 
+Эта функция возвращает поток, который работает только для записи. Любая выходная
+информация, посланная в этот поток, будет отослана в все указанные потоки
+\emph{streams}.
+Множество операций, которые могут быть выполнены на новом потоке, является
+пересечением множеств операций для указанных потоков. Результаты, возвращаемые
+операциями над новым потоком, являются результатами возвращенными операциями на
+последнем потоке из списка \emph{streams}.
+Результаты полученные в ходе выполнения функции над всеми, кроме последнего,
+потоками игнорируются.
+Если не было передено ни одного потока в аргументе \emph{streams}, тогда
+результат является <<кусочком клоаки>>. Вся выводимая информация будет
+игнорироваться.
 \begin{new}
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
-\cd{make-\discretionary{}{}{}broadcast-stream} is always a stream of type \cdf{broadcast-stream}.
+\cd{make-broadcast-stream} is always a stream of type \cdf{broadcast-stream}.
 \end{new}
 \end{defun}
 
@@ -312,46 +334,57 @@ to specify that the result of
 make-concatenated-stream &rest streams
 
 This returns a stream that works only in the input direction.
-Input is taken from the first of the \textit{streams} until it reaches
+Input is taken from the first of the \emph{streams} until it reaches
 end-of-file; then that stream is discarded, and input is taken
-from the next of the \textit{streams}, and so on.  If no arguments
+from the next of the \emph{streams}, and so on.  If no arguments
 are given, the result is a stream with no content; any input attempt
 will result in end-of-file.
 
+Данная функция возвращает поток, который работает только для чтения.
+Входная информация берется из первого потоки из списка \emph{streams} пока
+указатель не достигнет конца-файла end-of-file, затем данный поток
+откладывается, и входная информация берется из следующего, и так далее. Если
+список потоков \emph{stream} был пуст, то возвращается поток без
+содержимого. Любая попытка чтения будет возвращать конец-файла end-of-file. 
 \begin{new}
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
-\cd{make-\discretionary{}{}{}concatenated-stream} is always a stream of type \cdf{concatenated-stream}.
+\cd{make-concatenated-stream} is always a stream of type \cdf{concatenated-stream}.
 \end{new}
 \end{defun}
 
 \begin{defun}[Function]
 make-two-way-stream input-stream output-stream
 
-This returns a bidirectional stream that gets its input from \textit{input-stream}
-and sends its output to \textit{output-stream}.
+This returns a bidirectional stream that gets its input from \emph{input-stream}
+and sends its output to \emph{output-stream}.
 
+Данная функция возвращает поток для чтения и записи, который входную информацию
+получает из \emph{input-stream} и посылает выходную информацию в \emph{output-stream}.
 \begin{new}
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
-\cd{make-\discretionary{}{}{}two-way-stream} is always a stream of type \cdf{two-way-stream}.
+\cd{make-two-way-stream} is always a stream of type \cdf{two-way-stream}.
 \end{new}
 \end{defun}
 
 \begin{defun}[Function]
 make-echo-stream input-stream output-stream
 
-This returns a bidirectional stream that gets its input from \textit{input-stream}
-and sends its output to \textit{output-stream}.  In addition, all
-input taken from \textit{input-stream} is echoed to \textit{output-stream}.
+This returns a bidirectional stream that gets its input from \emph{input-stream}
+and sends its output to \emph{output-stream}.  In addition, all
+input taken from \emph{input-stream} is echoed to \emph{output-stream}.
 
+Данная функция возвращает поток для чтения и записи, который получает входную
+информацию из \emph{input-stream} и отсылает выходную в \emph{output-stream}. В
+дополнение, входная информация посылается в \emph{output-stream} (эхо).
 \begin{new}
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
-\cd{make-\discretionary{}{}{}echo-stream} is always a stream of type \cdf{echo-stream}.
+\cd{make-echo-stream} is always a stream of type \cdf{echo-stream}.
 \end{new}
 
 \begin{new}
@@ -376,14 +409,19 @@ make-string-input-stream string &optional start end
 
 This returns an input stream.
 The input stream will supply, in order, the characters in the substring
-of \textit{string} delimited by \textit{start} and \textit{end}; after the last
+of \emph{string} delimited by \emph{start} and \emph{end}; after the last
 character has been supplied, the stream will then be at end-of-file.
+
+Данная функция возвращает поток для чтения.
+Данный поток последовательно будет сохранять строковые символы в подстроке в
+строке \emph{string} ограниченной с помощью \emph{start} и \emph{end}. После
+того, как будет достигнут последний символ, поток вернет конец-файла.
 
 \begin{new}
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
-\cd{make-\discretionary{}{}{}string-input-stream} is always a stream of type \cdf{string-stream}.
+\cd{make-string-input-stream} is always a stream of type \cdf{string-stream}.
 \end{new}
 \end{defun}
 
@@ -415,7 +453,18 @@ is omitted, the created stream must accept all characters.
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
 to specify that the result of
-\cd{make-\discretionary{}{}{}string-output-stream} is always a stream of type \cdf{string-stream}.
+\cdf{make-string-output-stream} is always a stream of type \cdf{string-stream}.
+
+Данная функция возвращает поток для записи, который будет аккумулировать всю
+полученную информацию в строку, которая может быть получена с помощью функции
+\cdf{get-output-stream-string}.
+
+Аргумент \cd{:element-type} указывает, какие символы могут приниматься
+потоком. Если аргумент \cd{:element-type} опущен, созданный поток должен
+принимать все символы.
+
+Результатом \cdf{make-string-output-stream} всегдя является поток типа
+\cdf{string-stream}.
 \end{defun}
 \end{newer}
 
@@ -428,13 +477,20 @@ returns a string containing all the characters output to the stream so far.
 The stream is then reset; thus each call to \cdf{get-output-stream-string}
 gets only the characters since the last such call (or the creation
 of the stream, if no such previous call has been made).
+
+Данная функция возвращает строку, для потока, возвращенного функцией
+\cdf{make-string-output-stream}, которая содержит все записанную в данный поток
+информацию. После этого поток сбрасывается. Таким образом каждый вызов
+\cdf{get-output-stream-string} возвращает только те символы, которые были
+записаны с момента предыдущего вызова этой функции (или создания потока, если
+предыдущего вызова еще не было).
 \end{defun}
 
 \begin{defmac}
 with-open-stream (var stream) {declaration}* {\,form}*
 
-The form \textit{stream} is evaluated and must produce a stream.
-The variable \textit{var} is bound with the stream as its value,
+The form \emph{stream} is evaluated and must produce a stream.
+The variable \emph{var} is bound with the stream as its value,
 and then the forms of the body are executed
 as an implicit \cdf{progn}; the results of evaluating
 the last form are returned as the value of the \cdf{with-open-stream} form.
@@ -444,6 +500,14 @@ no matter whether the exit is normal or abnormal;
 see \cdf{close}.
 The stream should be regarded as having dynamic extent.
 
+Форма \emph{stream} вычисляется и должна вернуть поток.
+Переменная \emph{var} связывается с этим потоком, и затем выполняются формы тела
+как неявный \cdf{progn}. Результатом выполнения \cdf{with-open-stream} является
+значение последней формы.
+Поток автоматически закрывается при выходе из формы \cdf{with-open-stream}, вне
+зависимости от типа выхода. Смотрите \cdf{close}.
+Поток следует рассматривать, как имеющий динамическую продолжительность
+видимости.
 \begin{new}
 X3J13 voted in January 1989
 \issue{STREAM-ACCESS}
@@ -456,15 +520,20 @@ to specify that the stream created by
 with-input-from-string (var string {keyword value}*)
       {declaration}* {\,form}*
 
-The body is executed as an implicit \cdf{progn} with the variable \textit{var}
+The body is executed as an implicit \cdf{progn} with the variable \emph{var}
 bound to a character input stream that supplies successive characters from
-the value of the form \textit{string}.  \cdf{with-input-from-string}
-returns the results from the last \textit{form} of the body.
+the value of the form \emph{string}.  \cdf{with-input-from-string}
+returns the results from the last \emph{form} of the body.
 
 The input stream is automatically closed on exit from
-the \cd{with-\discretionary{}{}{}input-\discretionary{}{}{}from-string} form,
+the \cd{with-input-from-string} form,
 no matter whether the exit is normal or abnormal.
 The stream should be regarded as having dynamic extent.
+
+Тело выполняется как неявный \cdf{progn} с переменной \emph{var} связанной с
+потоком символов для чтения, который последовательно предоставляет символы из
+значения формы \emph{string}. \cdf{with-input-from-string} возвращает результат
+выполнения последней формы \emph{form} тела.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -477,23 +546,48 @@ The following keyword options may be used:
 \begin{quotation}
 \begin{flushdesc}
 \item[\cd{:index}]
-The form after the \cd{:index} keyword should be a \textit{place}
+The form after the \cd{:index} keyword should be a \emph{place}
 acceptable to \cdf{setf}.  If the \cdf{with-input-from-string} form
-is exited normally, then the \textit{place} will have stored into it the
-index into the \textit{string} indicating the first character not read
+is exited normally, then the \emph{place} will have stored into it the
+index into the \emph{string} indicating the first character not read
 (the length of the string if all characters were used).
-The \textit{place} is not updated as reading progresses, but only at the
+The \emph{place} is not updated as reading progresses, but only at the
 end of the operation. 
 
 \item[\cd{:start}]
 The \cd{:start} keyword takes an argument indicating, in the manner
 usual for sequence functions, the beginning of
-a substring of \textit{string} to be used.
+a substring of \emph{string} to be used.
 
 \item[\cd{:end}]
 The \cd{:end} keyword takes an argument indicating, in the manner
 usual for sequence functions, the end of
-a substring of \textit{string} to be used.
+a substring of \emph{string} to be used.
+\end{flushdesc}
+\end{quotation}
+
+В параметрах могут использоваться следующие имена:
+\begin{quotation}
+\begin{flushdesc}
+\item[\cd{:index}]
+Форма после \cd{:index} должна быть \emph{местом}, в которое можно осуществить
+запись с помощью \cdf{setf}. Если форма \cdf{with-input-from-string} завершается
+нормально, то \emph{место} будет содержать позицию первого не прочитанного
+символа из строки \emph{string} (или длину строки, если все символы были
+прочитаны).
+\emph{Место} не изменяется в процессе чтения, а только во время выхода.
+
+\item[\cd{:start}]
+\cd{:start} принимает аргумент, указывающий позицию с которой
+необходимо начинать чтение символов из строки \emph{string}.
+
+\item[\cd{:end}]
+The \cd{:end} keyword takes an argument indicating, in the manner
+usual for sequence functions, the end of
+a substring of \emph{string} to be used.
+\cd{:end} принимает аргумент, указывающий на позицию на которой необходимо
+завершить чтение символов из строки \emph{string}
+
 \end{flushdesc}
 \end{quotation}
 
@@ -508,6 +602,16 @@ The \cd{:start} and \cd{:index} keywords may both specify
 the same variable, which is a pointer within the string to be advanced,
 perhaps repeatedly by some containing loop.
 
+Вот простой пример использования \cdf{with-input-from-string}:
+\begin{lisp}
+(with-input-from-string (s "Animal Crackers" :index j :start 6) \\
+~~(read s)) \EV\ crackers
+\end{lisp}
+В качестве побочного эффекта переменная \cd{j} будет установлена в \cd{15}.
+
+\cd{:start} и \cd{:index} могут оба содержать одну переменную, указывающую
+позицию в строке, возможно, внутри цикла.
+
 \begin{new}
 X3J13 voted in January 1989
 \issue{MAPPING-DESTRUCTIVE-INTERACTION}
@@ -519,20 +623,20 @@ to restrict user side effects; see section \ref{STRUCTURE-TRAVERSAL-SECTION}.
 \begin{defmac}
 with-output-to-string (var [string]) {declaration}* {\,form}*
 
-The body is executed as an implicit \cdf{progn} with the variable \textit{var}
+The body is executed as an implicit \cdf{progn} with the variable \emph{var}
 bound to a character output stream.  All output to that stream
 is saved in a string.  This may be done in one of two ways.
 
-If no \textit{string} argument is provided, then
+If no \emph{string} argument is provided, then
 the value of
 \cdf{with-output-from-string} is a string containing all the collected output.
 
-If \textit{string} is specified, it must be a string with a fill pointer;
+If \emph{string} is specified, it must be a string with a fill pointer;
 the output is incrementally appended to the string,
 as if using \cdf{vector-push-extend} if the string is adjustable,
 and otherwise as if using \cdf{vector-push}.
 In this case \cdf{with-output-to-string}
-returns the results from the last \textit{form} of the body.
+returns the results from the last \emph{form} of the body.
 
 In either case,
 the output stream is automatically closed on exit from
@@ -550,21 +654,21 @@ to let \cdf{with-output-to-string} take an \cd{:element-type} argument.
 with-output-to-string (var [string [\!:element-type! type]])
                       {declaration}* {\,form}*
 
-One may specify \cdf{nil} instead of a string as the \textit{string}
+One may specify \cdf{nil} instead of a string as the \emph{string}
 and use the \cd{:element-type} argument to specify what characters
-must be accepted by the created stream.  If no \textit{string} argument
+must be accepted by the created stream.  If no \emph{string} argument
 is provided, or if it is \cdf{nil} and no \cd{:element-type} is specified,
 the created stream must accept all characters.
 
 X3J13 voted in October 1988
 \issue{WITH-OUTPUT-TO-STRING-APPEND-STYLE}
 to specify that
-if \textit{string} is specified, it must be a string with a fill pointer;
+if \emph{string} is specified, it must be a string with a fill pointer;
 the output is incrementally appended to the string (as if by use of
 \cdf{vector-push-extend}).
 
 In this way output cannot be accidentally lost.  This change makes
-\cd{with-\discretionary{}{}{}output-\discretionary{}{}{}to-string} behave in the same way that \cdf{format} does
+\cd{with-output-to-string} behave in the same way that \cdf{format} does
 when given a string as its first argument.
 
 X3J13 voted in January 1989
@@ -575,22 +679,37 @@ to specify that the stream created by
 X3J13 voted in January 1989
 \issue{MAPPING-DESTRUCTIVE-INTERACTION}
 to restrict user side effects; see section \ref{STRUCTURE-TRAVERSAL-SECTION}.
+
+Можно указать \cdf{nil} вместо строки \emph{string} и использовать аргумент
+\cd{:element-type} для указания, какие символы должны приниматься созданным
+потоком. Если аргумент \emph{string} не указан или он \cdf{nil} и не указан
+\cd{:element-type}, то созданный поток должен принимать все символы.
 \end{defmac}
 \end{newer}
 
-\section {Operations on Streams}
+\section {Operations on Streams Операции над потоками}
 
 This section contains discussion of only those operations that
 are common to all streams.  Input and output is rather complicated
-and is discussed separately in chapter \ref{IO}.
+and is discussed separately in chapter~\ref{IO}.
 The interface between streams and the file system is discussed
-in chapter \ref{FILES}.
+in chapter~\ref{FILES}.
+
+В этом разделе описаны только те функции, которые работают со всеми
+потоки. Ввод и вывод информации слегка сложнее и описаны отдельно в
+главе~\ref{IO}.
+Интерфейс между потоками и файловой системой описан в главе~\ref{FILES}
 
 \begin{defun}[Function]
 streamp object
 
 \cdf{streamp} is true if its argument is a stream,
 and otherwise is false.
+\begin{lisp}
+(streamp x) \EQ\ (typep x 'stream)
+\end{lisp}
+
+\cdf{streamp} истинен, если его аргумент является потоком, иначе ложен.
 \begin{lisp}
 (streamp x) \EQ\ (typep x 'stream)
 \end{lisp}
@@ -619,6 +738,16 @@ with the \cdf{close} function.  The macros \cdf{with-open-stream},
 and \cdf{with-open-file} automatically close the created stream
 as control leaves their bodies, in effect imposing dynamic extent
 on the openness of the stream.
+
+Добавлен предикат \cdf{open-stream-p}.
+Если аргумент, который должен быть потоком, открыт, предикат истинен, иначе
+ложен.
+
+Поток всегда создается открытым. Он продолжает быть открытым, пока не будет
+закрыт с помощью функции \cdf{close}. Макросы \cdf{with-open-stream},
+\cdf{with-input-from-string}, \cdf{with-output-to-string} и \cdf{with-open-file}
+автоматически закрывают созданный поток, когда управление выходит из их тел, по
+сути открытость совпадает с динамической продолжительностью видимости потока. 
 \end{defun}
 \end{newer}
 
@@ -627,6 +756,9 @@ input-stream-p stream
 
 This predicate is true if its argument (which must be a stream) can handle
 input operations, and otherwise is false.
+
+Если аргумент, который должен быть потоком, может работать для чтения, предикат
+истинен, иначе ложен.
 \end{defun}
 
 \begin{defun}[Function]
@@ -634,6 +766,9 @@ output-stream-p stream
 
 This predicate is true if its argument (which must be a stream) can handle
 output operations, and otherwise is false.
+
+Если аргумент, который должен быть потоком, может работать для записи, предикат
+истинен, иначе ложен.
 \end{defun}
 
 
@@ -641,11 +776,17 @@ output operations, and otherwise is false.
 stream-element-type stream
 
 A type specifier is returned to indicate what objects
-may be read from or written to the argument \textit{stream}, which must be a stream.
+may be read from or written to the argument \emph{stream}, which must be a stream.
 Streams created by \cdf{open} will have an element type
 restricted to a subset of \cdf{character} or \cdf{integer},
 but in principle a stream may conduct transactions using any
 Lisp objects.
+
+Функция возвращает спецификатор типа, который указывает на то, какие объекты
+могут быть прочитаны или записаны из/в поток \emph{stream}.
+Потоки созданные с помощью \cdf{open} будут иметь тип элементов, ограниченный
+подможеством \cdf{character} или \cdf{integer}. Но в приципе поток может
+проводить операции используя любые Lisp'овые объекты.
 \end{defun}
 
 \begin{defun}[Function]
@@ -655,6 +796,11 @@ The argument must be a stream.
 The stream is closed.  No further input/output operations may be performed
 on it.  However, certain inquiry operations may still be performed,
 and it is permissible to close an already closed stream.
+
+Аргумент должен быть потоком.
+Функцией этот поток закрывается. После чего операции чтения и записи выполняться
+над ним не могут. Однако, конечно, некоторые операци все еще могут
+выполняться. Допускается повторное закрытие уже закрытого потока.
 
 \begin{newer}
 X3J13 voted in January 1989
@@ -695,24 +841,24 @@ to clarify the effect of closing various
 kinds of streams.  First some terminology:
 \begin{itemize}
 \item
-A \textit{composite} stream is one that was returned by a call to
-\cd{make-\discretionary{}{}{}synonym-\discretionary{}{}{}stream},
+A \emph{composite} stream is one that was returned by a call to
+\cd{make-synonym-stream},
 \cdf{make-broadcast-stream},
 \cdf{make-concatenated-stream},
-\cd{make-\discretionary{}{}{}two-\discretionary{}{}{}way-\discretionary{}{}{}stream},
-or \cd{make-\discretionary{}{}{}echo-stream}.
+\cd{make-two-way-stream},
+or \cd{make-echo-stream}.
 
 \item
-The \textit{constituents} of a composite stream are the streams that were given
+The \emph{constituents} of a composite stream are the streams that were given
 as arguments to the function that constructed it or, in the case of
-\cd{make-\discretionary{}{}{}synonym-stream}, the stream that is the \cdf{symbol-value} of
+\cd{make-synonym-stream}, the stream that is the \cdf{symbol-value} of
 the symbol that was given as an argument.  (The constituent of
 a synonym stream may therefore vary over time.)
 
 \item
-A \textit{constructed} stream is either a composite stream or one returned
+A \emph{constructed} stream is either a composite stream or one returned
 by a call to \cdf{make-string-input-stream}, \cdf{make-string-output-stream},
-\cd{with-\discretionary{}{}{}input-\discretionary{}{}{}from-\discretionary{}{}{}string}, or
+\cd{with-input-from-string}, or
 \cdf{with-output-to-string}.
 \end{itemize}
 
@@ -735,6 +881,12 @@ is made to clean up any side effects of having created the stream in the
 first place.  For example, if the stream performs output to a file
 that was newly created when the stream was created, then if possible the
 file is deleted and any previously existing file is not superseded.
+
+Если параметр \cd{:abort} не-{\false} (а по-умолчанию он {\false}), то он
+указывает на ненормальное завершение использования потока. Осуществляется
+попытка убрать все побочные эффекты, созданные потоком. Например, если поток
+выполнял вывод в файл, который был создан вместе с потоком, тогда, если
+возможно, файл удаляется и любой ранее существовавший файл не заменяется.
 \end{defun}
 
 
@@ -750,6 +902,9 @@ broadcast-stream-streams broadcast-stream
 
 The argument must be of type \cdf{broadcast-stream}.
 A list of the constituent output streams (whether open or not) is returned.
+
+Аргумент должен быть типа \cdf{broadcast-stream}.
+Функцией возвращается список потоков для записи (и открытых, и нет).
 \end{defun}
 
 
@@ -762,6 +917,13 @@ This list represents the ordered set of input streams from which
 the concatenated stream may yet read; the stream from which it is
 currently reading is first in the list.  The list may be empty
 if no more streams remain to be read.
+
+Аргумент должен быть типа \cdf{concatenated-stream}.
+Функцией возвращается список потоков (и открытых, и нет).
+Этот список отображает упорядоченное множество потоков для чтения, из которых
+поток \emph{concatenated-stream} все еще может получать данные. Поток, из
+которого в данный момент читались данные, находится в начале списока.
+Если потоков для чтения нет, список может быть пустым.
 \end{defun}
 
 
@@ -770,9 +932,13 @@ echo-stream-input-stream echo-stream \\
 echo-stream-output-stream echo-stream
 
 The argument must be of type \cdf{echo-stream}.
-The function \cd{echo-\discretionary{}{}{}stream-\discretionary{}{}{}input-\discretionary{}{}{}stream} returns the constituent
-input stream; \cd{echo-\discretionary{}{}{}stream-\discretionary{}{}{}output-\discretionary{}{}{}stream} returns the constituent
+The function \cdf{echo-stream-input-stream} returns the constituent
+input stream; \cdf{echo-stream-output-stream} returns the constituent
 output stream.
+
+Аргумент должен быть типа \cdf{echo-stream}.
+Функция \cdf{echo-stream-input-stream} возвращает список потоков для чтения.
+\cdf{echo-stream-output-stream} возвращает список потоков для записи.
 \end{defun}
 
 
@@ -780,7 +946,10 @@ output stream.
 synonym-stream-symbol synonym-stream
 
 The argument must be of type \cdf{synonym-stream}.  This function returns
-the symbol for whose value the \textit{synonym-stream} is a synonym.
+the symbol for whose value the \emph{synonym-stream} is a synonym.
+
+Аргумент должен быть типа \cdf{synonyn-stream}. Эта функция возвращает символ,
+значение которого является потоком для потока-синонима \emph{synonym-stream}.
 \end{defun}
 
 
@@ -789,9 +958,13 @@ two-way-stream-input-stream two-way-stream \\
 two-way-stream-output-stream two-way-stream
 
 The argument must be of type \cdf{two-way-stream}.
-The function \cd{two-way-\discretionary{}{}{}stream-\discretionary{}{}{}input-\discretionary{}{}{}stream} returns the constituent
-input stream; \cd{two-way-\discretionary{}{}{}stream-\discretionary{}{}{}output-\discretionary{}{}{}stream} returns the constituent
+The function \cdf{two-way-stream-input-stream} returns the constituent
+input stream; \cdf{two-way-stream-output-stream} returns the constituent
 output stream.
+
+Аргумент должен быть типа \cdf{two-way-stream}.
+Функция \cdf{two-way-stream-input-stream} возвращает список потоков для чтения. 
+\cdf{two-way-stream-output-stream} возвращает список потоков для записи.
 \end{defun}
 \end{new}
 
@@ -801,8 +974,8 @@ interactive-stream-p stream
 
 X3J13 voted in June 1989 \issue{STREAM-CAPABILITIES} to add the
 predicate \cdf{interactive-stream-p}, which returns \cdf{t}
-if the \textit{stream\/} is interactive and otherwise returns \cdf{nil}.
-A \cd{type-\discretionary{}{}{}error} error is signalled if the argument is not of type \cdf{stream}.
+if the \emph{stream\/} is interactive and otherwise returns \cdf{nil}.
+A \cd{type-error} error is signalled if the argument is not of type \cdf{stream}.
 
 The precise meaning of \cdf{interactive-stream-p} is implementation-dependent
 and may depend on the underlying operating system.
@@ -830,7 +1003,7 @@ stream-external-format stream
 X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL} to add the
 function \cdf{stream-external-format}, which returns a
 specifier for the implementation-recognized scheme used for
-representing characters in the argument \textit{stream}.
+representing characters in the argument \emph{stream}.
 See the \cd{:external-format} argument to \cdf{open}.
 \end{defun}
 \end{newer}
