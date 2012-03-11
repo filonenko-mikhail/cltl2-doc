@@ -99,8 +99,8 @@ encapsulate and formalize useful patterns of data and control flow that have
 been seen to be useful in dealing with exceptional situations.
 
 A proper conceptual approach to errors should perhaps begin from first
-principles, with a discussion of {\it conditions} in general, and eventually work
-up to the concept of an {\it error} as just one of the many kinds of
+principles, with a discussion of \emph{conditions} in general, and eventually work
+up to the concept of an \emph{error} as just one of the many kinds of
 conditions. However, given the primitive state of error-handling
 technology, a proper buildup may be as inappropriate as requiring that a
 beggar learn to cook a gourmet meal before being allowed to eat.  Thus,
@@ -112,16 +112,16 @@ go back later to fill in the missing details.
 In this section, we introduce changes to the terminology
 defined in section~\ref{INTRO-ERRORS}.
 
-A {\it condition} is an interesting situation in a program that has been
+A \emph{condition} is an interesting situation in a program that has been
 detected and announced. Later we allow this term also to refer to
 objects that programs use to represent such situations.
 
-An {\it error} is a condition in which normal program execution may not
+An \emph{error} is a condition in which normal program execution may not
 continue without some form of intervention (either interactively by the user
 or under some sort of program control, as described below).
 
 The process by which a condition is formally announced by a program is called
-{\it signaling}. The function \cdf{signal} is the primitive mechanism by which such
+\emph{signaling}. The function \cdf{signal} is the primitive mechanism by which such
 announcement is done. Other abstractions, such as \cdf{error} and \cdf{cerror}, are built
 using \cdf{signal}.
 
@@ -299,7 +299,7 @@ message is printed. For example:
 Lisp> (setq filename "nosuchfile") \\
 ~\EV\ "nosuchfile" \\
 Lisp> (ignore-errors (open filename :direction :input)) \\
-~\EV\ NIL {\rm and} \#<FILE-ERROR 3437523>
+~\EV\ NIL \textrm{and} \#<FILE-ERROR 3437523>
 \end{lisp}
 The second return value is an object that represents the kind of error. This
 is explained in greater detail in section~\ref{OBJECT-0RIENTED-BASIS}.
@@ -325,7 +325,7 @@ Lisp> (setq filename "nosuchfile") \\
 Lisp> (handler-case (open filename :direction :input) \\
 ~~~~~~~~(error (condition) \\
 ~~~~~~~~~~(values nil condition))) \\
-~\EV\ NIL {\rm and} \#<FILE-ERROR 3437525>
+~\EV\ NIL \textrm{and} \#<FILE-ERROR 3437525>
 \end{lisp}
 However, using \cdf{handler-case}, one can indicate a more specific condition
 type than just ``error.'' Condition types are explained in detail later, but the
@@ -355,19 +355,19 @@ low-level mechanism offers great flexibility in how to continue once
 a condition has been signaled. 
 
 The basic idea behind condition handling is that a piece of code called the
-{\it signaler} recognizes and announces the existence of an exceptional
+\emph{signaler} recognizes and announces the existence of an exceptional
 situation using \cdf{signal} or some function built on \cdf{signal} (such as \cdf{error}). 
 
 The process of signaling involves the search for and invocation of a
-{\it handler}, a piece of code that will attempt to deal appropriately with
+\emph{handler}, a piece of code that will attempt to deal appropriately with
 the situation. 
 
-If a handler is found, it may either {\it handle} the situation, by performing
-some non-local transfer of control, or {\it decline} to handle it, by failing to perform a
+If a handler is found, it may either \emph{handle} the situation, by performing
+some non-local transfer of control, or \emph{decline} to handle it, by failing to perform a
 non-local transfer of control. If it declines, other handlers are sought.
 
 Since the lexical environment of the signaler might not be available to
-handlers, a data structure called a {\it condition} is created to represent
+handlers, a data structure called a \emph{condition} is created to represent
 explicitly the relevant state of the situation. A condition either is created
 explicitly using \cdf{make-condition} and then passed to a function such as \cdf{signal},
 or is created implicitly by a function such as \cdf{signal} when given appropriate
@@ -390,10 +390,10 @@ A handler can be made dynamically accessible to a program by use of
    \itemsep\topsep}
 \makeatother
 \begin{lisp}
-(handler-bind ((arithmetic-error {\it handler})){\it body})
+(handler-bind ((arithmetic-error \emph{handler}))\emph{body})
 \end{lisp}
 The handler is a function of one argument, the condition. If a condition of
-the designated type is signaled while the {\it body} is executing (and there are no
+the designated type is signaled while the \emph{body} is executing (and there are no
 intervening handlers), the handler would be invoked on the given condition,
 allowing it the option of transferring control. For example, one might write a
 macro that executes a body, returning either its value(s) or the two values
@@ -403,7 +403,7 @@ macro that executes a body, returning either its value(s) or the two values
 ~~(let ((tag (gensym))) \\
 ~~~~`(block ,tag \\
 ~~~~~~ (handler-bind ((arithmetic-error \\
-~~~~~~~~~~~~~~~~~~~~~~~~~\#'(lambda (c)~~~~~;{\rm Argument \cdf{c} is a condition} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~\#'(lambda (c)~~~~~;\textrm{Argument \cdf{c} is a condition} \\
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ (return-from ,tag (values nil c))))) \\
 ~~~~~~~~~,@body)))) \\
 \end{lisp}
@@ -424,7 +424,7 @@ Of course, the ability of the handler to usefully handle an exceptional
 situation is related to the quality of the information it is provided. For
 example, if all errors were signaled by
 \begin{lisp}
-(error "{\it some format string}")
+(error "\emph{some format string}")
 \end{lisp}
 then the only piece of information that would be accessible to the handler
 would be an object of type \cdf{simple-error} that had a slot containing the
@@ -632,18 +632,18 @@ unbound variable error as follows:
 (restart-case (error "The variable {\Xtilde}S is unbound." variable) \\*
 ~~(continue () \\*
 ~~~~~~:report \\*
-~~~~~~~~(lambda (s)~~~~~;{\rm Argument \cdf{s} is a stream} \\*
+~~~~~~~~(lambda (s)~~~~~;\textrm{Argument \cdf{s} is a stream} \\*
 ~~~~~~~~~~(format s "Retry getting the value of {\Xtilde}S." variable)) \\*
 ~~~~(symbol-value variable)) \\
 ~~(use-value (value) \\*
 ~~~~~~:report \\*
-~~~~~~~~(lambda (s)~~~~~;{\rm Argument \cdf{s} is a stream} \\*
+~~~~~~~~(lambda (s)~~~~~;\textrm{Argument \cdf{s} is a stream} \\*
 ~~~~~~~~~~(format s "Specify a value of {\Xtilde}S to use this time." \\*
 ~~~~~~~~~~~~~~~~~~variable)) \\*
 ~~~~value) \\
 ~~(store-value (value) \\*
 ~~~~~~:report \\*
-~~~~~~~~(lambda (s)~~~~~;{\rm Argument \cdf{s} is a stream} \\*
+~~~~~~~~(lambda (s)~~~~~;\textrm{Argument \cdf{s} is a stream} \\*
 ~~~~~~~~~~(format s "Specify a value of {\Xtilde}S to store and use." \\*
 ~~~~~~~~~~~~~~~~~~variable)) \\*
 ~~~~(setf (symbol-value variable) value) \\*
@@ -655,18 +655,18 @@ errors. For example, to make unbound variables evaluate to themselves, one
 might write
 \begin{lisp}
 (handler-bind ((unbound-variable \\
-~~~~~~~~~~~~~~~~~\#'(lambda (c)~~~~~;{\rm Argument \cdf{c} is a condition} \\
+~~~~~~~~~~~~~~~~~\#'(lambda (c)~~~~~;\textrm{Argument \cdf{c} is a condition} \\
 ~~~~~~~~~~~~~~~~~~~~~(when (find-restart 'use-value) \\
 ~~~~~~~~~~~~~~~~~~~~~~~(invoke-restart 'use-value \\
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(cell-error-name c)))))) \\
-~~{\it body})
+~~\emph{body})
 \end{lisp}
 
 \subsection{Restart Functions}
 
 For commonly used restarts, it is conventional to define a program interface
 that hides the use of \cdf{invoke-restart}. Such program interfaces to restarts
-are called {\it restart functions}.
+are called \emph{restart functions}.
 
 The normal convention is for the function to share the name of the restart.
 The pre-defined functions \cdf{abort}, \cdf{continue}, \cdf{muffle-warning}, \cdf{store-value}, and
@@ -674,9 +674,9 @@ The pre-defined functions \cdf{abort}, \cdf{continue}, \cdf{muffle-warning}, \cd
 \cdf{handler-bind} could have been written more concisely as
 \begin{lisp}
 (handler-bind ((unbound-variable \\
-~~~~~~~~~~~~~~~~~~~\#'(lambda (c)~~~~~;{\rm Argument \cdf{c} is a condition} \\
+~~~~~~~~~~~~~~~~~~~\#'(lambda (c)~~~~~;\textrm{Argument \cdf{c} is a condition} \\
 ~~~~~~~~~~~~~~~~~~~~~~~(use-value (cell-error-name c))))) \\
-~~{\it body})
+~~\emph{body})
 \end{lisp}
 
 \subsection{Comparison of Restarts and Catch/Throw}
@@ -751,14 +751,14 @@ for its associated restarts. \cdf{restart-case} is built on a lower-level mechan
 called \cdf{restart-bind}, which does not force transfer of control.
 
 \cdf{restart-bind} is to \cdf{restart-case} as \cdf{handler-bind} is to
-\cd{handler-\discretionary{}{}{}case}.
+\cd{handler-case}.
 The syntax is
 \begin{lisp}
-(restart-bind (({\it name} {\it function} . {\it options})) . {\it body})
+(restart-bind ((\emph{name} \emph{function} . \emph{options})) . \emph{body})
 \end{lisp}
-The {\it body} is executed in a dynamic context within which the {\it function}
+The \emph{body} is executed in a dynamic context within which the \emph{function}
 will be called whenever 
-\cd{(invoke-restart '{\it name})} is executed. The {\it options} are keyword-style and are
+\cd{(invoke-restart '\emph{name})} is executed. The \emph{options} are keyword-style and are
 used to pass information such as that provided with the
 \cd{:report} keyword in \cdf{restart-case}.
 
@@ -824,7 +824,7 @@ The \cdf{ignore-errors} macro will trap conditions of type \cdf{error}. There ar
 however, conditions that are not of type \cdf{error}.
 
 Some conditions are not considered errors but are still very serious, so
-we call them {\it serious conditions} and we use the type \cdf{serious-condition} to
+we call them \emph{serious conditions} and we use the type \cdf{serious-condition} to
 represent them. Conditions such as those that might be signaled for
 ``stack overflow'' or ``storage exhausted'' are in this category.
 
@@ -857,7 +857,7 @@ actually causes the debugger to be entered.
 \begin{incompatibility}
 The Common Lisp Condition System differs from that of Zeta{}lisp in this respect.
 In Zetalisp the debugger is entered for an unhandled signal if the \cdf{error}
-function is used {\it or} if the condition is of type \cdf{error}.
+function is used \emph{or} if the condition is of type \cdf{error}.
 \end{incompatibility}
 \afternoterule
 
@@ -887,8 +887,8 @@ work to avoid this.
 \subsection{Condition Types}
 
 Some types of conditions are predefined by the system. All types of conditions
-are subtypes of \cdf{condition}. That is, \cd{(typep~{\it x} 'condition)} is true if
-and only if the value of {\it x} is a condition. 
+are subtypes of \cdf{condition}. That is, \cd{(typep~\emph{x} 'condition)} is true if
+and only if the value of \emph{x} is a condition. 
 
 Implementations supporting multiple (or non-hierarchical) type inheritance
 are expressly permitted to exploit multiple inheritance in the tree of
@@ -901,18 +901,18 @@ so multiple inheritance is always available for condition types.---GLS]
 In order to avoid problems in portable code that runs both in systems with
 multiple type inheritance and in systems without it, programmers are explicitly
 warned that while all correct Common Lisp implementations will ensure that
-\cd{(typep~{\it c} 'condition)}
-is true for all conditions {\it c} (and all subtype relationships indicated in this
-chapter will also be true), it should {\it not} be assumed that two condition
+\cd{(typep~\emph{c} 'condition)}
+is true for all conditions \emph{c} (and all subtype relationships indicated in this
+chapter will also be true), it should \emph{not} be assumed that two condition
 types specified to be subtypes of the same third type are disjoint.
 (In some cases,
 disjoint subtypes are identified explicitly, but such disjointness is not to be assumed by
 default.)  For example, it follows from the subtype descriptions contained in
 this chapter that in all implementations
-\cd{(typep~{\it c}~'control-error)} implies \cd{(typep~{\it c}~'error)},
+\cd{(typep~\emph{c}~'control-error)} implies \cd{(typep~\emph{c}~'error)},
 but note that
-\cd{(typep~{\it c}~'control-error)} does {\it not}
-imply \cd{(not~(typep~{\it c}~'cell-error))}.
+\cd{(typep~\emph{c}~'control-error)} does \emph{not}
+imply \cd{(not~(typep~\emph{c}~'cell-error))}.
 
 
 \subsection{Signaling Conditions}
@@ -924,7 +924,7 @@ Handlers are established dynamically using \cdf{handler-bind} or abstractions bu
 on \cdf{handler-bind}.
 
 If an appropriate handler is found, it is called. In some circumstances, 
-the handler may {\it decline} simply by returning without performing a 
+the handler may \emph{decline} simply by returning without performing a 
 non-local transfer of control. In such cases, the search for an 
 appropriate handler is picked up where it left off, as if the called 
 handler had never been present.
@@ -961,7 +961,7 @@ attempting to allocate more storage.
 \subsection{Condition Handlers}
 \label{CONDITION-HANDLERS}
 
-A {\it handler} is a function of one argument, the condition to be handled. The
+A \emph{handler} is a function of one argument, the condition to be handled. The
 handler may inspect the object
 to be sure it is ``interested'' in handling the condition.
 
@@ -974,14 +974,14 @@ After inspecting the condition, the handler should take one of the following
 actions:
 \begin{itemize}
   \item
-    It might {\it decline} to handle the condition (by simply returning). When
+    It might \emph{decline} to handle the condition (by simply returning). When
     this happens, the returned values are ignored and the effect is the same
     as if the handler had been invisible to the mechanism seeking to find a
     handler. The next handler in line will be tried, or if no such handler
     exists, the condition will go unhandled.
 
   \item
-    It might {\it handle} the condition (by performing some non-local transfer
+    It might \emph{handle} the condition (by performing some non-local transfer
     of control). This may be done either primitively using \cdf{go}, \cdf{return}, or \cdf{throw},
     or more abstractly using a function such as \cdf{abort} or \cdf{invoke-restart}.
 
@@ -1022,7 +1022,7 @@ Some suggestions about the form of text typed by report methods:
    capital letter and ending with appropriate punctuation (usually a period).
 
  \item
-    The message should {\it not} include any introductory text such as ``\cd{Error:}''
+    The message should \emph{not} include any introductory text such as ``\cd{Error:}''
    or ``\cd{Warning:}'' and should not be followed by a trailing newline. Such
    text will be added as may be appropriate to context by the routine invoking
    the report method.
@@ -1070,16 +1070,16 @@ a condition type, or for invoking it; the techniques described above were
 the sole interface to reporting.  The vote specified that, in CLOS terms,
 condition reporting is mediated through the \cdf{print-object}
 method for the condition type (that is, class) in question, with \cd{*print-escape*}
-bound to \cdf{nil}.  Specifying \cd{(:report {\it fn})} to
+bound to \cdf{nil}.  Specifying \cd{(:report \emph{fn})} to
 \cdf{define-condition} when defining
-condition type {\it C} is equivalent to a separate method definition:
+condition type \emph{C} is equivalent to a separate method definition:
 \begin{lisp}
-(defmethod print-object ((x {\it C}) stream) \\*
+(defmethod print-object ((x \emph{C}) stream) \\*
 ~~(if *print-escape* \\*
 ~~~~~~(call-next-method) \\*
-~~~~~~(funcall \#'{\it fn} x stream)))
+~~~~~~(funcall \#'\emph{fn} x stream)))
 \end{lisp}
-Note that the method uses {\it fn} to print the condition
+Note that the method uses \emph{fn} to print the condition
 only when \cd{*print-escape*} has the value \cdf{nil}.
 
 
@@ -1105,23 +1105,23 @@ error datum &rest arguments
    given in section~\ref{ERROR-SIGNALLING-FUNCTIONS}.---GLS]
 
   Invokes the signal facility on a condition. If the condition is not handled,
-  \cd{(invoke-debugger {\it condition})} is executed. As a consequence of calling 
+  \cd{(invoke-debugger \emph{condition})} is executed. As a consequence of calling 
   \cdf{invoke-debugger}, \cdf{error} never directly returns to its caller; the only exit from this
   function can come by non-local transfer of control in a handler or by use of
   an interactive debugging command.
 
-  If {\it datum} is a condition, then that condition is used directly. 
-  In this case, it is an error for the list of {\it arguments} to be non-empty;
+  If \emph{datum} is a condition, then that condition is used directly. 
+  In this case, it is an error for the list of \emph{arguments} to be non-empty;
   that is, \cdf{error} must have been called with exactly one argument, the condition.
 
-  If {\it datum} is a condition type (a class or class name), then the condition used is effectively the result
-  of \cd{(apply \#'make-condition {\it datum} {\it arguments})}.
+  If \emph{datum} is a condition type (a class or class name), then the condition used is effectively the result
+  of \cd{(apply \#'make-condition \emph{datum} \emph{arguments})}.
 
-  If {\it datum} is a string, then the condition used is effectively the result of
+  If \emph{datum} is a string, then the condition used is effectively the result of
 \begin{lisp}
 (make-condition 'simple-error \\*
-~~~~~~~~~~~~~~~~:format-string {\it datum} \\*
-~~~~~~~~~~~~~~~~:format-arguments {\it arguments})
+~~~~~~~~~~~~~~~~:format-string \emph{datum} \\*
+~~~~~~~~~~~~~~~~:format-arguments \emph{arguments})
 \end{lisp}
 \end{defun}
 
@@ -1133,33 +1133,33 @@ cerror continue-format-string datum &rest arguments
 
   The function \cdf{cerror}
   invokes the error facility on a condition. If the condition is not handled,
-  \cd{(invoke-debugger {\it condition})} is executed. While signaling is going on,
+  \cd{(invoke-debugger \emph{condition})} is executed. While signaling is going on,
   and
   while control is in the debugger (if it is reached), it is possible to continue
   program execution (thereby returning from the call to \cdf{cerror})
   using the \cdf{continue} restart.
 
-  If {\it datum} is a condition, then that condition is used directly. 
-  In this case, the list of {\it arguments} need not be empty,
-  but will be used only with the {\it continue-format-string}
-  and will not be used to initialize {\it datum}.
+  If \emph{datum} is a condition, then that condition is used directly. 
+  In this case, the list of \emph{arguments} need not be empty,
+  but will be used only with the \emph{continue-format-string}
+  and will not be used to initialize \emph{datum}.
 
-  If {\it datum} is a condition type (a class or class name), then the condition used is effectively the result
-  of \cd{(apply \#'make-condition {\it datum} {\it arguments})}.
+  If \emph{datum} is a condition type (a class or class name), then the condition used is effectively the result
+  of \cd{(apply \#'make-condition \emph{datum} \emph{arguments})}.
 
-  If {\it datum} is a string, then the condition used is effectively the result of
+  If \emph{datum} is a string, then the condition used is effectively the result of
 \begin{lisp}
 (make-condition 'simple-error \\*
-~~~~~~~~~~~~~~~~:format-string {\it datum} \\*
-~~~~~~~~~~~~~~~~:format-arguments {\it arguments})
+~~~~~~~~~~~~~~~~:format-string \emph{datum} \\*
+~~~~~~~~~~~~~~~~:format-arguments \emph{arguments})
 \end{lisp}
 
-  The {\it continue-format-string} must be a string.
-  Note that if {\it datum} is not a 
-  string, then the format arguments used by the {\it continue-format-string} will
-  still be the list of {\it arguments} (which is in keyword format if {\it datum} is a condition
+  The \emph{continue-format-string} must be a string.
+  Note that if \emph{datum} is not a 
+  string, then the format arguments used by the \emph{continue-format-string} will
+  still be the list of \emph{arguments} (which is in keyword format if \emph{datum} is a condition
   type). In this case, some care may be necessary to set up the
-  {\it continue-format-string} correctly. The \cdf{format} directive \cd{{\Xtilde}*},
+  \emph{continue-format-string} correctly. The \cdf{format} directive \cd{{\Xtilde}*},
   which ignores and skips over \cdf{format} arguments,
   may be particularly 
   useful in this situation.
@@ -1173,21 +1173,21 @@ signal datum &rest arguments
   Invokes the signal facility on a condition. If the condition is not handled,
   \cdf{signal} returns \cdf{nil}.
 
-  If {\it datum} is a condition, then that condition is used directly. 
-  In this case, it is an error for the list of {\it arguments} to be non-empty;
+  If \emph{datum} is a condition, then that condition is used directly. 
+  In this case, it is an error for the list of \emph{arguments} to be non-empty;
   that is, \cdf{error} must have been called with exactly one argument, the condition.
 
-  If {\it datum} is a condition type (a class or class name), then the condition used is effectively the result
-  of \cd{(apply \#'make-condition {\it datum} {\it arguments})}.
+  If \emph{datum} is a condition type (a class or class name), then the condition used is effectively the result
+  of \cd{(apply \#'make-condition \emph{datum} \emph{arguments})}.
 
-  If {\it datum} is a string, then the condition used is effectively the result of
+  If \emph{datum} is a string, then the condition used is effectively the result of
 \begin{lisp}
 (make-condition 'simple-error \\*
-~~~~~~~~~~~~~~~~:format-string {\it datum} \\*
-~~~~~~~~~~~~~~~~:format-arguments {\it arguments})
+~~~~~~~~~~~~~~~~:format-string \emph{datum} \\*
+~~~~~~~~~~~~~~~~:format-arguments \emph{arguments})
 \end{lisp}
 
-  Note that if \cd{(typep {\it condition} *break-on-signals*)} is true, then the debugger
+  Note that if \cd{(typep \emph{condition} *break-on-signals*)} is true, then the debugger
   will be entered prior to beginning the process of signaling. The \cdf{continue}
   restart function may be used to continue with the signaling process;
 the restart is associated with the signaled condition as if by
@@ -1199,7 +1199,7 @@ This is true
 During the dynamic extent of a call to \cdf{signal} with a
      particular condition, the effect of calling \cdf{signal} again on that
      condition object for a distinct abstract event is not defined.
-     For example, although a handler {\it may} resignal a condition in order to
+     For example, although a handler \emph{may} resignal a condition in order to
      allow outer handlers first shot at handling the condition, two
      distinct asynchronous keyboard events must not signal an the same (\cdf{eq}) condition
      object at the same time.
@@ -1217,10 +1217,10 @@ During the dynamic extent of a call to \cdf{signal} with a
   The value of \cd{*break-on-signals*} should be suitable as a second argument to
   \cdf{typep}, that is, a type or type specifier.
 
-  When \cd{(typep {\it condition} *break-on-signals*)} is true, then calls to
+  When \cd{(typep \emph{condition} *break-on-signals*)} is true, then calls to
   \cdf{signal} (and to other advertised functions such as \cdf{error} that
   implicitly call \cdf{signal}) will enter the debugger prior to signaling
-  that {\it condition}. The \cdf{continue} restart may be used to continue with
+  that \emph{condition}. The \cdf{continue} restart may be used to continue with
   the normal signaling process;
 the restart is associated with the signaled condition as if by
 use of \cdf{with-condition-restarts}.
@@ -1278,12 +1278,12 @@ check-type place typespec [string]
    given in section~\ref{SPECIALIZED-ERROR-SIGNALLING}.---GLS]
 
   A \cdf{check-type} form signals an error of type
-  \cdf{type-error} if the contents of {\it place} are not of the
+  \cdf{type-error} if the contents of \emph{place} are not of the
   desired type.
 
   If a condition is signaled, handlers of this condition can use the
   functions \cdf{type-error-datum} and \cdf{type-error-expected-type} to access the
-  contents of {\it place} and the {\it typespec}, respectively.
+  contents of \emph{place} and the \emph{typespec}, respectively.
 
   This function can return only if the \cdf{store-value} restart is invoked, either
   explicitly from a handler or implicitly as one of the options offered by the
@@ -1293,26 +1293,26 @@ use of \cdf{with-condition-restarts}.
 
   If \cdf{store-value} is called, \cdf{check-type} will store the new value that is
   the argument to \cdf{store-value} (or that is prompted for interactively by
-  the debugger) in {\it place} and start over, checking the type of the new value
+  the debugger) in \emph{place} and start over, checking the type of the new value
   and signaling another error if it is still not the desired type. Subforms
-  of {\it place} may be evaluated multiple times because of the implicit loop
+  of \emph{place} may be evaluated multiple times because of the implicit loop
   generated. \cdf{check-type} returns \cdf{nil}.
 
-  The {\it place} must be a generalized variable reference acceptable to \cdf{setf}. The
-  {\it typespec} must be a type specifier; it is not evaluated.  The \cdf{string} should
+  The \emph{place} must be a generalized variable reference acceptable to \cdf{setf}. The
+  \emph{typespec} must be a type specifier; it is not evaluated.  The \cdf{string} should
   be an English description of the type, starting with an indefinite article
-  (``a'' or ``an''); it is evaluated. If the {\it string} is not supplied, it is computed
-  automatically from the {\it typespec}. (The optional {\it string} argument is allowed 
+  (``a'' or ``an''); it is evaluated. If the \emph{string} is not supplied, it is computed
+  automatically from the \emph{typespec}. (The optional \emph{string} argument is allowed 
   because some applications of \cdf{check-type} may require a more specific
   description of what is wanted than can be generated automatically from the
   type specifier.)
 
-  The error message will mention the {\it place}, its contents, and the desired type.
+  The error message will mention the \emph{place}, its contents, and the desired type.
 
   \beforenoterule
   \begin{implementation}
   An implementation may choose to generate a somewhat
-  differently worded error message if it recognizes that {\it place} is of a
+  differently worded error message if it recognizes that \emph{place} is of a
   particular form, such as one of the arguments to the function that called
   \cdf{check-type}.
   \end{implementation}
@@ -1359,53 +1359,53 @@ assert test-form [({place}*) [datum {argument}*]]
    [This supersedes the description of \cdf{assert}
    given in section~\ref{SPECIALIZED-ERROR-SIGNALLING}.---GLS]
 
-  An \cdf{assert} form signals an error if the value of the {\it test-form} is \cdf{nil}.
+  An \cdf{assert} form signals an error if the value of the \emph{test-form} is \cdf{nil}.
   Continuing from this
   error using the \cdf{continue} restart will allow the user to alter the values
-  of some variables, and \cdf{assert} will then start over, evaluating the {\it test-form}
+  of some variables, and \cdf{assert} will then start over, evaluating the \emph{test-form}
   again.
 (The restart is associated with the signaled condition as if by
 use of \cdf{with-condition-restarts}.)
 \cdf{assert} returns \cdf{nil}.
 
-  The {\it test-form} may be any form. Each {\it place} (there may be any number of them, 
+  The \emph{test-form} may be any form. Each \emph{place} (there may be any number of them, 
   or none) must be a generalized variable reference acceptable to \cdf{setf}.
-  These should be variables on which {\it test-form} depends, whose values
+  These should be variables on which \emph{test-form} depends, whose values
   may sensibly be changed by the user in attempting to correct the error.
-  Subforms of each {\it place} are evaluated only if an error is signaled, and
+  Subforms of each \emph{place} are evaluated only if an error is signaled, and
   may be re-evaluated if the error is re-signaled (after continuing without
   actually fixing the problem).
 
-  The {\it datum} and {\it argument\/}s are evaluated only if an error is to be
+  The \emph{datum} and \emph{argument\/}s are evaluated only if an error is to be
   signaled, and re-evaluated if the error is to be signaled again.
 
-  If {\it datum} is a condition, then that condition is used directly. 
-  In this case, it is an error to specify any {\it argument\/}s.
+  If \emph{datum} is a condition, then that condition is used directly. 
+  In this case, it is an error to specify any \emph{argument\/}s.
 
-  If {\it datum} is a condition type (a class or class name), then the condition used is effectively the result
-  of \cd{(apply \#'make-condition {\it datum} (list \Mstar{argument}))}.
+  If \emph{datum} is a condition type (a class or class name), then the condition used is effectively the result
+  of \cd{(apply \#'make-condition \emph{datum} (list \Mstar{argument}))}.
 
-  If {\it datum} is a string, then the condition used is effectively the result of
+  If \emph{datum} is a string, then the condition used is effectively the result of
 \begin{lisp}
 (make-condition 'simple-error \\*
-~~~~~~~~~~~~~~~~:format-string {\it datum} \\*
+~~~~~~~~~~~~~~~~:format-string \emph{datum} \\*
 ~~~~~~~~~~~~~~~~:format-arguments (list \Mstar{argument}))
 \end{lisp}
 
-  If {\it datum} is omitted, then a condition of type \cdf{simple-error} is 
-  constructed using the {\it test-form} as data. For example, the following
+  If \emph{datum} is omitted, then a condition of type \cdf{simple-error} is 
+  constructed using the \emph{test-form} as data. For example, the following
   might be used:
 \begin{lisp}
 (make-condition 'simple-error \\
 ~~:format-string "The assertion {\Xtilde}S failed." \\
-~~:format-arguments '({\it test-form}))
+~~:format-arguments '(\emph{test-form}))
 \end{lisp}
-Note that the {\it test-form} itself, and not its value, is used as the format argument.
+Note that the \emph{test-form} itself, and not its value, is used as the format argument.
 
 \beforenoterule
   \begin{implementation}
-  The debugger need not include the {\it test-form} in
-  the error message, and any {\it places} should not be included in the message,
+  The debugger need not include the \emph{test-form} in
+  the error message, and any \emph{places} should not be included in the message,
   but they should be made available for the user's perusal. If the user
   gives the ``continue'' command, an opportunity should be presented
   to alter the values of any or all of the references. The details of this
@@ -1495,12 +1495,12 @@ ctypecase keyplace {(type {\,form}*)}*
   This control construct is similar to \cdf{typecase}, but no explicit 
   \cdf{otherwise} or \cdf{t} clause is permitted.
 
-  The {\it keyplace} must be a generalized variable reference acceptable to \cdf{setf}.
+  The \emph{keyplace} must be a generalized variable reference acceptable to \cdf{setf}.
   If no clause is satisfied, \cdf{ctypecase} signals an error (of type \cdf{type-error})
   with a message constructed from the clauses. This error may be continued
   using the \cdf{store-value} restart. The argument to \cdf{store-value} is stored in
-  {\it keyplace} and then \cdf{ctypecase} starts over, making the type tests again. 
-  Subforms of {\it keyplace} may be evaluated multiple times. If the \cdf{store-value}
+  \emph{keyplace} and then \cdf{ctypecase} starts over, making the type tests again. 
+  Subforms of \emph{keyplace} may be evaluated multiple times. If the \cdf{store-value}
   restart is invoked interactively, the user will be prompted for the value
   to be used.
   
@@ -1570,12 +1570,12 @@ ccase keyplace {({({key}*) | key} {\,form}*)}*
   This control construct is similar to \cdf{case}, but no explicit \cdf{otherwise} or
   \cdf{t} clause is permitted.
 
-  The {\it keyplace} must be a generalized variable reference acceptable to \cdf{setf}.
+  The \emph{keyplace} must be a generalized variable reference acceptable to \cdf{setf}.
   If no clause is satisfied, \cdf{ccase} signals an error (of type \cdf{type-error})
   with a message constructed from the clauses. This error may be continued
   using the \cdf{store-value} restart. The argument to \cdf{store-value} is stored in
-  {\it keyplace} and then \cdf{ccase} starts over, making the type tests again. Subforms
-  of {\it keyplace} may be evaluated multiple times. If the \cdf{store-value} restart is
+  \emph{keyplace} and then \cdf{ccase} starts over, making the type tests again. Subforms
+  of \emph{keyplace} may be evaluated multiple times. If the \cdf{store-value} restart is
   invoked interactively, the user will be prompted for the value to be used.
 
   The name of this function is mnemonic for ``continuable (exhaustive) case.''
@@ -1585,7 +1585,7 @@ ccase keyplace {({({key}*) | key} {\,form}*)}*
   The \cdf{type-error} signaled by \cdf{ccase} and \cdf{ecase} is free to
   choose any representation of the acceptable argument type that it wishes
   for placement in the expected-type slot. It will always work to use type
-  \cd{(member . {\it keys})}, but in some cases it may be more efficient, for example,
+  \cd{(member . \emph{keys})}, but in some cases it may be more efficient, for example,
   to use a type that represents an integer subrange or a type composed using the
   \cdf{or} type specifier.
 \end{implementation}
@@ -1600,11 +1600,11 @@ These macros allow a program to gain control when a condition is signaled.
 \begin{defmac}
 handler-case expression {(typespec ([var]) {\,form}*)}*
 
-  Executes the given {\it expression} in a context where various specified handlers are active.
+  Executes the given \emph{expression} in a context where various specified handlers are active.
 
-  Each {\it typespec} may be any type specifier. If during the execution of the \cdf{expression}
+  Each \emph{typespec} may be any type specifier. If during the execution of the \cdf{expression}
   a condition is signaled for which there is an appropriate clause---that is, one
-  for which \cd{(typep {\it condition} '{\it typespec})} is true---and if there is no intervening
+  for which \cd{(typep \emph{condition} '\emph{typespec})} is true---and if there is no intervening
   handler for conditions of that type, then control is transferred to the body
   of the relevant clause (unwinding the dynamic state appropriately in the
   process) and the given variable \cdf{var} is bound to the condition that was signaled. If
@@ -1614,11 +1614,11 @@ handler-case expression {(typespec ([var]) {\,form}*)}*
   If more than one case is provided, those cases are made accessible in
   parallel. That is, in
 \begin{lisp}
-(handler-case {\it expression} \\*
-~~({\it type\SU{1}} ({\it var\SU{1}}) {\it form\SU{1}}) \\*
-~~({\it type\SU{2}} ({\it var\SU{2}}) {\it form\SU{2}}))
+(handler-case \emph{expression} \\*
+~~(\emph{type\SU{1}} (\emph{var\SU{1}}) \emph{form\SU{1}}) \\*
+~~(\emph{type\SU{2}} (\emph{var\SU{2}}) \emph{form\SU{2}}))
 \end{lisp}
-  if the first clause (containing {\it form\SU{1}}) has been selected, the handler
+  if the first clause (containing \emph{form\SU{1}}) has been selected, the handler
   for the second is no longer visible (and vice versa).
 
   The cases are searched sequentially from top to bottom. If a signaled condition
@@ -1628,21 +1628,21 @@ handler-case expression {(typespec ([var]) {\,form}*)}*
 
 \penalty-10000 %required
 
-  If the variable {\it var} is not needed, it may be omitted. That is, a clause such as
+  If the variable \emph{var} is not needed, it may be omitted. That is, a clause such as
 \begin{lisp}
-({\it type} ({\it var}) (declare (ignore {\it var})) {\it form})
+(\emph{type} (\emph{var}) (declare (ignore \emph{var})) \emph{form})
 \end{lisp}
 may be written using the following shorthand notation:
 \begin{lisp}
-({\it type} () {\it form})
+(\emph{type} () \emph{form})
 \end{lisp}
 
   If there are no forms in a selected case, the case returns \cdf{nil}.
 Note that
 \begin{lisp}
-(handler-case {\it expression} \\*
-~~({\it type\SU{1}} ({\it var\SU{1}}) . {\it body\SU{1}}) \\*
-~~({\it type\SU{2}} ({\it var\SU{2}}) . {\it body\SU{2}}) \\*
+(handler-case \emph{expression} \\*
+~~(\emph{type\SU{1}} (\emph{var\SU{1}}) . \emph{body\SU{1}}) \\*
+~~(\emph{type\SU{2}} (\emph{var\SU{2}}) . \emph{body\SU{2}}) \\*
 ~~...)
 \end{lisp}
 is approximately equivalent to
@@ -1650,51 +1650,51 @@ is approximately equivalent to
 (block \#1=\#:block-1 \\*
 ~~(let (\#2=\#:var-2) \\*
 ~~~~(tagbody \\*
-~~~~~~(handler-bind (({\it type\SU{1}} \pushtabs\=\#'(lambda (temp) \\*
+~~~~~~(handler-bind ((\emph{type\SU{1}} \pushtabs\=\#'(lambda (temp) \\*
 \>~~~~(setq \#2\# temp) \\*
 \>~~~~(go \#3=\#:tag-3)))\poptabs \\
-~~~~~~~~~~~~~~~~~~~~~({\it type\SU{2}} \pushtabs\=\#'(lambda (temp) \\*
+~~~~~~~~~~~~~~~~~~~~~(\emph{type\SU{2}} \pushtabs\=\#'(lambda (temp) \\*
 \>~~~~(setq \#2\# temp) \\*
 \>~~~~(go \#4=\#:tag-4)))\poptabs \\*
 ~~~~~~~~~~~~~~~~~~~~~...) \\*
-~~~~~~~~(return-from \#1\# {\it expression})) \\
-~~~~~~\#3\# (return-from \#1\# (let (({\it var\SU{1}} \#2\#)) . {\it body\SU{1}})) \\*
-~~~~~~\#4\# (return-from \#1\# (let (({\it var\SU{2}} \#2\#)) . {\it body\SU{2}})) \\*
+~~~~~~~~(return-from \#1\# \emph{expression})) \\
+~~~~~~\#3\# (return-from \#1\# (let ((\emph{var\SU{1}} \#2\#)) . \emph{body\SU{1}})) \\*
+~~~~~~\#4\# (return-from \#1\# (let ((\emph{var\SU{2}} \#2\#)) . \emph{body\SU{2}})) \\*
 ~~~~~~...)))
 \end{lisp}
 [Note the use of ``gensyms'' such as \cd{\#:block-1}
 as block names, variables, and \cdf{tagbody} tags in this example,
-and the use of \cd{\#{\it n}=} and \cd{\#{\it n}\#} read-macro syntax
+and the use of \cd{\#\emph{n}=} and \cd{\#\emph{n}\#} read-macro syntax
 to indicate that the very same gensym appears in multiple places.---GLS]
 
-  As a special case, the {\it typespec} can also be the symbol \cd{:no-error} in the last clause.
-  If it is, it designates a clause that will take control if the {\it expression} returns
+  As a special case, the \emph{typespec} can also be the symbol \cd{:no-error} in the last clause.
+  If it is, it designates a clause that will take control if the \emph{expression} returns
   normally. In that case, a completely general lambda-list may follow the symbol \cd{:no-error},
   and the arguments to which the lambda-list parameters are bound are like those for
-  \cdf{multiple-value-call} on the return value of the {\it expression}.
+  \cdf{multiple-value-call} on the return value of the \emph{expression}.
 For example,
 
 \penalty-10000 %required
 
 \begin{lisp}
-(handler-case {\it expression} \\*
-~~({\it type\SU{1}} ({\it var\SU{1}}) . {\it body\SU{1}}) \\*
-~~({\it type\SU{2}} ({\it var\SU{2}}) . {\it body\SU{2}}) \\*
+(handler-case \emph{expression} \\*
+~~(\emph{type\SU{1}} (\emph{var\SU{1}}) . \emph{body\SU{1}}) \\*
+~~(\emph{type\SU{2}} (\emph{var\SU{2}}) . \emph{body\SU{2}}) \\*
 ~~... \\*
-~~({\it type\SU{\hbox{\scriptsize\it n}}} ({\it var\SU{\hbox{\scriptsize\it n}}}) . {\it body\SU{\hbox{\scriptsize\it n}}}) \\*
-~~(:no-error ({\it nvar\SU{1}} {\it nvar\SU{2}} ... {\it nvar\SU{\hbox{\scriptsize\it m}}}) . {\it nbody}))
+~~(\emph{type\SU{\hbox{\scriptsize\it n}}} (\emph{var\SU{\hbox{\scriptsize\it n}}}) . \emph{body\SU{\hbox{\scriptsize\it n}}}) \\*
+~~(:no-error (\emph{nvar\SU{1}} \emph{nvar\SU{2}} ... \emph{nvar\SU{\hbox{\scriptsize\it m}}}) . \emph{nbody}))
 \end{lisp}
 is approximately equivalent to
 \begin{lisp}
 (block \#1=\#:error-return \\*
-~~(multiple-value-call \#'(lambda ({\it nvar\SU{1}} {\it nvar\SU{2}} ... {\it nvar\SU{\hbox{\scriptsize\it m}}}) . {\it nbody}) \\*
+~~(multiple-value-call \#'(lambda (\emph{nvar\SU{1}} \emph{nvar\SU{2}} ... \emph{nvar\SU{\hbox{\scriptsize\it m}}}) . \emph{nbody}) \\*
 ~~~~(block \#2=\#:normal-return \\*
 ~~~~~~(return-from \#1\# \\*
-~~~~~~~~(handler-case (return-from \#2\# {\it expression}) \\*
-~~~~~~~~~~({\it type\SU{1}} ({\it var\SU{1}}) . {\it body\SU{1}}) \\*
-~~~~~~~~~~({\it type\SU{2}} ({\it var\SU{2}}) . {\it body\SU{2}}) \\*
+~~~~~~~~(handler-case (return-from \#2\# \emph{expression}) \\*
+~~~~~~~~~~(\emph{type\SU{1}} (\emph{var\SU{1}}) . \emph{body\SU{1}}) \\*
+~~~~~~~~~~(\emph{type\SU{2}} (\emph{var\SU{2}}) . \emph{body\SU{2}}) \\*
 ~~~~~~~~~~... \\*
-~~~~~~~~~~({\it type\SU{\hbox{\scriptsize\it n}}} ({\it var\SU{\hbox{\scriptsize\it n}}}) . {\it body\SU{\hbox{\scriptsize\it n}}}))))))
+~~~~~~~~~~(\emph{type\SU{\hbox{\scriptsize\it n}}} (\emph{var\SU{\hbox{\scriptsize\it n}}}) . \emph{body\SU{\hbox{\scriptsize\it n}}}))))))
 \end{lisp}
 
 
@@ -1742,14 +1742,14 @@ handler-bind ({(typespec handler)}*) {\,form}*
 
   Executes body in a dynamic context where the given handler bindings 
   are in effect.
-  Each {\it typespec} may be any type specifier.
-  Each {\it handler} form should evaluate to a function to be used to handle conditions 
-  of the given type(s) during execution of the {\it form\/}s. This function should
+  Each \emph{typespec} may be any type specifier.
+  Each \emph{handler} form should evaluate to a function to be used to handle conditions 
+  of the given type(s) during execution of the \emph{form\/}s. This function should
   take a single argument, the condition being signaled.
 
   If more than one binding is specified, the bindings are searched 
   sequentially from top to bottom in search of a match (by visual analogy
-  with \cdf{typecase}). If an appropriate {\it typespec} is found, the associated handler 
+  with \cdf{typecase}). If an appropriate \emph{typespec} is found, the associated handler 
   is run in a context where none of the handler bindings are visible (to avoid
   recursive errors). For example, in the case of
 \begin{lisp}
@@ -1776,18 +1776,18 @@ tablets, and call a hacker in the morning.---GLS]
 define-condition name ({parent-type}*)
                  [({slot-specifier}*) {option}*]
 
-  Defines a new condition type called {\it name}, which is a subtype of each given
-  {\it parent-type}.  Except as otherwise noted, the arguments are not evaluated.
+  Defines a new condition type called \emph{name}, which is a subtype of each given
+  \emph{parent-type}.  Except as otherwise noted, the arguments are not evaluated.
 
-  Objects of this condition type will have all of the indicated {\it slot\/}s, plus
+  Objects of this condition type will have all of the indicated \emph{slot\/}s, plus
   any additional slots inherited from the parent types (its superclasses).
-  If the {\it slot\/}s list is omitted, the empty list is assumed.
+  If the \emph{slot\/}s list is omitted, the empty list is assumed.
 
-  A {\it slot} must have the form
+  A \emph{slot} must have the form
 \begin{tabbing}
-{\it slot-specifier\/} ::= {\it slot-name\/} {\Mor} ({\it slot-name\/}  $\lbrack\!\lbrack\downarrow\!\hbox{{\it slot-option}}\,\rbrack\!\rbrack$)
+\emph{slot-specifier\/} ::= \emph{slot-name\/} {\Mor} (\emph{slot-name\/}  $\lbrack\!\lbrack\downarrow\!\hbox{\emph{slot-option}}\,\rbrack\!\rbrack$)
 \end{tabbing}
-For the syntax of a {\it slot-option}, see \cdf{defclass}.
+For the syntax of a \emph{slot-option}, see \cdf{defclass}.
 The slots of a condition object are normal CLOS slots.
 Note that \cdf{with-slots} may be used instead of accessor functions to access slots of a
 condition object.
@@ -1798,58 +1798,58 @@ condition object.
 
   Accessors are created according to the same rules as used by \cdf{defclass}.
 
-  The valid {\it options} are as follows:
+  The valid \emph{options} are as follows:
 
 \begin{flushdesc}
-\item[\cd{(:documentation {\it doc-string})}]
+\item[\cd{(:documentation \emph{doc-string})}]
 
-     The {\it doc-string} should be either \cdf{nil} or
+     The \emph{doc-string} should be either \cdf{nil} or
      a string that describes the purpose of the
      condition type. If this option is omitted, \cdf{nil} is assumed.
-     Calling \cd{(documentation '{\it name} 'type)} will retrieve this information.
+     Calling \cd{(documentation '\emph{name} 'type)} will retrieve this information.
 
-\item[\cd{(:report {\it exp})}]
+\item[\cd{(:report \emph{exp})}]
 
-     If {\it exp} is not a literal string, it must be a suitable argument to the
-     \cdf{function} special form. The expression \cd{(function~{\it exp})} will be evaluated
+     If \emph{exp} is not a literal string, it must be a suitable argument to the
+     \cdf{function} special form. The expression \cd{(function~\emph{exp})} will be evaluated
      in the current lexical environment. It should produce a function of two
      arguments, a condition and a stream, that prints on the stream a
      description of the condition. This function is called whenever the
      condition is printed while \cd{*print-escape*} is \cdf{nil}.
 
-     If {\it exp} is a literal string, it is shorthand for
+     If \emph{exp} is a literal string, it is shorthand for
 \begin{lisp}
 (lambda (c s) \\*
 ~~(declare (ignore c)) \\*
-~~(write-string {\it exp} s))
+~~(write-string \emph{exp} s))
 \end{lisp}
      [That is, a function is provided that will simply write the given string literally
      to the stream, regardless of the particular condition object supplied.---GLS]
 
-     The \cd{:report} option is processed {\it after} the new condition type has been defined,
+     The \cd{:report} option is processed \emph{after} the new condition type has been defined,
      so use of the slot accessors within the report function is permitted.
      If this option is not specified, information about how to report this
-     type of condition will be inherited from the {\it parent-type}.
+     type of condition will be inherited from the \emph{parent-type}.
 \end{flushdesc}
 
 [X3J13 voted in March 1989 \issue{ZLOS-CONDITIONS} to integrate the
 Condition System and the Object System.
 In the original Condition System proposal, \cdf{define-condition}
-allowed only one {\it parent-type} (the inheritance structure was a simple
+allowed only one \emph{parent-type} (the inheritance structure was a simple
 hierarchy).
 Slot descriptions were much simpler, even simpler than those for \cdf{defstruct}:
 \begin{tabbing}
-{\it slot} ::= {\it slot-name} {\Mor} ({\it slot-name}) {\Mor} ({\it slot-name} {\it default-value})
+\emph{slot} ::= \emph{slot-name} {\Mor} (\emph{slot-name}) {\Mor} (\emph{slot-name} \emph{default-value})
 \end{tabbing}
 Similarly, \cdf{define-condition} allowed
 a \cd{:conc-name} option similar to that of \cdf{defstruct}:
 \begin{flushdesc}
-\item[\cd{(:conc-name {\it symbol-or-string})}]
+\item[\cd{(:conc-name \emph{symbol-or-string})}]
 
      {\bf Not now part of Common Lisp.}
      As with \cdf{defstruct}, this sets up automatic prefixing of the names 
      of slot accessors. Also as in \cdf{defstruct}, the default behavior 
-     is to use the name of the new type, {\it name}, followed by a hyphen.
+     is to use the name of the new type, \emph{name}, followed by a hyphen.
      (Generated names are interned in the package that is current at the time that the 
      \cdf{define-condition} is processed).
 \end{flushdesc}
@@ -1895,7 +1895,7 @@ Here are some examples of the use of \cdf{define-condition}.
 ~~~~~~~~~~~~~~~~~~~~~(machine-error-machine-name condition)))))
 \end{lisp}
   We may now define a still more specific condition, built upon 
-  \cd{machine-\discretionary{}{}{}not-\discretionary{}{}{}available-\discretionary{}{}{}error},
+  \cd{machine-not-available-error},
   that provides a default for \cdf{machine-name}
   but does not provide any new slots or report information. It just
   gives the \cdf{machine-name} slot a default initialization:
@@ -1917,11 +1917,11 @@ creating condition objects.
 \begin{defun}[Function]
 make-condition type &rest slot-initializations
 
-   Constructs a condition object of the given {\it type} using {\it slot-initializations}
+   Constructs a condition object of the given \emph{type} using \emph{slot-initializations}
    as a specification of the initial value of the slots. The newly created
    condition is returned.
 
-   The {\it slot-initializations} are alternating keyword/value pairs.
+   The \emph{slot-initializations} are alternating keyword/value pairs.
    For example:
 \begin{lisp}
 (make-condition 'peg/hole-mismatch \\*
@@ -1934,11 +1934,11 @@ make-condition type &rest slot-initializations
 
 The lowest-level form that creates restart points is called \cdf{restart-bind}.
 The \cdf{restart-case} macro is an abstraction that addresses many common needs for
-\cd{restart-\discretionary{}{}{}bind} while offering a more\vadjust{\penalty-10000}
+\cd{restart-bind} while offering a more\vadjust{\penalty-10000}
 palatable syntax. See also 
-\cd{with-\discretionary{}{}{}simple-\discretionary{}{}{}restart}.
+\cd{with-simple-restart}.
 The function that transfers control to a restart
-point established by one of these macros is called \cd{invoke-\discretionary{}{}{}restart}.
+point established by one of these macros is called \cd{invoke-restart}.
 
 All restarts have dynamic extent; a restart does not survive execution of the form
 that establishes it.
@@ -1949,12 +1949,12 @@ with-simple-restart (name format-string {\,format-argument}*)
 
   This is shorthand for one of the most common uses of \cdf{restart-case}.
 
-  If the restart designated by {\it name} is not invoked while executing the {\it form\/}s,
-  all values returned by the last {\it form} are returned. If that
+  If the restart designated by \emph{name} is not invoked while executing the \emph{form\/}s,
+  all values returned by the last \emph{form} are returned. If that
   restart is invoked, control is transferred to the \cdf{with-simple-restart}
   form, which immediately returns the two values \cdf{nil} and \cdf{t}.
 
-  The {\it name} may be \cdf{nil}, in which case an anonymous restart
+  The \emph{name} may be \cdf{nil}, in which case an anonymous restart
   is established.
 
   \cdf{with-simple-restart} could be defined by
@@ -2047,16 +2047,16 @@ restart-case expression {(case-name arglist
                          {keyword value}*
                          {\,form}*)}*
 
-  The {\it expression} is evaluated in a dynamic context where the clauses have 
-  special meanings as points to which control may be transferred. If the {\it expression}
+  The \emph{expression} is evaluated in a dynamic context where the clauses have 
+  special meanings as points to which control may be transferred. If the \emph{expression}
   finishes executing and returns any values, all such values are simply
-  returned by the \cdf{restart-case} form. While the {\it expression} is running, any code may
+  returned by the \cdf{restart-case} form. While the \emph{expression} is running, any code may
   transfer control to one of the clauses (see \cdf{invoke-restart}). If a transfer
-  occurs, the {\it form\/}s in the body of that clause will be evaluated and any values
-  returned by the last such {\it form} will be returned by the \cdf{restart-case} form.
+  occurs, the \emph{form\/}s in the body of that clause will be evaluated and any values
+  returned by the last such \emph{form} will be returned by the \cdf{restart-case} form.
 
 As a special case,
-if the {\it expression} is a list whose {\it car} is \cdf{signal}, \cdf{error},
+if the \emph{expression} is a list whose \emph{car} is \cdf{signal}, \cdf{error},
      \cdf{cerror}, or \cdf{warn}, then \cdf{with-condition-restarts} is implicitly
      used to associate the restarts with the condition to be signaled.
 For example,
@@ -2079,18 +2079,18 @@ For example,
 ~~(halt-and-catch-fire ...))
 \end{lisp}
 
-  If there are no {\it form\/}s in a selected clause, \cdf{restart-case} returns \cdf{nil}.
+  If there are no \emph{form\/}s in a selected clause, \cdf{restart-case} returns \cdf{nil}.
 
-  The {\it case-name} may be \cdf{nil} or a symbol naming this restart.
+  The \emph{case-name} may be \cdf{nil} or a symbol naming this restart.
 
-  It is possible to have more than one clause use the same {\it case-name}.
+  It is possible to have more than one clause use the same \emph{case-name}.
   In this case, the first clause with that name will be found by
   \cdf{find-restart}. The other clauses are accessible using \cdf{compute-restarts}.
   [In this respect, \cdf{restart-case} is rather different from \cdf{case}!---GLS]
 
-  Each {\it arglist} is a normal lambda-list containing parameters
+  Each \emph{arglist} is a normal lambda-list containing parameters
   to be bound during the execution of 
-  its corresponding {\it form\/}s. These parameters are used to pass any necessary 
+  its corresponding \emph{form\/}s. These parameters are used to pass any necessary 
   data from a call to \cdf{invoke-restart} to the \cdf{restart-case} clause.
 
   By default, \cdf{invoke-restart-interactively} will pass no arguments and
@@ -2099,12 +2099,12 @@ For example,
   \cd{:interactive} keyword has been used to inform \cdf{invoke-restart-interactively}
   about how to compute a proper argument list.
 
-  The valid {\it keyword value} pairs are the following:
+  The valid \emph{keyword value} pairs are the following:
 \begin{flushdesc}
-\item[\cd{:test {\it fn}}]
+\item[\cd{:test \emph{fn}}]
 
-    The {\it fn} must be a suitable argument for the \cdf{function} special form. The
-    expression \cd{(function~{\it fn})} will be evaluated in the current lexical
+    The \emph{fn} must be a suitable argument for the \cdf{function} special form. The
+    expression \cd{(function~\emph{fn})} will be evaluated in the current lexical
     environment. It should produce a function of one argument, a condition.
     If this function returns \cdf{nil} when given some condition, functions such as
 \cdf{find-restart}, \cdf{compute-restart}, and \cdf{invoke-restart}
@@ -2113,12 +2113,12 @@ that condition.  If this pair is not supplied, it is as if
 \begin{lisp}
 (lambda (c) (declare (ignore c)) t)
 \end{lisp}
-were used for the {\it fn}.
+were used for the \emph{fn}.
 
-\item[\cd{:interactive {\it fn}}]
+\item[\cd{:interactive \emph{fn}}]
 
-    The {\it fn} must be a suitable argument for the \cdf{function} special form. The
-    expression \cd{(function~{\it fn})} will be evaluated in the current lexical
+    The \emph{fn} must be a suitable argument for the \cdf{function} special form. The
+    expression \cd{(function~\emph{fn})} will be evaluated in the current lexical
     environment. It should produce a function of no arguments that 
     returns arguments to be used by \cdf{invoke-restart-interactively} when
     invoking this function. This function will be called in the dynamic
@@ -2129,18 +2129,18 @@ were used for the {\it fn}.
     was supplied, the argument list used in the invocation is the empty
     list.
 
-\item[\cd{:report {\it exp}}]
+\item[\cd{:report \emph{exp}}]
 
-    If {\it exp} is not a literal string, it must be a suitable argument to the
-    \cdf{function} special form. The expression \cd{(function~{\it exp})} will be evaluated
+    If \emph{exp} is not a literal string, it must be a suitable argument to the
+    \cdf{function} special form. The expression \cd{(function~\emph{exp})} will be evaluated
     in the current lexical environment. It should produce a function of one
     argument, a stream, that prints on the stream a description of the
     restart. This function is called whenever the restart is printed while
     \cd{*print-escape*} is \cdf{nil}.
 
-    If {\it exp} is a literal string, it is shorthand for
+    If \emph{exp} is a literal string, it is shorthand for
 \begin{lisp}
-(lambda (s) (write-string {\it exp} s))
+(lambda (s) (write-string \emph{exp} s))
 \end{lisp}
 [That is, a function is provided that will simply write the given string literally
 to the stream.---GLS]
@@ -2183,9 +2183,9 @@ to the stream.---GLS]
 
 Note that 
 \begin{lisp}
-(restart-case {\it expression} \\*
-~~({\it name\SU{1}} {\it arglist\SU{1}} {\it options\SU{1}} . {\it body\SU{1}}) \\*
-~~({\it name\SU{2}} {\it arglist\SU{2}} {\it options\SU{2}} . {\it body\SU{2}}) \\*
+(restart-case \emph{expression} \\*
+~~(\emph{name\SU{1}} \emph{arglist\SU{1}} \emph{options\SU{1}} . \emph{body\SU{1}}) \\*
+~~(\emph{name\SU{2}} \emph{arglist\SU{2}} \emph{options\SU{2}} . \emph{body\SU{2}}) \\*
 ~~...)
 \end{lisp}
 is essentially equivalent to
@@ -2193,25 +2193,25 @@ is essentially equivalent to
 (block \#1=\#:block-1 \\*
 ~~(let ((\#2=\#:var-2 nil)) \\*
 ~~~~(tagbody \\*
-~~~~~~(restart-bind (({\it name\SU{1}} \pushtabs\=\#'(lambda (\&rest temp) \\*
+~~~~~~(restart-bind ((\emph{name\SU{1}} \pushtabs\=\#'(lambda (\&rest temp) \\*
 \>~~~~(setq \#2\# temp) \\*
 \>~~~~(go \#3=\#:tag-3)) \\*
-\>{\rm $\langle$slightly transformed {\it options\SU{1}}$\rangle$})\poptabs \\
-~~~~~~~~~~~~~~~~~~~~~({\it name\SU{2}} \pushtabs\=\#'(lambda (\&rest temp) \\*
+\>\textrm{$\langle$slightly transformed \emph{options\SU{1}}$\rangle$})\poptabs \\
+~~~~~~~~~~~~~~~~~~~~~(\emph{name\SU{2}} \pushtabs\=\#'(lambda (\&rest temp) \\*
 \>~~~~(setq \#2\# temp) \\*
 \>~~~~(go \#4=\#:tag-4)) \\*
-\>{\rm $\langle$slightly transformed {\it options\SU{2}}$\rangle$})\poptabs \\*
+\>\textrm{$\langle$slightly transformed \emph{options\SU{2}}$\rangle$})\poptabs \\*
 ~~~~~~~~~~~~~~~~~~~~~...) \\*
 ~~~~~~~~(return-from \#1\# expression)) \\
 ~~~~~~\#3\# (return-from \#1\# \\*
-~~~~~~~~~~~~~~~~(apply \#'(lambda {\it arglist\SU{1}} . {\it body\SU{1}}) \#2\#)) \\
+~~~~~~~~~~~~~~~~(apply \#'(lambda \emph{arglist\SU{1}} . \emph{body\SU{1}}) \#2\#)) \\
 ~~~~~~\#4\# (return-from \#1\# \\*
-~~~~~~~~~~~~~~~~(apply \#'(lambda {\it arglist\SU{2}} . {\it body\SU{2}}) \#2\#)) \\*
+~~~~~~~~~~~~~~~~(apply \#'(lambda \emph{arglist\SU{2}} . \emph{body\SU{2}}) \#2\#)) \\*
 ~~~~~~...)))
 \end{lisp}
 [Note the use of ``gensyms'' such as \cd{\#:block-1} as block names,
 variables, and \cdf{tagbody} tags in this example,
-and the use of \cd{\#{\it n}=} and \cd{\#{\it n}\#} read-macro syntax
+and the use of \cd{\#\emph{n}=} and \cd{\#\emph{n}\#} read-macro syntax
 to indicate that the very same gensym appears in multiple places.---GLS]
 
 
@@ -2238,7 +2238,7 @@ Here are some examples of the use of \cdf{restart-case}.
 (restart-case (a-command-loop) \\*
 ~~(return-from-command-level () \\*
 ~~~~~~:report \\*
-~~~~~~~~(lambda (s)~~~~~;{\rm Argument \cdf{s} is a stream} \\*
+~~~~~~~~(lambda (s)~~~~~;\textrm{Argument \cdf{s} is a stream} \\*
 ~~~~~~~~~~(format s "Return from command level {\Xtilde}D." level)) \\*
 ~~~~nil)) \\
  \\
@@ -2288,9 +2288,9 @@ Assuming that \cdf{use-food} and \cdf{use-color} have been defined as
 a handler can then restart from the error in either of two ways.
 It may correct the color or correct the food. For example:
 \begin{lisp}
-\#'(lambda (c) ... (use-color 'white) ...)~~~;{\rm Corrects \cdf{color}} \\
+\#'(lambda (c) ... (use-color 'white) ...)~~~;\textrm{Corrects \cdf{color}} \\
 \\
-\#'(lambda (c) ... (use-food 'cheese) ...)~~~;{\rm Corrects \cdf{food}}
+\#'(lambda (c) ... (use-food 'cheese) ...)~~~;\textrm{Corrects \cdf{food}}
 \end{lisp}
 
   Here is an example using \cdf{handler-bind} and \cdf{restart-case} that refers to a
@@ -2310,10 +2310,10 @@ restart-bind ({(name function {keyword value}*)}*) {\,form}*
   Executes a body of forms in a dynamic context where the given restart
   bindings are in effect.
 
-  Each {\it name} may be \cdf{nil} to indicate an anonymous restart, or some other symbol
+  Each \emph{name} may be \cdf{nil} to indicate an anonymous restart, or some other symbol
   to indicate a named restart.
 
-  Each {\it function} is a form that
+  Each \emph{function} is a form that
   should evaluate to a function to be used to perform the restart.
   If invoked, this function may either perform a non-local transfer of control
   or it may return normally. The function may take whatever arguments the
@@ -2324,11 +2324,11 @@ restart-bind ({(name function {keyword value}*)}*) {\,form}*
 
 \vskip 6pt plus 3pt minus 2pt
 
-  The valid {\it keyword value} pairs are as follows:
+  The valid \emph{keyword value} pairs are as follows:
 \begin{flushdesc}
-\item[\cd{:test-function {\it form}}]
+\item[\cd{:test-function \emph{form}}]
 
-    The {\it form} will be evaluated in the current lexical environment and
+    The \emph{form} will be evaluated in the current lexical environment and
      should return a function of one argument, a condition.
     If this function returns \cdf{nil} when given some condition, functions such as
 \cdf{find-restart}, \cdf{compute-restart}, and \cdf{invoke-restart}
@@ -2337,19 +2337,19 @@ that condition.  If this pair is not supplied, it is as if
 \begin{lisp}
 \#'(lambda (c) (declare (ignore c)) t)
 \end{lisp}
-were used for the {\it form}.
+were used for the \emph{form}.
 
-\item[\cd{:interactive-function {\it form}}]
+\item[\cd{:interactive-function \emph{form}}]
 
-     The {\it form} will be evaluated in the current lexical environment and
+     The \emph{form} will be evaluated in the current lexical environment and
      should return a function of no arguments that constructs a list
      of arguments to be used by \cdf{invoke-restart-interactively} when invoking
      this restart. The function may prompt interactively using \cdf{*query-io*}
      if necessary.
 
-\item[\cd{:report-function {\it form}}]
+\item[\cd{:report-function \emph{form}}]
 
-     The {\it form} will be evaluated in the current lexical environment and
+     The \emph{form} will be evaluated in the current lexical environment and
      should return a function of one argument, a stream, that prints on
      the stream a summary of the action this restart will take. This
      function is called whenever the restart is printed while \cd{*print-escape*}
@@ -2361,13 +2361,13 @@ were used for the {\it form}.
 with-condition-restarts condition-form restarts-form
   {declaration}* {\,form}*
 
-The value of {\it condition-form} should be a condition {\it C} and
-the value of {\it restarts-form} should be a list of restarts \cd{({\it R1} {\it R2} ...)}.
-      The {\it form\/}s of the body are evaluated as an implicit \cdf{progn}.
+The value of \emph{condition-form} should be a condition \emph{C} and
+the value of \emph{restarts-form} should be a list of restarts \cd{(\emph{R1} \emph{R2} ...)}.
+      The \emph{form\/}s of the body are evaluated as an implicit \cdf{progn}.
       While in the dynamic context of the body,
       an attempt to find a restart associated with a particular
-      condition ${\it C}'$ will 
-      consider the restarts {\it R1}, {\it R2}, $\ldots$ if ${\it C}'$ is \cdf{eq} to {\it C}.
+      condition $\emph{C}'$ will 
+      consider the restarts \emph{R1}, \emph{R2}, $\ldots$ if $\emph{C}'$ is \cdf{eq} to \emph{C}.
 
      Usually this macro is not used explicitly in code, because
      \cdf{restart-case} handles most of the common uses in a way that is
@@ -2391,9 +2391,9 @@ compute-restarts &optional condition
   Uses the dynamic state of the program to compute a list of the restarts
   that are currently active. See \cdf{restart-bind}.
 
-If {\it condition} is \cdf{nil} or not supplied, all outstanding restarts
+If \emph{condition} is \cdf{nil} or not supplied, all outstanding restarts
 are returned.
-If {\it condition} is not \cdf{nil}, only restarts associated
+If \emph{condition} is not \cdf{nil}, only restarts associated
 with that condition are returned.
 
   Each restart represents a function that can be called to perform some
@@ -2420,7 +2420,7 @@ with that condition are returned.
 \begin{defun}[Function]
 restart-name restart
 
-  Returns the name of the given {\it restart}, or \cdf{nil} if it is not named.
+  Returns the name of the given \emph{restart}, or \cdf{nil} if it is not named.
 \end{defun}
 
 \begin{defun}[Function]
@@ -2428,21 +2428,21 @@ find-restart restart-identifier &optional condition
 
   Searches for a particular restart in the current dynamic environment.
 
-If {\it condition} is \cdf{nil} or not supplied, all outstanding restarts
+If \emph{condition} is \cdf{nil} or not supplied, all outstanding restarts
 are considered.
-If {\it condition} is not \cdf{nil}, only restarts associated
+If \emph{condition} is not \cdf{nil}, only restarts associated
 with that condition are considered.
 
-  If the {\it restart-identifier} is a non-\cdf{nil}
+  If the \emph{restart-identifier} is a non-\cdf{nil}
   symbol, then the innermost (that is, most recently
   established) restart with that name is returned;  \cdf{nil} is returned if no
   such restart is found.
 
-  If {\it restart-identifier} is a restart object, then it is simply returned,
+  If \emph{restart-identifier} is a restart object, then it is simply returned,
   unless it is not currently active, in which case \cdf{nil} is returned.
 
   Although anonymous restarts have a name of \cdf{nil}, it is an error for
-  the symbol \cdf{nil} to be given as the {\it restart-identifier}.  Applications that 
+  the symbol \cdf{nil} to be given as the \emph{restart-identifier}.  Applications that 
   would seem to require this should be rewritten to make appropriate use 
   of \cdf{compute-restarts} instead.
 \end{defun}
@@ -2450,8 +2450,8 @@ with that condition are considered.
 \begin{defun}[Function]
 invoke-restart restart-identifier &rest arguments
 
-  Calls the function associated with the given {\it restart-identifier}, passing any given
-  {\it arguments}. The {\it restart-identifier} must be a restart or the non-null name of a
+  Calls the function associated with the given \emph{restart-identifier}, passing any given
+  \emph{arguments}. The \emph{restart-identifier} must be a restart or the non-null name of a
   restart that is valid in the current dynamic context. If the argument
   is not valid, an error of type \cdf{control-error} will be signaled.
 
@@ -2465,8 +2465,8 @@ invoke-restart restart-identifier &rest arguments
 \begin{defun}[Function]
 invoke-restart-interactively restart-identifier
 
-  Calls the function associated with the given {\it restart-identifier}, prompting for any
-  necessary arguments. The {\it restart-identifier} must be a restart or the non-null name
+  Calls the function associated with the given \emph{restart-identifier}, prompting for any
+  necessary arguments. The \emph{restart-identifier} must be a restart or the non-null name
   of a restart that is valid in the current dynamic context. If the
   argument is not valid, an error of type \cdf{control-error} will be signaled.
 
@@ -2482,7 +2482,7 @@ invoke-restart-interactively restart-identifier
 
   Once \cdf{invoke-restart-interactively} has calculated the arguments, it simply
   performs
-  \cd{(apply~\#'invoke-restart {\it restart-identifier} {\it arguments})}.
+  \cd{(apply~\#'invoke-restart \emph{restart-identifier} \emph{arguments})}.
 
   \cdf{invoke-restart-interactively} is used internally by the debugger and may also be useful
   in implementing other portable, interactive debugging tools.
@@ -2502,19 +2502,19 @@ warn datum &rest arguments
 
   Warns about a situation, by signaling a condition of type \cdf{warning}.
 
-  If {\it datum} is a condition, then that condition is used directly.
+  If \emph{datum} is a condition, then that condition is used directly.
   In this case, if the condition is not of type \cdf{warning} or arguments
   is non-\cdf{nil}, an error of type \cdf{type-error} is signaled.
 
-  If {\it datum} is a condition type (a class or class name), then the condition used is effectively the result
-  of \cd{(apply \#'make-condition {\it datum} {\it arguments})}. This result
+  If \emph{datum} is a condition type (a class or class name), then the condition used is effectively the result
+  of \cd{(apply \#'make-condition \emph{datum} \emph{arguments})}. This result
   must be of type \cdf{warning} or an error of type \cdf{type-error} is signaled.
 
-  If {\it datum} is a string, then the condition used is effectively the result of
+  If \emph{datum} is a string, then the condition used is effectively the result of
 \begin{lisp}
 (make-condition 'simple-error \\*
-~~~~~~~~~~~~~~~~:format-string {\it datum} \\*
-~~~~~~~~~~~~~~~~:format-arguments {\it arguments})
+~~~~~~~~~~~~~~~~:format-string \emph{datum} \\*
+~~~~~~~~~~~~~~~~:format-arguments \emph{arguments})
 \end{lisp}
 
   The precise mechanism for warning is as follows.
@@ -2535,7 +2535,7 @@ warn datum &rest arguments
      by \cdf{warn} (that is, to cause \cdf{warn} to immediately return \cdf{nil}).
 
      As part of the signaling process, if
-     \cd{(typep {\it condition} *break-on-signals*)}
+     \cd{(typep \emph{condition} *break-on-signals*)}
      is true, then a \cdf{break} will occur prior to beginning the signaling
      process.
 
@@ -2582,9 +2582,9 @@ abort &optional condition
   This function transfers control to the restart named \cdf{abort}. If no such
   restart exists, \cdf{abort} signals an error of type \cdf{control-error}.
 
- If {\it condition} is \cdf{nil} or not supplied, all outstanding restarts
+ If \emph{condition} is \cdf{nil} or not supplied, all outstanding restarts
 are considered.
-If {\it condition} is not \cdf{nil}, only restarts associated
+If \emph{condition} is not \cdf{nil}, only restarts associated
 with that condition are considered.
 
   The purpose of the \cdf{abort} restart is generally to allow control to return to the
@@ -2597,9 +2597,9 @@ continue &optional condition
   This function transfers control to the restart named \cdf{continue}. If no such
   restart exists, \cdf{continue} returns \cdf{nil}.
 
- If {\it condition} is \cdf{nil} or not supplied, all outstanding restarts
+ If \emph{condition} is \cdf{nil} or not supplied, all outstanding restarts
 are considered.
-If {\it condition} is not \cdf{nil}, only restarts associated
+If \emph{condition} is not \cdf{nil}, only restarts associated
 with that condition are considered.
 
   The \cdf{continue} restart is generally part of simple protocols where there is
@@ -2616,9 +2616,9 @@ muffle-warning &optional condition
   If no such restart exists, \cdf{muffle-warning} signals an error of type 
   \cdf{control-error}.
  
- If {\it condition} is \cdf{nil} or not supplied, all outstanding restarts
+ If \emph{condition} is \cdf{nil} or not supplied, all outstanding restarts
 are considered.
-If {\it condition} is not \cdf{nil}, only restarts associated
+If \emph{condition} is not \cdf{nil}, only restarts associated
 with that condition are considered.
 
   \cdf{warn} sets up this restart so that handlers of \cdf{warning} conditions have
@@ -2632,9 +2632,9 @@ store-value value &optional condition
   This function transfers control (and one value) to the restart named
   \cdf{store-value}. If no such restart exists, \cdf{store-value} returns \cdf{nil}.
 
- If {\it condition} is \cdf{nil} or not supplied, all outstanding restarts
+ If \emph{condition} is \cdf{nil} or not supplied, all outstanding restarts
 are considered.
-If {\it condition} is not \cdf{nil}, only restarts associated
+If \emph{condition} is not \cdf{nil}, only restarts associated
 with that condition are considered.
 
   The \cdf{store-value} restart is generally used by handlers trying to recover
@@ -2648,9 +2648,9 @@ use-value value &optional condition
   This function transfers control (and one value) to the restart named
   \cdf{use-value}. If no such restart exists, \cdf{use-value} returns \cdf{nil}.
  
- If {\it condition} is \cdf{nil} or not supplied, all outstanding restarts
+ If \emph{condition} is \cdf{nil} or not supplied, all outstanding restarts
 are considered.
-If {\it condition} is not \cdf{nil}, only restarts associated
+If \emph{condition} is not \cdf{nil}, only restarts associated
 with that condition are considered.
 
   The \cdf{use-value} restart is generally used by handlers trying to recover
@@ -2673,11 +2673,11 @@ break &optional format-string &rest format-arguments
    given in section~\ref{ERROR-SIGNALLING-FUNCTIONS}.---GLS]
 
   The function \cdf{break} prints the message described by the
-  {\it format-string} and {\it format-arguments} and then
+  \emph{format-string} and \emph{format-arguments} and then
   goes directly into the debugger without allowing any possibility of
   interception by programmed error-handling facilities.
 
-  If no {\it format-string} is supplied, a suitable default will be generated.
+  If no \emph{format-string} is supplied, a suitable default will be generated.
 
   If continued, \cdf{break} returns \cdf{nil}.
 
@@ -2711,7 +2711,7 @@ invoke-debugger condition
   Attempts interactive handling of its argument, which must be a condition.
 
   If the variable \cd{*debugger-hook*} is not \cdf{nil}, it will be called as a function on two
-  arguments: the {\it condition} being handled and the value of \cd{*debugger-hook*}.
+  arguments: the \emph{condition} being handled and the value of \cd{*debugger-hook*}.
   If a hook function returns normally, the standard debugger will be tried.
 
   The standard debugger will never directly return. Return can occur only by a
@@ -2921,7 +2921,7 @@ simple-error
 \begin{defun}[Function]
 simple-condition-format-string condition
 
-  Accesses the format-string slot of a given {\it condition}, which must be
+  Accesses the format-string slot of a given \emph{condition}, which must be
   of type \cdf{simple-condition}, \cdf{simple-warning}, \cdf{simple-error}, or 
   \cdf{simple-type-error}.
 \end{defun}
@@ -2929,7 +2929,7 @@ simple-condition-format-string condition
 \begin{defun}[Function]
 simple-condition-format-arguments condition
 
-  Accesses the format-arguments slot of a given {\it condition}, which must
+  Accesses the format-arguments slot of a given \emph{condition}, which must
   be of type \cdf{simple-condition}, \cdf{simple-warning}, \cdf{simple-error}, or
   \cdf{simple-type-error}.
 \end{defun}
@@ -2957,14 +2957,14 @@ type-error
 \begin{defun}[Function]
 type-error-datum condition
 
-  Accesses the datum slot of a given {\it condition}, which must be of
+  Accesses the datum slot of a given \emph{condition}, which must be of
   type \cdf{type-error}.
 \end{defun}
 
 \begin{defun}[Function]
 type-error-expected-type condition
 
-  Accesses the expected-type slot of a given {\it condition}, which must be
+  Accesses the expected-type slot of a given \emph{condition}, which must be
   of type \cdf{type-error}. Users of \cdf{type-error} conditions are expected to
   fill this slot with an object that is a valid Common Lisp type specifier.
 \end{defun}
@@ -2975,10 +2975,10 @@ simple-type-error
   Conditions signaled by facilities similar to \cdf{check-type} may want to
   use this type. The initialization keywords \cd{:format-string} and \cd{:format-arguments}
   are supported to initialize the slots, which can be accessed using 
-  \cd{simple-\discretionary{}{}{}condition-\discretionary{}{}{}format-\discretionary{}{}{}string} and
-  \cd{simple-\discretionary{}{}{}condition-\discretionary{}{}{}format-\discretionary{}{}{}arguments}.
-  If \cd{:format-\discretionary{}{}{}arguments} is not supplied to
-  \cd{make-\discretionary{}{}{}condition}, the 
+  \cd{simple-condition-format-string} and
+  \cd{simple-condition-format-arguments}.
+  If \cd{:format-arguments} is not supplied to
+  \cd{make-condition}, the 
   format-arguments slot defaults to \cdf{nil}.
 
   In implementations supporting multiple inheritance, this type will also be
@@ -2991,14 +2991,14 @@ program-error
   Errors relating to incorrect program syntax that are statically
   detectable should inherit from this type (regardless of whether they
   are in fact statically detected). This is a subtype of \cdf{error}. This is
-  {\it not} a subtype of \cdf{control-error}.
+  \emph{not} a subtype of \cdf{control-error}.
 \end{defun}
 
 \begin{defun}[Type]
 control-error
 
   Errors in the dynamic transfer of control in a program should inherit
-  from this type. This is a subtype of \cdf{error}. This is {\it not} a subtype of
+  from this type. This is a subtype of \cdf{error}. This is \emph{not} a subtype of
   \cdf{program-error}.
 
   The errors that result from giving \cdf{throw} a tag that is not
@@ -3024,7 +3024,7 @@ package-error
 package-error-package condition
 
   Accesses the package (or package name) that was being modified or
-  manipulated in a {\it condition} of type \cdf{package-error}.
+  manipulated in a \emph{condition} of type \cdf{package-error}.
 \end{defun}
 
 
@@ -3040,7 +3040,7 @@ stream-error
 \begin{defun}[Function]
 stream-error-stream condition
 
-  Accesses the offending stream of a {\it condition} of type \cdf{stream-error}.
+  Accesses the offending stream of a \emph{condition} of type \cdf{stream-error}.
 \end{defun}
 
 \begin{defun}[Type]
@@ -3063,7 +3063,7 @@ file-error
 \begin{defun}[Function]
 file-error-pathname condition
 
-  Accesses the offending pathname of a {\it condition} of type \cdf{file-error}.
+  Accesses the offending pathname of a \emph{condition} of type \cdf{file-error}.
 \end{defun}
 
 \begin{defun}[Type]
@@ -3077,7 +3077,7 @@ cell-error
 \begin{defun}[Function]
 cell-error-name condition
 
-  Accesses the offending cell name of a {\it condition} of type \cdf{cell-error}.
+  Accesses the offending cell name of a \emph{condition} of type \cdf{cell-error}.
 \end{defun}
 
 \begin{defun}[Type]
