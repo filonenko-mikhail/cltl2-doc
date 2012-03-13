@@ -1,210 +1,458 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Precision, Contagion, and Coercion</title> 
+<head><title>Arithmetic Operations</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-11 14:56:00"> 
+<meta name="date" content="2012-03-13 16:31:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 58--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 559--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse67.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch12.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch12.html#tailclmch12.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse65.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse65.html#tailclmse65.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse66.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch12.html#clmse66.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">12.1   </span> <a 
- id="x83-19700012.1"></a>Precision, Contagion, and Coercion</h3>
-<!--l. 61--><p class="noindent" >In general, computations with ﬂoating-point numbers are only approximate. The
-precision of a ﬂoating-point number is not necessarily correlated at all with the
-accuracy of that number. For instance, 3.142857142857142857 is a more precise
-approximation to π than 3.14159, but the latter is more accurate. The
-precision refers to the number of bits retained in the representation. When an
-operation combines a short ﬂoating-point number with a long one, the result
-will be a long ﬂoating-point number. This rule is made to ensure that
-as much accuracy as possible is preserved; however, it is by no means a
-guarantee. Common Lisp numerical routines do assume, however, that the
-accuracy of an argument does not exceed its precision. Therefore when two
-small ﬂoating-point numbers are combined, the result will always be a
-small ﬂoating-point number. This assumption can be overridden by ﬁrst
-explicitly converting a small ﬂoating-point number to a larger representation.
-(Common Lisp never converts automatically from a larger size to a smaller
-one.)
-<!--l. 80--><p class="indent" >   Rational computations cannot overﬂow in the usual sense (though of course
-there may not be enough storage to represent one), as integers and ratios may in
-principle be of any magnitude. Floating-point computations may get exponent
-overﬂow or underﬂow; this is an error.
-<div class=newer>
-                                                                          
-
-                                                                          
-<!--l. 89--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx83-197001"></a>to address certain problems relating to
-ﬂoating-point overﬂow and underﬂow, but certain parts of the proposed solution
-were not adopted, namely to add the macro without-ﬂoating-underﬂow-traps to
-the language and to require certain behavior of ﬂoating-point overﬂow and
-underﬂow. The committee agreed that this area of the language requires more
-discussion before a solution is standardized.
-<!--l. 97--><p class="indent" >   For the record, the proposal that was considered and rejected (for the nonce)
-introduced a macro without-ﬂoating-underﬂow-traps that would execute its body
-in such a way that, within its dynamic extent, a ﬂoating-point underﬂow must not
-signal an error but instead must produce either a denormalized number or zero as
-the result. The rejected proposal also speciﬁed the following treatment of overﬂow
-and underﬂow:
-      <ul class="itemize1">
-      <li class="itemize">A ﬂoating-point computation that overﬂows should signal an error of
-      type <a 
-href="clmse156.html#x190-496069r1055">ﬂoating-point-overﬂow</a>.
-      </li>
-      <li class="itemize">Unless the dynamic extent of a use of without-ﬂoating-underﬂow-traps,
-      a ﬂoating-point computation that underﬂows should signal an error of
-      type <a 
-href="clmse156.html#x190-496071r1056">ﬂoating-point-underﬂow</a>. A result that can be represented only in
-      denormalized form must be considered an underﬂow in implementations
-      that support denormalized ﬂoating-point numbers.</li></ul>
-<!--l. 115--><p class="noindent" >These points refer to conditions <a 
-href="clmse156.html#x190-496069r1055">ﬂoating-point-overﬂow</a> and ﬂoating-point-underﬂow
-that were approved by X3J13 and are described in section <a 
-href="clmse156.html#x190-49600029.5">29.5<!--tex4ht:ref: PREDEFINED-CONDITIONS-SECTION --></a>.
+   <h3 class="sectionHead"><span class="titlemark">12.4   </span> <a 
+ id="x83-18100012.4"></a>Arithmetic Operations</h3>
+<!--l. 561--><p class="noindent" >Each of the functions in this section requires that its arguments all be numbers; to
+call one with a non-number is an error. Unless otherwise speciﬁed, each works on
+all types of numbers, automatically performing any required coercions when
+arguments are of diﬀerent types.
+<div class=defun>
+<!--l. 566--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-181001"></a><a 
+ id="x83-181002r186"></a><b> +</b>  &#x0026;rest  <i>numbers</i>
+<!--l. 568--><p class="noindent" >This returns the sum of the arguments. If there are no arguments, the result is 0,
+which is an identity for this operation.
+<div class=incompatibility>
+<!--l. 573--><p class="noindent" ><b>Compatibility note:</b> While <a 
+href="clmse108.html#x133-242002r592">+</a> is compatible with its use in Lisp Machine Lisp, it is
+incompatible with MacLisp, which uses <a 
+href="clmse108.html#x133-242002r592">+</a> for ﬁxnum-only addition.
 </div>
-<!--l. 123--><p class="indent" >   When rational and ﬂoating-point numbers are compared or combined by a
-numerical function, the rule of ﬂoating-point contagion is followed: when a
-rational meets a ﬂoating-point number, the rational is ﬁrst converted to a
+</div>
+<div class=defun>
+<!--l. 581--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-181003"></a><a 
+ id="x83-181004r187"></a><b> -</b>  <i>number</i> &#x0026;rest  <i>more-numbers</i>
+<!--l. 583--><p class="noindent" >The function <a 
+href="clmse108.html#x133-242008r595">-</a>, when given one argument, returns the negative of that
+argument.
+<!--l. 587--><p class="indent" >   The function <a 
+href="clmse108.html#x133-242008r595">-</a>, when given more than one argument, successively subtracts
+from the ﬁrst argument all the others, and returns the result. For example, (- 3 4
+5)  ⇒ -6.
+<div class=incompatibility>
+<!--l. 592--><p class="noindent" ><b>Compatibility note:</b> While <a 
+href="clmse108.html#x133-242008r595">-</a> is compatible with its use in Lisp Machine Lisp,
+it is incompatible with MacLisp, which uses <a 
+href="clmse108.html#x133-242008r595">-</a> for ﬁxnum-only subtraction.
+Also, <a 
+href="clmse108.html#x133-242008r595">-</a> diﬀers from diﬀerence as used in most Lisp systems in the case of one
+argument.
+</div>
+</div>
+<div class=defun>
+<!--l. 602--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-181005"></a><a 
+ id="x83-181006r188"></a><b> *</b>  &#x0026;rest  <i>numbers</i>
+<!--l. 604--><p class="noindent" >This returns the product of the arguments. If there are no arguments, the result is
                                                                           
 
                                                                           
-ﬂoating-point number of the same format. For functions such as <a 
-href="clmse111.html#x136-262002r626">+</a> that take
-more than two arguments, it may be that part of the operation is carried
-out exactly using rationals and then the rest is done using ﬂoating-point
-arithmetic.
+1, which is an identity for this operation.
+<div class=incompatibility>
+<!--l. 610--><p class="noindent" ><b>Compatibility note:</b> While <a 
+href="clmse108.html#x133-242010r596">*</a> is compatible with its use in Lisp Machine Lisp, it is
+incompatible with MacLisp, which uses <a 
+href="clmse108.html#x133-242010r596">*</a> for ﬁxnum-only multiplication.
+</div>
+</div>
+<div class=defun>
+<!--l. 618--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-181007"></a><a 
+ id="x83-181008r189"></a><b> /</b>  <i>number</i> &#x0026;rest  <i>more-numbers</i>
+<!--l. 620--><p class="noindent" >The function <a 
+href="clmse108.html#x133-242016r599">/</a>, when given more than one argument, successively divides the ﬁrst
+argument by all the others and returns the result.
 <div class=new>
-<!--l. 133--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx83-197002"></a>to apply the rule of ﬂoating-point contagion
-stated above to the case of combining rational and ﬂoating-point numbers. For
-comparing, the following rule is to be used instead: When a rational number and a
-ﬂoating-point number are to be compared by a numerical function, in eﬀect the
-ﬂoating-point number is ﬁrst converted to a rational number as if by the function
-<a 
-href="clmse71.html#x88-206004r252">rational</a>, and then an exact comparison of two rational numbers is performed. It is
-of course valid to use a more eﬃcient implementation than actually calling the
-function <a 
-href="clmse71.html#x88-206004r252">rational</a>, as long as the result of the comparison is the same. In
-the case of complex numbers, the real and imaginary parts are handled
-separately.
-<div class=rationale>
-<!--l. 148--><p class="noindent" ><b>Rationale:</b> In general, accuracy cannot be preserved in combining operations, but it can
-be preserved in comparisons, and preserving it makes that part of Common Lisp
-algebraically a bit more tractable. In particular, this change prevents the breakdown of
-transitivity. Let a be the result of (/ 10.0 single-ﬂoat-epsilon), and let j be the result of
-(ﬂoor a). (Note that (= a (+ a 1.0)) is true, by the deﬁnition of <a 
-href="clmse75.html#x92-210059r348">single-ﬂoat-epsilon</a>.)
-Under the old rules, all of (&#x003C;= a j), (&#x003C; j (+ j 1)), and (&#x003C;= (+ j 1) a) would be
-true; transitivity would then imply that (&#x003C; a a) ought to be true, but of course it is
-false, and therefore transitivity fails. Under the new rule, however, (&#x003C;= (+ j 1) a) is
-false.
+<!--l. 625--><p class="indent" >   It is generally accepted that it is an error for any argument other than the ﬁrst
+to be zero.
 </div>
+<!--l. 629--><p class="indent" >   With one argument, <a 
+href="clmse108.html#x133-242016r599">/</a> reciprocates the argument.
+<div class=new>
+<!--l. 632--><p class="indent" >   It is generally accepted that it is an error in this case for the argument to be
+zero.
 </div>
-<!--l. 165--><p class="indent" >   For functions that are mathematically associative (and possibly commutative),
-a Common Lisp implementation may process the arguments in any manner
-consistent with associative (and possibly commutative) rearrangement. This does
-not aﬀect the order in which the argument forms are evaluated, of course; that
-order is always left to right, as in all Common Lisp function calls. What is left
-loose is the order in which the argument values are processed. The point of all this
-is that implementations may diﬀer in which automatic coercions are applied
-because of diﬀering orders of argument processing. As an example, consider this
-expression: <div class=lisp> <div class=tabbing>
-                                                                          
-
-                                                                          
+<!--l. 636--><p class="indent" >   <a 
+href="clmse108.html#x133-242016r599">/</a> will produce a ratio if the mathematical quotient of two integers is not an
+exact integer. For example: <div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(+ 1/3 2/3 1.0D0 1.0 1.0E-15)
+class="tabbing">(/ 12 4)  ⇒ 3
 </td></tr></table>
-<!--l. 178--><p class="indent" >
+<!--l. 639--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(/ 13 4)  ⇒ 13/4</td></tr></table>
+<!--l. 640--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(/ -8)  ⇒ -1/8</td></tr></table>
+<!--l. 641--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(/ 3 4 5)  ⇒ 3/20</td></tr></table>
+<!--l. 643--><p class="indent" >
 </div>
 </div>
-<!--l. 179--><p class="noindent" >One implementation might process the arguments from left to right, ﬁrst adding 1/3
-and 2/3 to get 1, then converting that to a double-precision ﬂoating-point number
-for combination with 1.0D0, then successively converting and adding 1.0 and
-1.0E-15. Another implementation might process the arguments from right to left,
-ﬁrst performing a single-precision ﬂoating-point addition of 1.0 and 1.0E-15 (and
-probably losing some accuracy in the process!), then converting the sum to
-double precision and adding 1.0D0, then converting 2/3 to double-precision
-ﬂoating-point and adding it, and then converting 1/3 and adding that. A third
-implementation might ﬁrst scan all the arguments, process all the rationals ﬁrst to
-keep that part of the computation exact, then ﬁnd an argument of the
-largest ﬂoating-point format among all the arguments and add that, and
-then add in all other arguments, converting each in turn (all in a perhaps
-misguided attempt to make the computation as accurate as possible). In any
-case, all three strategies are legitimate. The user can of course control
-the order of processing explicitly by writing several calls; for example: <div class=lisp>
+<!--l. 644--><p class="noindent" >To divide one integer by another producing an integer result, use one of the functions
+<a 
+href="clmse68.html#x85-187012r224">ﬂoor</a>, <a 
+href="clmse68.html#x85-187014r225">ceiling</a>, <a 
+href="clmse68.html#x85-187016r226">truncate</a>, or <a 
+href="clmse68.html#x85-187018r227">round</a>.
+<!--l. 648--><p class="indent" >   If any argument is a ﬂoating-point number, then the rules of ﬂoating-point
+contagion apply.
+<div class=incompatibility>
+<!--l. 652--><p class="noindent" ><b>Compatibility note:</b> What <a 
+href="clmse108.html#x133-242016r599">/</a> does is totally unlike what the usual <a 
+href="clmse108.html#x133-242018r600">//</a> or quotient
+operator does. In most Lisp systems, quotient behaves like <a 
+href="clmse108.html#x133-242016r599">/</a> except when dividing
+                                                                          
+
+                                                                          
+integers, in which case it behaves like <a 
+href="clmse68.html#x85-187016r226">truncate</a> of two arguments; this behavior is
+mathematically intractable, leading to such anomalies as <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(quotient 1.0 2.0)  ⇒ 0.5 but (quotient 1 2)  ⇒ 0
+</td></tr></table>
+<!--l. 661--><p class="indent" >
+</div>
+</div>
+<!--l. 662--><p class="noindent" >In contrast, the Common Lisp function <a 
+href="clmse108.html#x133-242016r599">/</a> produces these results: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(/ 1.0 2.0)  ⇒ 0.5 and (/ 1 2)  ⇒ 1/2
+</td></tr></table>
+<!--l. 665--><p class="indent" >
+</div>
+</div>
+<!--l. 666--><p class="noindent" >In practice quotient is used only when one is sure that both arguments are integers, <i>or</i> when
+one is sure that at least one argument is a ﬂoating-point number. <a 
+href="clmse108.html#x133-242016r599">/</a> is tractable for its
+purpose and works for <i>any</i> numbers.
+</div>
+</div>
+<div class=defun>
+<!--l. 674--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-181009"></a><a 
+ id="x83-181010r190"></a><b> 1+</b>  <i>number</i><br 
+class="newline" /><i>[Function]</i><a 
+ id="dx83-181011"></a><a 
+ id="x83-181012r191"></a><b> 1-</b>  <i>number</i>
+<!--l. 677--><p class="noindent" >(1+ <i>x</i>) is the same as (+ <i>x</i> 1).
+<!--l. 680--><p class="indent" >   (1- <i>x</i>) is the same as (- <i>x</i> 1). Note that the short name may be confusing: (1-
+<i>x</i>) does <i>not</i> mean 1 −<i>x</i>; rather, it means <i>x</i> − 1.
+<div class=rationale>
+<!--l. 685--><p class="noindent" ><b>Rationale:</b> These are included primarily for compatibility with MacLisp and Lisp
+Machine Lisp. Some programmers prefer always to write (+ x 1) and (- x 1) instead of
+(1+ x) and (1- x).
+</div>
+<div class=implementation>
+<!--l. 691--><p class="noindent" ><b>Implementation note:</b> Compiler writers are very strongly encouraged to ensure that
+(1+ x) and (+ x 1) compile into identical code, and similarly for (1- x) and
+(- x 1), to avoid pressure on a Lisp programmer to write possibly less clear
+code for the sake of eﬃciency. This can easily be done as a source-language
+transformation.
+                                                                          
+
+                                                                          
+</div>
+</div>
+<div class=defmac>
 <div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(+ (+ 1/3 2/3) (+ 1.0D0 1.0E-15) 1.0)
+class="tabbing"> <i>[Macro]</i><b> incf </b><a 
+ id="dx83-181013"></a><a 
+ id="x83-181014r192"></a> place [delta]
 </td></tr></table>
-<!--l. 199--><p class="indent" >
+<!--l. 702--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  <i>[Macro]</i><b> decf </b><a 
+ id="dx83-181015"></a><a 
+ id="x83-181016r193"></a> place [delta]</td></tr></table>
+<!--l. 704--><p class="indent" >
+</div>
+<!--l. 704--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x83-18200012.4"></a></span>
+   The number produced by the form <i>delta</i> is added to (<a 
+href="#x83-181014r192">incf</a>) or subtracted from
+(<a 
+href="#x83-181016r193">decf</a>) the number in the generalized variable named by <i>place</i>, and the sum is
+stored back into <i>place</i> and returned. The form <i>place</i> may be any form acceptable
+as a generalized variable to <a 
+href="clmse36.html#x48-90002r64">setf</a>. If <i>delta</i> is not supplied, then the number in <i>place</i>
+is changed by 1. For example: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setq n 0)
+</td></tr></table>
+<!--l. 716--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:162;" 
+class="tabbing">(incf n)  ⇒ 1          </td><td  
+class="tabbing">and now n  ⇒ 1</td></tr></table>
+<!--l. 717--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:162;" 
+class="tabbing">(decf n 3)  ⇒ -2      </td><td  
+class="tabbing">and now n  ⇒ -2</td></tr></table>
+<!--l. 718--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:162;" 
+class="tabbing">(decf n -5)  ⇒ 3      </td><td  
+class="tabbing">and now n  ⇒ 3</td></tr></table>
+<!--l. 719--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td style="width:162;" 
+class="tabbing">(decf n)  ⇒ 2         </td><td  
+class="tabbing">and now n  ⇒ 2</td></tr></table>
+<!--l. 721--><p class="indent" >
 </div>
 </div>
-<!--l. 200--><p class="noindent" >The user can also control all coercions simply by writing calls to coercion functions
-explicitly.
-<!--l. 203--><p class="indent" >   In general, then, the type of the result of a numerical function is a
-ﬂoating-point number of the largest format among all the ﬂoating-point
-arguments to the function; but if the arguments are all rational, then the
-result is rational (except for functions that can produce mathematically
-irrational results, in which case a single-format ﬂoating-point number may
-result).
-<!--l. 210--><p class="indent" >   There is a separate rule of complex contagion. As a rule, complex numbers
-never result from a numerical function unless one or more of the arguments is
+<!--l. 722--><p class="noindent" >The eﬀect of (incf <i>place</i> <i>delta</i>) is roughly equivalent to <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(setf <i>place</i> (+ <i>place</i> <i>delta</i>))
+</td></tr></table>
+<!--l. 726--><p class="indent" >
                                                                           
 
                                                                           
-complex. (Exceptions to this rule occur among the irrational and transcendental
-functions, speciﬁcally <a 
-href="clmse70.html#x87-203004r230">expt</a>, <a 
-href="clmse70.html#x87-203008r231">log</a>, <a 
-href="clmse70.html#x87-203011r232">sqrt</a>, <a 
-href="clmse70.html#x87-204017r241">asin</a>, <a 
-href="clmse70.html#x87-204019r242">acos</a>, <a 
-href="clmse70.html#x87-204035r249">acosh</a>, and <a 
-href="clmse70.html#x87-204037r250">atanh</a>; see
-section <a 
-href="clmse70.html#x87-20200012.5">12.5<!--tex4ht:ref: TRANSCENDENTAL-SECTION --></a>.) When a non-complex number meets a complex number, the
-non-complex number is in eﬀect ﬁrst converted to a complex number by providing
-an imaginary part of zero.
-<!--l. 222--><p class="indent" >   If any computation produces a result that is a ratio of two integers such that
-the denominator evenly divides the numerator, then the result is immediately
-converted to the equivalent integer. This is called the rule of rational
-canonicalization.
-<!--l. 227--><p class="indent" >   If the result of any computation would be a complex rational with a zero
-imaginary part, the result is immediately converted to a non-complex rational
-number by taking the real part. This is called the rule of complex canonicalization.
-Note that this rule does not apply to complex numbers whose components are
-ﬂoating-point numbers. Whereas #C(5 0) and 5 are not distinct values
-in Common Lisp (they are always <a 
-href="clmse33.html#x44-81005r47">eql</a>), #C(5.0 0.0) and 5.0 are always
-distinct values in Common Lisp (they are never <a 
-href="clmse33.html#x44-81005r47">eql</a>, although they are
-<a 
-href="clmse33.html#x44-81010r49">equalp</a>).
+</div>
+</div>
+<!--l. 727--><p class="noindent" >except that the latter would evaluate any subforms of <i>place</i> twice, whereas <a 
+href="#x83-181014r192">incf</a> takes
+care to evaluate them only once. Moreover, for certain <i>place</i> forms <a 
+href="#x83-181014r192">incf</a> may be
+signiﬁcantly more eﬃcient than the <a 
+href="clmse36.html#x48-90002r64">setf</a> version. <div class=newer> X3J13 voted in March 1988 <a 
+ id="dx83-182001"></a>to
+clarify order of evaluation (see section <a 
+href="clmse36.html#x48-900007.2">7.2<!--tex4ht:ref: SETF-SECTION --></a>).
+</div>
+</div>
+<div class=defun>
+<!--l. 737--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-182002"></a><a 
+ id="x83-182003r194"></a><b> conjugate</b>  <i>number</i>
+<!--l. 739--><p class="noindent" >This returns the complex conjugate of <i>number</i>. The conjugate of a non-complex
+number is itself. For a complex number z, <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(conjugate z)  ≡ (complex (realpart z) (- (imagpart z)))
+</td></tr></table>
+<!--l. 744--><p class="indent" >
+</div>
+</div>
+<!--l. 745--><p class="noindent" >For example: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(conjugate #C(3/5 4/5))  ⇒ #C(3/5 -4/5)
+</td></tr></table>
+<!--l. 747--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(conjugate #C(0.0D0 -1.0D0))  ⇒ #C(0.0D0 1.0D0)</td></tr></table>
+<!--l. 748--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(conjugate 3.7)  ⇒ 3.7</td></tr></table>
+<!--l. 750--><p class="indent" >
+</div>
+</div>
+</div>
+<div class=defun>
+<!--l. 753--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-182004"></a><a 
+ id="x83-182005r195"></a><b> gcd</b>  &#x0026;rest  <i>integers</i>
+<!--l. 755--><p class="noindent" >This returns the greatest common divisor of all the arguments, which must be
+integers. The result of <a 
+href="#x83-182005r195">gcd</a> is always a non-negative integer. If one argument is
+given, its absolute value is returned. If no arguments are given, <a 
+href="#x83-182005r195">gcd</a> returns 0,
+which is an identity for this operation. For three or more arguments,
+<div class=lisp><div class=tabbing>
                                                                           
 
                                                                           
-   <!--l. 237--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(gcd <i>a</i> <i>b</i> <i>c</i> ... <i>z</i>)  ≡ (gcd (gcd <i>a</i> <i>b</i>) <i>c</i> ... <i>z</i>)
+</td></tr></table>
+<!--l. 765--><p class="indent" >
+</div>
+</div>
+<!--l. 767--><p class="indent" >   Here are some examples of the use of <a 
+href="#x83-182005r195">gcd</a>: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(gcd 91 -49)  ⇒ 7
+</td></tr></table>
+<!--l. 769--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(gcd 63 -42 35)  ⇒ 7</td></tr></table>
+<!--l. 770--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(gcd 5)  ⇒ 5</td></tr></table>
+<!--l. 771--><p class="indent" >                                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(gcd -4)  ⇒ 4</td></tr></table>
+<!--l. 772--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(gcd)  ⇒ 0</td></tr></table>
+<!--l. 774--><p class="indent" >
+</div>
+</div>
+</div>
+<div class=defun>
+<!--l. 777--><p class="noindent" ><i>[Function]</i><a 
+ id="dx83-182006"></a><a 
+ id="x83-182007r196"></a><b> lcm</b>  <i>integer</i> &#x0026;rest  <i>more-integers</i>
+<!--l. 779--><p class="noindent" >This returns the least common multiple of its arguments, which must be integers.
+The result of <a 
+href="#x83-182007r196">lcm</a> is always a non-negative integer. For two arguments that are not
+both zero, <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(lcm <i>a</i> <i>b</i>)  ≡ (/ (abs (* <i>a</i> <i>b</i>)) (gcd <i>a</i> <i>b</i>))
+</td></tr></table>
+<!--l. 786--><p class="indent" >
+</div>
+</div>
+<!--l. 787--><p class="noindent" >If one or both arguments are zero, <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(lcm <i>a</i> 0)  ≡ (lcm 0 <i>a</i>)  ≡ 0
+</td></tr></table>
+<!--l. 790--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<!--l. 792--><p class="indent" >   For one argument, <a 
+href="#x83-182007r196">lcm</a> returns the absolute value of that argument. For three
+or more arguments, <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(lcm <i>a</i> <i>b</i> <i>c</i> ... <i>z</i>)  ≡ (lcm (lcm <i>a</i> <i>b</i>) <i>c</i> ... <i>z</i>)
+</td></tr></table>
+<!--l. 796--><p class="indent" >
+</div>
+</div>
+<!--l. 798--><p class="indent" >   Some examples: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(lcm 14 35)  ⇒ 70
+</td></tr></table>
+<!--l. 800--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(lcm 0 5)  ⇒ 0</td></tr></table>
+<!--l. 801--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(lcm 1 2 3 4 5 6)  ⇒ 60</td></tr></table>
+<!--l. 803--><p class="indent" >
+</div>
+</div>
+<!--l. 805--><p class="indent" >   Mathematically, (lcm) should return inﬁnity. Because Common Lisp does not
+have a representation for inﬁnity, <a 
+href="#x83-182007r196">lcm</a>, unlike <a 
+href="#x83-182005r195">gcd</a>, always requires at least one
+argument.
+<div class=new>
+<!--l. 810--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx83-182008"></a>to specify that (lcm)  ⇒ 1.
+<!--l. 814--><p class="indent" >   This is one of my biggest boners. The identity for <a 
+href="#x83-182007r196">lcm</a> is of course 1,
+not inﬁnity, and so (lcm) ought to have been deﬁned to return 1. Sorry
+about that, though in point of fact very few users have complained to me
+that this mistake in the ﬁrst edition has cramped their programming
+style.
+</div>
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 821--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse67.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch12.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch12.html#tailclmch12.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse65.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse65.html#tailclmse65.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse66.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch12.html#clmse66.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 237--><p class="indent" >   <a 
+<!--l. 821--><p class="indent" >   <a 
  id="tailclmse66.html"></a>  
 </body></html> 

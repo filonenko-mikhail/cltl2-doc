@@ -4,22 +4,27 @@
 \clearpage\def\pagestatus{FINAL PROOF}
 
 \begingroup
-\def\arcsinh{\mathop{\rm arcsinh}\nolimits}
-\def\arccosh{\mathop{\rm arccosh}\nolimits}
-\def\arctanh{\mathop{\rm arctanh}\nolimits}
-\def\cis{\mathop{\rm cis}\nolimits}
-\def\phase{\mathop{\rm phase}\nolimits}
+\def\arcsinh{\mathop\textrm{arcsinh}\nolimits}
+\def\arccosh{\mathop\textrm{arccosh}\nolimits}
+\def\arctanh{\mathop\textrm{arctanh}\nolimits}
+\def\cis{\mathop\textrm{cis}\nolimits}
+\def\phase{\mathop\textrm{phase}\nolimits}
 
 
-\chapter{Numbers}
+\chapter{Numbers Числа}
 \label{NUMBER}
 
 
 Common Lisp provides several different representations for numbers.
 These representations may be divided into four categories: integers,
 ratios, floating-point numbers, and complex numbers.  Many numeric
-functions will accept any kind of number; they are {\it generic}.  Other
+functions will accept any kind of number; they are \emph{generic}.  Other
 functions accept only certain kinds of numbers.
+
+Common Lisp предоставляет несколько различных представлений для чисел.
+Эти представления могут быть разделены на четыре категории: целые, дробные, с
+плавающей точкой и комплексные. Многие числовые функции принимают любой тип
+числа. Другие принимают только определенный тип.
 
 \begin{new}
 Note that this remark, predating the design of the Common Lisp Object System,
@@ -28,8 +33,6 @@ in the technical sense used by CLOS
 (see chapter~\ref{DTYPES}).
 \end{new}
 
-
-
 In general, numbers in Common Lisp are not true objects; \cdf{eq} cannot
 be counted upon to operate on them reliably.  In particular,
 it is possible that the expression
@@ -37,6 +40,15 @@ it is possible that the expression
 (let ((x z) (y z)) (eq x y))
 \end{lisp}
 may be false rather than true if the value of \cdf{z} is a number.
+
+В целом, числа в Common Lisp'е не является объектами в прямом понимании
+слова. Нельзя полагатся, например, на использование \cdf{eq} для чисел. В
+частности, возможно, что значение выражения
+\begin{lisp}
+(let ((x z) (y z)) (eq x y))
+\end{lisp}
+может быть ложным, а не истинным, если значение \cdf{z} является числом.
+
 
 \beforenoterule
 \begin{rationale}
@@ -55,13 +67,17 @@ a number, then the predicate \cdf{eql} is probably appropriate;
 if both objects are known to be numbers, then \cdf{=}
 may be preferable.
 
+Если два объекта сравниваются для <<идентичности>>, но один из может быть
+числом, то использование предиката \cdf{eql} является более подходящим.
+Если оба объекта являются числами, то преимущество стоит отдать \cdf{=}.
+
 \section{Precision, Contagion, and Coercion}
 \label{PRECISION-CONTAGION-COERCION-SECTION}
 
 In general,
 computations with floating-point numbers are only approximate.
-The {\it precision} of a floating-point number is not necessarily
-correlated at all with the {\it accuracy} of that number.
+The \emph{precision} of a floating-point number is not necessarily
+correlated at all with the \emph{accuracy} of that number.
 For instance, 3.142857142857142857 is a more precise approximation
 to $\pi$ than 3.14159, but the latter is more accurate.
 The precision refers to the number of bits retained in the representation.
@@ -96,7 +112,7 @@ discussion before a solution is standardized.
 
 For the record, the proposal that was considered and rejected
 (for the nonce) introduced a macro
-\cd{without-\discretionary{}{}{}floating-\discretionary{}{}{}underflow-\discretionary{}{}{}traps}
+\cdf{without-floating-underflow-traps}
 that would execute its body in such a way that, within its dynamic extent,
 a floating-point underflow
 must not signal an error but instead must produce
@@ -113,7 +129,7 @@ The rejected proposal also specified the following treatment of overflow and und
   numbers.
 \end{itemize}
 These points refer to conditions \cdf{floating-point-overflow}
-and \cd{floating-\discretionary{}{}{}point-\discretionary{}{}{}underflow}
+and \cdf{floating-point-underflow}
 that were approved by X3J13
 and are described in section~\ref{PREDEFINED-CONDITIONS-SECTION}.
 \end{newer}
@@ -121,7 +137,7 @@ and are described in section~\ref{PREDEFINED-CONDITIONS-SECTION}.
 \vskip 0pt plus 24pt
 
 When rational and floating-point numbers are compared or combined by
-a numerical function, the rule of {\it floating-point contagion}
+a numerical function, the rule of \emph{floating-point contagion}
 is followed: when a rational meets a floating-point number,\vadjust{\penalty-10000}
 the rational is first converted to a floating-point number of
 the same format.  For functions such as \cdf{+}
@@ -133,8 +149,8 @@ rationals and then the rest is done using floating-point arithmetic.
 X3J13 voted in January 1989
 \issue{CONTAGION-ON-NUMERICAL-COMPARISONS}
 to apply the rule of floating-point
-contagion stated above to the case of {\it combining} rational and floating-point numbers.
-For {\it comparing}, the following rule is to be used instead:
+contagion stated above to the case of \emph{combining} rational and floating-point numbers.
+For \emph{comparing}, the following rule is to be used instead:
 When a rational number and a floating-point number are to be compared
 by a numerical function, in effect the floating-point number is first
 converted to a rational number as if by the function \cdf{rational},
@@ -222,81 +238,121 @@ imaginary part of zero.
 If any computation produces a result that is a ratio of
 two integers such that the denominator evenly divides the
 numerator, then the result is immediately converted to the equivalent
-integer.  This is called the rule of {\it rational canonicalization}.
+integer.  This is called the rule of \emph{rational canonicalization}.
 
 If the result of any computation would be a complex rational
 with a zero imaginary part, the result is immediately
 converted to a non-complex rational number by taking the
-real part.  This is called the rule of {\it complex canonicalization}.
-Note that this rule does {\it not} apply to complex numbers whose components
+real part.  This is called the rule of \emph{complex canonicalization}.
+Note that this rule does \emph{not} apply to complex numbers whose components
 are floating-point numbers.  Whereas \cd{\#C(5 0)} and \cd{5} are not
 distinct values in Common Lisp (they are always \cdf{eql}),
 \cd{\#C(5.0 0.0)} and \cd{5.0} are always distinct values in Common Lisp
 (they are never \cdf{eql}, although they are \cdf{equalp}).
 
-\section{Predicates on Numbers}
+\section{Predicates on Numbers Предикаты для чисел}
 
 Each of the following functions tests a single number for
 a specific property.
 Each function requires that its argument be
 a number; to call one with a non-number is an error.
 
+Каждая из следующих функций проверяет одиночное число на наличие некоторого
+свойсва.
+Каждая функция требует числовой аргумент. Вызов с отличным аргументом является
+ошибкой.
+
 \begin{defun}[Function]
 zerop number
 
-This predicate is true if {\it number} is zero (the integer zero,
+This predicate is true if \emph{number} is zero (the integer zero,
 a floating-point zero, or a complex zero), and is false otherwise.
 Regardless of whether an implementation provides distinct representations
 for positive and negative floating-point zeros,
 \cd{(zerop -0.0)} is always true.
-It is an error if the argument {\it number} is not a number.
+It is an error if the argument \emph{number} is not a number.
+
+Если \emph{number} является нулем (целым нулем, нулем с
+плавающей точкой, компексным нулем), этот предикат истинен, иначе ложен.
+Вне зависимости от того, предоставляет различные представления для
+положительного и отрицательного нулей система, \cd{(zerop -0.0)} всегда истинно.
+Если аргумент \emph{number} не является числом, то сигнализируется ошибка.
 \end{defun}
 
 \begin{defun}[Function]
 plusp number
 
-This predicate is true if {\it number} is strictly greater than zero,
+This predicate is true if \emph{number} is strictly greater than zero,
 and is false otherwise.
-It is an error if the argument {\it number} is not a non-complex number.
+It is an error if the argument \emph{number} is not a non-complex number.
+
+Если \emph{number} строго больше нуля, то предикат истинен, иначе ложен.
+Аргумент \emph{number} должен быть любым числом, кроме комплексного, иначе
+сигнализируется ошибка. 
 \end{defun}
 
 \begin{defun}[Function]
 minusp number
 
-This predicate is true if {\it number} is strictly less than zero,
+This predicate is true if \emph{number} is strictly less than zero,
 and is false otherwise.
 Regardless of whether an implementation provides distinct representations
 for positive and negative floating-point zeros,
 \cd{(minusp -0.0)} is always false.
 (The function \cdf{float-sign} may be used to distinguish a negative zero.)
-It is an error if the argument {\it number} is not a non-complex number.
+It is an error if the argument \emph{number} is not a non-complex number.
+
+Если \emph{number} строго меньше нуля, то предикат истинен, иначе ложен.
+Вне зависимости от того, предоставляет ли система различные отображения для
+отрицательного и положительного нулей с плавающей точкой, \cd{(minusp -0.0)}
+всегда ложно.
+(Для проверки отрицательного нуля, может использоваться функция
+\cdf{float-sign}.)
+Аргумент \emph{number} должен быть любым числом, кроме комплексного, иначе
+сигнализируется ошибка. 
 \end{defun}
 
 \begin{defun}[Function]
 oddp integer
 
-This predicate is true if the argument {\it integer} is odd (not divisible
+This predicate is true if the argument \emph{integer} is odd (not divisible
 by 2), and otherwise is false.  It is an error if the argument is not
 an integer.
+
+Если аргумент \emph{integer} является нечетным числом (то есть не делится на два
+нацело), то предикат истинен, иначе ложен.
+Если аргумент не целое число, сигнализируется ошибка.
 \end{defun}
 
 \begin{defun}[Function]
 evenp integer
 
-This predicate is true if the argument {\it integer} is even (divisible
+This predicate is true if the argument \emph{integer} is even (divisible
 by 2), and otherwise is false.  It is an error if the argument is not
 an integer.
+
+Если аргумент \emph{integer} является четным числом (то есть делится на два
+нацело), то предикат истинен, иначе ложен.
+Если аргумент не целое число, сигнализируется ошибка.
 \end{defun}
 
 See also the data-type predicates \cdf{integerp},
 \cdf{rationalp}, \cdf{floatp}, \cdf{complexp}, and \cdf{numberp}.
 
-\section{Comparisons on Numbers}
+Смотрите также предикаты типов данных \cdf{integerp},
+\cdf{rationalp}, \cdf{floatp}, \cdf{complexp} и \cdf{numberp}.
+
+\section{Comparisons on Numbers Сравнение чисел}
 
 Each of the functions in this section requires that its arguments all be
 numbers; to call one with a non-number is an error.  Unless otherwise
 specified, each works on all types of numbers, automatically performing
 any required coercions when arguments are of different types.
+
+Каждая функция в данном разделе требует, что все аргументы были
+числами. Использование в качестве аргумента не числа является ошибкой. Если не
+указано иное, то каждая функция работает со всеми типами чисел, автоматически
+выполняя необходимые приведения, когда типы аргументы различаются.
 
 \begin{defun}[Function]
 = number &rest more-numbers \\
@@ -311,43 +367,43 @@ of arguments satisfies a certain condition:
 \begin{tabbing}
 \hskip 5pc\=\kill
 \cdf{=}\>all the same \\
-\cd{/=}\>all different \\
+\cdf{/=}\>all different \\
 \cdf{<}\>monotonically increasing \\
 \cdf{>}\>monotonically decreasing \\
 \cdf{<=}\>monotonically nondecreasing \\
 \cdf{>=}\>monotonically nonincreasing
 \end{tabbing}
 then the predicate is true, and otherwise is false.
-Complex numbers may be compared using \cdf{=} and \cd{/=},
+Complex numbers may be compared using \cdf{=} and \cdf{/=},
 but the others require non-complex arguments.
 Two complex numbers are considered equal by \cdf{=}
 if their real parts are equal and their imaginary parts are equal
 according to \cdf{=}.
-A complex number may be compared with a non-complex number with \cdf{=} or \cd{/=}.
+A complex number may be compared with a non-complex number with \cdf{=} or \cdf{/=}.
 For example:
 \begin{lisp}
 \hskip 0.5\textwidth\=\kill
-(= 3 3) {\rm is true.}\>(/= 3 3) {\rm is false.} \\
-(= 3 5) {\rm is false.}\>(/= 3 5) {\rm is true.} \\
-(= 3 3 3 3) {\rm is true.}\>(/= 3 3 3 3) {\rm is false.} \\
-(= 3 3 5 3) {\rm is false.}\>(/= 3 3 5 3) {\rm is false.} \\
-(= 3 6 5 2) {\rm is false.}\>(/= 3 6 5 2) {\rm is true.} \\
-(= 3 2 3) {\rm is false.}\>(/= 3 2 3) {\rm is false.} \\
-(< 3 5) {\rm is true.}\>(<= 3 5) {\rm is true.} \\
-(< 3 -5) {\rm is false.}\>(<= 3 -5) {\rm is false.} \\
-(< 3 3) {\rm is false.}\>(<= 3 3) {\rm is true.} \\
-(< 0 3 4 6 7) {\rm is true.}\>(<= 0 3 4 6 7) {\rm is true.} \\
-(< 0 3 4 4 6) {\rm is false.}\>(<= 0 3 4 4 6) {\rm is true.} \\
-(> 4 3) {\rm is true.}\>(>= 4 3) {\rm is true.} \\
-(> 4 3 2 1 0) {\rm is true.}\>(>= 4 3 2 1 0) {\rm is true.} \\
-(> 4 3 3 2 0) {\rm is false.}\>(>= 4 3 3 2 0) {\rm is true.} \\
-(> 4 3 1 2 0) {\rm is false.}\>(>= 4 3 1 2 0) {\rm is false.} \\
-(= 3) {\rm is true.}\>(/= 3) {\rm is true.} \\
-(< 3) {\rm is true.}\>(<= 3) {\rm is true.} \\
-(= 3.0 \#C(3.0 0.0)) {\rm is true.}\>(/= 3.0 \#C(3.0 1.0)) {\rm is true.} \\
-(= 3 3.0) {\rm is true.}\>(= 3.0s0 3.0d0) {\rm is true.} \\
-(= 0.0 -0.0) {\rm is true.}\>(= 5/2 2.5) {\rm is true.} \\
-(> 0.0 -0.0) {\rm is false.}\>(= 0 -0.0) {\rm is true.}
+(= 3 3) \textrm{is true.}\>(/= 3 3) \textrm{is false.} \\
+(= 3 5) \textrm{is false.}\>(/= 3 5) \textrm{is true.} \\
+(= 3 3 3 3) \textrm{is true.}\>(/= 3 3 3 3) \textrm{is false.} \\
+(= 3 3 5 3) \textrm{is false.}\>(/= 3 3 5 3) \textrm{is false.} \\
+(= 3 6 5 2) \textrm{is false.}\>(/= 3 6 5 2) \textrm{is true.} \\
+(= 3 2 3) \textrm{is false.}\>(/= 3 2 3) \textrm{is false.} \\
+(< 3 5) \textrm{is true.}\>(<= 3 5) \textrm{is true.} \\
+(< 3 -5) \textrm{is false.}\>(<= 3 -5) \textrm{is false.} \\
+(< 3 3) \textrm{is false.}\>(<= 3 3) \textrm{is true.} \\
+(< 0 3 4 6 7) \textrm{is true.}\>(<= 0 3 4 6 7) \textrm{is true.} \\
+(< 0 3 4 4 6) \textrm{is false.}\>(<= 0 3 4 4 6) \textrm{is true.} \\
+(> 4 3) \textrm{is true.}\>(>= 4 3) \textrm{is true.} \\
+(> 4 3 2 1 0) \textrm{is true.}\>(>= 4 3 2 1 0) \textrm{is true.} \\
+(> 4 3 3 2 0) \textrm{is false.}\>(>= 4 3 3 2 0) \textrm{is true.} \\
+(> 4 3 1 2 0) \textrm{is false.}\>(>= 4 3 1 2 0) \textrm{is false.} \\
+(= 3) \textrm{is true.}\>(/= 3) \textrm{is true.} \\
+(< 3) \textrm{is true.}\>(<= 3) \textrm{is true.} \\
+(= 3.0 \#C(3.0 0.0)) \textrm{is true.}\>(/= 3.0 \#C(3.0 1.0)) \textrm{is true.} \\
+(= 3 3.0) \textrm{is true.}\>(= 3.0s0 3.0d0) \textrm{is true.} \\
+(= 0.0 -0.0) \textrm{is true.}\>(= 5/2 2.5) \textrm{is true.} \\
+(> 0.0 -0.0) \textrm{is false.}\>(= 0 -0.0) \textrm{is true.}
 \end{lisp}
 With two arguments, these functions perform the usual arithmetic
 comparison tests.
@@ -361,11 +417,65 @@ as shown in the following example:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{indices for \cdf{s} and $\cdf{j}\leq\cdf{k}$}
 \end{lisp}
 
+Каждая из этих функций принимает один и более аргументов. Если последовательно
+аргументов удовлетворяет следующему условию:
+\begin{tabbing}
+\hskip 5pc\=\kill
+\cdf{=}\>все равны \\
+\cdf{/=}\>все различны \\
+\cdf{<}\>монотонно возрастают \\
+\cdf{>}\>монотонно убывают \\
+\cdf{<=}\>монотонно не убывают \\
+\cdf{>=}\>монотонно не возрастают
+\end{tabbing}
+тогда предикат истинен, иначе ложен.
+Комплексные числа могут сравниваться с помощью \cdf{=} и \cdf{/=}, но остальные
+предикаты требуют некомплексных аргументов.
+Два комплексных числа равны \cdf{=}, если их действительные части равны между
+собой и мнимые равны между собой с помощью предиката \cdf{=}.
+Комплексное число может быть сравнено с некомплексным с помошью \cdf{=} или
+\cdf{/=}.
+Например
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+(= 3 3) \textrm{истина}\>(/= 3 3) \textrm{ложь} \\
+(= 3 5) \textrm{ложь}\>(/= 3 5) \textrm{истина} \\
+(= 3 3 3 3) \textrm{истина}\>(/= 3 3 3 3) \textrm{ложь} \\
+(= 3 3 5 3) \textrm{ложь}\>(/= 3 3 5 3) \textrm{ложь} \\
+(= 3 6 5 2) \textrm{ложь}\>(/= 3 6 5 2) \textrm{истина} \\
+(= 3 2 3) \textrm{ложь}\>(/= 3 2 3) \textrm{ложь} \\
+(< 3 5) \textrm{истина}\>(<= 3 5) \textrm{истина} \\
+(< 3 -5) \textrm{ложь}\>(<= 3 -5) \textrm{ложь} \\
+(< 3 3) \textrm{ложь}\>(<= 3 3) \textrm{истина} \\
+(< 0 3 4 6 7) \textrm{истина}\>(<= 0 3 4 6 7) \textrm{истина} \\
+(< 0 3 4 4 6) \textrm{ложь}\>(<= 0 3 4 4 6) \textrm{истина} \\
+(> 4 3) \textrm{истина}\>(>= 4 3) \textrm{истина} \\
+(> 4 3 2 1 0) \textrm{истина}\>(>= 4 3 2 1 0) \textrm{истина} \\
+(> 4 3 3 2 0) \textrm{ложь}\>(>= 4 3 3 2 0) \textrm{истина} \\
+(> 4 3 1 2 0) \textrm{ложь}\>(>= 4 3 1 2 0) \textrm{ложь} \\
+(= 3) \textrm{истина}\>(/= 3) \textrm{истина} \\
+(< 3) \textrm{истина}\>(<= 3) \textrm{истина} \\
+(= 3.0 \#C(3.0 0.0)) \textrm{истина}\>(/= 3.0 \#C(3.0 1.0)) \textrm{истина} \\
+(= 3 3.0) \textrm{истина}\>(= 3.0s0 3.0d0) \textrm{истина} \\
+(= 0.0 -0.0) \textrm{истина}\>(= 5/2 2.5) \textrm{истина} \\
+(> 0.0 -0.0) \textrm{ложь}\>(= 0 -0.0) \textrm{истина}
+\end{lisp}
+С двумя аргументами, эти функции выполняют обычные арифметические сравнения.
+С тремя и более аргуметами, они полезны для проверок рядов, как показано в
+следующем примере:
+\begin{lisp}
+(<= 0 x 9)~~~~~~~~~~~~~~~~~~~~~~;\textrm{истина, если \cdf{x} между 0 и 9, включительно} \\
+(< 0.0 x 1.0)~~~~~~~~~~~~~~~~~~~;\textrm{истина, если \cdf{x} между 0.0 и 1.0} \\
+(< -1 j (length s))~~~~~~~~~~~~~;\textrm{истина, если \cdf{j} корректный индекс для \cdf{s}} \\
+(<= 0 j k (- (length s) 1))~~~~~;\textrm{истина, если \cdf{j} и \cdf{k} оба корректные} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{индексы \cdf{s} и $\cdf{j}\leq\cdf{k}$}
+\end{lisp}
+
 \beforenoterule
 \begin{rationale}
-The ``unequality'' relation is called \cd{/=} rather than
+The ``unequality'' relation is called \cdf{/=} rather than
 \cd{<>}
-(the name used in Pascal) for two reasons.  First, \cd{/=} of more than two
+(the name used in Pascal) for two reasons.  First, \cdf{/=} of more than two
 arguments is not the same as the \cdf{or} of \cdf{<} and \cdf{>} of those same
 arguments.  Second, unequality is meaningful for complex numbers even though
 \cdf{<} and \cdf{>} are not.  For both reasons it would be misleading to
@@ -416,13 +526,34 @@ Similar remarks apply to \cdf{min} (replacing ``largest argument'' by
 (max 1 3 2 -7) \EV\ 3\>(min 1 3 2 -7) \EV\ -7 \\
 (max -2 3 0 7) \EV\ 7\>(min -2 3 0 7) \EV\ -2 \\
 (max 3) \EV\ 3\>(min 3) \EV\ 3 \\
-(max 5.0 2) \EV\ 5.0\>(min 5.0 2) \EV\ 2 {\it or} 2.0 \\
-(max 3.0 7 1) \EV\ 7 {\it or} 7.0\>(min 3.0 7 1) \EV\ 1 {\it or} 1.0 \\
+(max 5.0 2) \EV\ 5.0\>(min 5.0 2) \EV\ 2 \emph{or} 2.0 \\
+(max 3.0 7 1) \EV\ 7 \emph{or} 7.0\>(min 3.0 7 1) \EV\ 1 \emph{or} 1.0 \\
 (max 1.0s0 7.0d0) \EV\ 7.0d0 \\
-(min 1.0s0 7.0d0) \EV\ 1.0s0 {\it or} 1.0d0 \\
-(max 3 1 1.0s0 1.0d0) \EV\ 3 {\it or} 3.0d0 \\
-(min 3 1 1.0s0 1.0d0) \EV\ 1 {\it or} 1.0s0 {\it or} 1.0d0
+(min 1.0s0 7.0d0) \EV\ 1.0s0 \emph{or} 1.0d0 \\
+(max 3 1 1.0s0 1.0d0) \EV\ 3 \emph{or} 3.0d0 \\
+(min 3 1 1.0s0 1.0d0) \EV\ 1 \emph{or} 1.0s0 \emph{or} 1.0d0
 \end{lisp}
+
+Аргументы могут быть некомплексными числами.
+\cdf{max} возвращает наибольший аргумент (ближайший к положительной
+бесконечности).
+\cdf{max} возвращает наименьший аргумент (ближайший к отрицательной
+бесконечности).
+
+Для \cdf{max}, если аргументы являеются смесью из дробных и с плавающей точкой
+чисел, и наибольший является дробным, реализация может вернуть как дробное
+число, так и его апроксимацию с плавающей точкой.
+Если наибольший аргумент является числом с плавающей точкой меньшего формата в
+сравнении с числом большего формата, то реализация может вернуть число без
+изменения, либо конвертировать его в больший формат.
+More concisely, the implementation has the choice of returning the largest
+argument as is or applying the rules of floating-point contagion,
+taking all the arguments into consideration for contagion purposes.
+Если среди наибольших два аргумента равны, то реализация может вернуть любой из
+них.
+
+Те же правила применяются и ко второй функции \cdf{min} (только <<наибольший
+аргумент>> нужно заменить на <<наименьший аргумент>>).
 \end{defun}
 
 \section{Arithmetic Operations}
@@ -526,16 +657,16 @@ in which case it behaves like \cdf{truncate} of two arguments;
 this behavior is mathematically intractable, leading to such
 anomalies as
 \begin{lisp}
-(quotient 1.0 2.0) \EV\ 0.5   {\rm but}   (quotient 1 2) \EV\ 0
+(quotient 1.0 2.0) \EV\ 0.5   \textrm{but}   (quotient 1 2) \EV\ 0
 \end{lisp}
 In contrast, the Common Lisp function \cdf{/} produces these results:
 \begin{lisp}
-(/ 1.0 2.0) \EV\ 0.5          {\rm and}   (/ 1 2) \EV\ 1/2
+(/ 1.0 2.0) \EV\ 0.5          \textrm{and}   (/ 1 2) \EV\ 1/2
 \end{lisp}
 In practice \cdf{quotient} is used only when one is sure that both arguments
-are integers, {\it or} when one is sure that at least one argument
+are integers, \emph{or} when one is sure that at least one argument
 is a floating-point number.  \cdf{/} is tractable for its purpose
-and works for {\it any} numbers.
+and works for \emph{any} numbers.
 \end{incompatibility}
 \afternoterule
 \end{defun}
@@ -544,11 +675,11 @@ and works for {\it any} numbers.
 1+ number \\
 1- number
 
-\cd{(1+ {\it x})} is the same as \cd{(+ {\it x} 1)}.
+\cd{(1+ \emph{x})} is the same as \cd{(+ \emph{x} 1)}.
 
-\cd{(1- {\it x})} is the same as \cd{(- {\it x} 1)}.
-Note that the short name may be confusing: \cd{(1- {\it x})} does {\it not} mean
-$1-{\it x}$; rather, it means ${\it x}-1$.
+\cd{(1- \emph{x})} is the same as \cd{(- \emph{x} 1)}.
+Note that the short name may be confusing: \cd{(1- \emph{x})} does \emph{not} mean
+$1-\emph{x}$; rather, it means $\emph{x}-1$.
 
 \beforenoterule
 \begin{rationale}
@@ -571,31 +702,31 @@ This can easily be done as a source-language transformation.
 incf place [delta] \\
 decf place [delta]
 
-The number produced by the form {\it delta}
+The number produced by the form \emph{delta}
 is added to (\cdf{incf}) or subtracted from (\cdf{decf})
-the number in the generalized variable named by {\it place},
-and the sum is stored back into {\it place} and returned.
-The form {\it place} may be any form acceptable
+the number in the generalized variable named by \emph{place},
+and the sum is stored back into \emph{place} and returned.
+The form \emph{place} may be any form acceptable
 as a generalized variable to \cdf{setf}.
-If {\it delta} is not supplied, then the number in {\it place} is changed
+If \emph{delta} is not supplied, then the number in \emph{place} is changed
 by \cd{1}.
 For example:
 \begin{lisp}
 \hskip 9pc\=\kill
 (setq n 0) \\
-(incf n) \EV\ 1\>{\rm and now} n \EV\ 1 \\
-(decf n 3) \EV\ -2\>{\rm and now} n \EV\ -2 \\
-(decf n -5) \EV\ 3\>{\rm and now} n \EV\ 3 \\
-(decf n) \EV\ 2\>{\rm and now} n \EV\ 2
+(incf n) \EV\ 1\>\textrm{and now} n \EV\ 1 \\
+(decf n 3) \EV\ -2\>\textrm{and now} n \EV\ -2 \\
+(decf n -5) \EV\ 3\>\textrm{and now} n \EV\ 3 \\
+(decf n) \EV\ 2\>\textrm{and now} n \EV\ 2
 \end{lisp}
-The effect of \cd{(incf {\it place} {\it delta})}
+The effect of \cd{(incf \emph{place} \emph{delta})}
 is roughly equivalent to
 \begin{lisp}
-(setf {\it place} (+ {\it place} {\it delta}))
+(setf \emph{place} (+ \emph{place} \emph{delta}))
 \end{lisp}
-except that the latter would evaluate any subforms of {\it place}
+except that the latter would evaluate any subforms of \emph{place}
 twice, whereas \cdf{incf} takes care to evaluate them only once.
-Moreover, for certain {\it place} forms \cdf{incf} may be
+Moreover, for certain \emph{place} forms \cdf{incf} may be
 significantly more efficient than the \cdf{setf} version.
 \begin{newer}
 X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
@@ -606,7 +737,7 @@ to clarify order of evaluation (see section~\ref{SETF-SECTION}).
 \begin{defun}[Function]
 conjugate number
 
-This returns the complex conjugate of {\it number}.  The conjugate
+This returns the complex conjugate of \emph{number}.  The conjugate
 of a non-complex number is itself.  For a complex number \cdf{z},
 \begin{lisp}
 (conjugate z) \EQ\ (complex (realpart z) (- (imagpart z)))
@@ -630,7 +761,7 @@ If no arguments are given, \cdf{gcd} returns \cd{0},
 which is an identity for this operation.
 For three or more arguments,
 \begin{lisp}
-(gcd {\it a} {\it b} {\it c} ... {\it z}) \EQ\ (gcd (gcd {\it a} {\it b}) {\it c} ... {\it z})
+(gcd \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (gcd (gcd \emph{a} \emph{b}) \emph{c} ... \emph{z})
 \end{lisp}
 
 Here are some examples of the use of \cdf{gcd}:
@@ -651,17 +782,17 @@ which must be integers.
 The result of \cdf{lcm} is always a non-negative integer.
 For two arguments that are not both zero,
 \begin{lisp}
-(lcm {\it a} {\it b}) \EQ\ (/ (abs (* {\it a} {\it b})) (gcd {\it a} {\it b}))
+(lcm \emph{a} \emph{b}) \EQ\ (/ (abs (* \emph{a} \emph{b})) (gcd \emph{a} \emph{b}))
 \end{lisp}
 If one or both arguments are zero,
 \begin{lisp}
-(lcm {\it a} 0) \EQ\ (lcm 0 {\it a}) \EQ\ 0
+(lcm \emph{a} 0) \EQ\ (lcm 0 \emph{a}) \EQ\ 0
 \end{lisp}
 
 For one argument, \cdf{lcm} returns the absolute value of that argument.
 For three or more arguments,
 \begin{lisp}
-(lcm {\it a} {\it b} {\it c} ... {\it z}) \EQ\ (lcm (lcm {\it a} {\it b}) {\it c} ... {\it z})
+(lcm \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (lcm (lcm \emph{a} \emph{b}) \emph{c} ... \emph{z})
 \end{lisp}
 
 Some examples:
@@ -754,15 +885,15 @@ function, because it raises a number to the power 1/2.
 \begin{defun}[Function]
 exp number
 
-Returns {\it e} raised to the power {\it number},
-where {\it e} is the base of the natural logarithms.
+Returns \emph{e} raised to the power \emph{number},
+where \emph{e} is the base of the natural logarithms.
 \end{defun}
 
 \begin{defun}[Function]
 expt base-number power-number
 
-Returns {\it base-number} raised to the power {\it power-number}.
-If the {\it base-number} is of type \cdf{rational} and the {\it power-number} is
+Returns \emph{base-number} raised to the power \emph{power-number}.
+If the \emph{base-number} is of type \cdf{rational} and the \emph{power-number} is
 an \cdf{integer},
 the calculation will be exact and the result will be of type \cdf{rational};
 otherwise a floating-point approximation may result.
@@ -771,30 +902,30 @@ otherwise a floating-point approximation may result.
 X3J13 voted in March 1989
 \issue{COMPLEX-RATIONAL-RESULT}
 to clarify that provisions similar to those of the previous paragraph apply to complex
-numbers.  If the {\it base-number} is of type \cd{(complex~rational)}
-and the {\it power-number} is
+numbers.  If the \emph{base-number} is of type \cd{(complex~rational)}
+and the \emph{power-number} is
 an \cdf{integer},
 the calculation will also be exact and the result will be of type
 \cd{(or~rational (complex rational))};
 otherwise a floating-point or complex floating-point approximation may result.
 \end{newer}
 
-When {\it power-number} is \cd{0} (a zero of type integer),
-then the result is always the value 1 in the type of {\it base-number},
-even if the {\it base-number} is zero (of any type).  That is:
+When \emph{power-number} is \cd{0} (a zero of type integer),
+then the result is always the value 1 in the type of \emph{base-number},
+even if the \emph{base-number} is zero (of any type).  That is:
 \begin{lisp}
-(expt {\it x} 0) \EQ\ (coerce 1 (type-of {\it x}))
+(expt \emph{x} 0) \EQ\ (coerce 1 (type-of \emph{x}))
 \end{lisp}
-If the {\it power-number} is a zero of any other data type,
+If the \emph{power-number} is a zero of any other data type,
 then the result is also the value 1, in the type of the arguments
 after the application of the contagion rules, with one exception:
-it is an error if {\it base-number} is zero when the {\it power-number}
+it is an error if \emph{base-number} is zero when the \emph{power-number}
 is a zero not of type integer.
 
 Implementations of \cdf{expt} are permitted to use different algorithms
-for the cases of a rational {\it power-number} and a floating-point
-{\it power-number}; the motivation is that in many cases greater accuracy
-can be achieved for the case of a rational {\it power-number}.
+for the cases of a rational \emph{power-number} and a floating-point
+\emph{power-number}; the motivation is that in many cases greater accuracy
+can be achieved for the case of a rational \emph{power-number}.
 For example, \cd{(expt pi 16)} and \cd{(expt pi 16.0)} may yield
 slightly different results if the first case is computed by repeated squaring
 and the second by the use of logarithms.  Similarly, an implementation
@@ -813,16 +944,16 @@ specification of the principal value of \cdf{expt} as given in section~\ref{BRAN
 should be regarded as definitive.
 
 As an example of the difficulty, let
-$ {\it x}=\cis {2 \pi \over 3}= -{1 \over 2} + {\sqrt{3} \over 2}{\it i} $.
-Then $ \sqrt{{\it x}^3} = \sqrt{1} = 1 $, but
-$ {\it x}^{3 / 2} = {\it e}^{(3/2) \log {\hbox{\scriptsize\it x}}}
-   = {\it e}^{(3/2) (2\pi/3) i} = {\it e}^{\pi i} = -1 $.
+$ \emph{x}=\cis {2 \pi \over 3}= -{1 \over 2} + {\sqrt{3} \over 2}\emph{i} $.
+Then $ \sqrt{\emph{x}^3} = \sqrt{1} = 1 $, but
+$ \emph{x}^{3 / 2} = \emph{e}^{(3/2) \log {x}}
+   = \emph{e}^{(3/2) (2\pi/3) i} = \emph{e}^{\pi i} = -1 $.
 Another example is $x=-1$; then $ \sqrt{x^3} = \sqrt{-1} = i$, but
 $ x^{3/2} = e^{(3/2) \log {x}} = e^{(3/2) \pi i} = -i $.
 \end{new}
 
 The result of \cdf{expt} can be a complex number, even when neither argument
-is complex, if {\it base-number} is negative and {\it power-number}
+is complex, if \emph{base-number} is negative and \emph{power-number}
 is not an integer.  The result is always the principal complex value.
 Note that \cd{(expt -8 1/3)} is not permitted to return \cd{-2};
 while \cd{-2} is indeed one of the cube roots of \cd{-8}, it is
@@ -830,7 +961,7 @@ not the principal cube root, which is a complex number
 approximately equal to \cd{\#C(1.0 1.73205)}.
 
 \begin{new}%CORR
-{\it Notice of correction.}  The first edition gave the incorrect value
+\emph{Notice of correction.}  The first edition gave the incorrect value
 \cd{\#C(0.5 1.73205)} for the principal cube root of \cd{-8}.  The correct
 value is \cd{\#C(1.0 1.73205)}, that is, $1+\sqrt{3}i$.  I simply don't know what
 I was thinking of!
@@ -841,8 +972,8 @@ I was thinking of!
 \begin{defun}[Function]
 log number &optional base
 
-Returns the logarithm of {\it number} in the base {\it base},
-which defaults to {\it e}, the base of the natural logarithms.
+Returns the logarithm of \emph{number} in the base \emph{base},
+which defaults to \emph{e}, the base of the natural logarithms.
 For example:
 \begin{lisp}
 (log 8.0 2) \EV\ 3.0 \\
@@ -866,7 +997,7 @@ in terms of real logarithm, absolute value,
 arc tangent of two real arguments, and the phase function as
 \begin{tabbing}
 \hskip 10pc\=\kill
-Logarithm\>$ \log \left| {\it z} \right| + {\it i} \phase {\it z} $
+Logarithm\>$ \log \left| \emph{z} \right| + \emph{i} \phase \emph{z} $
 \end{tabbing}
 This specifies the branch cuts precisely whether minus zero is supported or not;
 see \cdf{phase} and \cdf{atan}.
@@ -876,8 +1007,8 @@ see \cdf{phase} and \cdf{atan}.
 \begin{defun}[Function]
 sqrt number
 
-Returns the principal square root of {\it number}.
-If the {\it number} is not complex but is negative, then the result
+Returns the principal square root of \emph{number}.
+If the \emph{number} is not complex but is negative, then the result
 will be a complex number.
 For example:
 \begin{lisp}
@@ -896,7 +1027,7 @@ As a part of that vote it approved a mathematical definition of complex square r
 in terms of complex logarithm and exponential functions as
 \begin{tabbing}
 \hskip 10pc\=\kill
-Square root\>$ {\it e}^{(\log z)/2} $
+Square root\>$ \emph{e}^{(\log z)/2} $
 \end{tabbing}
 This specifies the branch cuts precisely whether minus zero is supported or not;
 see \cdf{phase} and \cdf{atan}.
@@ -929,15 +1060,15 @@ operate on complex numbers makes the trigonometric connection clear.
 \begin{defun}[Function]
 abs number
 
-Returns the absolute value of the argument.  For a non-complex number {\it x},
+Returns the absolute value of the argument.  For a non-complex number \emph{x},
 \begin{lisp}
-(abs {\it x}) \EQ\ (if (minusp {\it x}) (- {\it x}) {\it x})
+(abs \emph{x}) \EQ\ (if (minusp \emph{x}) (- \emph{x}) \emph{x})
 \end{lisp}
 and the result is always of the same type as the argument.
 
-For a complex number {\it z}, the absolute value may be computed as
+For a complex number \emph{z}, the absolute value may be computed as
 \begin{lisp}
-(sqrt (+ (expt (realpart {\it z}) 2) (expt (imagpart {\it z}) 2)))
+(sqrt (+ (expt (realpart \emph{z}) 2) (expt (imagpart \emph{z}) 2)))
 \end{lisp}
 
 \beforenoterule
@@ -963,7 +1094,7 @@ phase number
 The phase of a number is the angle part of its polar representation
 as a complex number.  That is,
 \begin{lisp}
-(phase {\it z}) \EQ\ (atan (imagpart {\it z}) (realpart {\it z}))
+(phase \emph{z}) \EQ\ (atan (imagpart \emph{z}) (realpart \emph{z}))
 \end{lisp}
 \begin{obsolete}
 The result is in radians, in the range $-\pi$ (exclusive)
@@ -978,12 +1109,12 @@ X3J13 voted in January 1989
 to specify certain floating-point behavior when minus zero is supported;
 \cdf{phase} is still defined in terms of \cdf{atan} as above,
 but thanks to a change in \cdf{atan} the range of \cdf{phase}
-becomes $-\pi$ {\it inclusive} to $\pi$ inclusive.  The value $-\pi$
+becomes $-\pi$ \emph{inclusive} to $\pi$ inclusive.  The value $-\pi$
 results from an argument\vadjust{\penalty-10000}
 whose real part is negative and whose imaginary
 part is minus zero.  The \cdf{phase} function therefore has a branch cut
-along the negative real axis.  The phase of $+0+0{\it i}$ is $+0$, of $+0-0{\it i}$ is $-0$,
-of $-0+0{\it i}$ is $+\pi$, and of $-0-0{\it i}$ is $-\pi$.
+along the negative real axis.  The phase of $+0+0\emph{i}$ is $+0$, of $+0-0\emph{i}$ is $-0$,
+of $-0+0\emph{i}$ is $+\pi$, and of $-0-0\emph{i}$ is $-\pi$.
 \end{new}
 
 If the argument is a complex floating-point number, the result
@@ -1000,15 +1131,15 @@ signum number
 
 By definition,
 \begin{lisp}
-(signum {\it x}) \EQ\ (if (zerop {\it x}) {\it x} (/ {\it x} (abs {\it x})))
+(signum \emph{x}) \EQ\ (if (zerop \emph{x}) \emph{x} (/ \emph{x} (abs \emph{x})))
 \end{lisp}
 For a rational number, \cdf{signum} will return one of \cd{-1}, \cd{0}, or \cd{1}
 according to whether the number is negative, zero, or positive.
 For a floating-point number, the result will be a floating-point number
 of the same format whose value is $-1$, $0$, or $1$.
-For a complex number {\it z}, \cd{(signum {\it z})} is a complex number of
-the same phase but with unit magnitude, unless {\it z} is a complex zero,
-in which case the result is {\it z}.
+For a complex number \emph{z}, \cd{(signum \emph{z})} is a complex number of
+the same phase but with unit magnitude, unless \emph{z} is a complex zero,
+in which case the result is \emph{z}.
 For example:
 \begin{lisp}
 (signum 0) \EV\ 0 \\
@@ -1034,9 +1165,9 @@ The argument may be complex.
 \begin{defun}[Function]
 cis radians
 
-This computes $ {\it e} ^ {i \cdot radians} $.
-The name \cdf{cis} means ``cos + {\it i} sin,'' because
-$ {\it e} ^{ i \theta } = \cos \theta + {\it i} \sin \theta $.
+This computes $ \emph{e} ^ {i \cdot radians} $.
+The name \cdf{cis} means ``cos + \emph{i} sin,'' because
+$ \emph{e} ^{ i \theta } = \cos \theta + \emph{i} \sin \theta $.
 The argument is in
 radians and may be any non-complex number.  The result is a complex
 number whose real part is the cosine of the argument and whose imaginary
@@ -1060,11 +1191,11 @@ acos number
 The result is in radians.  The argument may be complex.
 
 The arc sine and arc cosine functions may be defined mathematically for
-an argument {\it z} as follows:
+an argument \emph{z} as follows:
 \begin{tabbing}
 \hskip 10pc\=\kill
-Arc sine\>$ -{\it i} \log \left({\it i}{\it z} + \sqrt{1-{\it z}^2}\right) $ \\[2pt]
-Arc cosine\>$ -{\it i} \log \left({\it z} + {\it i}\sqrt{1-{\it z}^2}\right) $
+Arc sine\>$ -\emph{i} \log \left(\emph{i}\emph{z} + \sqrt{1-\emph{z}^2}\right) $ \\[2pt]
+Arc cosine\>$ -\emph{i} \log \left(\emph{z} + \emph{i}\sqrt{1-\emph{z}^2}\right) $
 \end{tabbing}
 Note that the result of \cdf{asin} or \cdf{acos} may be
 complex even if the argument is not complex; this occurs
@@ -1075,9 +1206,9 @@ Kahan \cite{KAHAN-COMPLEX-FNS} suggests for \cdf{acos} the
 defining formula
 \begin{tabbing}
 \hskip 10pc\=\kill
-Arc cosine\>$  \displaystyle { 2 \log \left( \sqrt{{1+{\it z} \over 2}} + {\it i} \sqrt{{1-{\it z} \over 2}} \right) \over i}$
+Arc cosine\>$  \displaystyle { 2 \log \left( \sqrt{{1+\emph{z} \over 2}} + \emph{i} \sqrt{{1-\emph{z} \over 2}} \right) \over i}$
 \end{tabbing}
-or even the much simpler $ (\pi/2)-\arcsin {\it z} $.  Both equations are mathematically
+or even the much simpler $ (\pi/2)-\arcsin \emph{z} $.  Both equations are mathematically
 equivalent to the formula shown above.
 \end{newer}
 
@@ -1098,11 +1229,11 @@ atan y &optional x
 
 An arc tangent is calculated and the result is returned in radians.
 
-With two arguments {\it y} and {\it x}, neither argument may be complex.
-The result is the arc tangent of the quantity {\it y/x}.
-The signs of {\it y} and {\it x} are used to derive quadrant
-information; moreover, {\it x} may be zero provided
-{\it y} is not zero.  The value of \cdf{atan} is always between
+With two arguments \emph{y} and \emph{x}, neither argument may be complex.
+The result is the arc tangent of the quantity \emph{y/x}.
+The signs of \emph{y} and \emph{x} are used to derive quadrant
+information; moreover, \emph{x} may be zero provided
+\emph{y} is not zero.  The value of \cdf{atan} is always between
 $-\pi$ (exclusive) and $\pi$ (inclusive).
 The following table details various special cases.
 
@@ -1110,15 +1241,15 @@ The following table details various special cases.
 \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}llc@{}}
 \multicolumn{2}{c}{Condition}&Cartesian Locus&Range of Result \\
 \hlinesp
-\hbox to 0.4in{${\it y}=0$\hss}&\hbox to 0.4in{${\it x}>0$\hss}&\hbox to 1.6in{Positive {\it x}-axis\hss}&$0$ \\
-${\it y}>0$&${\it x}>0$&Quadrant I&$0 < {\rm result} < \pi/2$ \\
-${\it y}>0$&${\it x}=0$&Positive {\it y}-axis&$\pi/2$ \\
-${\it y}>0$&${\it x}<0$&Quadrant II&$\pi/2 < {\rm result} < \pi$ \\
-${\it y}=0$&${\it x}<0$&Negative {\it x}-axis&$\pi$ \\
-${\it y}<0$&${\it x}<0$&Quadrant III&$-\pi < {\rm result} < -\pi/2$ \\
-${\it y}<0$&${\it x}=0$&Negative {\it y}-axis&$-\pi/2$ \\
-${\it y}<0$&${\it x}>0$&Quadrant IV&$-\pi/2 < {\rm result} < 0$ \\
-${\it y}=0$&${\it x}=0$&Origin&error \\
+\hbox to 0.4in{$\emph{y}=0$\hss}&\hbox to 0.4in{$\emph{x}>0$\hss}&\hbox to 1.6in{Positive \emph{x}-axis\hss}&$0$ \\
+$\emph{y}>0$&$\emph{x}>0$&Quadrant I&$0 < \textrm{result} < \pi/2$ \\
+$\emph{y}>0$&$\emph{x}=0$&Positive \emph{y}-axis&$\pi/2$ \\
+$\emph{y}>0$&$\emph{x}<0$&Quadrant II&$\pi/2 < \textrm{result} < \pi$ \\
+$\emph{y}=0$&$\emph{x}<0$&Negative \emph{x}-axis&$\pi$ \\
+$\emph{y}<0$&$\emph{x}<0$&Quadrant III&$-\pi < \textrm{result} < -\pi/2$ \\
+$\emph{y}<0$&$\emph{x}=0$&Negative \emph{y}-axis&$-\pi/2$ \\
+$\emph{y}<0$&$\emph{x}>0$&Quadrant IV&$-\pi/2 < \textrm{result} < 0$ \\
+$\emph{y}=0$&$\emph{x}=0$&Origin&error \\
 \hline
 \end{tabular*}
 \end{flushleft}
@@ -1133,36 +1264,36 @@ When there is a minus zero, the preceding table must be modified slightly:
 \begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}llc@{}}
 \multicolumn{2}{c}{Condition}&Cartesian Locus&Range of Result \\
 \hlinesp
-\hbox to 0.4in{${\it y}=+0$\hss}&\hbox to 0.4in{${\it x}>0$\hss}&\hbox to 1.6in{Just above positive {\it x}-axis\hss}&$+0$ \\
-${\it y}>0$&${\it x}>0$&Quadrant I&$+0 < {\rm result} < \pi/2$ \\
-${\it y}>0$&${\it x}=\pm 0$&Positive {\it y}-axis&$\pi/2$ \\
-${\it y}>0$&${\it x}<0$&Quadrant II&$\pi/2 < {\rm result} < \pi$ \\
-${\it y}=+0$&${\it x}<0$&Just below negative {\it x}-axis&$\pi$ \\
-${\it y}=-0$&${\it x}<0$&Just above negative {\it x}-axis&$\pi$ \\
-${\it y}<0$&${\it x}<0$&Quadrant III&$-\pi < {\rm result} < -\pi/2$ \\
-${\it y}<0$&${\it x}=\pm 0$&Negative {\it y}-axis&$-\pi/2$ \\
-${\it y}<0$&${\it x}>0$&Quadrant IV&$-\pi/2 < {\rm result} < -0$ \\
-${\it y}=-0$&${\it x}>0$&Just below positive {\it x}-axis&$-0$ \\
-${\it y}=+0$&${\it x}=+0$&Near origin&$+0$ \\
-${\it y}=-0$&${\it x}=+0$&Near origin&$-0$ \\
-${\it y}=+0$&${\it x}=-0$&Near origin&$\pi$ \\
-${\it y}=-0$&${\it x}=-0$&Near origin&$-\pi$ \\
+\hbox to 0.4in{$\emph{y}=+0$\hss}&\hbox to 0.4in{$\emph{x}>0$\hss}&\hbox to 1.6in{Just above positive \emph{x}-axis\hss}&$+0$ \\
+$\emph{y}>0$&$\emph{x}>0$&Quadrant I&$+0 < \textrm{result} < \pi/2$ \\
+$\emph{y}>0$&$\emph{x}=\pm 0$&Positive \emph{y}-axis&$\pi/2$ \\
+$\emph{y}>0$&$\emph{x}<0$&Quadrant II&$\pi/2 < \textrm{result} < \pi$ \\
+$\emph{y}=+0$&$\emph{x}<0$&Just below negative \emph{x}-axis&$\pi$ \\
+$\emph{y}=-0$&$\emph{x}<0$&Just above negative \emph{x}-axis&$\pi$ \\
+$\emph{y}<0$&$\emph{x}<0$&Quadrant III&$-\pi < \textrm{result} < -\pi/2$ \\
+$\emph{y}<0$&$\emph{x}=\pm 0$&Negative \emph{y}-axis&$-\pi/2$ \\
+$\emph{y}<0$&$\emph{x}>0$&Quadrant IV&$-\pi/2 < \textrm{result} < -0$ \\
+$\emph{y}=-0$&$\emph{x}>0$&Just below positive \emph{x}-axis&$-0$ \\
+$\emph{y}=+0$&$\emph{x}=+0$&Near origin&$+0$ \\
+$\emph{y}=-0$&$\emph{x}=+0$&Near origin&$-0$ \\
+$\emph{y}=+0$&$\emph{x}=-0$&Near origin&$\pi$ \\
+$\emph{y}=-0$&$\emph{x}=-0$&Near origin&$-\pi$ \\
 \hline
 \end{tabular*}
 \end{flushleft}
 \vskip 0pt plus 6pt\relax%manual
 
-Note that the case ${\it y}=0,{\it x}=0$ is an error in the absence of minus zero,
-but the four cases ${\it y}=\pm 0,{\it x}=\pm 0$ are defined in the presence of minus zero.
+Note that the case $\emph{y}=0,\emph{x}=0$ is an error in the absence of minus zero,
+but the four cases $\emph{y}=\pm 0,\emph{x}=\pm 0$ are defined in the presence of minus zero.
 \end{new}
 
 \begin{obsolete}
-With only one argument {\it y}, the argument may be complex.
-The result is the arc tangent of {\it y}, which may be defined by
+With only one argument \emph{y}, the argument may be complex.
+The result is the arc tangent of \emph{y}, which may be defined by
 the following formula:
 \begin{tabbing}
 \hskip 10pc\=\kill
-Arc tangent\>$ -{\it i}\log \left((1+{\it i}{\it y}) \sqrt{1/(1+{\it y}^2)}\right) $
+Arc tangent\>$ -\emph{i}\log \left((1+\emph{i}\emph{y}) \sqrt{1/(1+\emph{y}^2)}\right) $
 \end{tabbing}
 \end{obsolete}
 
@@ -1185,7 +1316,7 @@ X3J13 voted in January 1989
 to replace the preceding formula with the formula
 \begin{tabbing}
 \hskip 10pc\=\kill
-Arc tangent\>$ \displaystyle { \log (1+{\it i}{\it y}) - \log (1-{\it i}{\it y}) \over 2{\it i} } $
+Arc tangent\>$ \displaystyle { \log (1+\emph{i}\emph{y}) - \log (1-\emph{i}\emph{y}) \over 2\emph{i} } $
 \end{tabbing}
 This change alters the direction of continuity for the
 branch cuts, which alters the result returned by \cdf{atan}
@@ -1194,7 +1325,7 @@ are of magnitude greater than 1.
 See section~\ref{BRANCH-CUTS-SECTION} for further details.
 \end{new}
 
-For a non-complex argument {\it y}, the result is non-complex and lies between
+For a non-complex argument \emph{y}, the result is non-complex and lies between
 $-\pi/2$ and $\pi/2$ (both exclusive).
 
 \beforenoterule
@@ -1225,16 +1356,16 @@ version of arc tangent, its branch cuts are inconsistent anyway.
 pi
 
 This global variable has as its value the best possible approximation to
-$\pi$ in {\it long} floating-point format.
+$\pi$ in \emph{long} floating-point format.
 For example:
 \begin{lisp}
-(defun sind (x)~~~~~;{\rm The argument is in degrees} \\
+(defun sind (x)~~~~~;\textrm{The argument is in degrees} \\
 ~~(sin (* x (/ (float pi x) 180))))
 \end{lisp}
 An approximation to $\pi$ in some other precision can
-be obtained by writing \cd{(float pi {\it x})}, where {\it x} is a
+be obtained by writing \cd{(float pi \emph{x})}, where \emph{x} is a
 floating-point number of the desired precision,
-or by writing \cd{(coerce pi {\it type})}, where {\it type} is the
+or by writing \cd{(coerce pi \emph{type})}, where \emph{type} is the
 name of the desired type, such as \cdf{short-float}.
 \end{defun}
 
@@ -1251,28 +1382,28 @@ atanh number
 \begin{obsolete}\noindent
 These functions compute the hyperbolic sine, cosine, tangent,
 arc sine, arc cosine, and arc tangent functions, which are mathematically
-defined for an argument {\it z} as follows:
+defined for an argument \emph{z} as follows:
 
 \begin{tabbing}
 \hskip 10pc\=\kill
-Hyperbolic sine\>$ ({\it e}^{z}-{\it e}^{-z})/2 $ \\
-Hyperbolic cosine\>$ ({\it e}^{z}+{\it e}^{-z})/2 $ \\
-Hyperbolic tangent\>$ ({\it e}^{z}-{\it e}^{-z})/({\it e}^{z}+{\it e}^{-z}) $ \\[2pt]
-Hyperbolic arc sine\>$ \log \left({\it z}+\sqrt{1+{\it z}^2}\right) $ \\[2pt]
-Hyperbolic arc cosine\>$ \log \left({\it z}+({\it z}+1)\sqrt{({\it z}-1)/({\it z}+1)}\right) $ \\[2pt]
-Hyperbolic arc tangent\>$ \log \left((1+{\it z})\sqrt{1-1/{\it z}^2}\right) $\`{\bf WRONG!}
+Hyperbolic sine\>$ (\emph{e}^{z}-\emph{e}^{-z})/2 $ \\
+Hyperbolic cosine\>$ (\emph{e}^{z}+\emph{e}^{-z})/2 $ \\
+Hyperbolic tangent\>$ (\emph{e}^{z}-\emph{e}^{-z})/(\emph{e}^{z}+\emph{e}^{-z}) $ \\[2pt]
+Hyperbolic arc sine\>$ \log \left(\emph{z}+\sqrt{1+\emph{z}^2}\right) $ \\[2pt]
+Hyperbolic arc cosine\>$ \log \left(\emph{z}+(\emph{z}+1)\sqrt{(\emph{z}-1)/(\emph{z}+1)}\right) $ \\[2pt]
+Hyperbolic arc tangent\>$ \log \left((1+\emph{z})\sqrt{1-1/\emph{z}^2}\right) $\`{\bf WRONG!}
 \end{tabbing}
 \end{obsolete}
 
 \begin{newer}
-WARNING!  {\it The formula shown above for hyperbolic arc tangent is incorrect.}
+WARNING!  \emph{The formula shown above for hyperbolic arc tangent is incorrect.}
 It is not a matter of incorrect branch cuts; it simply does not compute anything
 like a hyperbolic arc tangent.  This unfortunate error in the first edition
 was the result of mistranscribing a (correct) APL formula from Penfield's paper
 \cite{APL-BRANCH-CUTS}.  The formula should have been transcribed as
 \begin{tabbing}
 \hskip 10pc\=\kill
-Hyperbolic arc tangent\>$ \log \left((1+{\it z})\sqrt{1/(1-{\it z}^2)}\right) $
+Hyperbolic arc tangent\>$ \log \left((1+\emph{z})\sqrt{1/(1-\emph{z}^2)}\right) $
 \end{tabbing}
 A proposal was submitted to X3J13 in September 1989 to replace the
 formulae for \cdf{acosh} and \cdf{atanh}.
@@ -1309,7 +1440,7 @@ number of complex values for the logarithm function.  In each such
 case, a principal value must be chosen for the function to return.
 In general, such values cannot be chosen so as to make the range
 continuous; lines in the domain
-called {\it branch cuts} must be defined, which in turn
+called \emph{branch cuts} must be defined, which in turn
 define the discontinuities in the range.
 
 Common Lisp defines the branch cuts, principal values, and boundary
@@ -1324,7 +1455,7 @@ respects from those advanced by W.~Kahan, who considers not only the
 ``usual'' definitions but also the special modifications necessary for
 {IEEE} proposed floating-point arithmetic, which has infinities and
 minus zero as explicit computational objects.  For example, he proposes
-that $\sqrt{-4+0{\it i}}=2{\it i}$, but $\sqrt{-4-0{\it i}}=-2{\it i}$.
+that $\sqrt{-4+0\emph{i}}=2\emph{i}$, but $\sqrt{-4-0\emph{i}}=-2\emph{i}$.
 
 It may be that the differences between the APL proposal and Kahan's
 proposal will be ironed out.  If so, Common Lisp may be
@@ -1348,7 +1479,7 @@ The treatment of minus zero centers in two-argument \cdf{atan}.
 If there is no minus zero, then the branch cut runs just below the negative real
 axis as before, and the range of two-argument \cdf{atan} is $(-\pi,\pi]$.
 If there is a minus zero, however, then the branch cut runs precisely on the negative real
-axis, skittering between pairs of numbers of the form $-{\it x}\pm 0{\it i}$,
+axis, skittering between pairs of numbers of the form $-\emph{x}\pm 0\emph{i}$,
 and the range of two-argument \cdf{atan} is $[-\pi,\pi]$.
 
 The treatment of minus zero by all other irrational and transcendental functions
@@ -1366,7 +1497,7 @@ in IEEE standard floating-point arithmetic \cite{IEEE-PROPOSED-FLOATING-POINT-ST
 Remarks in the first edition about the direction of the continuity of branch
 cuts continue to hold in the absence of minus zero and may be ignored if minus zero
 is supported; since all branch cuts happen to run along the principal axes, they
-run {\it between} plus zero and minus zero, and so each sort of zero is associated
+run \emph{between} plus zero and minus zero, and so each sort of zero is associated
 with the obvious quadrant.
 \end{new}
 
@@ -1383,7 +1514,7 @@ X3J13 voted in January 1989
 to specify certain floating-point behavior when minus zero is supported.
 As a part of that vote it approved a mathematical definition of complex square root:
 \begin{tabbing}
-$ \sqrt{{\it z}} = {\it e}^{(\log z)/2} $
+$ \sqrt{\emph{z}} = \emph{e}^{(\log z)/2} $
 \end{tabbing}
 This defines the branch cuts precisely, whether minus zero is supported or not.
 \end{new}
@@ -1399,19 +1530,19 @@ X3J13 voted in January 1989
 to specify certain floating-point behavior when minus zero is supported.
 As a part of that vote it approved a mathematical definition of phase:
 \begin{tabbing}
-$ \phase {\it z} = \arctan (\Im {\it z}, \Re {\it z}) $
+$ \phase \emph{z} = \arctan (\Im \emph{z}, \Re \emph{z}) $
 \end{tabbing}
-where $\Im {\it z}$ is the imaginary part of ${\it z}$ and $\Re {\it z}$ the real part of ${\it z}$.
+where $\Im \emph{z}$ is the imaginary part of $\emph{z}$ and $\Re \emph{z}$ the real part of $\emph{z}$.
 This defines the branch cuts precisely, whether minus zero is supported or not.
 \end{new}
 
 \item[\cdf{log}]
 The branch cut for the logarithm function of one argument (natural
 logarithm) lies along the negative real axis, continuous with quadrant II.
-The domain excludes the origin.  For a complex number ${\it z}$,
-$\log {\it z}$ is defined to be
+The domain excludes the origin.  For a complex number $\emph{z}$,
+$\log \emph{z}$ is defined to be
 \begin{tabbing}
-$ \log {\it z} = \left(\log \left|{\it z}\right|\right)+{\it i} (\phase {\it z}) $
+$ \log \emph{z} = \left(\log \left|\emph{z}\right|\right)+\emph{i} (\phase \emph{z}) $
 \end{tabbing}
 Therefore the range of the one-argument logarithm function is that strip
 of the complex plane containing numbers with imaginary parts between
@@ -1423,10 +1554,10 @@ The X3J13 vote on minus zero
 would alter that exclusive bound of $-\pi$  to be inclusive if minus zero is supported.
 \end{new}
 
-The two-argument logarithm function is defined as $ \log_{b} {\it z}=(\log {\it z})/(\log {\it b}) $.
+The two-argument logarithm function is defined as $ \log_{b} \emph{z}=(\log \emph{z})/(\log \emph{b}) $.
 This defines the principal values precisely.  The range of the two-argument
 logarithm function is the entire complex plane.
-It is an error if ${\it z}$ is zero.  If ${\it z}$ is non-zero and ${\it b}$ is zero,
+It is an error if $\emph{z}$ is zero.  If $\emph{z}$ is non-zero and $\emph{b}$ is zero,
 the logarithm is taken to be zero.
 
 \item[\cdf{exp}]
@@ -1434,29 +1565,29 @@ The simple exponential function has no branch cut.
 
 \item[\cdf{expt}]
 The two-argument exponential function is defined
-as $ {\it b}^{x}={\it e}^{x \log b } $.
+as $ \emph{b}^{x}=\emph{e}^{x \log b } $.
 This defines the principal values precisely.  The range of the
 two-argument exponential function is the entire complex plane.  Regarded
-as a function of ${\it x}$, with ${\it b}$ fixed, there is no branch cut.
-Regarded as a function of {\it b}, with ${\it x}$ fixed, there is in general
+as a function of $\emph{x}$, with $\emph{b}$ fixed, there is no branch cut.
+Regarded as a function of \emph{b}, with $\emph{x}$ fixed, there is in general
 a branch cut along the negative real axis, continuous with quadrant II.
 The domain excludes the origin.
-By definition, $0^0=1$.  If ${\it b}=0$ and the real part of ${\it x}$ is strictly
-positive, then ${\it b}^{x}=0$.
-For all other values of ${\it x}$, $0^{x}$
+By definition, $0^0=1$.  If $\emph{b}=0$ and the real part of $\emph{x}$ is strictly
+positive, then $\emph{b}^{x}=0$.
+For all other values of $\emph{x}$, $0^{x}$
 is an error.
 
 \item[\cdf{asin}]
 The following definition for arc sine determines the range and
 branch cuts:
 \begin{tabbing}
-$ \arcsin {\it z}=-{\it i} \log \left({\it i}{\it z}+\sqrt{1-{\it z}^2}\right) $
+$ \arcsin \emph{z}=-\emph{i} \log \left(\emph{i}\emph{z}+\sqrt{1-\emph{z}^2}\right) $
 \end{tabbing}
 
 \begin{newer}\noindent
 This is equivalent to the formula
 \begin{tabbing}
-$ \displaystyle \arcsin {\it z} = { \arcsinh {\it i}{\it z} \over {\it i} }$
+$ \displaystyle \arcsin \emph{z} = { \arcsinh \emph{i}\emph{z} \over \emph{i} }$
 \end{tabbing}
 recommended by Kahan \cite{KAHAN-COMPLEX-FNS}.
 \end{newer}
@@ -1475,11 +1606,11 @@ the range if and only if its imaginary part is non-positive.
 The following definition for arc cosine determines the range and
 branch cuts:
 \begin{tabbing}
-$ \arccos {\it z}=-{\it i} \log \left({\it z}+{\it i} \sqrt{1-{\it z}^2}\right) $
+$ \arccos \emph{z}=-\emph{i} \log \left(\emph{z}+\emph{i} \sqrt{1-\emph{z}^2}\right) $
 \end{tabbing}
 or, which is equivalent,
 \begin{tabbing}
-$ \arccos {\it z}={\pi \over 2}-\arcsin {\it z} $
+$ \arccos \emph{z}={\pi \over 2}-\arcsin \emph{z} $
 \end{tabbing}
 The branch cut for the arc cosine function is in two pieces:
 one along the negative real axis to the left of $-1$
@@ -1498,7 +1629,7 @@ range and branch cuts:
 \begin{obsolete}
 \noindent\leavevmode\vtop{
 \begin{tabbing}
-$ \arctan {\it z}=-{\it i} \log \left((1+{\it i} {\it z}) \sqrt{1/(1+{\it z}^2)}\right)$
+$ \arctan \emph{z}=-\emph{i} \log \left((1+\emph{i} \emph{z}) \sqrt{1/(1+\emph{z}^2)}\right)$
 \end{tabbing}
 }
 
@@ -1506,10 +1637,10 @@ Beware of simplifying this formula; ``obvious'' simplifications are likely
 to alter the branch cuts or the values on the branch cuts incorrectly.
 
 The branch cut for the arc tangent function is in two pieces:
-one along the positive imaginary axis above {\it i}
+one along the positive imaginary axis above \emph{i}
 (exclusive), continuous with quadrant II, and one along the negative imaginary
-axis below $-{\it i}$ (exclusive), continuous with quadrant IV.  
-The points {\it i} and $-{\it i}$ are excluded from the domain.
+axis below $-\emph{i}$ (exclusive), continuous with quadrant IV.  
+The points \emph{i} and $-\emph{i}$ are excluded from the domain.
 The range is that strip of the complex plane containing numbers whose real
 part is between $-\pi/2$ and $\pi/2$.  A number with real
 part equal to $-\pi/2$ is in the range if and only if its imaginary
@@ -1524,11 +1655,11 @@ X3J13 voted in January 1989
 \issue{COMPLEX-ATAN-BRANCH-CUT}
 to replace the formula shown above with the formula
 \begin{tabbing}
-$ \displaystyle \arctan {\it z} = { \log (1+{\it i}{\it z}) - \log (1-{\it i}{\it z}) \over 2{\it i} }$
+$ \displaystyle \arctan \emph{z} = { \log (1+\emph{i}\emph{z}) - \log (1-\emph{i}\emph{z}) \over 2\emph{i} }$
 \end{tabbing}
 This is equivalent to the formula
 \begin{tabbing}
-$ \displaystyle \arctan {\it z} = { \arctanh {\it i}{\it z} \over {\it i} }$
+$ \displaystyle \arctan \emph{z} = { \arctanh \emph{i}\emph{z} \over \emph{i} }$
 \end{tabbing}
 recommended by Kahan \cite{KAHAN-COMPLEX-FNS}.
 It causes the upper branch cut to be continuous with
@@ -1539,28 +1670,28 @@ only for arguments on the positive imaginary axis that
 are of magnitude greater than 1.  The full description for this new formula is as follows.
 
 The branch cut for the arc tangent function is in two pieces:
-one along the positive imaginary axis above {\it i}
+one along the positive imaginary axis above \emph{i}
 (exclusive), continuous with quadrant I, and one along the negative imaginary
-axis below $-{\it i}$ (exclusive), continuous with quadrant III.  
-The points {\it i} and $-{\it i}$ are excluded from the domain.
+axis below $-\emph{i}$ (exclusive), continuous with quadrant III.  
+The points \emph{i} and $-\emph{i}$ are excluded from the domain.
 The range is that strip of the complex plane containing numbers whose real
 part is between $-\pi/2$ and $\pi/2$.  A number with real
 part equal to $-\pi/2$ is in the range if and only if its imaginary
 part is strictly negative; a number with real part equal to $\pi/2$ is in
 the range if and only if its imaginary part is strictly positive.  Thus the range of
-the arc tangent function is {\it not} identical to that of the arc sine function.
+the arc tangent function is \emph{not} identical to that of the arc sine function.
 \end{new}
 
 \item[\cdf{asinh}]
 The following definition for the inverse hyperbolic sine determines
 the range and branch cuts:
 \begin{tabbing}
-$ \arcsinh {\it z}=\log \left({\it z}+\sqrt{1+{\it z}^2}\right)$
+$ \arcsinh \emph{z}=\log \left(\emph{z}+\sqrt{1+\emph{z}^2}\right)$
 \end{tabbing}
 The branch cut for the inverse hyperbolic sine function is in two pieces:
-one along the positive imaginary axis above {\it i}
+one along the positive imaginary axis above \emph{i}
 (inclusive), continuous with quadrant I, and one along the negative imaginary
-axis below $-{\it i}$ (inclusive), continuous with quadrant III.
+axis below $-\emph{i}$ (inclusive), continuous with quadrant III.
 The range is that strip of the complex plane containing numbers whose imaginary
 part is between $-\pi/2$ and $\pi/2$.  A number with imaginary
 part equal to $-\pi/2$ is in the range if and only if its real
@@ -1571,16 +1702,16 @@ the range if and only if its real part is non-negative.
 The following definition for the inverse hyperbolic cosine
 determines the range and branch cuts:
 \begin{tabbing}
-$ \arccosh {\it z}=\log \left({\it z}+({\it z}+1)\sqrt{({\it z}-1)/({\it z}+1)}\right) $
+$ \arccosh \emph{z}=\log \left(\emph{z}+(\emph{z}+1)\sqrt{(\emph{z}-1)/(\emph{z}+1)}\right) $
 \end{tabbing}
 
 \begin{newer}
 Kahan \cite{KAHAN-COMPLEX-FNS} suggests the formula
 \begin{tabbing}
-$ \arccosh {\it z}=2 \log \left(  \sqrt{({\it z}+1)/2} + \sqrt{({\it z}-1)/2} \right) $
+$ \arccosh \emph{z}=2 \log \left(  \sqrt{(\emph{z}+1)/2} + \sqrt{(\emph{z}-1)/2} \right) $
 \end{tabbing}
 pointing out that it yields the same principal value but eliminates
-a gratuitous removable singularity at ${\it z}=-1$.
+a gratuitous removable singularity at $\emph{z}=-1$.
 A proposal was submitted to X3J13 in September 1989 to replace the
 formula \cdf{acosh} with that recommended by Kahan.
 There is a good possibility that it will be adopted.
@@ -1602,19 +1733,19 @@ determines the range and branch cuts:
 \begin{obsolete}
 \noindent\leavevmode\vtop{
 \begin{tabbing}
-$ \arctanh {\it z}=\log \left((1+{\it z})\sqrt{1-1/{\it z}^2}\right) $\`{\bf WRONG!}
+$ \arctanh \emph{z}=\log \left((1+\emph{z})\sqrt{1-1/\emph{z}^2}\right) $\`{\bf WRONG!}
 \end{tabbing}
 }
 \end{obsolete}
 
 \begin{newer}
-WARNING!  {\it The formula shown above for hyperbolic arc tangent is incorrect.}
+WARNING!  \emph{The formula shown above for hyperbolic arc tangent is incorrect.}
 It is not a matter of incorrect branch cuts; it simply does not compute anything
 like a hyperbolic arc tangent.  This unfortunate error in the first edition
 was the result of mistranscribing a (correct) APL formula from Penfield's paper
 \cite{APL-BRANCH-CUTS}.  The formula should have been transcribed as
 \begin{tabbing}
-$ \arctanh {\it z}=\log \left((1+{\it z})\sqrt{1/(1-{\it z}^2)}\right) $
+$ \arctanh \emph{z}=\log \left((1+\emph{z})\sqrt{1/(1-\emph{z}^2)}\right) $
 \end{tabbing}
 \end{newer}
 
@@ -1637,14 +1768,14 @@ imaginary part equal to $\pi/2$ is in the range if and only if its real
 part is strictly positive.  Thus the range of the inverse
 hyperbolic tangent function is identical to
 that of the inverse hyperbolic sine function with the points
-$-\pi {\it i}/2$ and $\pi {\it i}/2$ excluded.
+$-\pi \emph{i}/2$ and $\pi \emph{i}/2$ excluded.
 \end{obsolete}
 
 \begin{newer}
 A proposal was submitted to X3J13 in September 1989 to replace the
 formula \cdf{atanh} with that recommended by Kahan \cite{KAHAN-COMPLEX-FNS}:
 \begin{tabbing}
-$ \displaystyle \arctanh {\it z}= { \left(\log(1+{\it z}) - \log(1-{\it z})\right) \over 2 } $
+$ \displaystyle \arctanh \emph{z}= { \left(\log(1+\emph{z}) - \log(1-\emph{z})\right) \over 2 } $
 \end{tabbing}
 There is a good possibility that it will be adopted.  If it is, the complete
 description of the branch cuts of \cdf{atanh} will then be as follows.
@@ -1661,7 +1792,7 @@ $\pi/2$.  A number with imaginary part equal to $-\pi/2$
 is in the range if and only if its real part is strictly positive; a number with
 imaginary part equal to $\pi/2$ is in the range if and only if its real
 part is strictly negative.  Thus the range of the inverse
-hyperbolic tangent function is {\it not} the same as
+hyperbolic tangent function is \emph{not} the same as
 that of the inverse hyperbolic sine function.
 \end{newer}
 \end{flushdesc}
@@ -1673,9 +1804,9 @@ the branch cuts:
 
 \begin{flushleft}
 \begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
-$\sin {\it i}{\it z} = {\it i} \sinh {\it z}$&$\sinh {\it i}{\it z} = {\it i} \sin {\it z}$&$\arctan {\it i}{\it z} = {\it i} \arctanh {\it z}$ \\
-$\cos {\it i}{\it z} = \cosh {\it z}$&$\cosh {\it i}{\it z} = \cos {\it z}$&$\arcsinh {\it i}{\it z} = {\it i} \arcsin {\it z}$ \\
-$\tan {\it i}{\it z} = {\it i} \tanh {\it z}$&$\arcsin {\it i}{\it z} = {\it i} \arcsinh {\it z}$&$\arctanh {\it i}{\it z} = {\it i} \arctan {\it z}$
+$\sin \emph{i}\emph{z} = \emph{i} \sinh \emph{z}$&$\sinh \emph{i}\emph{z} = \emph{i} \sin \emph{z}$&$\arctan \emph{i}\emph{z} = \emph{i} \arctanh \emph{z}$ \\
+$\cos \emph{i}\emph{z} = \cosh \emph{z}$&$\cosh \emph{i}\emph{z} = \cos \emph{z}$&$\arcsinh \emph{i}\emph{z} = \emph{i} \arcsin \emph{z}$ \\
+$\tan \emph{i}\emph{z} = \emph{i} \tanh \emph{z}$&$\arcsin \emph{i}\emph{z} = \emph{i} \arcsinh \emph{z}$&$\arctanh \emph{i}\emph{z} = \emph{i} \arctan \emph{z}$
 \end{tabular*}
 \end{flushleft}
 
@@ -1694,20 +1825,20 @@ consists of points whose radial distances from the origin lie in the range
 $[1/4,1/2]$; ring 2 is in the radial range
 $[3/4, 1]$; ring 3, in the range
 $[\pi /2, 2]$; and ring 4, in the range $[3, \pi]$.
-Ring {\it j} is divided into $2^{j+1}$ equal sectors, with each sector
+Ring \emph{j} is divided into $2^{j+1}$ equal sectors, with each sector
 painted a different shade of gray, darkening as one proceeds counterclockwise
 from the positive real axis.
 
-We can illustrate the behavior of a numerical function ${\it f}$ by considering how
+We can illustrate the behavior of a numerical function $\emph{f}$ by considering how
 it maps the complex plane to itself.  More specifically, consider each
-point ${\it z}$ of the decorated plane.  We decorate a new plane by coloring
-the point ${\it f}({\it z})$ with the same color that point ${\it z}$ had in the original
+point $\emph{z}$ of the decorated plane.  We decorate a new plane by coloring
+the point $\emph{f}(\emph{z})$ with the same color that point $\emph{z}$ had in the original
 decorated plane.  In other words, the newly decorated plane illustrates
-how the ${\it f}$ maps the axes, other horizontal and vertical lines, and annuli.
+how the $\emph{f}$ maps the axes, other horizontal and vertical lines, and annuli.
 
 In each figure we will show only a fragment of the complex plane,
 with the real axis horizontal in the usual manner ($-\infty$ to the left, $+\infty$
-to the right) and the imaginary axis vertical ($-\infty {\it i}$ below, $+\infty {\it i}$
+to the right) and the imaginary axis vertical ($-\infty \emph{i}$ below, $+\infty \emph{i}$
 above).  Each fragment shows a region containing points whose real and imaginary
 parts are in the range $[-4.1, 4.1]$.  The axes of the new plane are shown as very
 thin lines, with large tick marks at integer coordinates and somewhat smaller
@@ -1719,11 +1850,11 @@ Figure~\ref{IDENTITY-PLOT} shows the result of plotting the \cdf{identity} funct
 Figures~\ref{SECOND-PLOT} through~\ref{LAST-PLOT} show the graphs for the functions
 \cdf{sqrt}, \cdf{exp}, \cdf{log}, \cdf{sin}, \cdf{asin}, \cdf{cos}, \cdf{acos}, \cdf{tan}, \cdf{atan},
 \cdf{sinh}, \cdf{asinh}, \cdf{cosh}, \cdf{acosh}, \cdf{tanh}, and \cdf{atanh}, and
-as a bonus, the graphs for the functions $\sqrt{1-{\it z}^2}$,
-$\sqrt{1+{\it z}^2}$, $({\it z}-1)/({\it z}+1)$, and $(1+{\it z})/(1-{\it z})$.  All of these are related
+as a bonus, the graphs for the functions $\sqrt{1-\emph{z}^2}$,
+$\sqrt{1+\emph{z}^2}$, $(\emph{z}-1)/(\emph{z}+1)$, and $(1+\emph{z})/(1-\emph{z})$.  All of these are related
 to the trigonometric functions in various ways.  For example, if
-${\it f}({\it z})=({\it z}-1)/({\it z}+1)$, then $\tanh {\it z} = {\it f}({\it e}^{2z})$, and if ${\it g}({\it z})=\sqrt{1-{\it z}^2}$, then
-$\cos {\it z} = {\it g}(\sin {\it z})$.  It is instructive to examine the graph for $\sqrt{1-{\it z}^2}$
+$\emph{f}(\emph{z})=(\emph{z}-1)/(\emph{z}+1)$, then $\tanh \emph{z} = \emph{f}(\emph{e}^{2z})$, and if $\emph{g}(\emph{z})=\sqrt{1-\emph{z}^2}$, then
+$\cos \emph{z} = \emph{g}(\sin \emph{z})$.  It is instructive to examine the graph for $\sqrt{1-\emph{z}^2}$
 and try to visualize how it transforms the graph for \cdf{sin} into the graph for~\cdf{cos}.
 
 Each figure is accompanied by a commentary on what maps to what and other interesting
@@ -1749,7 +1880,7 @@ $-\infty i$ to $z$, I mean that
 $ z = \lim_{y\rightarrow -\infty} f(0+yi\/) $
 \end{tabbing}
 In other words, I am considering a limit as one travels out along one of the
-main axes.  I~also speak in a similar manner of mapping {\it to} one of these
+main axes.  I~also speak in a similar manner of mapping \emph{to} one of these
 infinities.
 \end{new}
 \clearpage
@@ -1798,8 +1929,8 @@ The fan also shrinks, as if it were made of cotton and had gotten
 wetter at the periphery than at the center.
 The positive real axis is mapped onto itself.  The negative real axis is mapped
 onto the positive imaginary axis (but if minus zero is supported, then
-$-{\it x}+0{\it i}$ is mapped onto the positive imaginary axis and $-{\it x}-0{\it i}$ onto
-the negative imaginary axis, assuming ${\it x}>0$).  The positive imaginary axis
+$-\emph{x}+0\emph{i}$ is mapped onto the positive imaginary axis and $-\emph{x}-0\emph{i}$ onto
+the negative imaginary axis, assuming $\emph{x}>0$).  The positive imaginary axis
 is mapped onto the northeast diagonal, and the negative imaginary axis
 onto the southeast diagonal.  More generally, lines are mapped to rectangular hyperbolas
 (or fragments thereof\,) centered on the origin;
@@ -1819,11 +1950,11 @@ The \cdf{exp} function maps horizontal lines to radii and maps vertical
 lines to circles centered at the origin.
 The origin is mapped to 1.  (It is instructive to compare
 this graph with those of other functions
-that map the origin to 1, for example $(1+{\it z})/(1-{\it z})$, $\cos {\it z}$, and $\sqrt{1-{\it z}^2}$.)
+that map the origin to 1, for example $(1+\emph{z})/(1-\emph{z})$, $\cos \emph{z}$, and $\sqrt{1-\emph{z}^2}$.)
 The entire real axis is mapped to the positive
 real axis, with $-\infty$ mapping to the origin and $+\infty$ to itself.
 The imaginary axis is mapped to the unit circle with infinite multiplicity (period $2\pi$);
-therefore the mapping of the imaginary infinities $\pm\infty {\it i}$ is indeterminate.
+therefore the mapping of the imaginary infinities $\pm\infty \emph{i}$ is indeterminate.
 It follows that the entire left half-plane is mapped to the interior of the unit circle,
 and the right half-plane is mapped to the exterior of the unit circle.
 A line at any angle other than horizontal or vertical is mapped to a
@@ -1854,22 +1985,22 @@ The origin is mapped to $-\infty$.
 
 \begin{figure}
 \vbox to \foodimen{
-\caption{Illustration of the Range of the Function $({\it z}-1)/({\it z}+1)$}
+\caption{Illustration of the Range of the Function $(\emph{z}-1)/(\emph{z}+1)$}
 \numplot{minus-over-plus}
 \small\noindent
 A line is a degenerate circle with infinite radius;
 when I say ``circles'' here I also mean lines.
-Then $({\it z}-1)/({\it z}+1)$ maps circles into circles.
+Then $(\emph{z}-1)/(\emph{z}+1)$ maps circles into circles.
 All circles through $-1$ become lines; all lines become
 circles through $1$.
 The real axis is mapped onto itself: 1 to
 the origin, the origin to $-1$, $-1$ to infinity, and infinity to 1.
-The imaginary axis becomes the unit circle; {\it i} is mapped to itself,
-as is $-{\it i}$.  Thus the entire right half-plane is mapped to the interior
+The imaginary axis becomes the unit circle; \emph{i} is mapped to itself,
+as is $-\emph{i}$.  Thus the entire right half-plane is mapped to the interior
 of the unit circle, the unit circle interior to the left half-plane,
 the left half-plane to the unit circle exterior, and the unit circle exterior
 to the right half-plane.  Imagine the complex plane to be a vast sea.
-The Colossus of Rhodes straddles the origin, its left foot on {\it i} and its right foot on $-{\it i}$.
+The Colossus of Rhodes straddles the origin, its left foot on \emph{i} and its right foot on $-\emph{i}$.
 It bends down and briefly paddles water between its legs so furiously that the water
 directly beneath is pushed out into the entire area behind it; much that was
 behind swirls forward to either side; and all that was before is
@@ -1881,23 +2012,23 @@ sucked in to lie between its feet.
 
 \begin{figure}
 \vbox to \foodimen{
-\caption{Illustration of the Range of the Function $(1+{\it z})/(1-{\it z})$}
+\caption{Illustration of the Range of the Function $(1+\emph{z})/(1-\emph{z})$}
 \numplot{plus-over-minus}
 \small\noindent
-The function ${\it h}({\it z})=(1+{\it z})/(1-{\it z})$
-is the inverse of ${\it f}({\it z})=({\it z}-1)/({\it z}+1)$; that is,
-${\it h}({\it f}({\it z}))={\it f}({\it h}({\it z}))={\it z}$. At first glance,
-the graph of ${\it h}$ appears to be that of ${\it f}$
+The function $\emph{h}(\emph{z})=(1+\emph{z})/(1-\emph{z})$
+is the inverse of $\emph{f}(\emph{z})=(\emph{z}-1)/(\emph{z}+1)$; that is,
+$\emph{h}(\emph{f}(\emph{z}))=\emph{f}(\emph{h}(\emph{z}))=\emph{z}$. At first glance,
+the graph of $\emph{h}$ appears to be that of $\emph{f}$
 flipped left-to-right, or perhaps reflected in the origin, but careful
 consideration of the shaded annuli reveals that this is not so; something more
 subtle is going on.  Note that
-${\it f}({\it f}({\it z}))={\it h}({\it h}({\it z}))={\it g}({\it z})=-1/{\it z}$.
-The functions ${\it f}$, ${\it g}$, ${\it h}$, and the identity function
+$\emph{f}(\emph{f}(\emph{z}))=\emph{h}(\emph{h}(\emph{z}))=\emph{g}(\emph{z})=-1/\emph{z}$.
+The functions $\emph{f}$, $\emph{g}$, $\emph{h}$, and the identity function
 thus form a group under composition, isomorphic to the group
 of the cyclic permutations of the points $-1$, $0$, $1$, and $\infty$, as
 indeed these functions accomplish the four possible cyclic permutations
 on those points.  This function group is a subset of the group of bilinear
-transformations $({\it a}{\it z}+{\it b})/({\it c}{\it z}+{\it d})$,
+transformations $(\emph{a}\emph{z}+\emph{b})/(\emph{c}\emph{z}+\emph{d})$,
 all of which are conformal (angle-preserving) and map circles
 onto circles.  Now, doesn't that tangle of circles through $-1$ look like something
 the cat got into?
@@ -1922,7 +2053,7 @@ Vertical lines are mapped to hyperbolas with the same foci.  There is a curious 
 the ellipse for horizontal
 lines at distance $\pm1$ from the real axis appears to intercept the real axis at
 $\pm\pi/2\approx \pm1.57\ldots$ but this is not so; the intercepts are actually at
-$\pm({\it e}+1/{\it e})/2\approx \pm1.54\ldots\,\hbox{}$.
+$\pm(\emph{e}+1/\emph{e})/2\approx \pm1.54\ldots\,\hbox{}$.
 }
 \end{figure}
 
@@ -1943,8 +2074,8 @@ would cover the plane with an infinite number of copies of this strip side by si
 looking for all the world like the tail of a peacock with an infinite number of feathers.
 The imaginary axis is mapped to itself as if by \cdf{asinh} considered as a real function.
 The real axis is mapped to a bent path, turning corners at $\pm\pi/2$ (the points to
-which $\pm 1$ are mapped); $+\infty$ is mapped to $\pi/2-\infty {\it i}$, and
-$-\infty$ to $-\pi/2+\infty {\it i}$.
+which $\pm 1$ are mapped); $+\infty$ is mapped to $\pi/2-\infty \emph{i}$, and
+$-\infty$ to $-\pi/2+\infty \emph{i}$.
 }
 \end{figure}
 
@@ -1962,10 +2093,10 @@ and hyperbolas with foci at $\pm 1$, although mapping to them in a different
 manner, to be sure.
 The entire real axis is again mapped to the segment $[-1, 1]$ of the real axis,
 but each half of the imaginary axis is mapped to the real axis to the right of 1
-(as if by \cdf{cosh} considered as a real function).  Therefore $\pm\infty {\it i}$
+(as if by \cdf{cosh} considered as a real function).  Therefore $\pm\infty \emph{i}$
 both map to $+\infty$.
 The origin is mapped to 1.  Whereas \cdf{sin} is an odd function, \cdf{cos} is an
-even function; as a result {\it two} points in each annulus, one the negative
+even function; as a result \emph{two} points in each annulus, one the negative
 of the other, are mapped to the same shaded point in this graph; the shading shown here
 is taken from points in the original upper half-plane.
 }
@@ -1982,13 +2113,13 @@ The graph of \cdf{acos} is very much like that of \cdf{asin}.
 One might think that our nervous peacock has shuffled half a step
 to the right, but the shading on the annuli shows that we have instead caught
 the bird exactly in mid-flight while doing a cartwheel.
-This is easily understood if we recall that $\arccos {\it z}=(\pi/2)-\arcsin {\it z}$;
-negating $\arcsin {\it z}$ rotates it upside down, and adding the result to $\pi/2$
+This is easily understood if we recall that $\arccos \emph{z}=(\pi/2)-\arcsin \emph{z}$;
+negating $\arcsin \emph{z}$ rotates it upside down, and adding the result to $\pi/2$
 translates it $\pi/2$ to the right.
 The imaginary axis is mapped upside down to the vertical line at $\pi/2$.
 The point $+1$ is mapped to the origin, and $-1$ to $\pi$.
-The image of the real axis is again cranky; $+\infty$ is mapped to $+\infty {\it i}$,
-and $-\infty$ to $\pi-\infty {\it i}$.
+The image of the real axis is again cranky; $+\infty$ is mapped to $+\infty \emph{i}$,
+and $-\infty$ to $\pi-\infty \emph{i}$.
 
 }
 \end{figure}
@@ -2008,12 +2139,12 @@ This goes for the complex plane as well, although the swoopy loops produced
 from the annulus between $\pi/2$ and $2$ look vaguely like
 those from the graph of \cdf{sin} inside out.
 The real axis is mapped onto itself with infinite multiplicity (period $2\pi$).
-The imaginary axis is mapped backwards onto $[-{\it i},{\it i}]$:
-$+\infty {\it i}$ is mapped to $-{\it i}$ and $-\infty {\it i}$ to $+{\it i}$.
+The imaginary axis is mapped backwards onto $[-\emph{i},\emph{i}]$:
+$+\infty \emph{i}$ is mapped to $-\emph{i}$ and $-\infty \emph{i}$ to $+\emph{i}$.
 Horizontal lines below or above the real axis
-become circles surrounding $+{\it i}$ or $-{\it i}$, respectively.
-Vertical lines become circular arcs from $+{\it i}$ to $-{\it i}$;
-two vertical lines separated by $(2{\it k}+1)\pi$ for integer ${\it k}$
+become circles surrounding $+\emph{i}$ or $-\emph{i}$, respectively.
+Vertical lines become circular arcs from $+\emph{i}$ to $-\emph{i}$;
+two vertical lines separated by $(2\emph{k}+1)\pi$ for integer $\emph{k}$
 together become a complete circle.  It seems that two arcs
 shown hit the real axis at $\pm\pi/2=\pm 1.57\ldots$ but that is a coincidence;
 they really hit the axis at $\pm\tan 1= 1.55\ldots\,\hbox{}$.
@@ -2031,14 +2162,14 @@ All I can say is that this peacock is a horse of another color.
 At first glance, the axes seem to map in the same way as for \cdf{asin} and
 \cdf{acos}, but look again: this time it's the imaginary axis doing weird things.
 All infinities map multiply to the points
-$(2{\it k}+1)\pi/2$; within the strip of principal values we may say that
+$(2\emph{k}+1)\pi/2$; within the strip of principal values we may say that
 the real axis is mapped to the interval $[-\pi/2,+\pi/2]$ and therefore
 $-\infty$ is mapped to $-\pi/2$ and $+\infty$ to $+\pi/2$.
-The point $+{\it i}$ is mapped to $+\infty {\it i}$, and $-{\it i}$ to $-\infty {\it i}$, and
+The point $+\emph{i}$ is mapped to $+\infty \emph{i}$, and $-\emph{i}$ to $-\infty \emph{i}$, and
 so the imaginary axis is mapped into three pieces: the segment
-$[-\infty {\it i},-{\it i}]$ is mapped to $[\pi/2,\pi/2-\infty {\it i}]$; the segment
-$[-{\it i},{\it i}]$ is mapped to the imaginary axis $[-\infty {\it i},+\infty {\it i}]$; and the segment
-$[+{\it i},+\infty {\it i}]$ is mapped to $[-\pi/2+\infty {\it i},-\pi/2]$.
+$[-\infty \emph{i},-\emph{i}]$ is mapped to $[\pi/2,\pi/2-\infty \emph{i}]$; the segment
+$[-\emph{i},\emph{i}]$ is mapped to the imaginary axis $[-\infty \emph{i},+\infty \emph{i}]$; and the segment
+$[+\emph{i},+\infty \emph{i}]$ is mapped to $[-\pi/2+\infty \emph{i},-\pi/2]$.
 }
 \end{figure}
 
@@ -2050,15 +2181,15 @@ $[+{\it i},+\infty {\it i}]$ is mapped to $[-\pi/2+\infty {\it i},-\pi/2]$.
 \numplot{sinh}
 \small\noindent
 It would seem that the graph of \cdf{sinh} is merely that of \cdf{sin}
-rotated 90 degrees.  If that were so, then we would have $\sinh {\it z} = {\it i} \sin {\it z}$.
+rotated 90 degrees.  If that were so, then we would have $\sinh \emph{z} = \emph{i} \sin \emph{z}$.
 Careful inspection of the shading, however, reveals that this is not quite the case;
 in both graphs the lightest and darkest shades, which initially are adjacent to
 the positive real axis, remain adjacent to the positive real axis in both cases.
 To derive the graph of \cdf{sinh} from \cdf{sin} we must therefore first
 rotate the complex plane by $-90$ degrees, then apply \cdf{sin}, then
-rotate the result by 90 degrees. In other words, $\sinh {\it z} = {\it i} \sin (-{\it i\/}){\it z}$;
-consistently replacing ${\it z}$ with ${\it i}{\it z}$ in this formula yields the familiar identity
-$\sinh {\it i}{\it z} = {\it i} \sin {\it z}$.
+rotate the result by 90 degrees. In other words, $\sinh \emph{z} = \emph{i} \sin (-\emph{i\/})\emph{z}$;
+consistently replacing $\emph{z}$ with $\emph{i}\emph{z}$ in this formula yields the familiar identity
+$\sinh \emph{i}\emph{z} = \emph{i} \sin \emph{z}$.
 }
 \end{figure}
 
@@ -2069,7 +2200,7 @@ $\sinh {\it i}{\it z} = {\it i} \sin {\it z}$.
 \caption{Illustration of the Range of the Hyperbolic Arc Sine Function}
 \numplot{asinh}
 \small\noindent
-The peacock sleeps.  Because $\arcsinh {\it i}{\it z} = {\it i} \arcsin {\it z}$,
+The peacock sleeps.  Because $\arcsinh \emph{i}\emph{z} = \emph{i} \arcsin \emph{z}$,
 the graph of \cdf{asinh}
 is related to that of \cdf{asin} by pre- and post-rotations of the complex plane
 in the same way as for \cdf{sinh} and \cdf{sin}.
@@ -2083,10 +2214,10 @@ in the same way as for \cdf{sinh} and \cdf{sin}.
 \caption{Illustration of the Range of the Hyperbolic Cosine Function}
 \numplot{cosh}
 \small\noindent
-The graph of \cdf{cosh} does {\it not} look like that of \cdf{cos} rotated
+The graph of \cdf{cosh} does \emph{not} look like that of \cdf{cos} rotated
 90 degrees; instead it looks like that of \cdf{cos} unrotated.
-That is because $\cosh {\it i}{\it z}$ is not equal to ${\it i} \cos {\it z}$;
-rather, $\cosh {\it i}{\it z} = \cos {\it z}$.
+That is because $\cosh \emph{i}\emph{z}$ is not equal to $\emph{i} \cos \emph{z}$;
+rather, $\cosh \emph{i}\emph{z} = \cos \emph{z}$.
 Interpreted, that means that the shading is pre-rotated but there is no
 post-rotation.
 }
@@ -2117,18 +2248,18 @@ by a rotation.
 \numplot{tanh}
 \small\noindent
 The diagram for \cdf{tanh} is simply that of \cdf{tan} turned on its ear:
-${\it i} \tan {\it z} = \tanh {\it i}{\it z}$.
+$\emph{i} \tan \emph{z} = \tanh \emph{i}\emph{z}$.
 The imaginary axis is mapped onto itself with infinite multiplicity (period $2\pi$),
 and the real axis is mapped onto the segment $[-1,+1]$:
 $+\infty$ is mapped to $+1$, and $-\infty$ to $-1$.
 Vertical lines to the left or right of the real axis
 are mapped to circles surrounding $-1$ or $1$, respectively.
 Horizontal lines are mapped to circular arcs anchored at $-1$ and $+1$;
-two horizontal lines separated by a distance $(2{\it k}+1)\pi$ for integer ${\it k}$ are
+two horizontal lines separated by a distance $(2\emph{k}+1)\pi$ for integer $\emph{k}$ are
 together mapped into a complete circle.  How do we know these really are circles?
-Well, $\tanh {\it z} = ((\exp 2{\it z})-1)/((\exp 2{\it z})+1)$, which is the composition of the
-bilinear transform $({\it z}-1)/({\it z}+1)$, the exponential $\exp {\it z}$,
-and the magnification $2{\it z}$.
+Well, $\tanh \emph{z} = ((\exp 2\emph{z})-1)/((\exp 2\emph{z})+1)$, which is the composition of the
+bilinear transform $(\emph{z}-1)/(\emph{z}+1)$, the exponential $\exp \emph{z}$,
+and the magnification $2\emph{z}$.
 Magnification maps lines to lines of the same slope; the exponential maps
 horizontal lines to circles and vertical lines to radial lines;
 and a bilinear transform maps generalized circles (including lines) to
@@ -2144,7 +2275,7 @@ generalized circles.  Q.E.D.
 \label{ATANH-PLOT}
 \numplot{really-good-atanh}
 \small\noindent
-A sleeping peacock of another color: $\arctanh {\it i}{\it z} = {\it i} \arctan {\it z}$.
+A sleeping peacock of another color: $\arctanh \emph{i}\emph{z} = \emph{i} \arctan \emph{z}$.
 }
 \end{figure}
 
@@ -2152,7 +2283,7 @@ A sleeping peacock of another color: $\arctanh {\it i}{\it z} = {\it i} \arctan 
 
 \begin{figure}
 \vbox to \foodimen{
-\caption{Illustration of the Range of the Function $\protect\sqrt{1-{\it z}^2}$}
+\caption{Illustration of the Range of the Function $\protect\sqrt{1-\emph{z}^2}$}
 \numplot{sqrt-one-minus-sq}
 \small\noindent
 Here is a curious graph indeed for so simple a function!
@@ -2165,10 +2296,10 @@ Horizontal lines become vaguely vertical, and
 vertical lines become vaguely horizontal.
 Circles centered at the origin are transformed into Cassinian \hbox{(half-)ovals}; the unit
 circle is mapped to a \hbox{(half-)lemniscate} of Bernoulli.  The outermost annulus appears
-to have its {\it inner} edge at $\pi$ on the real axis and its {\it outer}
+to have its \emph{inner} edge at $\pi$ on the real axis and its \emph{outer}
 edge at 3 on the imaginary axis, but this is another accident; the intercept
 on the real axis, for example, is not really at $\pi\approx 3.14\ldots$ but
-at $\sqrt{1-(3{\it i\/})^2}=\sqrt{10}\approx 3.16\ldots\,\hbox{}$.
+at $\sqrt{1-(3\emph{i\/})^2}=\sqrt{10}\approx 3.16\ldots\,\hbox{}$.
 
 }
 \end{figure}
@@ -2177,24 +2308,24 @@ at $\sqrt{1-(3{\it i\/})^2}=\sqrt{10}\approx 3.16\ldots\,\hbox{}$.
 
 \begin{figure}
 \vbox to \foodimen{
-\caption{Illustration of the Range of the Function $\protect\sqrt{1+{\it z}^2}$}
+\caption{Illustration of the Range of the Function $\protect\sqrt{1+\emph{z}^2}$}
 \label{LAST-PLOT}
 \numplot{sqrt-one-plus-sq}
 \small\noindent
-The graph of ${\it q}({\it z})=\sqrt{1+{\it z}^2}$ looks like that
-of ${\it p}({\it z})=\sqrt{1-{\it z}^2}$ except for
-the shading.  You might not expect ${\it p}$ and ${\it q}$ to be related in the same
+The graph of $\emph{q}(\emph{z})=\sqrt{1+\emph{z}^2}$ looks like that
+of $\emph{p}(\emph{z})=\sqrt{1-\emph{z}^2}$ except for
+the shading.  You might not expect $\emph{p}$ and $\emph{q}$ to be related in the same
 way that \cdf{cos} and \cdf{cosh} are, but after a little reflection (or perhaps
 I should say, after turning it around in one's mind) one can see that
-${\it q}({\it i}{\it z})={\it p}({\it z})$.  This formula is indeed of exactly the same form as
-$\cosh {\it i}{\it z} = \cos {\it z}$.  The function
-$\sqrt{1+{\it z}^2}$ maps both halves of the real axis into $[1,+\infty]$ on the real axis.
-The segments $[0,{\it i}]$ and $[0,-{\it i}]$ of the imaginary axis are each mapped
-backwards onto segment $[0,1]$ of the real axis; $[{\it i},+\infty {\it i}]$ and
-$[-{\it ,}-\infty {\it i}]$ are each mapped onto the positive imaginary axis
+$\emph{q}(\emph{i}\emph{z})=\emph{p}(\emph{z})$.  This formula is indeed of exactly the same form as
+$\cosh \emph{i}\emph{z} = \cos \emph{z}$.  The function
+$\sqrt{1+\emph{z}^2}$ maps both halves of the real axis into $[1,+\infty]$ on the real axis.
+The segments $[0,\emph{i}]$ and $[0,-\emph{i}]$ of the imaginary axis are each mapped
+backwards onto segment $[0,1]$ of the real axis; $[\emph{i},+\infty \emph{i}]$ and
+$[-\emph{,}-\infty \emph{i}]$ are each mapped onto the positive imaginary axis
 (but if minus zero is supported then opposite sides of the
 imaginary axis map to opposite halves of the imaginary axis---for example,
-$q(+0+2{\it i\/})=\sqrt{5}{\it i}$ but $q(-0+2{\it i\/})=-\sqrt{5}{\it i}$).
+$q(+0+2\emph{i\/})=\sqrt{5}\emph{i}$ but $q(-0+2\emph{i\/})=-\sqrt{5}\emph{i}$).
 }
 \end{figure}
 
@@ -2273,7 +2404,7 @@ newpath \\
 ~~closepath \\
 currentgray~~~0.45 setgray~~~fill~~~setgray
 \end{lisp}
-{\rm {\lbrack}2598 lines omitted{\rbrack}}
+\textrm{{\lbrack}2598 lines omitted{\rbrack}}
 \begin{lisp}
 \% Vertical line from (0.0, -0.5) to (0.0, 0.0) \\
 newpath \\
@@ -2299,7 +2430,7 @@ newpath \\
 ~~0.0 -6.378103166302659 lineto \\
 0.05 setlinewidth   1 setlinecap  stroke
 \end{lisp}
-{\rm {\lbrack}84 lines omitted{\rbrack}}
+\textrm{{\lbrack}84 lines omitted{\rbrack}}
 \begin{lisp}
 \% End of PostScript file for plot of function IDENTITY
 \end{lisp}
@@ -2310,7 +2441,7 @@ newpath \\
 
 Here is the program that generated the PostScript code for
 the graphs shown in figures~\ref{IDENTITY-PLOT} through~\ref{LAST-PLOT}.
-It contains a mixture of fairly general mechanisms and {\it ad hoc} kludges
+It contains a mixture of fairly general mechanisms and \emph{ad hoc} kludges
 for plotting functions of a single complex argument while gracefully handling
 extremely large and small values,
 branch cuts, singularities, and periodic behavior.
@@ -2324,7 +2455,7 @@ a file named \cd{identity-plot.ps}.
 The program assumes that any periodic behavior will have a period that is a multiple of
 $2\pi$; that branch cuts will fall along the real or imaginary axis;
 and that singularities or very large or small values
-will occur only at the origin, at $\pm 1$ or $\pm {\it i}$,
+will occur only at the origin, at $\pm 1$ or $\pm \emph{i}$,
 or on the boundaries of the annuli (particularly those with radius $\pi/2$ or $\pi$).
 The central function is \cdf{parametric-path}, which accepts four arguments:
 two real numbers that are the endpoints of an interval of real numbers,
@@ -2854,11 +2985,11 @@ allow specific conversions of data types to be forced when desired.
 float number &optional other
 
 This converts any non-complex number to a floating-point number.
-With no second argument, if {\it number} is already a floating-point
-number, then {\it number} is returned;
+With no second argument, if \emph{number} is already a floating-point
+number, then \emph{number} is returned;
 otherwise a \cdf{single-float} is produced.
-If the argument {\it other} is provided, then it must be a floating-point
-number, and {\it number} is converted to the same format as {\it other}.
+If the argument \emph{other} is provided, then it must be a floating-point
+number, and \emph{number} is converted to the same format as \emph{other}.
 See also \cdf{coerce}.
 \end{defun}
 
@@ -2883,11 +3014,11 @@ denominator small.
 
 It is always the case that
 \begin{lisp}
-(float (rational {\it x}) {\it x}) \EQ\ {\it x}
+(float (rational \emph{x}) \emph{x}) \EQ\ \emph{x}
 \end{lisp}
 and
 \begin{lisp}
-(float (rationalize {\it x}) {\it x}) \EQ\ {\it x}
+(float (rationalize \emph{x}) \emph{x}) \EQ\ \emph{x}
 \end{lisp}
 That is, rationalizing a floating-point number by either method
 and then converting it back
@@ -2907,7 +3038,7 @@ and return as an integer the numerator or denominator of the canonical
 reduced form of the rational.  The numerator of an integer is that integer;
 the denominator of an integer is \cd{1}.  Note that
 \begin{lisp}
-(gcd (numerator {\it x}) (denominator {\it x})) \EV\ 1
+(gcd (numerator \emph{x}) (denominator \emph{x})) \EV\ 1
 \end{lisp}
 The denominator will always be a strictly positive integer;
 the numerator may be any integer.
@@ -2930,7 +3061,7 @@ truncate number &optional divisor \\
 round number &optional divisor
 
 In the simple one-argument case,
-each of these functions converts its argument {\it number}
+each of these functions converts its argument \emph{number}
 (which must not be complex) to an integer.
 If the argument is already an integer, it is returned directly.
 If the argument is a ratio or floating-point number, the functions use
@@ -2950,7 +3081,7 @@ and which has the greatest integral
 magnitude not greater than that of the argument.
 
 \cdf{round} converts its argument by rounding to the nearest
-integer; if {\it number} is exactly halfway between two integers
+integer; if \emph{number} is exactly halfway between two integers
 (that is, of the form $integer+0.5$), then it is rounded to the one that
 is even (divisible by 2).
 
@@ -2960,7 +3091,7 @@ various arguments.
 \begin{flushleft}
 \cf
 \begin{tabular}{@{}ccccc@{}}
-{\rm Argument}&floor&ceiling&truncate&round\\
+\textrm{Argument}&floor&ceiling&truncate&round\\
 \hlinesp
 ~2.6& ~2& ~3& ~2& ~3 \\
 ~2.5& ~2& ~3& ~2& ~2 \\
@@ -2976,9 +3107,9 @@ various arguments.
 \end{tabular}
 \end{flushleft}
 
-If a second argument {\it divisor} is supplied, then the result
+If a second argument \emph{divisor} is supplied, then the result
 is the appropriate type of rounding or truncation applied to the
-result of dividing the {\it number} by the {\it divisor}.
+result of dividing the \emph{number} by the \emph{divisor}.
 For example, \cd{(floor 5~2)}~\EQ~\cd{(floor (/~5~2))} but is potentially more
 efficient.
 \begin{new}%CORR
@@ -2988,30 +3119,30 @@ because there is a second value to consider, as discussed below.
 In other words, the first values returned by the two forms will be the same, but
 in general the second values will differ.  Indeed, we have
 \begin{lisp}
-(floor 5 2) \EV\ 2 {\rm and} 1 \\
-(floor (/ 5 2)) \EV\ 2 {\rm and} 1/2
+(floor 5 2) \EV\ 2 \textrm{and} 1 \\
+(floor (/ 5 2)) \EV\ 2 \textrm{and} 1/2
 \end{lisp}
 for this example.
 \end{new}
-The {\it divisor} may be any non-complex number.
+The \emph{divisor} may be any non-complex number.
 \begin{new}%CORR
-It is generally accepted that it is an error for the {\it divisor} to be zero.
+It is generally accepted that it is an error for the \emph{divisor} to be zero.
 \end{new}
 The one-argument case is exactly like the two-argument case where the second
 argument is \cd{1}.
 
 \begin{newer}
 In other words, the one-argument case returns an integer and fractional part
-for the {\it number}: \cd{(truncate 5.3) \EV\ 5.0 {\rm and} 0.3}, for example.
+for the \emph{number}: \cd{(truncate 5.3) \EV\ 5.0 \textrm{and} 0.3}, for example.
 \end{newer}
-Each of the functions actually returns {\it two} values,
+Each of the functions actually returns \emph{two} values,
 whether given one or two arguments.  The second
 result is the remainder and may be obtained using
 \cdf{multiple-value-bind} and related constructs.
-If any of these functions is given two arguments ${\it x}$ and ${\it y}$
-and produces results ${\it q}$ and ${\it r}$, then ${\it q} \cdot {\it y}+{\it r}={\it x}$.
-The first result ${\it q}$ is always an integer.
-The remainder ${\it r}$ is an integer if both arguments are integers,
+If any of these functions is given two arguments $\emph{x}$ and $\emph{y}$
+and produces results $\emph{q}$ and $\emph{r}$, then $\emph{q} \cdot \emph{y}+\emph{r}=\emph{x}$.
+The first result $\emph{q}$ is always an integer.
+The remainder $\emph{r}$ is an integer if both arguments are integers,
 is rational if both arguments are rational,
 and is floating-point if either argument is floating-point.
 One consequence is that
@@ -3053,10 +3184,10 @@ mod number divisor \\
 rem number divisor
 
 \cdf{mod} performs the operation \cdf{floor} on its two arguments
-and returns the {\it second} result of \cdf{floor} as its only result.
+and returns the \emph{second} result of \cdf{floor} as its only result.
 Similarly,
 \cdf{rem} performs the operation \cdf{truncate} on its arguments
-and returns the {\it second} result of \cdf{truncate} as its only result.
+and returns the \emph{second} result of \cdf{truncate} as its only result.
 
 \cdf{mod} and \cdf{rem} are therefore the usual modulus
 and remainder functions when applied to two integer arguments.
@@ -3120,16 +3251,16 @@ The first value is a new floating-point number of the same format
 representing the significand; the second value is an integer
 representing the exponent; and the third value is a floating-point
 number of the same format indicating the sign ($-1.0$ or $1.0$).
-Let {\it b} be the radix for the floating-point representation;
-then \cdf{decode-float} divides the argument by an integral power of {\it b}
-so as to bring its value between 1/{\it b} (inclusive) and 1 (exclusive)
+Let \emph{b} be the radix for the floating-point representation;
+then \cdf{decode-float} divides the argument by an integral power of \emph{b}
+so as to bring its value between 1/\emph{b} (inclusive) and 1 (exclusive)
 and returns the quotient as the first value.
 If the argument is zero, however, the result
 is equal to the absolute value of the argument (that is, if there is a negative
 zero, its significand is considered to be a positive~zero).
 
 The second value of \cdf{decode-float} is
-the integer exponent {\it e} to which {\it b} must be raised
+the integer exponent \emph{e} to which \emph{b} must be raised
 to produce the appropriate power for the division.
 If the argument is zero, any integer value may be returned, provided
 that the identity shown below for \cdf{scale-float} holds.
@@ -3138,9 +3269,9 @@ The third value of \cdf{decode-float} is a floating-point number,
 of the same format as the argument, whose absolute value is 1
 and whose sign matches that of the argument.
 
-The function \cdf{scale-float} takes a floating-point number {\it f}
-(not necessarily between 1/{\it b} and 1) and
-an integer {\it k}, and returns \cd{(* {\it f} (expt (float {\it b} {\it f}) {\it k}))}.
+The function \cdf{scale-float} takes a floating-point number \emph{f}
+(not necessarily between 1/\emph{b} and 1) and
+an integer \emph{k}, and returns \cd{(* \emph{f} (expt (float \emph{b} \emph{f}) \emph{k}))}.
 (The use of \cdf{scale-float} may be much more efficient than using
 exponentiation and multiplication and avoids intermediate
 overflow and underflow if the final result is representable.)
@@ -3148,25 +3279,25 @@ overflow and underflow if the final result is representable.)
 Note that
 \begin{lisp}
 (multiple-value-bind (signif expon sign) \\*
-~~~~~~~~~~~~~~~~~~~~~(decode-float {\it f}) \\*
+~~~~~~~~~~~~~~~~~~~~~(decode-float \emph{f}) \\*
 ~~(scale-float signif expon)) \\*
-\EQ\ (abs {\it f})
+\EQ\ (abs \emph{f})
 \end{lisp}
 and
 \begin{lisp}
 (multiple-value-bind (signif expon sign) \\*
-~~~~~~~~~~~~~~~~~~~~~(decode-float {\it f}) \\*
+~~~~~~~~~~~~~~~~~~~~~(decode-float \emph{f}) \\*
 ~~(* (scale-float signif expon) sign)) \\*
-\EQ\ {\it f}
+\EQ\ \emph{f}
 \end{lisp}
 
 The function \cdf{float-radix} returns (as an integer)
-the radix {\it b} of the floating-point argument.
+the radix \emph{b} of the floating-point argument.
 
-The function \cdf{float-sign} returns a floating-point number ${\it z}$ such
-that ${\it z}$ and {\it float1} have the same sign and also such that
-${\it z}$ and {\it float2} have the same absolute value.
-The argument {\it float2} defaults to the value of \cd{(float 1 {\it float1})};
+The function \cdf{float-sign} returns a floating-point number $\emph{z}$ such
+that $\emph{z}$ and \emph{float1} have the same sign and also such that
+$\emph{z}$ and \emph{float2} have the same absolute value.
+The argument \emph{float2} defaults to the value of \cd{(float 1 \emph{float1})};
 \cd{(float-sign x)} therefore always produces a \cd{1.0} or \cd{-1.0}
 of appropriate format
 according to the sign of \cdf{x}.  (Note that if an implementation
@@ -3174,12 +3305,12 @@ has distinct representations for negative zero and positive zero,
 then \cd{(float-sign -0.0)} \EV\ \cd{-1.0}.)
 
 The function \cdf{float-digits} returns, as a non-negative integer,
-the number of radix-{\it b} digits
+the number of radix-\emph{b} digits
 used in the representation of its argument (including any implicit
 digits, such as a ``hidden bit'').
 The function \cdf{float-precision}
 returns, as a non-negative integer,
-the number of significant radix-{\it b} digits present in the
+the number of significant radix-\emph{b} digits present in the
 argument; if the argument is (a floating-point)
 zero, then the result is (an integer) zero.
 For normalized floating-point numbers, the results of \cdf{float-digits}
@@ -3190,23 +3321,23 @@ number of representation digits for a denormalized or zero number.
 The function \cdf{integer-decode-float} is similar to \cdf{decode-float}
 but for its first value returns,
 as an \cdf{integer}, the significand scaled so as to be an integer.
-For an argument {\it f}, this integer will be strictly less than
+For an argument \emph{f}, this integer will be strictly less than
 \begin{lisp}
-\cd{(expt {\it b} (float-precision {\it f}))}
+\cd{(expt \emph{b} (float-precision \emph{f}))}
 \end{lisp}
 but no less than
 \begin{lisp}
-\cd{(expt {\it b} (- (float-precision {\it f}) 1))}
+\cd{(expt \emph{b} (- (float-precision \emph{f}) 1))}
 \end{lisp}
-except that if {\it f} is zero, then the integer value will be zero.
+except that if \emph{f} is zero, then the integer value will be zero.
 
 The second value bears the same relationship to the first value
 as for \cdf{decode-float}:
 \begin{lisp}
 (multiple-value-bind (signif expon sign) \\*
-~~~~~~~~~~~~~~~~~~~~~(integer-decode-float {\it f}) \\*
-~~(scale-float (float signif {\it f}) expon)) \\*
-\EQ\ (abs {\it f})
+~~~~~~~~~~~~~~~~~~~~~(integer-decode-float \emph{f}) \\*
+~~(scale-float (float signif \emph{f}) expon)) \\*
+\EQ\ (abs \emph{f})
 \end{lisp}
 
 The third value of \cdf{integer-decode-float} will be \cd{1} or \cd{-1}.
@@ -3224,14 +3355,14 @@ efficiency.
 complex realpart &optional imagpart
 
 The arguments must be non-complex numbers; a number is returned
-that has {\it realpart} as its real part and {\it imagpart} as its imaginary
+that has \emph{realpart} as its real part and \emph{imagpart} as its imaginary
 part, possibly converted according to the rule of floating-point
 contagion (thus both components will be of the same type).
-If {\it imagpart} is not specified,
-then \cd{(coerce 0 (type-of {\it realpart}))} is
-effectively used.  Note that if both the {\it realpart} and {\it imagpart} are
-rational and the {\it imagpart} is zero, then the result is just the
-{\it realpart} because of the rule of canonical representation
+If \emph{imagpart} is not specified,
+then \cd{(coerce 0 (type-of \emph{realpart}))} is
+effectively used.  Note that if both the \emph{realpart} and \emph{imagpart} are
+rational and the \emph{imagpart} is zero, then the result is just the
+\emph{realpart} because of the rule of canonical representation
 for complex rationals.  It follows that the result of \cdf{complex}
 is not always a complex number; it may be simply a \cdf{rational}.
 \end{defun}
@@ -3241,26 +3372,26 @@ realpart number \\
 imagpart number
 
 These return the real and imaginary parts of a complex number.  If
-{\it number} is a non-complex number, then \cdf{realpart} returns its
-argument {\it number} and \cdf{imagpart}
-returns \cd{(* 0 {\it number})}, which
+\emph{number} is a non-complex number, then \cdf{realpart} returns its
+argument \emph{number} and \cdf{imagpart}
+returns \cd{(* 0 \emph{number})}, which
 has the effect that the imaginary part of a rational is \cd{0} and that of
 a floating-point number is a floating-point zero of the same format.
 
 \begin{newer}
-A clever way to multiply a complex number {\it z} by {\it i} is to write
+A clever way to multiply a complex number \emph{z} by \emph{i} is to write
 \begin{lisp}
-(complex (- (imagpart {\it z})) (realpart {\it z}))
+(complex (- (imagpart \emph{z})) (realpart \emph{z}))
 \end{lisp}
-instead of \cd{(*~{\it z} \#c(0~1))}.  This cleverness is not always
+instead of \cd{(*~\emph{z} \#c(0~1))}.  This cleverness is not always
 gratuitous; it may be of particular importance in the presence of minus
 zero.  For example, if we are using IEEE standard floating-point arithmetic
-and $z=4+0{\it i}$, the result of the clever expression is $-0+4{\it i}$, a true
-$90^\circ$ rotation of ${\it z}$, whereas the result of \cd{(*~{\it z} \#c(0~1))}
+and $z=4+0\emph{i}$, the result of the clever expression is $-0+4\emph{i}$, a true
+$90^\circ$ rotation of $\emph{z}$, whereas the result of \cd{(*~\emph{z} \#c(0~1))}
 is likely to be
 \begin{tabbing}
-$ (4+0{\it i\/})(+0+{\it i\/}) = ((4)(+0) - (+0)(1)) + ((4)(1) + (+0)(+0)){\it i} $ \\
-\hskip2pc$ = ((+0)-(+0))+((4)+(+0)){\it i} = +0+4{\it i} $
+$ (4+0\emph{i\/})(+0+\emph{i\/}) = ((4)(+0) - (+0)(1)) + ((4)(1) + (+0)(+0))\emph{i} $ \\
+\hskip2pc$ = ((+0)-(+0))+((4)+(+0))\emph{i} = +0+4\emph{i} $
 \end{tabbing}
 which could
 land on the wrong side of a branch cut, for example.
@@ -3286,7 +3417,7 @@ perform calculations so as to give this appearance to the user.
 
 The logical operations provide a convenient way to represent
 an infinite vector of bits.  Let such a conceptual vector be
-indexed by the non-negative integers.  Then bit ${\it j}$ is assigned
+indexed by the non-negative integers.  Then bit $\emph{j}$ is assigned
 a ``weight'' $2^{j}$.
 Assume that only a finite number of bits are 1's
 or only a finite number of bits are 0's.
@@ -3311,7 +3442,7 @@ represented in this way.
 \begin{defun}[Function]
 logior &rest integers
 
-This returns the bit-wise logical {\it inclusive or} of its arguments.
+This returns the bit-wise logical \emph{inclusive or} of its arguments.
 If no argument is given, then the result is zero,
 which is an identity for this operation.
 \end{defun}
@@ -3319,7 +3450,7 @@ which is an identity for this operation.
 \begin{defun}[Function]
 logxor &rest integers
 
-This returns the bit-wise logical {\it exclusive or} of its arguments.
+This returns the bit-wise logical \emph{exclusive or} of its arguments.
 If no argument is given, then the result is zero,
 which is an identity for this operation.
 \end{defun}
@@ -3327,7 +3458,7 @@ which is an identity for this operation.
 \begin{defun}[Function]
 logand &rest integers
 
-This returns the bit-wise logical {\it and} of its arguments.
+This returns the bit-wise logical \emph{and} of its arguments.
 If no argument is given, then the result is \cd{-1},
 which is an identity for this operation.
 \end{defun}
@@ -3335,7 +3466,7 @@ which is an identity for this operation.
 \begin{defun}[Function]
 logeqv &rest integers
 
-This returns the bit-wise logical {\it equivalence} (also known as {\it exclusive nor})
+This returns the bit-wise logical \emph{equivalence} (also known as \emph{exclusive nor})
 of its arguments.
 If no argument is given, then the result is \cd{-1},
 which is an identity for this operation.
@@ -3354,12 +3485,12 @@ on two arguments.  Because they are not associative,
 they take exactly two arguments rather than any non-negative number
 of arguments.
 \begin{lisp}
-(lognand {\it n1} {\it n2}) \EQ\ (lognot (logand {\it n1} {\it n2})) \\[2pt]
-(lognor {\it n1} {\it n2}) \EQ\ (lognot (logior {\it n1} {\it n2})) \\[2pt]
-(logandc1 {\it n1} {\it n2}) \EQ\ (logand (lognot {\it n1}) {\it n2}) \\[2pt]
-(logandc2 {\it n1} {\it n2}) \EQ\ (logand {\it n1} (lognot {\it n2})) \\[2pt]
-(logorc1 {\it n1} {\it n2}) \EQ\ (logior (lognot {\it n1}) {\it n2}) \\[2pt]
-(logorc2 {\it n1} {\it n2}) \EQ\ (logior {\it n1} (lognot {\it n2}))
+(lognand \emph{n1} \emph{n2}) \EQ\ (lognot (logand \emph{n1} \emph{n2})) \\[2pt]
+(lognor \emph{n1} \emph{n2}) \EQ\ (lognot (logior \emph{n1} \emph{n2})) \\[2pt]
+(logandc1 \emph{n1} \emph{n2}) \EQ\ (logand (lognot \emph{n1}) \emph{n2}) \\[2pt]
+(logandc2 \emph{n1} \emph{n2}) \EQ\ (logand \emph{n1} (lognot \emph{n2})) \\[2pt]
+(logorc1 \emph{n1} \emph{n2}) \EQ\ (logior (lognot \emph{n1}) \emph{n2}) \\[2pt]
+(logorc2 \emph{n1} \emph{n2}) \EQ\ (logior \emph{n1} (lognot \emph{n2}))
 \end{lisp}
 \end{defun}
 
@@ -3368,19 +3499,19 @@ in the following table:
 \begin{flushleft}
 \cf
 \begin{tabular}{@{}rlllll@{}}
-{\it integer1}&0&0&1&1 \\
-{\it integer2}&0&1&0&1&{\rm Operation Name} \\
+\emph{integer1}&0&0&1&1 \\
+\emph{integer2}&0&1&0&1&\textrm{Operation Name} \\
 \hlinesp
-\hbox{logand~~}&0&0&0&1&{\rm and} \\
-\hbox{logior~~}&0&1&1&1&{\rm inclusive or} \\
-\hbox{logxor~~}&0&1&1&0&{\rm exclusive or} \\
-\hbox{logeqv~~}&1&0&0&1&{\rm equivalence (exclusive nor)} \\
-\hbox{lognand~}&1&1&1&0&{\rm not-and} \\
-\hbox{lognor~~}&1&0&0&0&{\rm not-or} \\
-\hbox{logandc1}&0&1&0&0&{\rm and complement of {\it integer1} with {\it integer2}} \\
-\hbox{logandc2}&0&0&1&0&{\rm and {\it integer1} with complement of {\it integer2}} \\
-\hbox{logorc1~}&1&1&0&1&{\rm or complement of {\it integer1} with {\it integer2}} \\
-\hbox{logorc2~}&1&0&1&1&{\rm or {\it integer1} with complement of {\it integer2}} \\
+\hbox{logand~~}&0&0&0&1&\textrm{and} \\
+\hbox{logior~~}&0&1&1&1&\textrm{inclusive or} \\
+\hbox{logxor~~}&0&1&1&0&\textrm{exclusive or} \\
+\hbox{logeqv~~}&1&0&0&1&\textrm{equivalence (exclusive nor)} \\
+\hbox{lognand~}&1&1&1&0&\textrm{not-and} \\
+\hbox{lognor~~}&1&0&0&0&\textrm{not-or} \\
+\hbox{logandc1}&0&1&0&0&\textrm{and complement of \emph{integer1} with \emph{integer2}} \\
+\hbox{logandc2}&0&0&1&0&\textrm{and \emph{integer1} with complement of \emph{integer2}} \\
+\hbox{logorc1~}&1&1&0&1&\textrm{or complement of \emph{integer1} with \emph{integer2}} \\
+\hbox{logorc2~}&1&0&1&1&\textrm{or \emph{integer1} with complement of \emph{integer2}} \\
 \hline
 \end{tabular}
 \end{flushleft}
@@ -3405,9 +3536,9 @@ boole-andc2 \\
 boole-orc1 \\
 boole-orc2
 
-The function \cdf{boole} takes an operation {\it op} and two integers,
+The function \cdf{boole} takes an operation \emph{op} and two integers,
 and returns an integer produced by performing the logical operation
-specified by {\it op} on the two integers.  The precise values of
+specified by \emph{op} on the two integers.  The precise values of
 the sixteen constants are implementation-dependent, but they are
 suitable for use as the first argument to \cdf{boole}:
 
@@ -3416,25 +3547,25 @@ suitable for use as the first argument to \cdf{boole}:
 \begin{flushleft}
 \cf
 \begin{tabular}{@{}rlllll@{}}
-{\it integer1}&0&0&1&1 \\
-{\it integer2}&0&1&0&1&{\rm Operation Performed} \\
+\emph{integer1}&0&0&1&1 \\
+\emph{integer2}&0&1&0&1&\textrm{Operation Performed} \\
 \hlinesp
-\hbox{boole-clr~~}&0&0&0&0&{\rm always 0} \\
-\hbox{boole-set~~}&1&1&1&1&{\rm always 1} \\
-\hbox{boole-1~~~~}&0&0&1&1&{\it integer1} \\
-\hbox{boole-2~~~~}&0&1&0&1&{\it integer2} \\
-\hbox{boole-c1~~~}&1&1&0&0&{\rm complement of {\it integer1}} \\
-\hbox{boole-c2~~~}&1&0&1&0&{\rm complement of {\it integer2}} \\
-\hbox{boole-and~~}&0&0&0&1&{\rm and} \\
-\hbox{boole-ior~~}&0&1&1&1&{\rm inclusive or} \\
-\hbox{boole-xor~~}&0&1&1&0&{\rm exclusive or} \\
-\hbox{boole-eqv~~}&1&0&0&1&{\rm equivalence (exclusive nor)} \\
-\hbox{boole-nand~}&1&1&1&0&{\rm not-and} \\
-\hbox{boole-nor~~}&1&0&0&0&{\rm not-or} \\
-\hbox{boole-andc1}&0&1&0&0&{\rm and complement of {\it integer1} with {\it integer2}} \\
-\hbox{boole-andc2}&0&0&1&0&{\rm and {\it integer1} with complement of {\it integer2}} \\
-\hbox{boole-orc1~}&1&1&0&1&{\rm or complement of {\it integer1} with {\it integer2}} \\
-\hbox{boole-orc2~}&1&0&1&1&{\rm or {\it integer1} with complement of {\it integer2}} \\
+\hbox{boole-clr~~}&0&0&0&0&\textrm{always 0} \\
+\hbox{boole-set~~}&1&1&1&1&\textrm{always 1} \\
+\hbox{boole-1~~~~}&0&0&1&1&\emph{integer1} \\
+\hbox{boole-2~~~~}&0&1&0&1&\emph{integer2} \\
+\hbox{boole-c1~~~}&1&1&0&0&\textrm{complement of \emph{integer1}} \\
+\hbox{boole-c2~~~}&1&0&1&0&\textrm{complement of \emph{integer2}} \\
+\hbox{boole-and~~}&0&0&0&1&\textrm{and} \\
+\hbox{boole-ior~~}&0&1&1&1&\textrm{inclusive or} \\
+\hbox{boole-xor~~}&0&1&1&0&\textrm{exclusive or} \\
+\hbox{boole-eqv~~}&1&0&0&1&\textrm{equivalence (exclusive nor)} \\
+\hbox{boole-nand~}&1&1&1&0&\textrm{not-and} \\
+\hbox{boole-nor~~}&1&0&0&0&\textrm{not-or} \\
+\hbox{boole-andc1}&0&1&0&0&\textrm{and complement of \emph{integer1} with \emph{integer2}} \\
+\hbox{boole-andc2}&0&0&1&0&\textrm{and \emph{integer1} with complement of \emph{integer2}} \\
+\hbox{boole-orc1~}&1&1&0&1&\textrm{or complement of \emph{integer1} with \emph{integer2}} \\
+\hbox{boole-orc2~}&1&0&1&1&\textrm{or \emph{integer1} with complement of \emph{integer2}} \\
 \hline
 \end{tabular}
 \end{flushleft}
@@ -3452,11 +3583,11 @@ one of several logical operations.
 \begin{defun}[Function]
 lognot integer
 
-This returns the bit-wise logical {\it not} of its argument.
+This returns the bit-wise logical \emph{not} of its argument.
 Every bit of the result is the complement of the corresponding bit
 in the argument.
 \begin{lisp}
-(logbitp {\it j} (lognot {\it x})) \EQ\ (not (logbitp {\it j} {\it x}))
+(logbitp \emph{j} (lognot \emph{x})) \EQ\ (not (logbitp \emph{j} \emph{x}))
 \end{lisp}
 \end{defun}
 
@@ -3464,67 +3595,67 @@ in the argument.
 logtest integer1 integer2
 
 \cdf{logtest} is a predicate that is true if any of
-the bits designated by the 1's in {\it integer1} are 1's in {\it integer2}.
+the bits designated by the 1's in \emph{integer1} are 1's in \emph{integer2}.
 \begin{lisp}
-(logtest {\it x} {\it y}) \EQ\ (not (zerop (logand {\it x} {\it y})))
+(logtest \emph{x} \emph{y}) \EQ\ (not (zerop (logand \emph{x} \emph{y})))
 \end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
 logbitp index integer
 
-\cdf{logbitp} is true if the bit in {\it integer} whose index
-is {\it index} (that is, its weight is $2^{index}$) is a one-bit;
+\cdf{logbitp} is true if the bit in \emph{integer} whose index
+is \emph{index} (that is, its weight is $2^{index}$) is a one-bit;
 otherwise it is false.
 For example:
 \begin{lisp}
-(logbitp 2 6) {\rm is true} \\
-(logbitp 0 6) {\rm is false} \\
-(logbitp {\it k} {\it n}) \EQ\ (ldb-test (byte 1 {\it k}) {\it n})
+(logbitp 2 6) \textrm{is true} \\
+(logbitp 0 6) \textrm{is false} \\
+(logbitp \emph{k} \emph{n}) \EQ\ (ldb-test (byte 1 \emph{k}) \emph{n})
 \end{lisp}
 \begin{new}
 X3J13 voted in January 1989
 \issue{ARGUMENTS-UNDERSPECIFIED}
-to clarify that the {\it index} must be a non-negative integer.
+to clarify that the \emph{index} must be a non-negative integer.
 \end{new}
 \end{defun}
 
 \begin{defun}[Function]
 ash integer count
 
-This function shifts {\it integer} arithmetically left by {\it count} bit
-positions if {\it count} is positive,
-or right by $-\hbox{\it count}$ bit positions if {\it count} is negative.
-The sign of the result is always the same as the sign of {\it integer}.
+This function shifts \emph{integer} arithmetically left by \emph{count} bit
+positions if \emph{count} is positive,
+or right by $-\hbox\emph{count}$ bit positions if \emph{count} is negative.
+The sign of the result is always the same as the sign of \emph{integer}.
 
 Mathematically speaking, this operation performs the computation
-${\it floor}({\it integer}\cdot2^{count}$).
+$\emph{floor}(\emph{integer}\cdot2^{count}$).
 
-Logically, this moves all of the bits in {\it integer} to the left,
+Logically, this moves all of the bits in \emph{integer} to the left,
 adding zero-bits at the bottom, or moves them to the right,
 discarding bits.  (In this context the question of what gets shifted
 in on the left is irrelevant; integers, viewed as strings of bits,
 are ``half-infinite,'' that is, conceptually extend infinitely far to the left.)
 For example:
 \begin{lisp}
-(logbitp {\it j} (ash {\it n} {\it k})) \EQ\ (and (>= {\it j} {\it k}) (logbitp (- {\it j} {\it k}) {\it n}))
+(logbitp \emph{j} (ash \emph{n} \emph{k})) \EQ\ (and (>= \emph{j} \emph{k}) (logbitp (- \emph{j} \emph{k}) \emph{n}))
 \end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
 logcount integer
 
-The number of bits in {\it integer} is determined and returned.
-If {\it integer} is positive, the \cd{1}-bits in its binary
-representation are counted.  If {\it integer} is negative,
+The number of bits in \emph{integer} is determined and returned.
+If \emph{integer} is positive, the \cd{1}-bits in its binary
+representation are counted.  If \emph{integer} is negative,
 the \cd{0}-bits in its two's-complement binary representation are counted.
 The result is always a non-negative integer.
 For example:
 \begin{lisp}
-(logcount 13) \EV\ 3~~~~~~;{\rm Binary representation is} ...0001101 \\
-(logcount -13) \EV\ 2~~~~~;{\rm Binary representation is} ...1110011 \\
-(logcount 30) \EV\ 4~~~~~~;{\rm Binary representation is} ...0011110 \\
-(logcount -30) \EV\ 4~~~~~;{\rm Binary representation is} ...1100010
+(logcount 13) \EV\ 3~~~~~~;\textrm{Binary representation is} ...0001101 \\
+(logcount -13) \EV\ 2~~~~~;\textrm{Binary representation is} ...1110011 \\
+(logcount 30) \EV\ 4~~~~~~;\textrm{Binary representation is} ...0011110 \\
+(logcount -30) \EV\ 4~~~~~;\textrm{Binary representation is} ...1100010
 \end{lisp}
 The following identity always holds:
 \begin{lisp}
@@ -3538,16 +3669,16 @@ integer-length integer
 
 This function performs the computation
 \begin{tabbing}
-$ {\it ceiling}(\log_2 ({\bf if}\; {\it integer} < 0 \;{\bf then} \;
-    -{\it integer} \;{\bf else}\; {\it integer}+1)) $
+$ \emph{ceiling}(\log_2 ({\bf if}\; \emph{integer} < 0 \;{\bf then} \;
+    -\emph{integer} \;{\bf else}\; \emph{integer}+1)) $
 \end{tabbing}
 This is useful in two different ways.
-First, if {\it integer} is non-negative, then its value can be represented
+First, if \emph{integer} is non-negative, then its value can be represented
 in unsigned binary form in a field whose width in bits is
-no smaller than \cd{(integer-length {\it integer})}.
-Second, regardless of the sign of {\it integer}, its value can be
+no smaller than \cd{(integer-length \emph{integer})}.
+Second, regardless of the sign of \emph{integer}, its value can be
 represented in signed binary two's-complement form in a field
-whose width in bits is no smaller than \cd{(+ (integer-length {\it integer}) 1)}.
+whose width in bits is no smaller than \cd{(+ (integer-length \emph{integer}) 1)}.
 For example:
 \begin{lisp}
 (integer-length 0) \EV\ 0 \\
@@ -3577,20 +3708,20 @@ function \cdf{haulong}.  One may define \cdf{haulong} as
 
 Several functions are provided for dealing with an arbitrary-width field of
 contiguous bits appearing anywhere in an integer.
-Such a contiguous set of bits is called a {\it byte}.
-Here the term {\it byte} does not imply some fixed number of bits
+Such a contiguous set of bits is called a \emph{byte}.
+Here the term \emph{byte} does not imply some fixed number of bits
 (such as eight), rather a field of arbitrary and user-specifiable width.
 
-The byte-manipulation functions use objects called {\it byte specifiers} to
+The byte-manipulation functions use objects called \emph{byte specifiers} to
 designate a specific byte position within an integer.
 The representation of a byte specifier is implementation-dependent;
 in particular, it may or may not be a number.
 It is sufficient to know that the function \cdf{byte} will construct one,
 and that the byte-manipulation functions will accept them.
 The function \cdf{byte} accepts two integers representing
-the {\it position} and {\it size} of the byte and returns
+the \emph{position} and \emph{size} of the byte and returns
 a byte specifier.
-Such a specifier designates a byte whose width is {\it size}
+Such a specifier designates a byte whose width is \emph{size}
 and whose bits have weights $ 2^{position+size-1} $
 through $ 2^{position} $.
 
@@ -3610,19 +3741,19 @@ Given a byte specifier, \cdf{byte-size} returns the size specified as an
 integer; \cdf{byte-position} similarly returns the position.
 For example:
 \begin{lisp}
-(byte-size (byte {\it j} {\it k})) \EQ\ {\it j} \\
-(byte-position (byte {\it j} {\it k})) \EQ\ {\it k}
+(byte-size (byte \emph{j} \emph{k})) \EQ\ \emph{j} \\
+(byte-position (byte \emph{j} \emph{k})) \EQ\ \emph{k}
 \end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
 ldb bytespec integer
 
-{\it bytespec} specifies a byte of {\it integer} to be extracted.
+\emph{bytespec} specifies a byte of \emph{integer} to be extracted.
 The result is returned as a non-negative integer.
 For example:
 \begin{lisp}
-(logbitp {\it j} (ldb (byte {\it s} {\it p}) {\it n})) \EQ\ (and (< {\it j} {\it s}) (logbitp (+ {\it j} {\it p}) {\it n}))
+(logbitp \emph{j} (ldb (byte \emph{s} \emph{p}) \emph{n})) \EQ\ (and (< \emph{j} \emph{s}) (logbitp (+ \emph{j} \emph{p}) \emph{n}))
 \end{lisp}
 The name of the function \cdf{ldb} means ``load byte.''
 
@@ -3641,23 +3772,23 @@ implemented in terms of \cdf{ldb} as follows:
 \end{incompatibility}
 \afternoterule
 
-If the argument {\it integer} is specified by a form that is a {\it place} form
+If the argument \emph{integer} is specified by a form that is a \emph{place} form
 acceptable to \cdf{setf}, then
 \cdf{setf} may be used with \cdf{ldb} to modify
 a byte within the integer that is stored
-in that {\it place}.
+in that \emph{place}.
 The effect is to perform a \cdf{dpb} operation
-and then store the result back into the {\it place}.
+and then store the result back into the \emph{place}.
 \end{defun}
 
 \begin{defun}[Function]
 ldb-test bytespec integer
 
 \cdf{ldb-test} is a predicate that is true if any of
-the bits designated by the byte specifier {\it bytespec} are 1's in {\it integer};
+the bits designated by the byte specifier \emph{bytespec} are 1's in \emph{integer};
 that is, it is true if the designated field is non-zero.
 \begin{lisp}
-(ldb-test {\it bytespec} {\it n}) \EQ\ (not (zerop (ldb {\it bytespec} {\it n})))
+(ldb-test \emph{bytespec} \emph{n}) \EQ\ (not (zerop (ldb \emph{bytespec} \emph{n})))
 \end{lisp}
 \end{defun}
 
@@ -3666,44 +3797,44 @@ mask-field bytespec integer
 
 This is similar to \cdf{ldb}; however, the result contains
 the specified byte
-of {\it integer} in the position specified by {\it bytespec},
+of \emph{integer} in the position specified by \emph{bytespec},
 rather than in position 0 as with \cdf{ldb}.
-The result therefore agrees with {\it integer} in the byte specified
+The result therefore agrees with \emph{integer} in the byte specified
 but has zero-bits everywhere else.
 For example:
 \begin{lisp}
-(ldb {\it bs} (mask-field {\it bs} {\it n})) \EQ\ (ldb {\it bs} {\it n}) \\
+(ldb \emph{bs} (mask-field \emph{bs} \emph{n})) \EQ\ (ldb \emph{bs} \emph{n}) \\
  \\
-(logbitp {\it j} (mask-field (byte {\it s} {\it p}) {\it n})) \\
-~~~\EQ\ (and (>= {\it j} {\it p}) (< {\it j} (+ {\it p} {\it s})) (logbitp {\it j} {\it n})) \\
+(logbitp \emph{j} (mask-field (byte \emph{s} \emph{p}) \emph{n})) \\
+~~~\EQ\ (and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s})) (logbitp \emph{j} \emph{n})) \\
  \\
-(mask-field {\it bs} {\it n}) \EQ\ (logand {\it n} (dpb -1 {\it bs} 0))
+(mask-field \emph{bs} \emph{n}) \EQ\ (logand \emph{n} (dpb -1 \emph{bs} 0))
 \end{lisp}
 
-If the argument {\it integer} is specified by a form that is a {\it place} form
+If the argument \emph{integer} is specified by a form that is a \emph{place} form
 acceptable to \cdf{setf},
 then \cdf{setf} may be used with \cdf{mask-field}
 to modify a byte within the integer that is stored
-in that {\it place}.
+in that \emph{place}.
 The effect is to perform a \cdf{deposit-field} operation
-and then store the result back into the {\it place}.
+and then store the result back into the \emph{place}.
 \end{defun}
 
 \begin{defun}[Function]
 dpb newbyte bytespec integer
 
-This returns a number that is the same as {\it integer} except in the
-bits specified by {\it bytespec}.  Let {\it s} be the size specified
-by {\it bytespec}; then the low {\it s} bits of {\it newbyte} appear in
-the result in the byte specified by {\it bytespec}.
-The integer {\it newbyte} is therefore interpreted as
+This returns a number that is the same as \emph{integer} except in the
+bits specified by \emph{bytespec}.  Let \emph{s} be the size specified
+by \emph{bytespec}; then the low \emph{s} bits of \emph{newbyte} appear in
+the result in the byte specified by \emph{bytespec}.
+The integer \emph{newbyte} is therefore interpreted as
 being right-justified, as if it were the result of \cdf{ldb}.
 For example:
 \begin{lisp}
-(logbitp {\it j} (dpb {\it m} (byte {\it s} {\it p}) {\it n})) \\
-~~\EQ\ (if \=(and (>= {\it j} {\it p}) (< {\it j} (+ {\it p} {\it s}))) \\
-\>(logbitp (- {\it j} {\it p}) {\it m}) \\
-\>(logbitp {\it j} {\it n}))
+(logbitp \emph{j} (dpb \emph{m} (byte \emph{s} \emph{p}) \emph{n})) \\
+~~\EQ\ (if \=(and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s}))) \\
+\>(logbitp (- \emph{j} \emph{p}) \emph{m}) \\
+\>(logbitp \emph{j} \emph{n}))
 \end{lisp}
 The name of the function \cdf{dpb} means ``deposit byte.''
 \end{defun}
@@ -3712,36 +3843,36 @@ The name of the function \cdf{dpb} means ``deposit byte.''
 deposit-field newbyte bytespec integer
 
 This function is to \cdf{mask-field} as \cdf{dpb} is to \cdf{ldb}.
-The result is an integer that contains the bits of {\it newbyte}
-within the byte specified by {\it bytespec}, and elsewhere contains the bits
-of {\it integer}.
+The result is an integer that contains the bits of \emph{newbyte}
+within the byte specified by \emph{bytespec}, and elsewhere contains the bits
+of \emph{integer}.
 For example:
 \begin{lisp}
-(logbitp {\it j} (deposit-field {\it m} (byte {\it s} {\it p}) {\it n})) \\
-~~~\EQ\ (if \=(and (>= {\it j} {\it p}) (< {\it j} (+ {\it p} {\it s}))) \\
-\>(logbitp {\it j} {\it m}) \\
-\>(logbitp {\it j} {\it n}))
+(logbitp \emph{j} (deposit-field \emph{m} (byte \emph{s} \emph{p}) \emph{n})) \\
+~~~\EQ\ (if \=(and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s}))) \\
+\>(logbitp \emph{j} \emph{m}) \\
+\>(logbitp \emph{j} \emph{n}))
 \end{lisp}
 
 \beforenoterule
 \begin{implementation}
-If the {\it bytespec} is a constant, one may of course
-construct, at compile time, an equivalent mask {\it m}, for example
-by computing \cd{(deposit-field -1 {\it bytespec} 0)}.  Given
-this mask {\it m}, one may then compute
+If the \emph{bytespec} is a constant, one may of course
+construct, at compile time, an equivalent mask \emph{m}, for example
+by computing \cd{(deposit-field -1 \emph{bytespec} 0)}.  Given
+this mask \emph{m}, one may then compute
 \begin{lisp}
-(deposit-field {\it newbyte} {\it bytespec} {\it integer})
+(deposit-field \emph{newbyte} \emph{bytespec} \emph{integer})
 \end{lisp}
 by computing
 \begin{lisp}
-(logior (logand {\it newbyte} {\it m}) (logand {\it integer} (lognot {\it m})))
+(logior (logand \emph{newbyte} \emph{m}) (logand \emph{integer} (lognot \emph{m})))
 \end{lisp}
-where the result of \cd{(lognot {\it m})} can of course also be computed
+where the result of \cd{(lognot \emph{m})} can of course also be computed
 at compile time.  However, the following expression
 may also be used and may require fewer
 temporary registers in some situations:
 \begin{lisp}
-(logxor {\it integer} (logand {\it m} (logxor {\it integer} {\it newbyte})))
+(logxor \emph{integer} (logand \emph{m} (logxor \emph{integer} \emph{newbyte})))
 \end{lisp}
 A related, though possibly less useful, trick is that
 \begin{lisp}
@@ -3769,17 +3900,17 @@ as word size.
 \begin{defun}[Function]
 random number &optional state
 
-\cd{(random {\it n})} accepts a positive number {\it n} and returns
-a number of the same kind between zero (inclusive) and {\it n} (exclusive).
-The number {\it n} may be an integer or a floating-point number.
+\cd{(random \emph{n})} accepts a positive number \emph{n} and returns
+a number of the same kind between zero (inclusive) and \emph{n} (exclusive).
+The number \emph{n} may be an integer or a floating-point number.
 An approximately uniform choice distribution is used.
-If {\it n} is an integer, each of the possible results
-occurs with (approximate) probability 1/{\it n}.
+If \emph{n} is an integer, each of the possible results
+occurs with (approximate) probability 1/\emph{n}.
 (The qualifier ``approximate'' is used because of implementation
 considerations; in practice, the deviation from uniformity should be
 quite small.)
 
-The argument {\it state} must be an object of type \cdf{random-state};
+The argument \emph{state} must be an object of type \cdf{random-state};
 it defaults to the value of the variable \cd{*random-state*}.
 This object is used to maintain the state of the pseudo-random-number
 generator and is altered as a side effect of the \cdf{random} operation.
@@ -3794,31 +3925,31 @@ its value is too implementation-dependent (limited by fixnum range).
 \begin{implementation}
 In general, even if \cdf{random} of zero arguments
 were defined as in MacLisp,
-it is not adequate to define \cd{(random {\it n})} for integral {\it n}
-to be simply \cd{(mod (random) {\it n})}; this fails to be uniformly distributed
-if {\it n} is larger than the largest number produced by \cdf{random},
-or even if {\it n} merely approaches this number.
+it is not adequate to define \cd{(random \emph{n})} for integral \emph{n}
+to be simply \cd{(mod (random) \emph{n})}; this fails to be uniformly distributed
+if \emph{n} is larger than the largest number produced by \cdf{random},
+or even if \emph{n} merely approaches this number.
 This is another reason for omitting \cdf{random} of zero arguments in Common Lisp.
 Assuming that the underlying mechanism produces ``random bits''
 (possibly in chunks such as fixnums), the best approach is to produce
-enough random bits to construct an integer {\it k} some number {\it d} of bits
-larger than \cd{(integer-length {\it n})} (see \cdf{integer-length}), and
-then compute \cd{(mod {\it k} {\it n})}.  The quantity {\it d} should be at
+enough random bits to construct an integer \emph{k} some number \emph{d} of bits
+larger than \cd{(integer-length \emph{n})} (see \cdf{integer-length}), and
+then compute \cd{(mod \emph{k} \emph{n})}.  The quantity \emph{d} should be at
 least 7, and preferably 10 or more.
 
 To produce random floating-point numbers in the half-open
-range $[{\it A},{\it B})$,
+range $[\emph{A},\emph{B})$,
 accepted practice (as determined by a look through the
-{\it Collected Algorithms from the ACM}, particularly algorithms
-133, 266, 294, and 370) is to compute ${\it X}\cdot({\it B}-{\it A})+{\it A}$,
-where {\it X} is a floating-point number uniformly distributed over
+\emph{Collected Algorithms from the ACM}, particularly algorithms
+133, 266, 294, and 370) is to compute $\emph{X}\cdot(\emph{B}-\emph{A})+\emph{A}$,
+where \emph{X} is a floating-point number uniformly distributed over
 $[0.0, 1.0)$
-and computed by calculating a random integer ${\it N}$ in the range
-$[0,{\it M})$
+and computed by calculating a random integer $\emph{N}$ in the range
+$[0,\emph{M})$
 (typically by a multiplicative-congruential or linear-congruential method
-mod ${\it M}$) and then setting ${\it X}={\it N}/{\it M}$.  See also \cite{KNUTH-VOLUME-2}.
-If one takes ${\it M}=2^{\hbox{\footnotesize\it f}}$, where ${\it f}$ is the length of the significand
-of a floating-point number (and it is in fact common to choose ${\it M}$
+mod $\emph{M}$) and then setting $\emph{X}=\emph{N}/\emph{M}$.  See also \cite{KNUTH-VOLUME-2}.
+If one takes $\emph{M}=2^{f}$, where $\emph{f}$ is the length of the significand
+of a floating-point number (and it is in fact common to choose $\emph{M}$
 to be a power of 2), then this method is equivalent to the following
 assembly-language-level procedure.  Assume the representation
 has no hidden bit.  Take a floating-point 0.5,
@@ -3828,14 +3959,14 @@ result if necessary.
 For example, on the DEC PDP-10, assume that accumulator \cdf{T} is completely random
 (all 36 bits are random).  Then the code sequence
 \begin{lisp}
-LSH T,-9~~~~~~~~~~~~~~~~~;{\rm Clear high 9 bits; low 27 are random} \\
-FSC T,128.~~~~~~~~~~~~~~~;{\rm Install exponent and normalize}
+LSH T,-9~~~~~~~~~~~~~~~~~;\textrm{Clear high 9 bits; low 27 are random} \\
+FSC T,128.~~~~~~~~~~~~~~~;\textrm{Install exponent and normalize}
 \end{lisp}
 will produce in \cdf{T} a random floating-point number uniformly distributed
 over $[0.0, 1.0)$.  (Instead of the \cdf{LSH} instruction,
 one could do
 \begin{lisp}
-TLZ T,777000~~~~~~~~~~~~~;{\rm That's 777000 octal}
+TLZ T,777000~~~~~~~~~~~~~;\textrm{That's 777000 octal}
 \end{lisp}
 but if the 36 random bits came from a congruential random-number generator,
 the high-order bits tend to be ``more random'' than the low-order ones,
@@ -3853,8 +3984,8 @@ For example, on the DEC VAX, assume that register \cdf{T} is
 completely random (but a little less random than on the PDP-10, as
 it has only 32 random bits).  Then the code sequence
 \begin{lisp}
-INSV \#{\Xcircumflex}X81,\#7,\#9,T~~~~~;{\rm Install correct sign bit and exponent} \\
-SUBF \#{\Xcircumflex}F1.0,T~~~~~~~~~~;{\rm Subtract 1.0}
+INSV \#{\Xcircumflex}X81,\#7,\#9,T~~~~~;\textrm{Install correct sign bit and exponent} \\
+SUBF \#{\Xcircumflex}F1.0,T~~~~~~~~~~;\textrm{Subtract 1.0}
 \end{lisp}
 will produce in \cdf{T} a random floating-point number uniformly distributed
 over $[0.0, 1.0)$.  Again, if the low-order bits are not random enough,
@@ -3890,10 +4021,10 @@ make-random-state &optional state
 
 This function returns a new object of type \cdf{random-state},
 suitable for use as the value of the variable \cd{*random-state*}.
-If {\it state} is {\false} or omitted, \cdf{make-random-state} returns a {\it copy}
+If \emph{state} is {\false} or omitted, \cdf{make-random-state} returns a \emph{copy}
 of the current random-number state object (the value of
-the variable \cd{*random-state*}).  If {\it state} is a state object,
-a copy of that state object is returned.  If {\it state} is {\true},
+the variable \cd{*random-state*}).  If \emph{state} is a state object,
+a copy of that state object is returned.  If \emph{state} is {\true},
 then a new state object is returned that has been ``randomly''
 initialized by some means (such as by a time-of-day clock).
 
@@ -3955,7 +4086,7 @@ random-state-p object
 \cdf{random-state-p} is true if its argument is a random-state object,
 and otherwise is false.
 \begin{lisp}
-(random-state-p {\it x}) \EQ\ (typep {\it x} 'random-state)
+(random-state-p \emph{x}) \EQ\ (typep \emph{x} 'random-state)
 \end{lisp}
 \end{defun}
 
@@ -4054,16 +4185,16 @@ short-format
 floating-point number closest in value to (but not equal to) zero provided by
 the implementation.  In implementations that do not support denormalized numbers
 this may be the same as the value of
-\cd{least-\discretionary{}{}{}positive-\discretionary{}{}{}short-float}.
+\cd{least-positive-short-float}.
 
 The value of \cdf{least-negative-normalized-short-float} is that negative normalized short-format
 floating-point number closest in value to (but not equal to) zero provided by
 the implementation.
 (Note that even if an implementation supports
 minus zero as a distinct short floating-point value,
-\cd{least-\discretionary{}{}{}negative-\discretionary{}{}{}normalized-\discretionary{}{}{}short-float} must not be minus zero.)
+\cdf{least-negative-normalized-short-float} must not be minus zero.)
 In implementations that do not support denormalized numbers
-this may be the same as the value of \cd{least-\discretionary{}{}{}positive-\discretionary{}{}{}short-float}.
+this may be the same as the value of \cdf{least-positive-short-float}.
 \end{defun}
 
 \begin{defun}[Constant]
@@ -4086,10 +4217,10 @@ double-float-epsilon \\
 long-float-epsilon
 
 These constants have as value, for each floating-point format,
-the smallest positive floating-point number {\it e} of that format such that
+the smallest positive floating-point number \emph{e} of that format such that
 the expression
 \begin{lisp}
-(not (= (float 1 {\it e}) (+ (float 1 {\it e}) {\it e})))
+(not (= (float 1 \emph{e}) (+ (float 1 \emph{e}) \emph{e})))
 \end{lisp}
 is true when actually evaluated.
 \end{defun}
@@ -4101,10 +4232,10 @@ double-float-negative-epsilon \\
 long-float-negative-epsilon
 
 These constants have as value, for each floating-point format,
-the smallest positive floating-point number {\it e} of that format such that
+the smallest positive floating-point number \emph{e} of that format such that
 the expression
 \begin{lisp}
-(not (= (float 1 {\it e}) (- (float 1 {\it e}) {\it e})))
+(not (= (float 1 \emph{e}) (- (float 1 \emph{e}) \emph{e})))
 \end{lisp}
 is true when actually evaluated.
 \end{defun}

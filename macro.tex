@@ -3,9 +3,10 @@
 
 \clearpage\def\pagestatus{ULTIMATE}
 
+\ifx \rulang\Undef
+
 \chapter{Macros Макросы}
 \label{MACROS}
-
 
 The Common Lisp macro facility allows the user to define arbitrary
 functions that convert certain Lisp forms into different forms before
@@ -15,14 +16,6 @@ are important in the writing of good code: they make it possible to
 write code that is clear and elegant at the user level but that is
 converted to a more complex or more efficient internal form for
 execution.
-
-Функциональность макросов Common Lisp'а позволяет пользователю определять
-произвольные функции, которые преобразуют заданные Lisp'овые формы в другие
-формы, перед тем, как они будут вычислены или скомпилированы. Это делается на
-уровне выражений, а не на уровне строк, как в других языках. При написании
-хорошего кода макросы важны: они предоставляют возможность писать код, которые
-ясен и элегантен на пользовательском уровне, но после преобразования становится
-сложным или более эффективным для выполнения.
 
 When \cdf{eval} is given a list whose \emph{car} is a symbol, it looks
 for local definitions of that symbol (by \cdf{flet}, \cdf{labels},
@@ -38,25 +31,9 @@ see \cdf{macroexpand}.)
 This expansion is then evaluated in place of the original
 form.
 
-Когда \cdf{eval} получает список, у которого \emph{car} элемент является
-символом, она ищет локальные определения для этого символа (\cdf{flet},
-\cdf{labels} и \cdf{macrolet}). Если поиски не увенчались успехом, она ищет
-глобальное определение. Если это глобальное определение является макросом, тогда
-исходный список называется \emph{макровызовом}. С определением будет
-ассоциирована функция двух аргументов, называемая \emph{функцией раскрытия}. 
-Эта функция вызывается с макровызовом в качестве первого аргумента и лексическим
-окружением в качестве второго. Функция должна вернуть новую Lisp'овую форму,
-называемую \emph{раскрытием} макровызова. (На самом деле учавствует более общий
-механизм, смотрите \cdf{macroexpand}.)
-Затем это раскрытие выполняется по месту оригинальной (исходной) формы.
-
 When a function is being compiled, any macros it contains are expanded
 at compilation time.  This means that a macro definition must be seen by the
 compiler before the first use of the macro.
-
-Когда функция компилируется, все макросы, в ней содержащиеся, раскрываются во
-время компиляции. Это значит, что определение макроса должно быть прочитано
-компилятором до его первого использования.
 
 More generally, an implementation of Common Lisp has great latitude in deciding
 exactly when to expand macro calls within a program.  For example,
@@ -67,25 +44,11 @@ being defined.
 (An implementation might even choose always to compile functions defined
 by \cdf{defun}, even when operating in an ``interpretive'' mode.)
 
-В целом, реализация Common Lisp'а имеет большую свободу в выборе того, когда в
-программе раскрываются макровызовы.
-Например, допускается для специальной формы \cdf{defun} раскрытие всех
-внутренних макровызовов в время выполнения формы \cdf{defun} и записи полностью
-раскрытого тела функции, как определение данной функции для дальнейшего
-использования.
-(Реализация может даже выбрать путь, все время компилировать функции
-определенные с помощью \cdf{defun}, даже в режиме <<интерпретации>>.)
-
 Macros should be written so as to depend as little as possible
 on the execution environment to produce a correct expansion.  To ensure
 consistent behavior, it is best to ensure that all macro definitions are
 available, whether to the interpreter or compiler, before any code
 containing calls to those macros is introduced.
-
-Для правильного раскрытия макросы должны быть написаны так, чтобы иметь
-наименьшие зависимости от выполняемого окружения. Лучше всего удостовериться,
-что все определения макросов доступны перед тем, как компилятор или
-интерпретатор будет обрабатываеть код, содержащий макровызовы к ним. 
 
 In Common Lisp, macros are not functions.
 In particular, macros cannot be used as
@@ -94,22 +57,11 @@ or \cdf{map}; in such situations, the list representing the ``original macro
 call'' does not exist, and cannot exist, because in some sense the arguments
 have already been evaluated.
 
-В Common Lisp, макросы не являются функциями.
-В частности, макросы не могут использоваться, как функциональные аргументы к
-таким функциям, как \cdf{apply}, \cdf{funcall} или \cdf{map}. В таких ситуациях
-список, отображающий <<первоначальный макровызов>> не существует и не может
-существовать, потому что в некотором смысле аргументы уже были вычислены.
-
-
 \section{Macro Definition Определение макроса}
 
 The function \cdf{macro-function} determines whether a given symbol
 is the name of a macro.  The \cdf{defmacro} construct provides
 a convenient way to define new macros.
-
-Функция \cdf{macro-function} определяет, является ли данный символ именем
-макроса. Конструкция \cdf{defmacro} предоставляет удобный способ определить
-новый макрос.
 
 \begin{obsolete}
 \begin{defun}[Function]
@@ -170,30 +122,12 @@ as an ordinary function or as a special form but not as a macro, then
 {\false} is returned.  The function \cdf{macroexpand} or \cdf{macroexpand-1}
 is the best way to invoke the expansion function.
 
-Первый аргумент должен быть символом. Если символ содержит определение функции,
-то есть определение макроса, локально созданное в окружении \emph{env} с помощью
-\cdf{macrolet} или глобально созданное с помощью \cdf{defmacro}, тогда
-возвращается функция раскрытия (функция двух аргументов, первый форма
-макровызова и второй --- окружение).
-Если символ не содержит определение функции, или это определение обычной функции
-или это специальная форма, но не макрос, тогда возвращается {\false}. 
-Наилучший способ вызвать функцию раскрытия использовать
-\cdf{macroexpand} или \cdf{macroexpand-1}.
-
 It is possible for \emph{both} \cdf{macro-function} and \cdf{special-form-p}
 to be true of a symbol.  This is possible because an implementation is
 permitted to implement any macro also as a special form for speed.
 On the other hand, the macro definition must be available
 for use by programs that understand only the standard special forms
 listed in table~\ref{SPECIAL-FORM-TABLE}.
-
-Возможно такое, что и \cdf{macro-function}, и \cdf{special-form-p} обе возвращают
-истину для одного заданного символа. Так происходит, потому что реализация может
-для увеличения производительности реализовывать любой макрос, как специальную
-форму.
-С другой стороны, определения макросов должны быть доступны для использования
-программами, которые понимают только стандартные специальные формы,
-перечисленные в таблице~\ref{SPECIAL-FORM-TABLE}.
 
 \cdf{setf} may be used with \cdf{macro-function} to install
 a macro as a symbol's global function definition:
@@ -211,22 +145,6 @@ when using it with \cdf{setf}.
 It is an error to attempt to redefine the name of a special form.
 
 See also \cdf{compiler-macro-function}.
-
-\cdf{setf} может быть использована с \cdf{macro-function} для установки в символ
-глобального определения макроса:
-\begin{lisp}
-(setf (macro-function \emph{symbol}) \emph{fn})
-\end{lisp}
-Устанавливаемое значение должно быть функцией, которая принимает два аргументы,
-список макровызова и окружение, и вычислять раскрытие этого макровызова. 
-Выполнение этой операции указывает на то, что символ будет содержать \emph{только} это
-определение макроса в качестве определения глобальной функции. Предыдущее
-определение функции или макроса утрачивается. С помощью \cdf{setf} невозможно
-установить локальное определение макроса. При использовании \cdf{setf} указание
-второго параметра (окружение) является ошибкой.
-Переопределение специальной формы также является ошибкой.
-
-Смотрите также \cdf{compiler-macro-function}.
 \end{defun}
 \end{newer}
 
@@ -241,16 +159,6 @@ form to a lambda-list, and
 the \emph{form\/}s constitute the body of the expander function.
 The \cdf{defmacro} construct arranges to install this expander function,
 as the global macro definition of \emph{name}.
-
-\cdf{defmacro} является макросом определяющим макросы, которые преобразуют формы
-макровызовов.
-\cdf{defmacro} имеет почти такой же синтаксис, как и \cdf{defun}:
-\emph{name} является символом, для которого создается макрос,
-\emph{lambda-list} похож на список параметров лямбда-выражения и 
-\emph{form} содержит тело функции раскрытия.
-Конструкция \emph{defmacro} устанавливает функцию раскрытия, как глобальное
-определение макроса для символа \emph{name}.
-FIXME
 
 \begin{obsolete}
 The expander function
@@ -280,8 +188,6 @@ Therefore \cdf{return-from} may be used to exit from the function.
 The \emph{name} is returned
 as the value of the \cdf{defmacro} form.
 
-Форма \cdf{defmacro} возвращает в качестве значение \emph{name}.
-
 If we view the 
 macro call as a list containing a function name and some argument forms,
 in effect the expander function and the list of (unevaluated) argument
@@ -292,26 +198,11 @@ Then the body forms are evaluated
 as an implicit \cdf{progn}, and the value of the last form
 is returned as the expansion of the macro call.
 
-Если мы рассмотрим макровызов, как список содержащий имя функции и некоторые
-формы аргументов, то механизм заключается в передаче в функцию \cdf{apply} этой
-функции и списка ее (невычисленных) аргументов.
-Спецификаторы параметров обратываются также, как и для любого лямбда-выражения.
-В качестве параметров используются формы аргументов макровызова.
-Затем вычисляются формы тела, как неявный \cdf{progn}. Значение последней формы
-возвращается, как раскрытие макровызова.
-
 If the optional documentation string \emph{doc-string} is present (if not
 followed by a declaration, it may be
 present only if at least one \emph{form} is also specified, as it is
 otherwise taken to be a \emph{form}), then it is attached to the \emph{name}
 as a documentation string of type \cdf{function}; see \cdf{documentation}.
-
-Если указана необязательная строка документации \emph{doc-string}, тогда она
-присоединяется к символу \emph{name}, как строка документации типа
-\cdf{function}. Смотрите \cdf{documentation}.
-Если в определении макроса представлена только строка документации, и после нее
-нет ни одной формы, ни деклараций, ни просто для тела, то данная строка сама
-становиться формой, и тело считается состоящим из одной формы --- этой строки.
 
 \begin{obsolete}
 Like the lambda-list in a \cdf{defun}, a \cdf{defmacro} \emph{lambda-list} may contain
@@ -324,8 +215,6 @@ are allowed in \cdf{defmacro} variable lists only.
 \end{obsolete}
 \begin{new}
 These three markers are now allowed in other constructs as well.
-
-Следующие три маркера доступны в определении лямбда-списка.
 \end{new}
 \begin{indentdesc}{6pc}
 \item[\cd{\&body}]
@@ -334,23 +223,12 @@ output-formatting and editing functions that the remainder of the form is
 treated as a body and should be indented accordingly.
 (Only one of \cd{\&body} or \cd{\&rest} may be used.)
 
-Данный маркер эквивалентен \cd{\&rest} маркеру, но дополнительно сообщает для
-функций вывода-форматирования и редактирования, что оставшаяся часть формы
-рассматривается как тело и должна быть правильно отформатирована.
-(Можно использовать исключительно один маркер или \cd{\&body}, или \cd{\&rest})
-
 \item[\cd{\&whole}]
 This is followed by a single variable that is bound to the
 entire macro-call form; this is the value that the macro definition function
 receives as its single argument.
 \cd{\&whole} and the following variable should appear first in the lambda-list,
 before any other parameter or lambda-list keyword.
-
-За данным маркером указывается одна переменная, которая будет связана со всей
-формой макровызова. Это значение, которое получает функция определения макроса в
-качестве своего первого аргумента.
-\cd{\&whole} и следующая переменная должны указываться на первой позиции в
-лямбда-списке, перед другими параметрами или маркерами.
 
 \item[\cd{\&environment}]
 This is followed by a single variable that is bound
@@ -362,19 +240,8 @@ macro definitions that the \cdf{macrolet} construct may have
 established within that lexical environment.  This is useful primarily
 in the rare cases where a macro definition must explicitly expand any macros
 in a subform of the macro call before computing its own expansion.
-
-За данным маркером указывается одна переменния, которая будет связана с
-окружением, отображаюим лексическое окружение, в котором произошел
-макровызов. Это окружение может не быть полным лексическим окружением. Оно
-должно использоваться только с функцией \cdf{macroexpand} ради любых локальных
-определений макросов, которые могли быть установлены с помощью \cdf{macrolet}
-конструкции внутри этого лексического окружения. Этот функционал полезен крайне
-редко, когда определение макроса должно явно раскрыть другие макросы в процессе
-своего раскрытия.
 \end{indentdesc}
 See \cdf{lambda-list-keywords}.
-
-Смотрите \cdf{lambda-list-keywords}.
 
 \begin{new}%CORR
 \emph{Notice of correction.}
@@ -431,28 +298,6 @@ for \cdf{dolist} in this manner:
 \end{lisp}
 More examples of embedded lambda-lists in \cdf{defmacro} are shown below.
 
-\cdf{defmacro}, в отличие от любых других конструкций Common Lisp'а, имеющих
-лямбда-списки в своем синтаксисе, предоставляет дополнительную функциональность
-известную как \emph{деструктуризация}.
-\begin{newer}
-Смотрите \cdf{destructuring-bind}, которая отдельно предоставляет эту функциональность.
-\end{newer}
-В любом месте, где могло бы стоять имя параметра, и где по синтаксису не
-ожидается использование списка (как описано в
-разделе~\ref{LAMBDA-EXPRESSIONS-SECTION}), можно использовать еще один
-встроенный лямбда-список. Когда использован такой прием, при передаче форм
-аргументов для встроенного лямбда-списка, необходимо обернуть эти формы в
-отдельный список.
-В качестве примера, определение макроса для \cdf{dolist} можно записать в таком
-стиле:
-\begin{lisp}
-(defmacro dolist ((var listform \cd{\&optional} resultform) \\
-~~~~~~~~~~~~~~~~~~\&rest body) \\
-~~...)
-\end{lisp}
-Ниже будет больше примеров использования встраиваемых лямбда-списков в
-\cdf{defmacro}.
-
 Another destructuring rule is that \cdf{defmacro} allows any lambda-list
 (whether top-level or embedded) to be dotted, ending
 in a parameter name.  This situation is treated exactly as if the
@@ -465,30 +310,12 @@ instead have been written
 ~~...)
 \end{lisp}
 
-Следующим правилом деструктуризации является то, что \cdf{defmacro} позволяет
-любому лямбда-списку (верхнего уровня или встроенному) быть dotted,
-заканчивающимся именем параметра. Такая ситуация обрабатывается так, как будто
-имя параметра в конце списка, стоит после неявного маркера \cd{\&rest}.
-Например, уже показанное определение \cdf{dolist} может быть записано так:
-\begin{lisp}
-(defmacro dolist ((var listform \&optional resultform) \\
-~~~~~~~~~~~~~~~~~~. body) \\
-~~...)
-\end{lisp}
-
-
 If the compiler encounters a \cdf{defmacro},
 the new macro is added to the compilation
 environment, and a compiled form of the expansion function is also added
 to the output file so that the new macro will be operative at run time.
 If this is not the desired effect, the \cdf{defmacro} form can be wrapped
 in an \cdf{eval-when} construct.
-
-Если компилятор встречает \cdf{defmacro}, он добавляет новый макрос в окружение
-компиляции, и также функция раскрытия добавляется в выходной файл. Таким образом
-новый марокс будет более быстрым во время выполнения.
-Если необходимо избежать такого механизма, можно использовать \cdf{defmacro}
-внутри конструкции \cdf{eval-when}.
 
 It is permissible to use \cdf{defmacro} to redefine a macro
 (for example, to install
@@ -498,14 +325,6 @@ It is an error to attempt to redefine the name of a special
 form (see table~\ref{SPECIAL-FORM-TABLE}) as a macro.
 See \cdf{macrolet}, which establishes macro
 definitions over a restricted lexical scope.
-
-\cdf{defmacro} может также использоваться для переопределения макроса
-(например, для установки корректной версии определения вместо некорректной), или
-для переопределения функции в макрос.
-Переопределение специальной формы (смотрите таблицу~\ref{SPECIAL-FORM-TABLE})
-недопускается.
-Смотрите \cdf{macrolet}, которая устанавливает определение макроса в замкнутом
-лексическом области видимости.
 
 \begin{newer}
 See also \cdf{define-compiler-macro}.
@@ -536,33 +355,6 @@ Also note the use of \cdf{gensym} to generate a new variable name.
 This is necessary to avoid conflict with any variables that might
 be referred to in \emph{neg-form}, \emph{zero-form}, or \emph{pos-form}.
 
-Допустим, для примера, что необходимо реализовать условную конструкцию
-аналогичную Fortran'овскому арифметичскому выражению IF. (Это конечно требует
-определенного расширения воображения и приостановки неверия.)
-Конструкция должна принимать четыре формы:
-\emph{test-value},
-\emph{neg-form},
-\emph{zero-form} и
-\emph{pos-form}.
-В зависимости от того, является ли \emph{test-form} отрицительным, нулем или
-положительным числом, для выполнения будет выбрана одна из трех последних форм.
-С использованием \cdf{defmacro}, определение этой конструкции может выглядеть
-так:
-\begin{lisp}
-(defmacro arithmetic-if (test neg-form zero-form pos-form) \\
-~~(let ((var (gensym))) \\
-~~~~{\Xbq}(let ((,var ,test)) \\
-~~~~~~~(cond ((< ,var 0) ,neg-form) \\
-~~~~~~~~~~~~~((= ,var 0) ,zero-form) \\
-~~~~~~~~~~~~~(t ,pos-form)))))
-\end{lisp}
-Необходимо отметить, что в данном определении используется функциональность
-обратной кавычки (смотрите раздел~\ref{MACRO-CHARACTERS-SECTION}).
-Также необходимо заметить, что используется \cdf{gensym} для создания нового
-имени переменной.
-Это необходимо для избежания конфликтов с другими переменными, которые могут
-использоваться в формах \emph{neg-form}, \emph{zero-form} или \emph{pos-form}.
-
 If the form is executed by the interpreter, it will cause the
 function definition of the symbol \cdf{arithmetic-if}
 to be a macro associated with which is
@@ -585,26 +377,6 @@ The precise macro expansion function may depend on the implementation,
 for example providing some degree of explicit error checking on the number
 of argument forms in the macro call.
 
-Если форма выполняется интерпретатором, то определение функции для символа
-\cd{arithmetic-if} будет является макросом, с которым ассоциирована функция двух
-аргументом эквивалентная данной
-\begin{lisp}
-(lambda (calling-form environment) \\
-~~(declare (ignore environment)) \\
-~~(let ((var (gensym))) \\
-~~~~(list 'let \\
-~~~~~~~~~~(list (list 'var (cadr calling-form))) \\
-~~~~~~~~~~(list 'cond \\
-~~~~~~~~~~~~~~~~(list (list '< var '0) (caddr calling-form)) \\
-~~~~~~~~~~~~~~~~(list (list '= var '0) (cadddr calling-form)) \\
-~~~~~~~~~~~~~~~~(list 't (fifth calling-form))))))
-\end{lisp}
-Лямбда-выражение является результатом выполнения декларации \cdf{defmacro}.
-Вызов \cdf{list} является (гипотетически) результатом макросимвола обратной
-кавычки (\cd{{\Xbq}}) и связанной с нии запятой.
-Конкретная функция раскрытия макроса может зависеть от реализации, например, она
-также может содержать проверку на корректность входных аргументов в макровызове.
-
 Now, if \cdf{eval} encounters
 \begin{lisp}
 (arithmetic-if (- x 4.0) \\
@@ -626,26 +398,6 @@ normally a complex list structure, typically consisting of a
 mostly constant template with a few evaluated forms here and there.
 The backquote template provides a ``picture'' of the resulting
 code, with places to be filled in indicated by preceding commas.)
-
-Теперь, если \cdf{eval} встретит
-\begin{lisp}
-(arithmetic-if (- x 4.0) \\
-~~~~~~~~~~~~~~~(- x) \\
-~~~~~~~~~~~~~~~(error "Strange zero") \\
-~~~~~~~~~~~~~~~x)
-\end{lisp}
-то раскроет эту форму в
-\begin{lisp}
-(let ((g407 (- x 4.0))) \\
-~~(cond ((< g407 0) (- x)) \\
-~~~~~~~~((= g407 0) (error "Strange zero")) \\
-~~~~~~~~(t x)))
-\end{lisp}
-и \cdf{eval} выполнит полученную форму.
-(Сейчас должно быть понятно, что функциональность обратной кавычки очень полезна
-для написания макросов. Она используется для построения шаблона, возвращаемой
-формы, с константными частями и частями для выполнения. Шаблон представляет
-собой <<картину>> кода, с местами для заполнения выделенными запятыми.)
 
 To expand on this example, stretching credibility to its limit,
 we might allow the \emph{pos-form}
@@ -677,36 +429,6 @@ One might rewrite the macro definition to produce better code
 when \emph{pos-form} and possibly \emph{zero-form} are omitted,
 or one might simply rely on the Common Lisp implementation to provide
 a compiler smart enough to improve the code itself.
-
-Для улучшения примера мы можем сделать так, чтобы \emph{pos-form} и
-\emph{zero-form} могли быть заменены на {\nil} в результате разкрытия макроса.
-Таким же образом действует и \cdf{if} опусткая векту \emph{else} в случае
-истинности условия.
-\begin{lisp}
-(defmacro arithmetic-if (test neg-form \\*
-~~~~~~~~~~~~~~~~~~~~~~~~~\cd{\&optional} zero-form pos-form) \\*
-~~(let ((var (gensym))) \\*
-~~~~{\Xbq}(let ((,var ,test)) \\*
-~~~~~~~(cond ((< ,var 0) ,neg-form) \\*
-~~~~~~~~~~~~~((= ,var 0) ,zero-form) \\*
-~~~~~~~~~~~~~(t ,pos-form)))))
-\end{lisp}
-Тогда можно записать
-\begin{lisp}
-(arithmetic-if (- x 4.0) (print x))
-\end{lisp}
-и это раскроется в что-то вроде
-\begin{lisp}
-(let ((g408 (- x 4.0))) \\*
-~~(cond ((< g408 0) (print x)) \\*
-~~~~~~~~((= g408 0) nil) \\*
-~~~~~~~~(t nil)))
-\end{lisp}
-Результирующий код корректен, но некрасиво выглядит.
-Можно переписать определение макроса для генерации лучшего кода, когда
-\emph{pos-form} и \emph{zero-form} могут быть вообще опущены.
-Или же можно положиться на реализацию Common Lisp'а, которая возможно
-соптимизирует этот код.
 
 Destructuring is a very powerful facility that allows
 the \cdf{defmacro} lambda-list to express the structure of
@@ -791,89 +513,6 @@ head&(m (car eyes) (cdr eyes)) \\
 \end{tabular}
 \end{flushleft}
 
-Деструктуризация является очень мощной функциональностью, которая позволяет
-лямбда-списку в \cdf{defmacro} выразить сложную структуру макровызова. Если
-не использовались ключевые символы лямбда-списка, то он представляет собой
-просто список с некоторой степенью вложенности и параметрами в качестве
-листьев. Структура макровызова должна иметь такую же структуру списка.
-Например, рассмотрим следующее определение макроса:
-\begin{lisp}
-(defmacro halibut ((mouth eye1 eye2) \\*
-~~~~~~~~~~~~~~~~~~~((fin1 length1) (fin2 length2)) \\*
-~~~~~~~~~~~~~~~~~~~tail) \\*
-~~...)
-\end{lisp}
-Теперь давайте рассмотрим макровызов:
-\begin{lisp}
-(halibut (m (car eyes) (cdr eyes)) \\*
-~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\*
-~~~~~~~~~my-favorite-tail)
-\end{lisp}
-Все это приведет к тому, что функция раскрытия получит следующие значения для ее
-параметров:
-\begin{flushleft}
-\cf
-\begin{tabular}{@{}ll@{}}
-\textrm{Parameter}&\textrm{Value} \\
-\hlinesp
-mouth&m \\
-eye1&(car eyes) \\
-eye2&(cdr eyes) \\
-fin1&f1 \\
-length1&(count-scales f1) \\
-fin2&f2 \\
-length2&(count-scales f2) \\
-tail&my-favorite-tail \\
-\hline
-\end{tabular}
-\end{flushleft}
-Следующий макровызов ошибочный, так как аргумента для параметра \cd{length1} не
-представлено:
-\begin{lisp}
-(halibut (m (car eyes) (cdr eyes)) \\
-~~~~~~~~~((f1) (f2 (count-scales f2))) \\
-~~~~~~~~~my-favorite-tail)
-\end{lisp}
-Следующий макровызов также ошибочный, так как на месте предполагаемого списка
-указан символ.
-\begin{lisp}
-(halibut my-favorite-head \\
-~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\
-~~~~~~~~~my-favorite-tail)
-\end{lisp}
-Тот факт, что значение переменной \cd{my-favorite-head} может быть списком, не
-имеет здесь значения. В макровызове структура должна совпадать с лямбда-списком
-в определении.
-
-Использование ключевых символов лябмда-списка предоставляет еще большую
-гибкость.
-Например, предположим, что удобно будет в функции раскрытия обращаться к
-элементам списка, называемым cd{mouth}, \cd{eye1}, and \cd{eye2}, как к
-\cd{head}.
-Можно записать так:
-\begin{lisp}
-(defmacro halibut ((\cd{\&whole} head mouth eye1 eye2) \\
-~~~~~~~~~~~~~~~~~~~((fin1 length1) (fin2 length2)) \\
-~~~~~~~~~~~~~~~~~~~tail)
-\end{lisp}
-Теперь рссмотрим такой же, как раньше, корректный макровызов:
-\begin{lisp}
-(halibut (m (car eyes) (cdr eyes)) \\
-~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\
-~~~~~~~~~my-favorite-tail)
-\end{lisp}
-Это приведет к тому, что функции раскрытия получит те же значения для своих
-параметров, а также значение для параметра \cd{head}:
-\begin{flushleft}
-\cf
-\begin{tabular}{@{}ll@{}}
-\textrm{Parameter}&\textrm{Value} \\
-\hlinesp
-head&(m (car eyes) (cdr eyes)) \\
-\hline
-\end{tabular}
-\end{flushleft}
-
 The stipulation that
 an embedded lambda-list is permitted only
 where ordinary lambda-list syntax would permit a parameter name
@@ -916,55 +555,13 @@ whereas the second does not have this requirement.  For example,
 (loser (car pool) ((+ x 1)))
 \end{lisp}
 would be a valid call for the second definition but not for the first.
-
-Существует условие для деструктуризации, встроенный лямбда-список разрешен
-только на позиции, где синтаксис лямбда-списка предусматривает имя параметра, но
-не список. Это защищает от двусмысленности. Например, нельзя записать
-\begin{lisp}
-(defmacro loser (x \cd{\&optional} (a b \cd{\&rest} c) \cd{\&rest} z) \\
-~~...)
-\end{lisp}
-потому что синтаксис лямбда-списка не позволяет использовать списки после
-\cd{\&optional}. Список \cd{(a b \cd{\&rest} c)} был бы интерпретирован как
-необязательный параметр \cd{a}, у которого значение по умолчанию \cd{b}, и
-supplied-p параметр с некорректным именем \cd{\&rest}, и дополнительным символом
-\cd{c}, также некорректным. Было бы правильнее выразить это так:
-\begin{lisp}
-(defmacro loser (x \cd{\&optional} ((a b \cd{\&rest} c)) \cd{\&rest} z) \\
-~~...)
-\end{lisp}
-Дополнительные круглые скобки устраняют двусмысленность. Однако, такой
-макровызов, как \cd{(loser (car pool))} не предоставляет никакой формы аргумента
-для лямбда-списка  \cd{(a b \cd{\&rest} c)}, значит значение по умолчанию для
-него будет {\nil}. А так как {\nil} является пустым списком, то этот макровызов
-ошибочен. Полностью корректное определение выглядит так:
-\begin{lisp}
-(defmacro loser (x \cd{\&optional} ((a b \cd{\&rest} c) '(nil nil)) \cd{\&rest} z) \\
-~~...)
-\end{lisp}
-или так
-\begin{lisp}
-(defmacro loser (x \cd{\&optional} ((\cd{\&optional} a b \cd{\&rest} c)) \cd{\&rest} z) \\
-~~...)
-\end{lisp}
-Они слегка отличаются: первое определение требует, что если макровызов явно
-указывает \cd{a}, тогда он должен указать явно и \cd{b}, тогда как второе
-определение не содержит такого требования. Например,
-\begin{lisp}
-(loser (car pool) ((+ x 1)))
-\end{lisp}
-будет корректным макровызовом для второго определения, но не для первого.
 \end{defmac}
 
-\section{Macro Expansion Раскрытие макроса}
+\section{Macro Expansion}
 
 The \cdf{macroexpand} function is the conventional means for
 expanding a macro call.  A hook is provided for a user function
 to gain control during the expansion process.
-
-Функция \cdf{macroexpand} служит для раскрытия макровызовов. Также
-предоставляется ловушка для пользовательской функции для управления процессом
-раскрытия.
 
 \begin{defun}[Function]
 macroexpand form &optional env \\
@@ -974,12 +571,6 @@ If \emph{form} is a macro call, then \cdf{macroexpand-1} will expand the macro
 call \emph{once} and return two values: the expansion and \cdf{t}.
 If \emph{form} is not a macro call, then the two values \emph{form} and {\nil} are
 returned.
-
-Если форма \emph{form} является макровызовом, тогда \cdf{macroexpand-1} раскроет
-макровызов только на \emph{один} уровень и вернет два значеия:
-раскрытие и \cdf{t}.
-Если форма \emph{form} не является макровызовом, тогда будут возвращены два
-значения: \emph{form} и {\nil}.
 
 A \emph{form} is considered to be a macro call only if it is a cons whose
 \emph{car} is a symbol that names a macro.  The environment \emph{env} is similar
@@ -991,16 +582,6 @@ argument, then the environment is effectively null,
 and only global macro definitions
 (as established by \cdf{defmacro}) will be considered.
 
-Форма \emph{form} рассматривается как макровызов, только если она является
-cons-ячейкой, у которой \emph{car} элемент является символом имени макроса. 
-Окружение \emph{env} похоже на то, что используется внутри вычислителя (смотрите
-\cdf{evalhook}). По-умолчанию равно нулевому окружению.
-Если окружение указано будут рассмотрены все установленные внутри \emph{env} с
-помощью \cdf{macrolet} локальные определения макросов. Если в качестве аргумента
-указана только форма \emph{form}, то берется нулевое окружение, и будут
-рассматриваться только глобальные определения макросов (установленные с помощью
-\cdf{defmacro}).
-
 Macro expansion is carried out as follows.  Once \cdf{macroexpand-1} has
 determined that a symbol names a macro, it obtains the expansion
 function for that macro.  The value of the variable
@@ -1011,18 +592,6 @@ this call is taken to be the expansion of the macro call.
 The initial value of \cdf{*macroexpand-hook*} is \cdf{funcall},
 and the net effect is to invoke the expansion function, giving
 it \emph{form} and \emph{env} as its two arguments.
-
-Раскрытие макросов происходит следующим образом. Когда \cdf{macroexpand-1}
-устанавливает, что символ в форме указывает на макрос, тогда она получает
-функцию раскрытия для этого макроса. Затем вызывается значение переменной
-\cdf{*macroexpand-hook*}, как функция трех аргументов с параметрами:
-функция раскрытия,
-форма \emph{form} и
-окружение \emph{env}.
-Значение, возвращенное этим вызовом, расенивается, как раскрытие макровызова.
-Значение переменной \cdf{*macroexpand-hook*} по-умолчанию \cdf{funcall}, которая
-следовательно просто запускает функцию раскрытия с двумя параметрами: формой
-\emph{form} и окружением \emph{env}.
 
 \begin{newer}
 X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to specify
@@ -1098,18 +667,6 @@ but repeatedly expands \emph{form} until it is no longer a macro call.
 until the second value returned is {\nil}.)
 A second value of \cdf{t} or {\nil} is returned as for \cdf{macroexpand-1},
 indicating whether the original \emph{form} was a macro call.
-
-Вычислитель раскрывает макровызовы, как если бы использовал
-\cdf{macroexpand-1}. Таким образом \cdf{eval} также использует
-\cdf{*macroexpand-hook*}.
-
-\cdf{macroexpan} похожа на \cdf{macroexpand-1}, однако циклично раскрывает форму
-\emph{form}, пока в ней не останется макровызовов.
-(А точнее, \cdf{macroexpand} просто циклично вызывает \cdf{macroexpand-1}, пока
-последняя не вернет {\nil} во втором значении.)
-Второе возвращаемое значение функции \cdf{macroexpand-1} (\cdf{t} или {\nil})
-указывает на то, являлась ли форма \emph{form} макровызовом.
-
 \end{defun}
 
 \begin{defun}[Variable]
@@ -1117,13 +674,10 @@ indicating whether the original \emph{form} was a macro call.
 
 The value of \cdf{*macroexpand-hook*} is used as the expansion
 interface hook by \cdf{macroexpand-1}.
-
-Значение \cdf{*macroexpand-hook*} используется как интерфейс раскрытия для
-\cdf{macroexpand-1}.
 \end{defun}
 
 \begin{newer}
-\section{Destructuring Деструктуризация}
+\section{Destructuring}
 
 X3J13 voted in March 1989 \issue{DESTRUCTURING-BIND}
 to make the destructuring feature of \cdf{defmacro}
@@ -1136,10 +690,6 @@ destructuring-bind lambda-list expression {declaration}* {\,form}*
    values in the tree structure resulting from evaluating the \emph{expression},
    then executes the \emph{form\/}s as an implicit \cdf{progn}.
 
-   Данный макрос связывает переменные указанные в \emph{лямбда-списке} с
-   соответствующими значениями в древовидной структуре, являющейся результатом
-   вычисления \emph{выражения}, а затем выполняет \emph{формы} как неявный \cdf{progn}.
-
 A \cdf{destructuring-bind} \emph{lambda-list} may contain
 the lambda-list keywords \cd{\&optional}, \cd{\&rest}, \cd{\&key},
 \cd{\&allow-other-keys}, and \cd{\&aux}; \cd{\&body} and \cd{\&whole}
@@ -1149,18 +699,8 @@ as for \cdf{defmacro}.
 The idea is that a \cdf{destructuring-bind} \emph{lambda-list}
 has the same format as inner levels of a \cdf{defmacro} lambda-list.
 
-Лямбда-список может содержать ключевые символы \cd{\&optional}, \cd{\&rest}, \cd{\&key}
-\cd{\&allow-other-keys}, and \cd{\&aux}.
-\cd{\&body} и \cd{\&whole} также могут использоваться как и в \cdf{defmacro},
-однако \cd{\&environment} использоваться \emph{не} может.
-Идея в том, что лямбда-список \cdf{destructuring-bind} имеет тот же формат, что
-и внутренние уровни лямбда-списка \cdf{defmacro}.
-
    If the result of evaluating the \emph{expression} does not match the 
    destructuring pattern, an error should be signaled.
-
-Если результат выполнения \emph{выражения} не совпадает с шаблоном
-деструктуризации, то должна быть сигнализирована ошибка.
 \end{defmac}
 \end{newer}
 
@@ -1699,3 +1239,502 @@ enclose lambda-expression &optional env
   visible in \emph{env}.
 \end{defun}  
 \end{newer}
+
+%RUSSIAN
+\else
+
+\chapter{Макросы}
+\label{MACROS}
+
+Функциональность макросов Common Lisp'а позволяет пользователю определять
+произвольные функции, которые преобразуют заданные Lisp'овые формы в другие
+формы, перед тем, как они будут вычислены или скомпилированы. Это делается на
+уровне выражений, а не на уровне строк, как в других языках. При написании
+хорошего кода макросы важны: они предоставляют возможность писать код, которые
+ясен и элегантен на пользовательском уровне, но после преобразования становится
+сложным или более эффективным для выполнения.
+
+Когда \cdf{eval} получает список, у которого \emph{car} элемент является
+символом, она ищет локальные определения для этого символа (\cdf{flet},
+\cdf{labels} и \cdf{macrolet}). Если поиски не увенчались успехом, она ищет
+глобальное определение. Если это глобальное определение является макросом, тогда
+исходный список называется \emph{макровызовом}. С определением будет
+ассоциирована функция двух аргументов, называемая \emph{функцией раскрытия}. 
+Эта функция вызывается с макровызовом в качестве первого аргумента и лексическим
+окружением в качестве второго. Функция должна вернуть новую Lisp'овую форму,
+называемую \emph{раскрытием} макровызова. (На самом деле учавствует более общий
+механизм, смотрите \cdf{macroexpand}.)
+Затем это раскрытие выполняется по месту оригинальной (исходной) формы.
+
+Когда функция компилируется, все макросы, в ней содержащиеся, раскрываются во
+время компиляции. Это значит, что определение макроса должно быть прочитано
+компилятором до его первого использования.
+
+В целом, реализация Common Lisp'а имеет большую свободу в выборе того, когда в
+программе раскрываются макровызовы.
+Например, допускается для специальной формы \cdf{defun} раскрытие всех
+внутренних макровызовов в время выполнения формы \cdf{defun} и записи полностью
+раскрытого тела функции, как определение данной функции для дальнейшего
+использования.
+(Реализация может даже выбрать путь, все время компилировать функции
+определенные с помощью \cdf{defun}, даже в режиме <<интерпретации>>.)
+
+Для правильного раскрытия макросы должны быть написаны так, чтобы иметь
+наименьшие зависимости от выполняемого окружения. Лучше всего удостовериться,
+что все определения макросов доступны перед тем, как компилятор или
+интерпретатор будет обрабатываеть код, содержащий макровызовы к ним. 
+
+В Common Lisp, макросы не являются функциями.
+В частности, макросы не могут использоваться, как функциональные аргументы к
+таким функциям, как \cdf{apply}, \cdf{funcall} или \cdf{map}. В таких ситуациях
+список, отображающий <<первоначальный макровызов>> не существует и не может
+существовать, потому что в некотором смысле аргументы уже были вычислены.
+
+\section{Определение макроса}
+
+Функция \cdf{macro-function} определяет, является ли данный символ именем
+макроса. Конструкция \cdf{defmacro} предоставляет удобный способ определить
+новый макрос.
+
+\begin{defun}[Function]
+macro-function symbol &optional env
+
+Первый аргумент должен быть символом. Если символ содержит определение функции,
+то есть определение макроса, локально созданное в окружении \emph{env} с помощью
+\cdf{macrolet} или глобально созданное с помощью \cdf{defmacro}, тогда
+возвращается функция раскрытия (функция двух аргументов, первый форма
+макровызова и второй --- окружение).
+Если символ не содержит определение функции, или это определение обычной функции
+или это специальная форма, но не макрос, тогда возвращается {\false}. 
+Наилучший способ вызвать функцию раскрытия использовать
+\cdf{macroexpand} или \cdf{macroexpand-1}.
+
+Возможно такое, что и \cdf{macro-function}, и \cdf{special-form-p} обе возвращают
+истину для одного заданного символа. Так происходит, потому что реализация может
+для увеличения производительности реализовывать любой макрос, как специальную
+форму.
+С другой стороны, определения макросов должны быть доступны для использования
+программами, которые понимают только стандартные специальные формы,
+перечисленные в таблице~\ref{SPECIAL-FORM-TABLE}.
+
+\cdf{setf} может быть использована с \cdf{macro-function} для установки в символ
+глобального определения макроса:
+\begin{lisp}
+(setf (macro-function \emph{symbol}) \emph{fn})
+\end{lisp}
+Устанавливаемое значение должно быть функцией, которая принимает два аргументы,
+список макровызова и окружение, и вычислять раскрытие этого макровызова. 
+Выполнение этой операции указывает на то, что символ будет содержать \emph{только} это
+определение макроса в качестве определения глобальной функции. Предыдущее
+определение функции или макроса утрачивается. С помощью \cdf{setf} невозможно
+установить локальное определение макроса. При использовании \cdf{setf} указание
+второго параметра (окружение) является ошибкой.
+Переопределение специальной формы также является ошибкой.
+
+Смотрите также \cdf{compiler-macro-function}.
+\end{defun}
+
+\begin{defmac}
+defmacro name lambda-list <{declaration}* | doc-string> {\,form}*
+
+\cdf{defmacro} является макросом определяющим макросы, которые преобразуют формы
+макровызовов.
+\cdf{defmacro} имеет почти такой же синтаксис, как и \cdf{defun}:
+\emph{name} является символом, для которого создается макрос,
+\emph{lambda-list} похож на список параметров лямбда-выражения и 
+\emph{form} содержит тело функции раскрытия.
+Конструкция \emph{defmacro} устанавливает функцию раскрытия, как глобальное
+определение макроса для символа \emph{name}.
+FIXME
+
+Форма \cdf{defmacro} возвращает в качестве значение \emph{name}.
+
+Если мы рассмотрим макровызов, как список содержащий имя функции и некоторые
+формы аргументов, то механизм заключается в передаче в функцию \cdf{apply} этой
+функции и списка ее (невычисленных) аргументов.
+Спецификаторы параметров обратываются также, как и для любого лямбда-выражения.
+В качестве параметров используются формы аргументов макровызова.
+Затем вычисляются формы тела, как неявный \cdf{progn}. Значение последней формы
+возвращается, как раскрытие макровызова.
+
+Если указана необязательная строка документации \emph{doc-string}, тогда она
+присоединяется к символу \emph{name}, как строка документации типа
+\cdf{function}. Смотрите \cdf{documentation}.
+Если в определении макроса представлена только строка документации, и после нее
+нет ни одной формы, ни деклараций, ни просто для тела, то данная строка сама
+становиться формой, и тело считается состоящим из одной формы --- этой строки.
+
+Следующие три дополнительных маркера доступны в определении лямбда-списка.
+\begin{indentdesc}{6pc}
+\item[\cd{\&body}]
+
+Данный маркер эквивалентен \cd{\&rest} маркеру, но дополнительно сообщает для
+функций вывода-форматирования и редактирования, что оставшаяся часть формы
+рассматривается как тело и должна быть правильно отформатирована.
+(Можно использовать исключительно один маркер или \cd{\&body}, или \cd{\&rest})
+
+\item[\cd{\&whole}]
+За данным маркером указывается одна переменная, которая будет связана со всей
+формой макровызова. Это значение, которое получает функция определения макроса в
+качестве своего первого аргумента.
+\cd{\&whole} и следующая переменная должны указываться на первой позиции в
+лямбда-списке, перед другими параметрами или маркерами.
+
+\item[\cd{\&environment}]
+
+За данным маркером указывается одна переменния, которая будет связана с
+окружением, отображаюим лексическое окружение, в котором произошел
+макровызов. Это окружение может не быть полным лексическим окружением. Оно
+должно использоваться только с функцией \cdf{macroexpand} ради любых локальных
+определений макросов, которые могли быть установлены с помощью \cdf{macrolet}
+конструкции внутри этого лексического окружения. Этот функционал полезен крайне
+редко, когда определение макроса должно явно раскрыть другие макросы в процессе
+своего раскрытия.
+\end{indentdesc}
+
+Смотрите \cdf{lambda-list-keywords}.
+
+\cdf{defmacro}, в отличие от любых других конструкций Common Lisp'а, имеющих
+лямбда-списки в своем синтаксисе, предоставляет дополнительную функциональность
+известную как \emph{деструктуризация}.
+\begin{newer}
+Смотрите \cdf{destructuring-bind}, которая отдельно предоставляет эту функциональность.
+\end{newer}
+В любом месте, где могло бы стоять имя параметра, и где по синтаксису не
+ожидается использование списка (как описано в
+разделе~\ref{LAMBDA-EXPRESSIONS-SECTION}), можно использовать еще один
+встроенный лямбда-список. Когда использован такой прием, при передаче форм
+аргументов для встроенного лямбда-списка, необходимо обернуть эти формы в
+отдельный список.
+В качестве примера, определение макроса для \cdf{dolist} можно записать в таком
+стиле:
+\begin{lisp}
+(defmacro dolist ((var listform \cd{\&optional} resultform) \\
+~~~~~~~~~~~~~~~~~~\&rest body) \\
+~~...)
+\end{lisp}
+Ниже будет больше примеров использования встраиваемых лямбда-списков в
+\cdf{defmacro}.
+
+Следующим правилом деструктуризации является то, что \cdf{defmacro} позволяет
+любому лямбда-списку (верхнего уровня или встроенному) быть dotted,
+заканчивающимся именем параметра. Такая ситуация обрабатывается так, как будто
+имя параметра в конце списка, стоит после неявного маркера \cd{\&rest}.
+Например, уже показанное определение \cdf{dolist} может быть записано так:
+\begin{lisp}
+(defmacro dolist ((var listform \&optional resultform) \\
+~~~~~~~~~~~~~~~~~~. body) \\
+~~...)
+\end{lisp}
+
+Если компилятор встречает \cdf{defmacro}, он добавляет новый макрос в окружение
+компиляции, и также функция раскрытия добавляется в выходной файл. Таким образом
+новый марокс будет более быстрым во время выполнения.
+Если необходимо избежать такого механизма, можно использовать \cdf{defmacro}
+внутри конструкции \cdf{eval-when}.
+
+\cdf{defmacro} может также использоваться для переопределения макроса
+(например, для установки корректной версии определения вместо некорректной), или
+для переопределения функции в макрос.
+Переопределение специальной формы (смотрите таблицу~\ref{SPECIAL-FORM-TABLE})
+недопускается.
+Смотрите \cdf{macrolet}, которая устанавливает определение макроса в замкнутом
+лексическом области видимости.
+
+Допустим, для примера, что необходимо реализовать условную конструкцию
+аналогичную Fortran'овскому арифметичскому выражению IF. (Это конечно требует
+определенного расширения воображения и приостановки неверия.)
+Конструкция должна принимать четыре формы:
+\emph{test-value},
+\emph{neg-form},
+\emph{zero-form} и
+\emph{pos-form}.
+В зависимости от того, является ли \emph{test-form} отрицительным, нулем или
+положительным числом, для выполнения будет выбрана одна из трех последних форм.
+С использованием \cdf{defmacro}, определение этой конструкции может выглядеть
+так:
+\begin{lisp}
+(defmacro arithmetic-if (test neg-form zero-form pos-form) \\
+~~(let ((var (gensym))) \\
+~~~~{\Xbq}(let ((,var ,test)) \\
+~~~~~~~(cond ((< ,var 0) ,neg-form) \\
+~~~~~~~~~~~~~((= ,var 0) ,zero-form) \\
+~~~~~~~~~~~~~(t ,pos-form)))))
+\end{lisp}
+Необходимо отметить, что в данном определении используется функциональность
+обратной кавычки (смотрите раздел~\ref{MACRO-CHARACTERS-SECTION}).
+Также необходимо заметить, что используется \cdf{gensym} для создания нового
+имени переменной.
+Это необходимо для избежания конфликтов с другими переменными, которые могут
+использоваться в формах \emph{neg-form}, \emph{zero-form} или \emph{pos-form}.
+
+Если форма выполняется интерпретатором, то определение функции для символа
+\cd{arithmetic-if} будет является макросом, с которым ассоциирована функция двух
+аргументом эквивалентная данной
+\begin{lisp}
+(lambda (calling-form environment) \\
+~~(declare (ignore environment)) \\
+~~(let ((var (gensym))) \\
+~~~~(list 'let \\
+~~~~~~~~~~(list (list 'var (cadr calling-form))) \\
+~~~~~~~~~~(list 'cond \\
+~~~~~~~~~~~~~~~~(list (list '< var '0) (caddr calling-form)) \\
+~~~~~~~~~~~~~~~~(list (list '= var '0) (cadddr calling-form)) \\
+~~~~~~~~~~~~~~~~(list 't (fifth calling-form))))))
+\end{lisp}
+Лямбда-выражение является результатом выполнения декларации \cdf{defmacro}.
+Вызов \cdf{list} является (гипотетически) результатом макросимвола обратной
+кавычки (\cd{{\Xbq}}) и связанной с нии запятой.
+Конкретная функция раскрытия макроса может зависеть от реализации, например, она
+также может содержать проверку на корректность входных аргументов в макровызове.
+
+Теперь, если \cdf{eval} встретит
+\begin{lisp}
+(arithmetic-if (- x 4.0) \\
+~~~~~~~~~~~~~~~(- x) \\
+~~~~~~~~~~~~~~~(error "Strange zero") \\
+~~~~~~~~~~~~~~~x)
+\end{lisp}
+то раскроет эту форму в
+\begin{lisp}
+(let ((g407 (- x 4.0))) \\
+~~(cond ((< g407 0) (- x)) \\
+~~~~~~~~((= g407 0) (error "Strange zero")) \\
+~~~~~~~~(t x)))
+\end{lisp}
+и \cdf{eval} выполнит полученную форму.
+(Сейчас должно быть понятно, что функциональность обратной кавычки очень полезна
+для написания макросов. Она используется для построения шаблона, возвращаемой
+формы, с константными частями и частями для выполнения. Шаблон представляет
+собой <<картину>> кода, с местами для заполнения выделенными запятыми.)
+
+Для улучшения примера мы можем сделать так, чтобы \emph{pos-form} и
+\emph{zero-form} могли быть заменены на {\nil} в результате разкрытия макроса.
+Таким же образом действует и \cdf{if} опусткая векту \emph{else} в случае
+истинности условия.
+\begin{lisp}
+(defmacro arithmetic-if (test neg-form \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~\cd{\&optional} zero-form pos-form) \\*
+~~(let ((var (gensym))) \\*
+~~~~{\Xbq}(let ((,var ,test)) \\*
+~~~~~~~(cond ((< ,var 0) ,neg-form) \\*
+~~~~~~~~~~~~~((= ,var 0) ,zero-form) \\*
+~~~~~~~~~~~~~(t ,pos-form)))))
+\end{lisp}
+Тогда можно записать
+\begin{lisp}
+(arithmetic-if (- x 4.0) (print x))
+\end{lisp}
+и это раскроется в что-то вроде
+\begin{lisp}
+(let ((g408 (- x 4.0))) \\*
+~~(cond ((< g408 0) (print x)) \\*
+~~~~~~~~((= g408 0) nil) \\*
+~~~~~~~~(t nil)))
+\end{lisp}
+Результирующий код корректен, но некрасиво выглядит.
+Можно переписать определение макроса для генерации лучшего кода, когда
+\emph{pos-form} и \emph{zero-form} могут быть вообще опущены.
+Или же можно положиться на реализацию Common Lisp'а, которая возможно
+соптимизирует этот код.
+
+Деструктуризация является очень мощной функциональностью, которая позволяет
+лямбда-списку в \cdf{defmacro} выразить сложную структуру макровызова. Если
+не использовались ключевые символы лямбда-списка, то он представляет собой
+просто список с некоторой степенью вложенности и параметрами в качестве
+листьев. Структура макровызова должна иметь такую же структуру списка.
+Например, рассмотрим следующее определение макроса:
+\begin{lisp}
+(defmacro halibut ((mouth eye1 eye2) \\*
+~~~~~~~~~~~~~~~~~~~((fin1 length1) (fin2 length2)) \\*
+~~~~~~~~~~~~~~~~~~~tail) \\*
+~~...)
+\end{lisp}
+Теперь давайте рассмотрим макровызов:
+\begin{lisp}
+(halibut (m (car eyes) (cdr eyes)) \\*
+~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\*
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+Все это приведет к тому, что функция раскрытия получит следующие значения для ее
+параметров:
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}ll@{}}
+\textrm{Parameter}&\textrm{Value} \\
+\hlinesp
+mouth&m \\
+eye1&(car eyes) \\
+eye2&(cdr eyes) \\
+fin1&f1 \\
+length1&(count-scales f1) \\
+fin2&f2 \\
+length2&(count-scales f2) \\
+tail&my-favorite-tail \\
+\hline
+\end{tabular}
+\end{flushleft}
+Следующий макровызов ошибочный, так как аргумента для параметра \cd{length1} не
+представлено:
+\begin{lisp}
+(halibut (m (car eyes) (cdr eyes)) \\
+~~~~~~~~~((f1) (f2 (count-scales f2))) \\
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+Следующий макровызов также ошибочный, так как на месте предполагаемого списка
+указан символ.
+\begin{lisp}
+(halibut my-favorite-head \\
+~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+Тот факт, что значение переменной \cd{my-favorite-head} может быть списком, не
+имеет здесь значения. В макровызове структура должна совпадать с лямбда-списком
+в определении.
+
+Использование ключевых символов лябмда-списка предоставляет еще большую
+гибкость.
+Например, предположим, что удобно будет в функции раскрытия обращаться к
+элементам списка, называемым cd{mouth}, \cd{eye1}, and \cd{eye2}, как к
+\cd{head}.
+Можно записать так:
+\begin{lisp}
+(defmacro halibut ((\cd{\&whole} head mouth eye1 eye2) \\
+~~~~~~~~~~~~~~~~~~~((fin1 length1) (fin2 length2)) \\
+~~~~~~~~~~~~~~~~~~~tail)
+\end{lisp}
+Теперь рссмотрим такой же, как раньше, корректный макровызов:
+\begin{lisp}
+(halibut (m (car eyes) (cdr eyes)) \\
+~~~~~~~~~((f1 (count-scales f1)) (f2 (count-scales f2))) \\
+~~~~~~~~~my-favorite-tail)
+\end{lisp}
+Это приведет к тому, что функции раскрытия получит те же значения для своих
+параметров, а также значение для параметра \cd{head}:
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}ll@{}}
+\textrm{Parameter}&\textrm{Value} \\
+\hlinesp
+head&(m (car eyes) (cdr eyes)) \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+Существует условие для деструктуризации, встроенный лямбда-список разрешен
+только на позиции, где синтаксис лямбда-списка предусматривает имя параметра, но
+не список. Это защищает от двусмысленности. Например, нельзя записать
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} (a b \cd{\&rest} c) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+потому что синтаксис лямбда-списка не позволяет использовать списки после
+\cd{\&optional}. Список \cd{(a b \cd{\&rest} c)} был бы интерпретирован как
+необязательный параметр \cd{a}, у которого значение по умолчанию \cd{b}, и
+supplied-p параметр с некорректным именем \cd{\&rest}, и дополнительным символом
+\cd{c}, также некорректным. Было бы правильнее выразить это так:
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} ((a b \cd{\&rest} c)) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+Дополнительные круглые скобки устраняют двусмысленность. Однако, такой
+макровызов, как \cd{(loser (car pool))} не предоставляет никакой формы аргумента
+для лямбда-списка  \cd{(a b \cd{\&rest} c)}, значит значение по умолчанию для
+него будет {\nil}. А так как {\nil} является пустым списком, то этот макровызов
+ошибочен. Полностью корректное определение выглядит так:
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} ((a b \cd{\&rest} c) '(nil nil)) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+или так
+\begin{lisp}
+(defmacro loser (x \cd{\&optional} ((\cd{\&optional} a b \cd{\&rest} c)) \cd{\&rest} z) \\
+~~...)
+\end{lisp}
+Они слегка отличаются: первое определение требует, что если макровызов явно
+указывает \cd{a}, тогда он должен указать явно и \cd{b}, тогда как второе
+определение не содержит такого требования. Например,
+\begin{lisp}
+(loser (car pool) ((+ x 1)))
+\end{lisp}
+будет корректным макровызовом для второго определения, но не для первого.
+\end{defmac}
+
+\section{Раскрытие макроса}
+
+Функция \cdf{macroexpand} служит для раскрытия макровызовов. Также
+предоставляется ловушка для пользовательской функции для управления процессом
+раскрытия.
+
+\begin{defun}[Function]
+macroexpand form &optional env \\
+macroexpand-1 form &optional env
+
+Если форма \emph{form} является макровызовом, тогда \cdf{macroexpand-1} раскроет
+макровызов только на \emph{один} уровень и вернет два значеия:
+раскрытие и \cdf{t}.
+Если форма \emph{form} не является макровызовом, тогда будут возвращены два
+значения: \emph{form} и {\nil}.
+
+Форма \emph{form} рассматривается как макровызов, только если она является
+cons-ячейкой, у которой \emph{car} элемент является символом имени макроса. 
+Окружение \emph{env} похоже на то, что используется внутри вычислителя (смотрите
+\cdf{evalhook}). По-умолчанию равно нулевому окружению.
+Если окружение указано будут рассмотрены все установленные внутри \emph{env} с
+помощью \cdf{macrolet} локальные определения макросов. Если в качестве аргумента
+указана только форма \emph{form}, то берется нулевое окружение, и будут
+рассматриваться только глобальные определения макросов (установленные с помощью
+\cdf{defmacro}).
+
+Раскрытие макросов происходит следующим образом. Когда \cdf{macroexpand-1}
+устанавливает, что символ в форме указывает на макрос, тогда она получает
+функцию раскрытия для этого макроса. Затем вызывается значение переменной
+\cdf{*macroexpand-hook*}, как функция трех аргументов с параметрами:
+функция раскрытия,
+форма \emph{form} и
+окружение \emph{env}.
+Значение, возвращенное этим вызовом, расенивается, как раскрытие макровызова.
+Значение переменной \cdf{*macroexpand-hook*} по-умолчанию \cdf{funcall}, которая
+следовательно просто запускает функцию раскрытия с двумя параметрами: формой
+\emph{form} и окружением \emph{env}.
+
+Вычислитель раскрывает макровызовы, как если бы использовал
+\cdf{macroexpand-1}. Таким образом \cdf{eval} также использует
+\cdf{*macroexpand-hook*}.
+
+\cdf{macroexpan} похожа на \cdf{macroexpand-1}, однако циклично раскрывает форму
+\emph{form}, пока в ней не останется макровызовов.
+(А точнее, \cdf{macroexpand} просто циклично вызывает \cdf{macroexpand-1}, пока
+последняя не вернет {\nil} во втором значении.)
+Второе возвращаемое значение функции \cdf{macroexpand-1} (\cdf{t} или {\nil})
+указывает на то, являлась ли форма \emph{form} макровызовом.
+\end{defun}
+
+\begin{defun}[Variable]
+*macroexpand-hook*
+
+Значение \cdf{*macroexpand-hook*} используется как интерфейс раскрытия для
+\cdf{macroexpand-1}.
+\end{defun}
+
+\section{Деструктуризация}
+
+\begin{defmac}
+destructuring-bind lambda-list expression {declaration}* {\,form}*
+
+   Данный макрос связывает переменные указанные в \emph{лямбда-списке} с
+   соответствующими значениями в древовидной структуре, являющейся результатом
+   вычисления \emph{выражения}, а затем выполняет \emph{формы} как неявный \cdf{progn}.
+
+Лямбда-список может содержать ключевые символы \cd{\&optional}, \cd{\&rest}, \cd{\&key}
+\cd{\&allow-other-keys}, and \cd{\&aux}.
+\cd{\&body} и \cd{\&whole} также могут использоваться как и в \cdf{defmacro},
+однако \cd{\&environment} использоваться \emph{не} может.
+Идея в том, что лямбда-список \cdf{destructuring-bind} имеет тот же формат, что
+и внутренние уровни лямбда-списка \cdf{defmacro}.
+
+Если результат выполнения \emph{выражения} не совпадает с шаблоном
+деструктуризации, то должна быть сигнализирована ошибка.
+\end{defmac}
+
+\fi

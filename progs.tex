@@ -3,7 +3,7 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-
+\ifx \rulang\Undef
 \chapter{Program Structure Структура программы}
 \label{PROGS}
 
@@ -11,38 +11,23 @@ In chapter~\ref{DTYPES} the syntax was sketched for notating data objects
 in Common Lisp.  The same syntax is used for notating programs because all
 Common Lisp programs have a representation as Common Lisp data objects.
 
-В главе~\ref{DTYPES} был обозначен синтаксис для записи объектов данных в Common
-Lisp'е. Такой же синтаксис используется для записи программ, потому что все
-Common Lisp программы представлены как объекты данных Common Lisp'а.
-
 Lisp programs are organized as forms and functions.  Forms are
-\textit{evaluated} (relative to some context) to produce values and side
-effects.  Functions are invoked by \textit{applying} them to arguments.
+\emph{evaluated} (relative to some context) to produce values and side
+effects.  Functions are invoked by \emph{applying} them to arguments.
 The most important kind of form performs a function call;
 conversely, a function performs computation by evaluating forms.
-
-Lisp программы организованы как формы и функции. Формы \textit{выполняются}
-(относительно некоторого контекста) для получения значений и побочных
-эффектов. Функции вызываются с помощью \textit{применения} их к аргументам.
-Наиболее важный вид форм выполняет вызов функции, и наоборот, функция выполняет
-вычисление с помощью выполнения форм.
 
 In this chapter, forms are discussed first and then functions.
 Finally, certain ``top level'' special forms are discussed; the most
 important of these is \cdf{defun}, whose purpose is to define a
 named function.
 
-В данной главе, сначала обсуджаются формы и затем функции. В конце, обсуждаются
-специальные формы <<верхнего уровня (top level)>>. Наиболее важной из этих форм
-является \cdf{defun}, цель которой --- создание именных функций (будут
-еще и безымянные).
+\section{Forms}
 
-\section{Forms Формы}
-
-The standard unit of interaction with a Common Lisp implementation is the \textit{form},
-which is simply a data object meant to be \textit{evaluated} as a program
-to produce one or more \textit{values} (which are also data objects).
-One may request evaluation of \textit{any} data object, but only certain ones
+The standard unit of interaction with a Common Lisp implementation is the \emph{form},
+which is simply a data object meant to be \emph{evaluated} as a program
+to produce one or more \emph{values} (which are also data objects).
+One may request evaluation of \emph{any} data object, but only certain ones
 are meaningful.  For instance,
 symbols and lists are meaningful forms, while arrays
 normally are not.  Examples of meaningful forms are \cd{3},
@@ -50,28 +35,10 @@ whose value is \cd{3}, and \cd{(+ 3 4)}, whose value is \cd{7}.
 We write \cd{3} \EV\ \cd{3} and \cd{(+ 3 4)} \EV\ \cd{7}
 to indicate these facts.  (\EV\ means ``evaluates to.'')
 
-Стандартная единица взаимодействия с реализацией Common Lisp'а является
-\textit{форма}, которая является объектом данных, который выполняется как
-программа для вычисления одного или более \textit{значений} (который также
-являются объектами данных). Запросить выполнение можно для \textit{любого}
-объекта данных, но не для всех это имеет смысл. Например, символы и списки имеет
-смысл выполнять, тогда как массивы обычно нет. Примеры содержательных форм:
-\cd{3}, значение которой \cd{3}, и \cd{(+ 3 4)}, значение которой \cd{7}.
-Для обозначения этих фактов мы пишем \cd{3} \EV\ \cd{3} и \cd{(+ 3 4)} \EV\
-\cd{7}. (\EV\ означает <<вычисляется в>>)
-
 Meaningful forms may be divided into three categories:
 self-evaluating forms, such as numbers; symbols, which stand
 for variables; and lists.  The lists in turn may be divided
 into three categories: special forms, macro calls, and function calls.
-
-Содержательные формы могут быть разделены на три категории:
-самовычисляемые формы, такие как числа,
-символы, которые используются для переменных,
-и списки. Списки в свою очередь могут быть разделены на три категории:
-специальные формы, 
-вызовы макросов,
-вызовы функций.
 
 \begin{obsolete}
 Any Common Lisp data object not explicitly defined here to be a valid form
@@ -94,13 +61,9 @@ X3J13 voted in October 1988 \issue{EVAL-OTHER} to specify that
 \emph{all} standard Common Lisp data objects other than symbols
 and lists (including \cdf{defstruct} structures defined
 without the \cd{:type} option) are self-evaluating.
-
-Все стандартные объекты данных Common Lisp, не являющиеся символами и списками
-(включая \cdf{defstruct} структуры, определенные без опции \cd{:type}) являются
-самовычисляемыми. 
 \end{newer}
 
-\subsection{Self-Evaluating Forms Самовычисляемые формы}
+\subsection{Self-Evaluating Forms}
 
 All numbers, characters, strings, and bit-vectors
 are \emph{self-evaluating} forms.
@@ -112,17 +75,6 @@ is also a self-evaluating form: the value of {\false} is {\false}.
 Keywords (symbols written with a leading colon) also evaluate
 to themselves: the value of \cd{:start} is \cd{:start}.
 
-Все числа, строковые символы, строки и битовые векторы являются
-\emph{самовычисляемыми} формами.
-Когда данный объект вычисляется, тогда объект (или возможно копия в случае с
-числами и строковыми символами) возвращается в качестве значения данной
-формы. Пустой список {\emptylist}, который также является значением false
-{\false}, также является самовычисляемой формой: значение {\false} является
-{\false}. 
-Ключевые символы (примечание переводчика: не путать с ключевыми словами в других
-языках, в Common Lisp'е это вид символов) также вычисляюется сами в себя:
-значение \cd{:start} является \cd{:start}.
-
 \begin{newer}
 X3J13 voted in January 1989 \issue{CONSTANT-MODIFICATION} to clarify that
 it is an error to destructively modify any object that appears as a constant
@@ -130,7 +82,7 @@ in executable code, whether as
 a self-evaluating form or within a \cdf{quote} special form.
 \end{newer}
 
-\subsection{Variables Переменные}
+\subsection{Variables}
 
 Symbols are used as names of variables in Common Lisp programs.
 When a symbol is evaluated as a form, the value of the variable it names
@@ -142,18 +94,6 @@ Any program construct that binds a variable effectively saves the old
 value of the variable and causes it to have a new value, and on exit from
 the construct the old value is reinstated.
 
-В Common Lisp программах символы используются в качестве имен переменных.
-Когда символ вычисляется как форма, то в качестве результата возвращается
-значение переменной, которую данный символ именовал. Например, после выполнения
-\cd{(setq items 3)}, которая присвоила значение \cd{3} переменой именованной
-символом \cdf{items}, форма \cdf{items} выполнится в \cd{3} (\cdf{items} \EV\
-\cd{3}).
-Переменные могут \emph{назначены} с помощью \cdf{setq} или \emph{связаны} с
-помощью \cdf{let}.
-Любая программная конструкция, которая связывает переменную, сохраняет старое
-значение переменной, и назначает новое, и при выходе из конструкции
-восстанавливается старое значение.
-
 There are actually two kinds of variables in Common Lisp, called \emph{lexical} (or
 \emph{static}) variables and \emph{special} (or \emph{dynamic}) variables.
 At any given time either or both kinds of variable with the same name may
@@ -164,16 +104,6 @@ construct that creates a \emph{binding} for a variable of the same name,
 then the reference is to the variable specified by the binding;
 if no such program construct textually contains the reference, then
 it is taken to refer to the special variable of that name.
-
-В Common Lisp'е есть два вида переменных. Они называются \cd{лексические} (или
-\emph{статические}) и \emph{специальные} (или \emph{динамические}).
-В одно время каждая из или обе переменные с одинаковым именем могут иметь
-некоторое значение. На какую переменную ссылается символ при его вычислении,
-зависит от контекста выполнения. Главное правило заключается в том, что если
-символ вычисляется по тексту в конструкции, которая создала \emph{связывание} для
-переменной с одинаковым именем, то символ ссылается на переменную, обозначенную
-в этом связывании, если же по тексту такой конструкции нет, то символ ссылается
-на специальную переменную.
 
 The distinction between the two kinds of variable is one of scope
 and extent.  A lexically bound variable can be referred to \emph{only}
@@ -189,29 +119,11 @@ remains).  Conversely, dynamic binding of variables imposes a temporal
 limitation on occurrences of references (but no spatial limitation).
 For more information on scope and extent, see chapter~\ref{SCOPE}.
 
-Различие между двумя видами переменных заключается в области видимости и
-продолжительности видимости. Лексически связанная переменная может быть использована
-\emph{только} по тексту в форме, которая установила связывание. Динамически
-связанная (специальная) переменная может быть использована в любое
-\emph{время} между установкой связи и до выполнения конструкции, которая
-упраздняет связывание. Таким образом лексическое связывание переменных
-накладывает ограничение на использование переменной только в некоторой текстовой
-области (но не на временные ограничения, так связывание продолжает существовать,
-пока возможно существование ссылки на переменную). И наоборот, динамическое
-связывание переменных накладывает ограничение на временные рамки использования
-переменной (но не на текстовую область).
-Для более подробной информации смотрите главу~\ref{SCOPE}.
-
 The value a special variable has when there are currently
 no bindings of that variable is called the \emph{global} value of the
 (special) variable.
 A global value can be given to a variable only by assignment,
 because a value given by binding is by definition not global.
-
-Когда нет связываний, значение, которое имеет специальная
-переменная, называется \emph{глобальным} значением (специальной) переменной.
-Глобальное значение может быть задано переменной только с помощью назначения,
-потому что значение заданное связыванием по определению не глобально.
 
 It is possible for a special variable to have no value at all,
 in which case it is said to be \emph{unbound}.
@@ -225,17 +137,6 @@ function \cdf{makunbound}.  In this situation the variable
 is also said to be ``unbound,'' although this is a misnomer;
 precisely speaking, it is bound but valueless.
 It is an error to refer to a variable that is unbound.
-
-Специальная переменная может вообще не иметь значения, в таком случае,
-говориться, что они \emph{несвязанная}. 
-По умолчанию, каждая глобальная переменная является несвязанной, пока значение
-не будет назначено явно, за исключением переменных определенных в этой книге или
-реализацией, которые уже имеют значения сразу после первого запуска Lisp машины.
-Кроме того, существует возможность установки связывания специальной переменной и
-затем упразднения этого связывания с помощью функции \cdf{makunbound}. В такой
-ситуации переменная также называется <<несвязанной>>, хотя это и неправильно,
-если быть точнее, переменная связана, но без значения FIXME. Ссылка на несвязанную
-переменную является ошибкой.
 
 \begin{newer}
 X3J13 voted in June 1989 \issue{UNDEFINED-VARIABLES-AND-FUNCTIONS}
@@ -300,30 +201,13 @@ which are notated with a leading colon, are reserved and
 may never be assigned to or bound; a keyword always evaluates
 to itself.
 
-Некоторые глобальные переменные зарезервированы в качестве <<именованных
-констант>>.
-Они имеют глобальное значение и не могут быть связаны или переназначены.
-Например символы {\true} и {\false} зарезервированы.
-Невозможно назначить и этим символам. Также невозможно связать эти символы со
-другими значениями. Символы констант определенных с помощью \cdf{defconstant}
-также становяться зарезервированными и не могут быть переназначены или связаны
-(но они могут быть переопределены с помощью вызова \cdf{defconstant}). Ключевые
-символы также не могут быть переназначены или связаны, ключевые символы всегда
-вычисляются сами в себя.
-
-\subsection{Special Forms Специальные формы}
+\subsection{Special Forms}
 
 If a list is to be evaluated as a form, the first step is to examine
 the first element of the list.  If the first element is one of
 the symbols appearing in table~\ref{SPECIAL-FORM-TABLE},
 then the list is called a \emph{special form}.  (This use of the word
 ``special'' is unrelated to its use in the phrase ``special variable.'')
-
-Если список выполняется в качестве формы, первым шагом является определение
-первого элемента списка. Если первый элемент списка является одним из символов,
-перечисленных в таблице~\ref{SPECIAL-FORM-TABLE}, тогда список называется
-\emph{специальной формой}. (Использование слова <<специальный>> никак не
-связано с использованием этого слова в фразе <<специальная переменная>>.)
 
 Special forms are generally environment and control constructs.
 Every special form has its own idiosyncratic syntax.  An example
@@ -332,28 +216,13 @@ is the \cdf{if} special form:
 ``\textbf{if} \emph{p} \textbf{then} \emph{x}+4 \textbf{else} 5'' means in
 Algol.
 
-Специальные формы обычно являются окружениями и управляющими конструкциями.
-Каждая специальная форма имеет свой идиосинкразитечский синтаксис. Например
-специальная форма \cdf{if}:
-\cd{(if p (+ x 4) 5)} в Common Lisp'е означает то же, что и
-<<\textbf{if} \emph{p} \textbf{then} \emph{x}+4 \textbf{else} 5>> означает в
-Algol'е.
-
 The evaluation of a special form normally produces a value or values,
 but the evaluation may instead call for a non-local exit; see \cdf{return-from},
 \cdf{go}, and \cdf{throw}.
 
-Выполнение специальной формы обычно возвращает значение или значения, но
-выполнение может и вызвать нелокальный выход; смотрите \cdf{return-from},
-\cdf{go} и \cdf{throw}.
-
 The set of special forms is fixed in Common Lisp; no way is provided
 for the user to define more.  The user can create new syntactic
 constructs, however, by defining macros.
-
-Множество специальных форм в Common Lisp'е фиксировано. Создание
-пользовательский специальных форм невозможно. Однако пользователь может создавать новые
-синтаксические конструкции с помощью оперделения макросов.
 
 The set of special forms in Common Lisp is purposely kept very small
 because any program-analyzing program must have special knowledge
@@ -365,15 +234,6 @@ special knowledge.  A compiler may be able
 to produce much better code if it recognizes such constructs
 as \cdf{typecase} and \cdf{multiple-value-bind} and gives them customized
 treatment.)
-
-Множество специальных форм в Common Lisp'е специально держится малым, потому что
-любая программа, анализирующая программы, должна содержить специальные знания он
-каждом типе специальной формы. Такие программы не нуждаются в специальных
-знаниях о макросах, так как раскрытие макроса просто, и далее остается только
-оперирования с результатом раскрытия. (Это не значит, что программы, в
-частности, компиляторы, не будут иметь специальных знаний о макросах. Компилятор
-может генерировать более лучший код, если он распознает такие конструкции, как
-\cdf{typecase} и \cdf{multiple-value-bind} и по особому будет обращаться с ними.)
 
 \begin{table}[t]
 \caption{Names of All Common Lisp Special Forms}
@@ -419,15 +279,6 @@ The practical consequence is that the predicates \cdf{macro-function} and
 It is recommended that a program-analyzing program process
 a form that is a list whose \emph{car} is a symbol as follows:
 
-Реализация может осуществлять как макросы любую конструкцию описанную здесь как
-специальную форму. И наоборот, реализация может осуществлять как специальную
-форму любую конструкцию описанную здесь как макрос, при условии что также
-предоставляется эквивалентное определение макроса.
-Практическое значение заключается в том, что предикаты \cdf{macro-function} и
-\cdf{special-form-p} могут оба возвращать true принимая один и тот же символ.
-Рекомендуется, чтобы программа для анализа других программ обрабатывала форму
-являющуюся списком, \emph{car} которого является символом, следующим образом:
-
 \begin{enumerate}
 \item
 If the program has particular knowledge about the symbol,
@@ -436,28 +287,15 @@ All of the symbols listed in table~\ref{SPECIAL-FORM-TABLE}
 should fall into this category. 
 
 \item
-Если программа имеет подробные знания о символе, обрабатывать форму необходимо с
-помощью специализированного кода. Все символы, перечисленные в
-таблице~\ref{SPECIAL-FORM-TABLE} должны попадать под данную категорию.
-
-\item
 Otherwise, if \cdf{macro-function} is true of the symbol, apply either
 \cdf{macroexpand} or \cdf{macroexpand-1}, as appropriate,
 to the entire form and then start over.
 
 \item
-В противном случае, если для этого символа \cdf{macro-function} вычисляется в
-true, необходимо применить \cdf{macroexpand} или \cdf{macroexpand-1} для раскрытия
-формы, и результат вновь анализировать.
-
-\item
 Otherwise, assume it is a function call.
-
-\item
-В противном случае, необходимо раценивать форму как вызов функции.
 \end{enumerate}
 
-\subsection{Macros Макросы}
+\subsection{Macros}
 
 If a form is a list and the first element is not the name of a special
 form, it may be the name of a \emph{macro}; if so, the form is said
@@ -471,18 +309,6 @@ For example, the macro named \cdf{return} will take a form such as
 form \emph{expands} into the new form.  The new form is then evaluated in
 place of the original form; the value of the new form is returned as the
 value of the original form.
-
-Если форма является списком и первый элемент не обозначает специальную
-форму, возможно он является именем \emph{макроса}. Если так, то форма
-называется \emph{макровызовом или вызовом марокса (macrocall)} FIXME. Макрос
-это функция, которая принимает формы и возвращает формы. Возвращенные формы
-подставляются в то место, где происходил макровызов, и затем выполняются. (Этот
-процесс иногда называется \emph{раскрытием макроса}.)
-Например, макрос с именем \cdf{return} принимает форма, вот так: \cd{(return x)},
-и полученная в результате раскрытия форма такая: \cd{(return-from {\nil} x)}. Мы
-говорим: старая форма раскрылась в новую. Новая форма будет вычислена на месте
-оригинальной формы. Значение новой формы будет возвращено, как значение
-оригинальной формы.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -498,17 +324,10 @@ and appropriately handle such dotted forms or subforms.
 There are a number of standard macros in Common Lisp, and the user can define more
 by using \cdf{defmacro}.
 
-В Common Lisp'е существует некоторое количество стандартных макросов, и
-пользователь может определять свои макросы используя \cdf{defmacro}.
-
 Macros provided by a Common Lisp implementation as described herein may expand
 into code that is not portable among differing implementations.
 That is, a macro call may be implementation-independent because
 the macro is defined in this book, but the expansion need not be.
-
-Макросы, предоставляемые реализацией Common Lisp'а и описанные здесь, могут
-раскрываться в код, которые не будет являться переносимым между реализациями.
-Вызов макроса является портабельным, в то время как результат раскрытия нет.
 
 \beforenoterule
 \begin{implementation}
@@ -529,7 +348,7 @@ by using implementation-dependent special forms in the macro expansion.
 \end{implementation}
 \afternoterule
 
-\subsection{Function Calls Вызовы функций}
+\subsection{Function Calls}
 
 If a list is to be evaluated as a form and the first element is
 not a symbol that names a special form or macro, then the list
@@ -546,19 +365,6 @@ see \cdf{values}.
 If and when the function returns, whatever values it returns
 become the values of the function-call form.
 
-Если список выполняется как форма, и первый элемент не является символом,
-обозначающим специальную форму или макрос, тогда предполагается, что список
-является \emph{вызовом функции}. Первый элемент списка является именем
-функции. Все следующие элементы списка будут вычислены. Одно значение каждого
-вычисленного элемента будет является \emph{аргументом} для вызываемой
-функции. 
-Затем функция будет \emph{применена} к аргументам. Вычисление функции обычно
-возвращает значение, однако вместо этого может быть выполнен нелокальный выход,
-смотрите \cdf{throw}. Функция может возвращать 0 и более значений, смотрите
-\cdf{values}. 
-Если и когда функция возвращает значения, они становяться значениями вычисления
-формы вызова функции.
-
 For example, consider the evaluation of the form \cd{(+ 3 (* 4 5))}.
 The symbol \cdf{+} names the addition function, not a special form or macro.
 Therefore the two forms \cd{3} and \cd{(* 4 5)} are evaluated to produce
@@ -569,16 +375,6 @@ Therefore the forms \cd{4} and \cd{5} are evaluated, producing arguments
 calculates the number \cd{20} and returns it.  The values \cd{3} and \cd{20}
 are then given as arguments to the addition function, which calculates
 and returns the number \cd{23}.  Therefore we say \cd{(+ 3 (* 4 5)) \EV\ 23}.
-
-Например, рассмотрим вычисление формы: \cd{(+ (* 4 5))}.
-Символ \cdf{+} обозначает функцию сложения, а не специальную форму или макрос.
-Таким образом две формы \cd{3} и \cd{(* 4 5)} вычисляются для аргументов. Форма
-\cd{3} вычисляется в \cd{3}, а форма \cd{(* 4 5)} является вызовом функции
-(умножения). Таким образом формы \cd{4} и \cd{5} вычисляются сами в себя, тем
-самым предоставляя аргументы для функции умножения. Функция умножения вычисляет
-результат \cd{20} и возвращает его. Значения \cd{3} и \cd{20} становяться
-аргументами функции сложения, которая вычисляет и возвращает результат
-\cd{23}. Таким образом мы говорим \cd{(+3 (* 4 5)) \EV\ 23}.
 
 \begin{newer}
 X3J13 voted in October 1988 \issue{FUNCTION-CALL-EVALUATION-ORDER}
@@ -591,7 +387,7 @@ of the first element of a function call relative to the
 argument forms.
 \end{newer}
 
-\section{Functions Функции}
+\section{Functions}
 
 There are two ways to indicate a function to be used in a function-call
 form.  One is to use a symbol that names the function.  This use of
@@ -610,23 +406,7 @@ objects that satisfy the predicate \cdf{functionp},
 as when giving such an object to \cdf{apply} or \cdf{funcall} to be
 invoked.
 
-Существуют два метода указать функцию для использования в форме вызова
-функции. Один из них заключается в указании символа имени функции. Это
-использование символов для обозначения функций полностью независимо от их
-использования для обозначения специальных и лексических переменных. Другой путь
-заключается в использовании \emph{лямбда-выражения}, которое является списком
-с первым элементом равным \cdf{lambda}. Лябда выражение \emph{не} является
-формой, оно не может быть полноценно вычислено. Лямбда выражения и символы,
-когда они используются в программах для обозначения функций, могут быть
-указаны в качестве первого элемента формы вызова функции, или только в качестве
-второго параметры в специальной форме \cdf{function}. Следует отметить, что
-в этих двух контекстах символы и лябда выражения обрабатываются, как
-\emph{имена} функций. Необходимо отличать это от обработки символов и лямбда
-выражений, как \emph{функциональных объектов, или объектов функций (function
-  objects)}, которые удовлетворяют предикату \cdf{functionp}, как при
-представлении таких объектов в вызовы функций \cdf{apply} или \cdf{funcall}.
-
-\subsection{Named Functions Именованные функции}
+\subsection{Named Functions}
 
 A name can be given to a function in one of two ways.
 A \emph{global name} can be given to a function by using the
@@ -643,19 +423,7 @@ refers to the definition established by the innermost \cdf{flet} or \cdf{labels}
 construct that textually contains the reference, or to the global
 definition (if any) if there is no such containing construct.
 
-Имя может задано функции двумя способами.
-\emph{Глобальное имя} может быть дано функции с помощью конструкции
-\emph{defun}.
-\emph{Локальное имя} может быть дано функции с помощью специальных форм
-\cdf{flet} или \cdf{labels}.
-Когда функция именуется, лямбда-выражение связывается с этим именем вместе с
-информацией о сущностях, которые были лексически доступны на момент связи.
-Если символ используется в качестве первого элементы формы вызова функции, тогда
-он ссылается на определение функции из наиболее ближней формы \cdf{flet} или
-\cdf{labels}, которые по тексту содержат эту форму, иначе символ ссылается на
-глобальное определение функции, при отсутствии вышеназванных форм.
-
-\subsection{Lambda-Expressions Лябда выражения}
+\subsection{Lambda-Expressions}
 \label{LAMBDA-EXPRESSIONS-SECTION}
 \indexterm{lambda-expression}
 
@@ -675,21 +443,6 @@ and the results of the \emph{last} form only are returned as the results
 of the application (the value {\false} is returned if there are zero
 forms in the body).
 The complete syntax of a lambda-expression is:
-
-\emph{Лямбда выражение} является списком со следующим синтаксисом:
-\begin{lisp}
-(lambda \emph{lambda-list} . \emph{body})
-\end{lisp}
-Первый элемент должен быть символом \cdf{lambda}. Второй элемент должен быть
-списком. Он называется \emph{лямбда списком}, и задает имена для
-\emph{параметров} функции. Когда функция, обозначенная лямбда-выражением,
-применяется к аргументам, аргументы подставляются в соответствии с лямбда
-списком. \emph{body} может впоследствии ссылаться на аргументы используя имена
-параметров. \emph{body} состоит из любого количества форм (возможно нулевого
-количества). Эти формы последовательно выполняются, и результат только \emph{последней} формы,
-возвращается в качестве значения (в случае отсутствия форм, возвращается
-{\false}).
-Полный синтаксис лямбда-выражения:
 
 \begingroup
 \def\GrossOptVars{\Mstar{\emph{var} {\Mor} \cd{(}\emph{var} \Mopt{\emph{initform} \Mopt{\emph{svar}}}\cd{)}}}
@@ -714,14 +467,6 @@ they do not belong to the keyword package.  They are ordinary symbols
 each of whose names begins with an ampersand.  This terminology
 is unfortunately confusing but is retained for historical reasons.)
 
-Каждый элемент лямбда списка является или спецификатором параметра или \emph{ключевым
- символом лямбда списка}. Ключевые символы лямбда списка начинаются с символа
-\cd{\&}.
-Следует отметить, что ключевые символы лямбда списка не является ключевыми
-символами в обычном понимании. Они не принадлежат пакету keyword. Они являются
-обычными символами, имена которых начинается амперсандом. Такая терминология
-запутывает, но так сложилась история.
-
 \begin{obsolete}
 In all cases a \emph{var} or \emph{svar} must be a symbol, the name of a variable;
 each \emph{keyword} must be a keyword symbol, such as \cd{:start}.
@@ -736,18 +481,12 @@ in the \cdf{keyword} package.  See below.
 \end{newer}
 
 A lambda-list has five parts, any or all of which may be empty:
-Лямбда список имеет пять частей, любая или все могут быть пустыми:
 
 \begin{itemize}
 \item
 Specifiers for the \emph{required} parameters.  These are all the parameter
 specifiers up to the first lambda-list keyword; if there is no such
 lambda-list keyword, then all the specifiers are for required parameters.
-
-\item
-Спецификаторы для \emph{обязательных параметров}. К ним относятся все
-спецификаторы параметров до первого ключевого символа лямбда списка. Если такой
-ключевой символ отсутствует, все спецификаторы считаются обязательными.
 
 \item
 Specifiers for \emph{optional} parameters.
@@ -757,22 +496,10 @@ lambda-list keyword \cd{\&optional} up to the next lambda-list keyword or the
 end of the list.
 
 \item
-Спецификаторы для \emph{необязательных} параметров.
-Если указан ключевой символ лямбда списка \cd{\&optional}, спецификаторы
-\emph{необязательных} параметров будут следовать после ключевого символа
-\cd{\&optional} и до следующего ключевого слова, или до конца списка.
-
-\item
 A specifier for a \emph{rest} parameter.  The lambda-list keyword \cd{\&rest}, if present, must
 be followed by a single \emph{rest} parameter specifier,
 which in turn must be followed by another lambda-list keyword or the end
 of the lambda-list.
-
-\item
-Спецификатор для \emph{неопределенного количества или оставшегося (rest)} параметра. Если указан ключевой символ
-лямбда списка \cd{\&rest}, за ним должен следовать только один спецификатор
-\emph{оставшегося (rest)} параметра, за которым может следовать другой ключевой символ или
-лямбда список может заканчиваться.
 
 \item
 Specifiers for \emph{keyword} parameters.
@@ -782,21 +509,9 @@ The keyword parameter specifiers may optionally be followed by the
 lambda-list keyword \cd{\&allow-other-keys}.
 
 \item
-Спецификатор для \emph{именованных (keyword)} параметров. Если указан ключевой
-символ лямбда списка \cd{\&key}, все спецификаторы после данного символа до
-следующего ключевого символа или конца списка являются спецификаторами
-\emph{именованных} параметров. За спецификаторами именованных параметров
-опционально может использовать ключевой символ лямбда списка \cd{\&allow-others-keys}.
-
-\item
 Specifiers for \emph{aux} variables.  These are not really parameters.
 If the lambda-list keyword \cd{\&aux} is present, all specifiers after it are
 \emph{auxiliary variable} specifiers.
-
-\item
-Спецификатор для \emph{вспомогательных (aux)} переменных. Они не являются
-параметрами. Если указан ключевой символ лямбда списка \cd{\&aux}, все
-спецификаторы после него являются спецификаторами вспомогательных переменных.
 \end{itemize}
 
 When the function represented by the lambda-expression is applied
@@ -812,26 +527,10 @@ the parameter is bound as a lexical variable unless a
 declaration has been made that it should be a special binding;
 see \cdf{defvar}, \cdf{proclaim}, and \cdf{declare}.
 
-Когда функция, заданная лямбда-выражением, применяется к аргументам, то эти
-аргументы и параметры вычисляются слева направо.
-В простейшем случае, в лямбда списке присутствуют только обязательные
-параметры. Каждый из них задается просто именем переменной \emph{var}
-параметра.
-Когда функция применяется, аргументов должно быть столько же, сколько и
-параметров, и каждый параметр связывается с одним аргументом. В общем случае,
-каждый параметр связывается как лексическая переменная, если только с помощью
-декларации не указано, что связь должна осуществляться, как для специальной
-переменной. Смотрите \cdf{defvar}, \cdf{proclaim}, \cdf{declare}.
-
 In the more general case, if there are \emph{n} required parameters
 (\emph{n} may be zero), there must be at least \emph{n} arguments,
 and the required parameters are bound to the first \emph{n} arguments.
 The other parameters are then processed using any remaining arguments.
-
-В более общем случае, если указано \emph{n} обязательных параметров
-(\emph{n} может равняться нулю), тогда должно быть как мимимум \emph{n}
-аргументов, и обязательные параметры будут связаны с \emph{n} первыми
-аргументами.
 
 If \emph{optional} parameters are specified, then each one is processed as
 follows.  If any unprocessed arguments remain, then the parameter variable
@@ -847,20 +546,6 @@ The variable \emph{svar} is called a \emph{supplied-p} parameter;
 it is bound not to an argument but to a value indicating whether or not
 an argument had been supplied for another parameter.
 
-Если указаны необязательные параметры, тогда каждый из них будет оработан так,
-как описано ниже. Если осталось некоторое количество аргументов, тогда
-переменная параметра \cd{var} будет связана с оставшимся аргументом. Принцип
-такой же, как и для обязательных параметров. Если не осталось аргументов, тогда
-выполняется часть \emph{initform}, и переменная
-параметра связывается с ее результатом (или с {\false}, если форма
-\emph{initform} не была задана).
-Если в спецификаторе указано имя еще одной переменной \emph{svar}, то она
-связывается с \emph{true}, если аргумент был задан, и с \emph{false}
-аргумент не был задан (и в таком случае выполняется \emph{initform}).
-Переменная \emph{svar} называется \emph{supplied-p} параметр. Она
-связывается не с аргументом, а со значением, которое показывается был ли задан
-аргумент для данного параметра или нет.
-
 After all \emph{optional} parameter specifiers have been processed,
 then there may or may not be a \emph{rest} parameter.
 If there is a \emph{rest} parameter, it is bound to a list of all
@@ -869,15 +554,6 @@ the \emph{rest} parameter is bound to the empty list.)
 If there is no \emph{rest} parameter and there are no \emph{keyword}
 parameters,
 then there should be no unprocessed arguments (it is an error if there are).
-
-После того, как все \emph{необязательные} параметры были обработаны, могут
-быть указан \emph{оставшийся (rest)} параметр.
-Если \emph{оставшийся (rest)} параметр указан, он будет связан со списком все
-оставшихся необработанных аргументов. Если таких аргументов не осталось,
-\emph{оставшийся (rest)} параметр будет связан с пустым списком. Если в лямбда
-списке отсутствуют \emph{оставшийся (rest)} параметр и \emph{именованные
-  (keyword)} параметры, то необработанных аргументов оставаться не должно (иначе
-будет ошибка).
 
 \begin{new}
 X3J13 voted in January 1989
@@ -927,19 +603,6 @@ If \cd{\&key} is specified, there must remain
 an even number of arguments; these are considered as pairs,
 the first argument in each pair being interpreted as a keyword name
 and the second as the corresponding value.
-
-Далее обрабатываются все \emph{именованные (keyword)} параметры.
-Для этих параметров обрабатываются те же аргументы, что и для
-\emph{оставшегося (rest)} параметра.
-Безусловно, возможно указывать и \cd{\&rest} и \cd{\&key}. В таком случае
-оставшиеся аргументы используются для обеих целей:
-все оставшиеся аргументы составляются в список для \cd{\&rest} параметра и они
-также обрабатываются, как \cd{\&key} параметры. Только в этой ситуации один
-аргумент может обрабатываться более чем для одного параметра.
-Если указан \cd{\&key}, должно остаться четное количество аргументов. Они будут
-обработаны попарно. Первый аргумент в паре должен быть ключевым символом,
-который задает имя параметра, второй аргумент должен быть соответствующим
-значением.
 
 \begin{obsolete}
 It is an error for the first object of each pair to be
@@ -1009,20 +672,10 @@ specified, then that is the keyword name for the parameter.  Otherwise
 the name \emph{var} serves to indicate the keyword name,
 in that a keyword with the same name (in the \cdf{keyword} package) is used
 as the keyword.  Thus
-
-In each keyword parameter specifier must be a name \emph{var} for the
-parameter variable.
-Если явно указан ключевой символ, тогда он будет использоваться для имени
-параметра. В противном случае используется имя переменной \cdf{var} для поиска
-ключевого символа в аргументах. Таким образом:
-
 \begin{lisp}
 (defun foo (\cd{\&key} radix (type 'integer)) ...)
 \end{lisp}
 means exactly the same as
-
-означает то же, что и
-
 \begin{lisp}
 (defun foo (\cd{\&key} ((:radix radix)) ((:type type) 'integer)) ...)
 \end{lisp}
@@ -1043,42 +696,17 @@ no \emph{initform} was specified).  The variable \emph{svar} is treated
 as for ordinary \emph{optional} parameters: it is bound to \emph{true}
 if there was a matching argument pair, and to \emph{false} otherwise.
 
-Спецификатор именованого (keyword) параметра, как и все спецификаторы
-параметров, обрабатывается слева направо.
-Для каждого спецификатора именованного параметра, если в паре аргумента, в
-которой ключевой символ совпадает с именем параметра (сравнение производится с
-помощью \cdf{eq}), тогда переменная параметра связывается значением из этой
-пары.
-Если имеется более одной пар аргументов с одинаковым именем, то это не ошибка. В таком
-случае используется наиболее левая пара.
-Если пары аргументов не нашлось, тогда выполняется \emph{initform} и
-переменная параметра связыванется с этим значением (или с {\false}, если
-\emph{initform} не задана). Переменная \emph{svar} используется в тех же
-целях, что и для \emph{необязательных} параметров. Она будет связана с
-\emph{true} если была необходимая пара аргументов, иначе с \emph{false}.
-
 It is an error if an argument pair has a keyword name not matched
 by any parameter specifier, unless at least one of the following
 two conditions is met:
-
-Если пара аргументов содержит ключевой символ, который не
-присутствует в спецификаторах параметров в лямбда списке, то или возникнет
-ошибка или возможны следующие условия:
 
 \begin{itemize}
 \item
 \cd{\&allow-other-keys} was specified in the lambda-list.
 
 \item
-\cd{\&allow-other-keys} был указан в лямбда списке.
-
-\item
 Somewhere among the keyword argument pairs is a pair whose keyword
 is \cd{:allow-other-keys} and whose value is not {\false}.
-
-\item
-Где-то среди именованных аргументов есть пара, в которой есть ключевой символ
-\cd{:allow-other-keys} и значение не равно {\false}.
 \end{itemize}
 If either condition obtains, then it is not an error
 for an argument pair to match no parameter specified,
@@ -1089,27 +717,12 @@ allow sharing of argument lists among several functions
 and to allow either the caller or the called function
 to specify that such sharing may be taking place.
 
-В случае возникновения одного из этих условий, можно использовать именованные
-аргументы, которые не имеют соответствующих параметров (эти аргументы будут
-доступны, как оставшийся \cd{\&rest} параметр). 
-Целью этого механизма является возможность объединять лямбда списки разных
-функции без необходмиости копировать все спецификаторы именованных (keyword)
-параметров. Например функция обертка может передать часть именованных аргументов
-в обернутую функцию без необходимости явного ручного указания их всех. 
-
 After all parameter specifiers have been processed, the auxiliary
 variable specifiers (those following the lambda-list keyword \cd{\&aux}) are processed from
 left to right.  For each one, the \emph{initform} is evaluated and the
 variable \emph{var} bound to that value (or to {\false} if no \emph{initform} was
 specified).  Nothing can be done with \cd{\&aux} variables that cannot be
 done with the special form \cdf{let*}:
-
-После того как все спецификаторы были обработаны, слева направо обрабатываются
-спецификаторы вспомогательных параметров. Для каждого из них выполняется
-\emph{initform} и переменная \emph{var} связывается с этим результатом (или
-с {\false}, если \emph{initform} не определена). С \cd{\&aux} переменными
-можно делать то же, что и со специальной формой \cdf{let*}:
-
 \begin{lisp}
 (lambda (x y \&aux (a (car x)) (b 2) c) ...) \\
 ~~~\EQ\ (lambda (x y) (let* ((a (car x)) (b 2) c) ...))
@@ -1117,19 +730,11 @@ done with the special form \cdf{let*}:
 
 Which to use is purely a matter of style.
 
-Что использовать зависит только от стиля.
-
 Whenever any \emph{initform} is evaluated for any parameter
 specifier, that form may refer to any parameter variable to the left of
 the specifier in which the \emph{initform} appears, including any supplied-p
 variables, and may rely on the fact that no other parameter variable
 has yet been bound (including its own parameter variable).
-
-Когда какая-либо форма \emph{initform} выполняется в каком-либо спецификаторе
-параметра, данная форма может ссылаться на любую переменную параметра, стоящую
-слева от данной формы, включая supplied-p переменные, и может рассчитывать на
-то, что другие переменные параметров еще не связаны (включая переменную данного
-параметра).
 
 Once the lambda-list has been processed, the forms in the body of the
 lambda-expression are executed.  These forms may refer to the arguments
@@ -1141,20 +746,8 @@ for a lexical binding can later be reinstated if a
 ``closure'' over that binding was created,
 perhaps by using \cdf{function}, and saved before the exit occurred.)
 
-После того как был обработан лямбда список, выполняются формы в теле лямбда
-выражения. Эти формы могут ссылаться на аргументы функции, используя именя
-параметров. При выходе из функции, как с помощью нормального возврата, так и с
-помощью нелокального выхода, связывания параметров, и лексическеие, и
-специальные, упраздняются. В случае создания <<замыкания>> над данными
-связываниями, связи упраздняются не сразу, а сначала сохраняются, чтобы
-потом быть вновь восстановленными.
-
 \noindent
 Examples of \cd{\&optional} and \cd{\&rest} parameters:
-
-\noindent
-Примеры использования \cd{\&optional} и \cd{\&rest} параметров:
-
 \begin{lisp}
 ((lambda (a b) (+ a (* b 3))) 4 5) \EV\ 19 \\
 ((lambda (a \cd{\&optional} (b 2)) (+ a (* b 3))) 4 5) \EV\ 19 \\
@@ -1175,9 +768,6 @@ Examples of \cd{\&optional} and \cd{\&rest} parameters:
 ~~~\EV\ (6 t 3 t (8 9 10 11))
 \end{lisp}
 Examples of \cd{\&key} parameters:
-
-\noindent
-Примеры \cd{\&key} параметров:
 \begin{lisp}
 ((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2) \\*
 ~~~\EV\ (1 2 {\nil} {\nil}) \\
@@ -1195,9 +785,6 @@ Examples of \cd{\&key} parameters:
 ~~~\EV\ (:a :b :d {\nil})
 \end{lisp}
 Examples of mixtures:
-
-\noindent 
-Пример смешения всех:
 \begin{lisp}
 ((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
 ~~~(list a b c d x)) \\*
@@ -1233,22 +820,10 @@ lambda-expressions appearing explicitly as the first element of a
 function-call form.  They are extremely
 useful, however, in functions given global names by \cdf{defun}.
 
-В лямбда-выражении, которое стоит на первом месте в списке формы вызова функции
-допускаются все ключевые символы лямбда списка, хотя и не очень то они полезны в
-этом качестве.
-Гораздо полезнее они используются в глобальных функциях, определенных с помощью
-\cdf{defun}.
-
 All symbols whose names begin with \cd{\&} are conventionally reserved
 for use as lambda-list keywords and should not be used as variable names.
 Implementations of Common Lisp are free to provide additional lambda-list
 keywords.
-
-Все символы, что начиаются на \cd{\&} обычно зарезервированы для использования в
-качестве ключевых символов лямбда списка, и не должны использоваться для имен
-переменных.
-Реализации Common Lisp'а могут также предоставлять свои дополнительные ключевые
-символы лямбда списка.
 
 \begin{defun}[Constant]
 lambda-list-keywords
@@ -1258,23 +833,11 @@ keywords used in the implementation, including the additional ones
 used only by \cdf{defmacro}.  This list must contain at least the symbols
 \cd{\&optional}, \cd{\&rest}, \cd{\&key}, \cd{\&allow-other-keys}, \cd{\&aux}, \cd{\&body}, \cd{\&whole},
 and \cd{\&environment}.
-
-Значение \cdf{lambda-list-keywords} является списком всех ключевых символов
-лямбда списка, используемых в данной реализации, включая те, которые
-используются только в \cdf{defmacro}. Этот список должен содержать как минимум
-символы \cd{\&optional}, \cd{\&rest}, \cd{\&key}, \cd{\&allow-other-keys}, \cd{\&aux}, \cd{\&body}, \cd{\&whole}
-и \cd{\&environment}.
 \end{defun}
 
 As an example of the use of \cd{\&allow-other-keys} and \cd{:allow-other-keys},
 consider a function that takes two keyword arguments of its own and also
 accepts additional keyword arguments to be passed to \cdf{make-array}:
-
-Вот пример использования \cd{\&allow-other-keys} и \cd{:allow-other-keys}, 
-рассматривающий функция, которая принимает два своих именованных аргумента и
-также дополнительные именованные аргументы, которые затем передаются
-\cdf{make-array}:
-
 \begin{lisp}
 (defun array-of-strings (str dims \cd{\&rest} keyword-pairs \\*
 ~~~~~~~~~~~~~~~~~~~~~~~~~\cd{\&key} (start 0) end \cd{\&allow-other-keys}) \\*
@@ -1299,20 +862,6 @@ call to \cdf{make-array} of the keyword argument \cd{:allow-other-keys}
 with a non-{\false} value causes any extraneous keyword arguments,
 including \cd{:start} and \cd{:end}, to be acceptable and ignored.
 
-Такая функция принимает строку и информацию о размерности и возвращает массив с
-заданной размерностью, каждый из элементов которого равен заданной
-строке. Именованные аргументы \cd{:start} и \cd{:end}, как обчыно (смотрите
-главу~\ref{KSEQUE}), можно использовать для указания того, что должна
-использоваться подстрока. Кроме того, использование \cd{\&allow-other-keys} в
-лямбда списке указывает на то, что вызов этой функции может содержать
-дополнительные именованные аргументы. Для доступа к ним используется \cd{\&rest}
-аргумент. Эти дополнительные именованные аргументы передаются в
-\cdf{make-array}. \cdf{make-array} не принимает именованные аргументы
-\cd{:start} и \cd{:end}, и было бы ошибкой допустить их использование. Однако
-указание \cd{:allow-other-keys} равное не-{\false} значению позволяет передавать
-любые другие именованные аргументы, включая \cd{:start} и \cd{:end}, и они были
-бы приняты и проигнорированы.
-
 \begin{defun}[Constant]
 lambda-parameters-limit
 
@@ -1324,17 +873,9 @@ but will not be smaller than 50.
 Implementors are encouraged to make this limit as large as practicable
 without sacrificing performance.
 See \cdf{call-arguments-limit}.
-
-Значение \cdf{lambda-parameters-limir} является положительным целым, которое
-невключительно является верхней границей допустимого количества имен параметров,
-которые могут использоваться в лямбда списке.
-Значение зависит от реализации, но не может быть менее 50.
-Разработчики поощряются за создание данной границы как можно большей без потери
-производительности. 
-Смотрите \cdf{call-arguments-list}.
 \end{defun}
 
-\section{Top-Level Forms Формы верхнего уровня}
+\section{Top-Level Forms}
 
 The standard way for the user to interact with a Common Lisp implementation is
 via a \emph{read-eval-print loop}: the system repeatedly
@@ -1349,17 +890,6 @@ is embedded within \cd{(if p (+ 3 4) 6)}.
 These top-level special forms may be used to define globally named
 functions, to define macros, to make declarations,
 and to define global values for special variables.
-
-Стандартный путь взаимодействия с реализацией Common Lisp через
-\emph{read-eval-print loop} \emph{цикл чтение-выполнение-печать}: система
-повторно читает форму из некоторого источника ввода (клавиатура, файл),
-выполняет ее, затем выводит результат(ы) в некоторое устройство вывода (дисплей,
-другой файл). Допускается любая форма (выполняемый объект данных), однако
-существуют некоторые формы разработанные для удобного применения в качестве форм 
-\emph{верхнего уровня}.
-Эти специальные формы верхнего уровня могут использоваться для определения
-глобальных функции (globally named functions), макросов, создания деклараций и
-определения глобальных значений для специальных переменных.
 
 \begin{obsolete}
 It is not illegal to use these forms at other than top level,
@@ -1397,15 +927,9 @@ This odd marker is unnecessary in Common Lisp.
 Macros are usually defined by using the special form \cdf{defmacro}.
 This facility is fairly complicated; it is described in chapter~\ref{MACROS}.
 
-Макросы обычно определяются с помощью специальной формы \cdf{defmacro}.
-Этот механизм достаточно сложен. Для подробностей смотрите главу~\ref{MACROS}.
-
-
-\subsection{Defining Named Functions Определение именованных функций}
+\subsection{Defining Named Functions}
 
 The \cdf{defun} special form is the usual means of defining named functions.
-
-Специальная форма \cdf{defun} обычно обозначает определение именованных функций.
 
 \begin{defmac}
 defun name lambda-list <{declaration}* | doc-string> {\,form}*
@@ -1418,15 +942,6 @@ for the function specified by the lambda-expression
 defined in the lexical environment in which the \cdf{defun} form was
 executed.  Because \cdf{defun} forms normally appear at top level, this is
 normally the null lexical environment.
-
-Выполнение формы \cdf{defun} приводит к тому, что символ \emph{name}
-становиться глобальным именем для функции определенной лямбда-выражением.
-\begin{lisp}
-(lambda \emph{lambda-list} \Mstar{\emph{declaration} {\Mor} \emph{doc-string}} \Mstar{\emph{\,form}})
-\end{lisp}
-определеяется в лексическом окружении, в котором выполнялась форма
-\cdf{defun}. А так как формы \cdf{defun} обычно выполняются на самом верхнем
-уровне, лямбда-выражение обычно выполняется в нулевом лексическом окружении.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
@@ -1450,16 +965,6 @@ to define a \cdf{setf}
 expansion function for \cdf{cadr} 
 (although it may be much more convenient to
 use \cdf{defsetf} or \cdf{define-modify-macro}).
-
-\cdf{defun} была расширена для того, чтобы могла принимать любое имя функции
-(символ или список, car которого равен \cdf{setf}---смотрите
-раздел~\ref{FUNCTION-NAME-SECTION}) в качестве \emph{name}.
-Так теперь можно записать
-\begin{lisp}
-(defun (setf cadr) ...)
-\end{lisp}
-для определения \cdf{setf}-определения для функции \cdf{cadr}. Это более удобно,
-чем использование \cdf{defsetf} или \cdf{define-modify-macro}.
 \end{newer}
 
 \newpage%manual
@@ -1473,37 +978,18 @@ present only if at least one \emph{form} is also specified, as it is
 otherwise taken to be a \emph{form}.
 It is an error if more than one \emph{doc-string} is present.
 
-Если указана необязательная строка документации \emph{doc-string}, тогда они
-присоединяется к символу \emph{name} в качестве строки документации типа
-\cdf{function}, смотрите \cdf{documentation}. Если после \emph{doc-string} нет
-деклараций, строка документации может быть использована только при условии
-существования хотя бы одной формы после нее, иначе она будет использована в
-качестве \emph{form} функции. Указывать более чем одну \emph{doc-string} является ошибкой.
-
 The \emph{forms} constitute the body of the defined function; they are
 executed as an implicit \cdf{progn}.
-
-\emph{forms} составляют тело определяемой функции. Они выполняются как неявный \cdf{progn}.
 
 The body of the defined function is implicitly enclosed
 in a \cdf{block} construct whose name is the same as the \emph{name}
 of the function.  Therefore \cdf{return-from}
 may be used to exit from the function.
 
-Тело оперделяемой функции неявно заключается в конструкцию \cdf{block}, имя
-которой совпадает с \emph{именем (name)} функции. Таким образом
-\cdf{return-from} может быть использовано для выхода из функции.
-
 Other implementation-dependent bookkeeping actions may be taken as well
 by \cdf{defun}.  The \emph{name} is returned as the value of the \cdf{defun}
 form.
 For example:
-
-Другие учетные действия специальные для некоторой реализации могут также
-выполнятся в \cdf{defun}. \emph{name} возвращается в качестве значения формы
-\cdf{defun}.
-Например:
-
 \begin{lisp}
 (defun discriminant (a b c) \\
 ~~(declare (number a b c)) \\
@@ -1537,24 +1023,13 @@ to install a corrected version of an incorrect definition, for example.
 It is permissible to redefine a macro as a function.
 It is an error to attempt to redefine the name of a special
 form (see table~\ref{SPECIAL-FORM-TABLE}) as a function.
-
-Пользователю разрешено использовать \cdf{defun} для переопределения функции, например, для
-установки корректной версии некорректного определения.
-Пользователю также разрешено переопределять макрос на функцию.
-Однако является ошибкой, попытка переопределить имя специальной формы (смотрите
-таблицу~\ref{SPECIAL-FORM-TABLE}) на функцию.
 \end{defmac}
 
-\subsection{Declaring Global Variables and Named Constants Определение
-  глобальных переменных и констант}
+\subsection{Declaring Global Variables and Named Constants}
 
 The \cdf{defvar} and \cdf{defparameter} special forms are
 the usual means of specifying globally defined variables.
 The \cdf{defconstant} special form is used for defining named constants.
-
-Специальные формы \cdf{defvar} и \cdf{defparameter} используются для определения
-глобально определенных переменных.
-Специальная форма \cdf{defconstant} используется для определения констант.
 
 \begin{defmac}
 defvar name [initial-value [documentation]] \\
@@ -1563,17 +1038,11 @@ defconstant name initial-value [documentation]
 
 \cdf{defvar} is the recommended way to declare the use
 of a special variable in a program.
-\cdf{defvar} рекомендуется для декларации использования в программе специальных
-переменных.
 \begin{lisp}
 (defvar \emph{variable})
 \end{lisp}
 proclaims \emph{variable} to be \cdf{special} (see \cdf{proclaim}),
 and may perform other system-dependent bookkeeping actions.
-
-указывает на то, что переменная \emph{variable} будет специальной
-(\cdf{special}) (смотрите \cdf{proclaim}), и может выполнять некоторые учетные
-действия, зависимые от реализации.
 
 \begin{newer}
 X3J13 voted in June 1987 \issue{DEFVAR-INITIALIZATION} to clarify
@@ -1583,8 +1052,6 @@ if no \emph{initial-value} form is provided and the variable
 has no value, \cdf{defvar} does not give it a value.
 \end{newer}
 If a second argument form is supplied,
-
-Если для формы указан второй аргумент,
 \begin{lisp}
 (defvar \emph{variable} \emph{initial-value})
 \end{lisp}
@@ -1593,12 +1060,6 @@ then \emph{variable} is initialized to the result of evaluating the form
 is not evaluated unless it is used; this fact is useful if
 evaluation of the \emph{initial-value} form does something
 expensive like creating a large data structure.
-
-тогда переменная \emph{variable}, если она еще не была проинициализирована,
-инициализируется результатом выполнения формы \emph{initial-value}. Форма
-\emph{initial-value} не выполняется, если в этом нет необходимости. Это
-полезно, если форма \emph{initial-value} выполняет что-то
-трудоемкое, как, например, создание большого структуры данных.
 
 \begin{newer}
 X3J13 voted in June 1987 \issue{DEFVAR-INIT-TIME} to clarify that
@@ -1612,21 +1073,11 @@ performed by assignment and thus assigns a global value to the variable
 unless there are currently special bindings of that variable.
 Normally there should not be any such special bindings.
 
-Инициализация производится присвоением глобального значения переменной, если
-только не существует специального связывания этой переменной.
-Обычно, такого связывания быть не должно. FIXME.
-
 \cdf{defvar} also provides a good place to put a comment describing the
 meaning of the variable, whereas an ordinary \cdf{special} proclamation
 offers the
 temptation to declare several variables at once and not have room to
 describe them all.
-
-\cdf{defvar} также предоставляют хорошее место для комметария описывающего
-значение переменной, тогда как обычное \cd{special} указание соблазняет
-задекларировать несколько переменных за один раз и не предоставляет возможности
-прокомментировать их.
-
 \begin{lisp}
 (defvar *visible-windows* 0 \\
 ~~"Number of windows at least partially visible on the screen")
@@ -1644,17 +1095,6 @@ that the quantity \emph{never} changes; in particular, it does not license
 the compiler to build assumptions about the value into programs being
 compiled.
 
-\cdf{defparameter} подобен \cdf{defvar}, но \cdf{defparameter} требует
-обязательной формы \emph{initial-value}, и всего выполняет эту форму, и
-присваивает результат переменной. Семантическое различие заключается в том, что
-\cdf{defvar} предназначена декларировать переменную, изменяемую программой,
-тогда как \cdf{defparameter} предназначена для декларации переменной, как
-константы, которая может быть изменена (и во время выполнения программы), для
-изменения поведения программы. Таким образом \cdf{defparameter} не указывает,
-что количество никогда не изменяется, в частности, она не разрешает 
-компилятору предположить то, что значение может быть вкомпилировано в
-программу.
-
 \cdf{defconstant} is like \cdf{defparameter} but \emph{does} assert that
 the value of the variable \emph{name} is fixed and does license
 the compiler to build assumptions about the value into programs being
@@ -1666,23 +1106,9 @@ to the object that is the actual value of the constant.  For example,
 the compiler may freely make copies of numbers but must exercise
 care when the value is a list.)
 
-\cdf{defconstant} похожа на \cdf{defparameter}, но в отличие от последней,
-указывает, что значение переменной \emph{name} фиксировано и позволяет
-компилятору предположить, что значение может быть вкомпилировано в
-программу. Однако, если компилятор выбирает путь замены ссылок на имя константы
-на значения этой константы в компилируемом коде для оптимизации, он должен
-позаботиться о том, чтобы такие <<копии>> были эквивалентны \cdf{eql}
-объектам-значениям констант. Например, компилятор может спокойно копировать
-числа, но должен позаботиться об этом правиле, если значение константы
-является списком.
-
 It is an error if there are any special bindings
 of the variable at the time the \cdf{defconstant} form
 is executed (but implementations may or may not check for this).
-
-Если для переменной на момент вызова формы \cdf{defconstant} существует
-специальные связывания, то возникает ошибка (но реализации могут проверять, а
-могут и не проверять этот факт).
 
 Once a name has been declared by \cdf{defconstant} to be constant,
 any further assignment to or binding of that special variable is an error.
@@ -1690,13 +1116,6 @@ This is the case for such system-supplied constants as \cdf{t} and
 \cdf{most-positive-fixnum}.
 A compiler may also choose to issue warnings about bindings of
 the lexical variable of the same name.
-
-Если имя задекларировано с помощью \cdf{defconstant} быть константой,
-последующие присваивания и связывания данной специальной переменной будут
-являются ошибкой. Это справедливо для системозависимых констант, например,
-\cdf{t} и \cdf{most-positive-fixnum}.
-Компилятор может также сигнализировать о связывании лексической переменной с
-одинаковым именем.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -1717,10 +1136,6 @@ to the name of the variable, parameter, or constant
 under the \cdf{variable} documentation type; see the \cdf{documentation}
 function.
 
-Для любой из этих конструкций, документация должна быть строкой. Строка
-присоединяется к имени переменной, параметра или константы как тип документации
-\cdf{variable}, смотрите функцию \cdf{documentation}.
-
 \begin{new}
 X3J13 voted in March 1988
 \issue{DEFVAR-DOCUMENTATION}
@@ -1730,57 +1145,34 @@ is not evaluated but must appear as a literal string when the \cdf{defvar},
 
 For example,
 the form
-
-Например, форма
-
 \begin{lisp}
 (defvar *avoid-registers* nil "Compilation control switch \#43")
 \end{lisp}
-
 is legitimate, but
-
-законна, но
-
 \begin{lisp}
 (defvar *avoid-registers* nil \\*
 ~~(format nil "Compilation control switch \#{\Xtilde}D" \\*
 ~~~~~~~~~~(incf *compiler-switch-number*)))
 \end{lisp}
-
 is erroneous because the call to \cdf{format} is not a literal string.
 
-ошибочна, так как вызов \cdf{format} не является дословно строкой.
-
 (On the other hand, the form
-
-С другой стороны, форма
-
 \begin{lisp}
 (defvar *avoid-registers* nil \\*
 ~~\#.(format nil "Compilation control switch \#{\Xtilde}D" \\*
 ~~~~~~~~~~~~(incf *compiler-switch-number*)))
 \end{lisp}
-
 might be used to accomplish the same purpose, because the call to
 \cdf{format} is evaluated at \cdf{read} time; when the \cdf{defvar} form
 is evaluated, only the result of the call to \cdf{format}, a string,
 appears in the \cdf{defvar} form.)
-
-Может использоваться для вышеназванной цели, потому что вызов \cdf{format}
-выполняется на во время чтения кода \cdf{read}, когда форма \cdf{defvar}
-выполняется, в ней указана строка, которая являлась результатом вызова
-\cdf{format}.
-
 \end{new}
 
 These constructs are normally used only as top-level forms.  The
 value returned by each of these constructs is the \emph{name} declared.
-
-Эти конструкции обычно используются только как формы верхнего уровня. Значения
-возвращаемые каждой из этих конструкций это задекларированные имена \emph{name}.
 \end{defmac}
 
-\subsection{Control of Time of Evaluation Контроль времени выполнения}
+\subsection{Control of Time of Evaluation}
 
 \begin{obsolete}
 The \cdf{eval-when} special form allows pieces of code to
@@ -1873,10 +1265,6 @@ concerning its treatment in other than top-level contexts.
 The new definition is upward compatible with the old definition,
 but the old keywords are deprecated.
 
-\cdf{eval-when} была переработан для разрешения некоторых проблем, касательно ее
-использования в отличных от контекста верхнего уровня. Новое определение
-совместимо со старым, но старые ключевые символы были упразднены.
-
 \begin{defspec}
 eval-when ({situation}*) {\,form}*
 
@@ -1885,31 +1273,14 @@ eval-when ({situation}*) {\,form}*
   either \cd{:compile-toplevel},
   \cd{:load-toplevel}, or \cd{:execute}.
 
-
-  Тело формы \cdf{eval-when} выполняется как неявный \cdf{progn}, но только в
-  ниже перечисленных ситуациях. Каждая ситуация \emph{situatuon} должна быть
-  одним символов, \cd{:compile-toplevel}, \cd{:load-toplevel} или \cd{:execute}.
-
   The use of \cd{:compile-toplevel} and \cd{:load-toplevel}
   controls whether and when processing
   occurs for top-level forms. The use of \cd{:execute} controls whether
   processing occurs for non-top-level forms.
 
-
-  Использование \cd{:compile-toplevel} и \cd{:load-toplevel} контролирует, что и
-  когда выполняется для форм верхнего уровня. Использование \cd{:execute}
-  контролирует будет ли производится выполнения форм не верхнего уровня.
-
-
   The \cdf{eval-when} construct may be more precisely understood in terms of
   a model of how the file compiler, \cdf{compile-file}, processes forms in a
   file to be compiled.
-
-
-  Конструкция \cdf{eval-when} может быть более понятна в терминах модели того,
-  как компилятор файлов, \cdf{compile-file}, выполняет формы в файле для
-  компиляции.
-
 
   Successive forms are read from the file by the file compiler using 
   \cdf{read}. These top-level forms are normally processed in what we call
@@ -1919,48 +1290,23 @@ eval-when ({situation}*) {\,form}*
   in a way that allows the program doing the processing to select
   the appropriate mode.
 
-
-  Формы следующие друг за другом читаются из файла с помощью компилятора файла
-  используя \cdf{read}. Эти формы верхнего уровня обычно обрабатываются в том,
-  что мы называем режим <<времени некомпиляции (not-compile-time
-  mode)>>. Существует и другой режим, называемый режим <<времени-компиляции
-  (compile-time-too mode)>>, которые вступает в игру для форм верхнего
-  уровня. Специальная форма \cdf{eval-when} используется для аннотации программы
-  таким образом, чтобы предоставить программе, осуществлять выбор режима.
-
   Processing of top-level forms in the file compiler works as follows:
-
-
-  Обработка форм верхнего уровня в компиляторе файла работает так, как
-  рассказано ниже:
 
 \begin{itemize}
    \item If the form is a macro call, it is expanded and the result is
      processed as a top-level form in the same processing mode
      (compile-time-too or not-compile-time).
 
-   \item Если форма является макровызовом, она разворачивается и результат
-     обрабатывается, как форма верхнего уровня в том же режиме обработки
-     (времени-компиляции или времени-некомпиляции, (compile-time-too или not-compile-time).
-
    \item If the form is a \cdf{progn} (or \cdf{locally} \issue{LOCALLY-TOP-LEVEL})
      form, each of its body forms is
      sequentially processed as top-level forms in the same processing
      mode.
-
-   \item Если форма \cdf{progn} (или \cdf{locally}), каждая из форм из их тел
-     обрабатываются, как формы верхнего уровня в том же режиме обработки.
 
    \item If the form is a \cdf{compiler-let}, \cdf{macrolet},
      or \cdf{symbol-macrolet},
      the file compiler makes the appropriate bindings and recursively
      processes the body forms as an implicit top-level \cdf{progn} with those 
      bindings in effect, in the same processing mode.
-
-   \item Если форма \cdf{compiler-let}, \cdf{macrolet} или
-     \cdf{symbol-macrolet}, компилятор файла создает соотвествующие связывания и
-     рекурсивно обрабатывает тела форм, как неявный \cdf{progn} верхнего уровня
-     в контексте установленных связей в том же режиме обработки.
 
    \item If the form is an \cdf{eval-when} form, it is handled according to
      the following table:
@@ -1989,45 +1335,12 @@ eval-when ({situation}*) {\,form}*
      implicit \cdf{progn} in the dynamic execution context of the compiler and
      in the lexical environment in which the \cdf{eval-when} appears.
 
-   \item Если форма \cdf{eval-when}, она обрабатывается в соответствии со
-     следующей таблицей:
-     \begin{flushleft}
-     \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}c@{}cccl@{}}
-     LT&CT&EX&CTTM&Action \\ \hlinesp
-       yes & yes &--   & --  &    обработать тело в режиме время-компиляции \\
-       yes & no  &yes  & yes &    обработать тело в режиме время-компиляции \\
-       yes & no  &--   & no  &    обработать тело в режиме время-некомпиляции \\
-       yes & no  &no   & --  &    обработать тело в режиме время-некомпиляции \\
-       no  & yes &--   & --  &    выполнить тело \\
-       no  & no  &yes  & yes &    выполнить тело \\
-       no  & no  &--   & no  &    ничего не делать \\
-       no  & no  &no   & --  &    ничего не делать \\
-       \hline
-     \end{tabular*}
-     \end{flushleft}
-     В этой таблице столбец LT спрашивает присутствует ли \cd{:load-toplevel} в
-     ситуациях указанных в форме \cdf{eval-when}.
-     CT соответственно указывает на \cd{:compile-toplevel} и EX на
-     \cd{:execute}. Столбец CTTM спрашивает встречается ли форма \cdf{eval-when}
-     в режиме времени-компиляции. Фраза <<обработка тела>> означает обработку
-     последовательно форм тела, как неявного \cdf{progn} верхнего уровня в
-     указанном режиме, и <<выполнение тела>> означает выполнение форм тела
-     последовательно, как неявный \cdf{progn} в динамическом контексте
-     выполнения компилятора и в лексическом окружении, в котором встретилась \cdf{eval-when}.
-
    \item Otherwise, the form is a top-level form that is not one of the
      special cases.  If in compile-time-too mode, the compiler first
      evaluates the form and then performs normal compiler processing
      on it.  If in not-compile-time mode, only normal compiler
      processing is performed (see section~\ref{COMPILER-SECTION}).
      Any subforms are treated as non-top-level forms.
-
-   \item В противном случае, форма верхнего уровня, которая не представлена в
-     специальных случаях. Если в режиме времени-компиляции, компилятор сначала
-     выполняет форму и затем выполняет обычную обработку компилятором. Если
-     установлен режим времени-некомпиляции, выполняется только обычная обработка
-     компилятором (смотрите раздел~\ref{COMPILER-SECTION}).
-     Любые подформы обрабатываются как формы не верхнего уровня.
 \end{itemize}
 
   Note that top-level forms are guaranteed to be processed in the order
@@ -2036,24 +1349,11 @@ eval-when ({situation}*) {\,form}*
   However, the order of processing (including, in particular, macro
   expansion) of subforms that are not top-level forms is unspecified.
 
-  Следует отметить, что формы верхнего уровня обрабатываются гарантированно в
-  порядке, в котором они текстово представлены в файле, и каждая форма верхнего
-  уровня прочтенная компилятором обрабатывается перед тем, как следующая будет
-  прочтена.
-  Однако, порядок обработки (включая, в частности, раскрытие макросов) подформ,
-  которые не являются формами верхнего уровня, не определен.
-
   For an \cdf{eval-when} form that is not a top-level form in the file compiler
   (that is, either in the interpreter, in \cdf{compile}, or in the file
   compiler but not at top level), if the \cd{:execute} situation is specified,
   its body is treated as an implicit \cdf{progn}.  Otherwise, the body
   is ignored and the \cdf{eval-when} form has the value \cdf{nil}.
-
-  Для формы \cdf{eval-when}, которая не является формой верхнего уровня в
-  компиляторе файлов (то есть либо в интерпретаторе, либо \cdf{compile}, либо в
-  компиляторе файлов, но не на верхнем уровне), если указана ситуация
-  \cd{:execute}, тело формы обрабатывается как неявный \cdf{progn}. В противном
-  случае, тело игнорируется и форма \cdf{eval-when} имеет значение \cdf{nil}.
 
   For the sake of backward compatibility,
   a \emph{situation} may also be \cdf{compile}, \cdf{load}, or \cdf{eval}.
@@ -2062,23 +1362,11 @@ eval-when ({situation}*) {\,form}*
   and \cd{:execute}, respectively; but their effect is undefined when used
   in an \cdf{eval-when} form that is not at top level.
 
-  Для сохранения обратной совместимости, \emph{situation} может также быть
-  \cdf{compile}, \cdf{load} или \cdf{eval}.
-  Внутри формы верхнего уровня \cdf{eval-when}, они имеют значения
-  \cd{:compile-toplevel}, \cd{:load-toplevel} и \cd{:execute} соответственно.
-  Однако их поведение не определено при использовании в \cdf{eval-when} не
-  верхнего уровня.
-
   The following effects are logical consequences of the preceding specification:
-
-  Следующие правила являются логическим продолжением предыдущих определений:
 
   \begin{itemize}
    \item It is never the case that the execution of a single \cdf{eval-when}
      expression will execute the body code more than once.
-
-   \item Никогда не случится так, что выполнение одного \cdf{eval-when}
-     выражения приведет к выполнению тела более чем один раз.
 
    \item The old keyword \cdf{eval} was a misnomer because execution of
      the body need not be done by \cdf{eval}.  For example, when the
@@ -2088,16 +1376,6 @@ eval-when ({situation}*) {\,form}*
      \end{lisp}
      is compiled
      the call to \cdf{print} should be compiled, not evaluated at compile time.
-
-   \item Старый ключевой символ \cd{eval} был неправильно использован, потому
-     что выполнение тела не нуждается в \cd{eval}. Например, когда определение
-     функции
-     \begin{lisp}
-     (defun foo () (eval-when (:execute) (print 'foo)))
-     \end{lisp}
-     скомпилируется
-     вызов \cdf{print} должен быть скомпилирован, а не выполнен во время
-     компиляции.
 
    \item Macros intended for use in top-level forms should arrange for all
      side-effects to be done by the forms in the macro expansion.
@@ -2116,25 +1394,6 @@ eval-when ({situation}*) {\,form}*
 
      Adherence to this convention will mean that such macros will behave
      intuitively when called in non-top-level positions.   
-
-   \item Макросы, предназначенные для использования в качестве форм верхнего
-     уровня, должны контролировать все побочные эффекты, которые будут сделаны
-     формами в процессе развертывания.
-     Разворачиватель макроса сам по себе не должен порождать никаких побочных
-     эффектов.
-     
-\begin{lisp}
-(defmacro foo () \\*
-~~(really-foo)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Wrong}\\*
-~~{\Xbq}(really-foo)) \\
-\\
-(defmacro foo () \\*
-~~{\Xbq}(eval-when (:compile-toplevel \\*
-~~~~~~~~~~~~~~~:load-toplevel :execute)~~~~~;{\rm Right} \\*
-~~~~(really-foo)))
-\end{lisp}
-     Соблюдение этого правила будет значит, что такие макросы будут вести себя
-     интуитивно понятно при вызовах в формах не верхнего уровня.
 
    \item Placing a variable binding around an \cdf{eval-when}
      reliably captures the
@@ -2181,6 +1440,1006 @@ into
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\#'(lambda () (+ x 3)))))))))
 \end{lisp}
 
+\end{itemize}
+
+Here are some additional examples.
+\begin{lisp} 
+(let ((x 1)) \\*
+~~(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~~~(setf (symbol-function 'foo1) \#'(lambda () x))))
+\end{lisp}
+ The \cdf{eval-when} in the preceding expression is not at top level,
+       so only the \cd{:execute}
+       keyword is considered.  At compile time, this has no effect.
+       At load time (if the \cdf{let} is at top level), or at execution time
+       (if the \cdf{let} is embedded in some other form which does not execute
+       until later), this sets \cd{(symbol-function 'foo1)} to a function that
+       returns \cd{1}.
+\begin{lisp}
+(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~(let ((x 2)) \\*
+~~~~(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~~~~~(setf (symbol-function 'foo2) \#'(lambda () x)))))
+\end{lisp}
+
+ If the preceding expression occurs at the top level of a file to be compiled,
+       it has \emph{both} a compile time \emph{and} a load-time effect of setting
+       \cd{(symbol-function 'foo2)} to a function that returns \cd{2}.
+\begin{lisp}
+(eval-when (:execute :load-toplevel :compile-toplevel) \\*
+~~(setf (symbol-function 'foo3) \#'(lambda () 3)))
+\end{lisp}
+ If the preceding expression occurs at the top level of a file to be compiled,
+       it has \emph{both} a compile time \emph{and}
+       a load-time effect of setting the
+       function cell of \cd{foo3} to a function that returns \cd{3}.
+\begin{lisp}
+(eval-when (:compile-toplevel) \\*
+~~(eval-when (:compile-toplevel)  \\*
+~~~~(print 'foo4)))
+\end{lisp}
+  The preceding expression always does nothing; it simply returns \cdf{nil}.
+
+\begin{lisp}
+(eval-when (:compile-toplevel)  \\*
+~~(eval-when (:execute) \\*
+~~~~(print 'foo5)))
+\end{lisp}
+  If the preceding form occurs at the top level of a file to be compiled,
+       \cd{foo5} is
+       printed at compile time. If this form occurs in a non-top-level
+       position, nothing is printed at compile time. Regardless of context,
+       nothing is ever printed at load time or execution time.
+
+\begin{lisp}
+(eval-when (:execute :load-toplevel) \\*
+~~(eval-when (:compile-toplevel) \\*
+~~~~(print 'foo6)))
+\end{lisp}
+
+    If the preceding form occurs at the top level of a file to be compiled,
+       \cd{foo6} is
+       printed at compile time.  If this form occurs in a non-top-level
+       position, nothing is printed at compile time. Regardless of context,
+       nothing is ever printed at load time or execution time.
+\end{defspec}
+\end{newer}
+
+%RUSSIAN
+\else
+
+\chapter{Структура программы}
+\label{PROGS}
+
+В главе~\ref{DTYPES} был обозначен синтаксис для записи объектов данных в Common
+Lisp'е. Такой же синтаксис используется для записи программ, потому что все
+Common Lisp программы представлены как объекты данных Common Lisp'а.
+
+Lisp программы организованы как формы и функции. Формы \emph{выполняются}
+(относительно некоторого контекста) для получения значений и побочных
+эффектов. Функции вызываются с помощью \emph{применения} их к аргументам.
+Наиболее важный вид форм выполняет вызов функции, и наоборот, функция выполняет
+вычисление с помощью выполнения форм.
+
+В данной главе, сначала обсуджаются формы и затем функции. В конце, обсуждаются
+специальные формы <<верхнего уровня (top level)>>. Наиболее важной из этих форм
+является \cdf{defun}, цель которой --- создание именных функций (будут
+еще и безымянные).
+
+\section{Формы}
+
+Стандартная единица взаимодействия с реализацией Common Lisp'а является
+\emph{форма}, которая является объектом данных, который выполняется как
+программа для вычисления одного или более \emph{значений} (который также
+являются объектами данных). Запросить выполнение можно для \emph{любого}
+объекта данных, но не для всех это имеет смысл. Например, символы и списки имеет
+смысл выполнять, тогда как массивы обычно нет. Примеры содержательных форм:
+\cd{3}, значение которой \cd{3}, и \cd{(+ 3 4)}, значение которой \cd{7}.
+Для обозначения этих фактов мы пишем \cd{3} \EV\ \cd{3} и \cd{(+ 3 4)} \EV\
+\cd{7}. (\EV\ означает <<вычисляется в>>)
+
+Содержательные формы могут быть разделены на три категории:
+самовычисляемые формы, такие как числа,
+символы, которые используются для переменных,
+и списки. Списки в свою очередь могут быть разделены на три категории:
+специальные формы, 
+вызовы макросов,
+вызовы функций.
+
+\begin{newer}
+Все стандартные объекты данных Common Lisp, не являющиеся символами и списками
+(включая \cdf{defstruct} структуры, определенные без опции \cd{:type}) являются
+самовычисляемыми. 
+\end{newer}
+
+\subsection{Самовычисляемые формы}
+
+Все числа, строковые символы, строки и битовые векторы являются
+\emph{самовычисляемыми} формами.
+Когда данный объект вычисляется, тогда объект (или возможно копия в случае с
+числами и строковыми символами) возвращается в качестве значения данной
+формы. Пустой список {\emptylist}, который также является значением false
+{\false}, также является самовычисляемой формой: значение {\false} является
+{\false}. 
+Ключевые символы (примечание переводчика: не путать с ключевыми словами в других
+языках, в Common Lisp'е это вид символов) также вычисляюется сами в себя:
+значение \cd{:start} является \cd{:start}.
+
+\begin{newer}
+X3J13 проголосовал в январе 1989 \issue{CONSTANT-MODIFICATION} для определения
+того, что деструктивная модификация любого объекта, представленного как
+константа, с помощью самовычисляемой формы или специальной формы \cdf{quote},
+является ошибкой.
+\end{newer}
+
+\subsection{Переменные}
+
+В Common Lisp программах символы используются в качестве имен переменных.
+Когда символ вычисляется как форма, то в качестве результата возвращается
+значение переменной, которую данный символ именовал. Например, после выполнения
+\cd{(setq items 3)}, которая присвоила значение \cd{3} переменой именованной
+символом \cdf{items}, форма \cdf{items} выполнится в \cd{3} (\cdf{items} \EV\
+\cd{3}).
+Переменные могут \emph{назначены} с помощью \cdf{setq} или \emph{связаны} с
+помощью \cdf{let}.
+Любая программная конструкция, которая связывает переменную, сохраняет старое
+значение переменной, и назначает новое, и при выходе из конструкции
+восстанавливается старое значение.
+
+В Common Lisp'е есть два вида переменных. Они называются \cd{лексические} (или
+\emph{статические}) и \emph{специальные} (или \emph{динамические}).
+В одно время каждая из или обе переменные с одинаковым именем могут иметь
+некоторое значение. На какую переменную ссылается символ при его вычислении,
+зависит от контекста выполнения. Главное правило заключается в том, что если
+символ вычисляется по тексту в конструкции, которая создала \emph{связывание} для
+переменной с одинаковым именем, то символ ссылается на переменную, обозначенную
+в этом связывании, если же по тексту такой конструкции нет, то символ ссылается
+на специальную переменную.
+
+Различие между двумя видами переменных заключается в области видимости и
+продолжительности видимости. Лексически связанная переменная может быть использована
+\emph{только} по тексту в форме, которая установила связывание. Динамически
+связанная (специальная) переменная может быть использована в любое
+\emph{время} между установкой связи и до выполнения конструкции, которая
+упраздняет связывание. Таким образом лексическое связывание переменных
+накладывает ограничение на использование переменной только в некоторой текстовой
+области (но не на временные ограничения, так связывание продолжает существовать,
+пока возможно существование ссылки на переменную). И наоборот, динамическое
+связывание переменных накладывает ограничение на временные рамки использования
+переменной (но не на текстовую область).
+Для более подробной информации смотрите главу~\ref{SCOPE}.
+
+Когда нет связываний, значение, которое имеет специальная
+переменная, называется \emph{глобальным} значением (специальной) переменной.
+Глобальное значение может быть задано переменной только с помощью назначения,
+потому что значение заданное связыванием по определению не глобально.
+
+Специальная переменная может вообще не иметь значения, в таком случае,
+говориться, что они \emph{несвязанная}. 
+По умолчанию, каждая глобальная переменная является несвязанной, пока значение
+не будет назначено явно, за исключением переменных определенных в этой книге или
+реализацией, которые уже имеют значения сразу после первого запуска Lisp машины.
+Кроме того, существует возможность установки связывания специальной переменной и
+затем упразднения этого связывания с помощью функции \cdf{makunbound}. В такой
+ситуации переменная также называется <<несвязанной>>, хотя это и неправильно,
+если быть точнее, переменная связана, но без значения FIXME. Ссылка на несвязанную
+переменную является ошибкой.
+
+Некоторые глобальные переменные зарезервированы в качестве <<именованных
+констант>>.
+Они имеют глобальное значение и не могут быть связаны или переназначены.
+Например символы {\true} и {\false} зарезервированы.
+Невозможно назначить и этим символам. Также невозможно связать эти символы со
+другими значениями. Символы констант определенных с помощью \cdf{defconstant}
+также становяться зарезервированными и не могут быть переназначены или связаны
+(но они могут быть переопределены с помощью вызова \cdf{defconstant}). Ключевые
+символы также не могут быть переназначены или связаны, ключевые символы всегда
+вычисляются сами в себя.
+
+\subsection{Специальные формы}
+
+Если список выполняется в качестве формы, первым шагом является определение
+первого элемента списка. Если первый элемент списка является одним из символов,
+перечисленных в таблице~\ref{SPECIAL-FORM-TABLE}, тогда список называется
+\emph{специальной формой}. (Использование слова <<специальный>> никак не
+связано с использованием этого слова в фразе <<специальная переменная>>.)
+
+Специальные формы обычно являются окружениями и управляющими конструкциями.
+Каждая специальная форма имеет свой идиосинкразитечский синтаксис. Например
+специальная форма \cdf{if}:
+\cd{(if p (+ x 4) 5)} в Common Lisp'е означает то же, что и
+<<\textbf{if} \emph{p} \textbf{then} \emph{x}+4 \textbf{else} 5>> означает в
+Algol'е.
+
+Выполнение специальной формы обычно возвращает значение или значения, но
+выполнение может и вызвать нелокальный выход; смотрите \cdf{return-from},
+\cdf{go} и \cdf{throw}.
+
+Множество специальных форм в Common Lisp'е фиксировано. Создание
+пользовательский специальных форм невозможно. Однако пользователь может создавать новые
+синтаксические конструкции с помощью оперделения макросов.
+
+Множество специальных форм в Common Lisp'е специально держится малым, потому что
+любая программа, анализирующая программы, должна содержить специальные знания он
+каждом типе специальной формы. Такие программы не нуждаются в специальных
+знаниях о макросах, так как раскрытие макроса просто, и далее остается только
+оперирования с результатом раскрытия. (Это не значит, что программы, в
+частности, компиляторы, не будут иметь специальных знаний о макросах. Компилятор
+может генерировать более лучший код, если он распознает такие конструкции, как
+\cdf{typecase} и \cdf{multiple-value-bind} и по особому будет обращаться с ними.)
+
+Реализация может осуществлять как макросы любую конструкцию описанную здесь как
+специальную форму. И наоборот, реализация может осуществлять как специальную
+форму любую конструкцию описанную здесь как макрос, при условии что также
+предоставляется эквивалентное определение макроса.
+Практическое значение заключается в том, что предикаты \cdf{macro-function} и
+\cdf{special-form-p} могут оба возвращать true принимая один и тот же символ.
+Рекомендуется, чтобы программа для анализа других программ обрабатывала форму
+являющуюся списком, \emph{car} которого является символом, следующим образом:
+
+\begin{enumerate}
+
+\item
+Если программа имеет подробные знания о символе, обрабатывать форму необходимо с
+помощью специализированного кода. Все символы, перечисленные в
+таблице~\ref{SPECIAL-FORM-TABLE} должны попадать под данную категорию.
+
+\item
+В противном случае, если для этого символа \cdf{macro-function} вычисляется в
+true, необходимо применить \cdf{macroexpand} или \cdf{macroexpand-1} для раскрытия
+формы, и результат вновь анализировать.
+
+\item
+В противном случае, необходимо раценивать форму как вызов функции.
+\end{enumerate}
+
+\subsection{Макросы}
+
+Если форма является списком и первый элемент не обозначает специальную
+форму, возможно он является именем \emph{макроса}. Если так, то форма
+называется \emph{макровызовом или вызовом марокса (macrocall)} FIXME. Макрос
+это функция, которая принимает формы и возвращает формы. Возвращенные формы
+подставляются в то место, где происходил макровызов, и затем выполняются. (Этот
+процесс иногда называется \emph{раскрытием макроса}.)
+Например, макрос с именем \cdf{return} принимает форма, вот так: \cd{(return x)},
+и полученная в результате раскрытия форма такая: \cd{(return-from {\nil} x)}. Мы
+говорим: старая форма раскрылась в новую. Новая форма будет вычислена на месте
+оригинальной формы. Значение новой формы будет возвращено, как значение
+оригинальной формы.
+
+В Common Lisp'е существует некоторое количество стандартных макросов, и
+пользователь может определять свои макросы используя \cdf{defmacro}.
+
+Макросы, предоставляемые реализацией Common Lisp'а и описанные здесь, могут
+раскрываться в код, которые не будет являться переносимым между реализациями.
+Вызов макроса является портабельным, в то время как результат раскрытия нет.
+
+\subsection{Вызовы функций}
+
+Если список выполняется как форма, и первый элемент не является символом,
+обозначающим специальную форму или макрос, тогда предполагается, что список
+является \emph{вызовом функции}. Первый элемент списка является именем
+функции. Все следующие элементы списка будут вычислены. Одно значение каждого
+вычисленного элемента будет является \emph{аргументом} для вызываемой
+функции. 
+Затем функция будет \emph{применена} к аргументам. Вычисление функции обычно
+возвращает значение, однако вместо этого может быть выполнен нелокальный выход,
+смотрите \cdf{throw}. Функция может возвращать 0 и более значений, смотрите
+\cdf{values}. 
+Если и когда функция возвращает значения, они становяться значениями вычисления
+формы вызова функции.
+
+Например, рассмотрим вычисление формы: \cd{(+ (* 4 5))}.
+Символ \cdf{+} обозначает функцию сложения, а не специальную форму или макрос.
+Таким образом две формы \cd{3} и \cd{(* 4 5)} вычисляются для аргументов. Форма
+\cd{3} вычисляется в \cd{3}, а форма \cd{(* 4 5)} является вызовом функции
+(умножения). Таким образом формы \cd{4} и \cd{5} вычисляются сами в себя, тем
+самым предоставляя аргументы для функции умножения. Функция умножения вычисляет
+результат \cd{20} и возвращает его. Значения \cd{3} и \cd{20} становяться
+аргументами функции сложения, которая вычисляет и возвращает результат
+\cd{23}. Таким образом мы говорим \cd{(+3 (* 4 5)) \EV\ 23}.
+
+\section{Функции}
+
+Существуют два метода указать функцию для использования в форме вызова
+функции. Один из них заключается в указании символа имени функции. Это
+использование символов для обозначения функций полностью независимо от их
+использования для обозначения специальных и лексических переменных. Другой путь
+заключается в использовании \emph{лямбда-выражения}, которое является списком
+с первым элементом равным \cdf{lambda}. Лябда выражение \emph{не} является
+формой, оно не может быть полноценно вычислено. Лямбда выражения и символы,
+когда они используются в программах для обозначения функций, могут быть
+указаны в качестве первого элемента формы вызова функции, или только в качестве
+второго параметры в специальной форме \cdf{function}. Следует отметить, что
+в этих двух контекстах символы и лябда выражения обрабатываются, как
+\emph{имена} функций. Необходимо отличать это от обработки символов и лямбда
+выражений, как \emph{функциональных объектов, или объектов функций (function
+  objects)}, которые удовлетворяют предикату \cdf{functionp}, как при
+представлении таких объектов в вызовы функций \cdf{apply} или \cdf{funcall}.
+
+\subsection{Именованные функции}
+
+Имя может задано функции двумя способами.
+\emph{Глобальное имя} может быть дано функции с помощью конструкции
+\emph{defun}.
+\emph{Локальное имя} может быть дано функции с помощью специальных форм
+\cdf{flet} или \cdf{labels}.
+Когда функция именуется, лямбда-выражение связывается с этим именем вместе с
+информацией о сущностях, которые были лексически доступны на момент связи.
+Если символ используется в качестве первого элементы формы вызова функции, тогда
+он ссылается на определение функции из наиболее ближней формы \cdf{flet} или
+\cdf{labels}, которые по тексту содержат эту форму, иначе символ ссылается на
+глобальное определение функции, при отсутствии вышеназванных форм.
+
+\subsection{Лямбда-выражения}
+\label{LAMBDA-EXPRESSIONS-SECTION}
+\indexterm{lambda-expression}
+
+\emph{Лямбда выражение} является списком со следующим синтаксисом:
+\begin{lisp}
+(lambda \emph{lambda-list} . \emph{body})
+\end{lisp}
+Первый элемент должен быть символом \cdf{lambda}. Второй элемент должен быть
+списком. Он называется \emph{лямбда списком}, и задает имена для
+\emph{параметров} функции. Когда функция, обозначенная лямбда-выражением,
+применяется к аргументам, аргументы подставляются в соответствии с лямбда
+списком. \emph{body} может впоследствии ссылаться на аргументы используя имена
+параметров. \emph{body} состоит из любого количества форм (возможно нулевого
+количества). Эти формы последовательно выполняются, и результат только \emph{последней} формы,
+возвращается в качестве значения (в случае отсутствия форм, возвращается
+{\false}).
+Полный синтаксис лямбда-выражения:
+
+\begingroup
+\def\GrossOptVars{\Mstar{\emph{var} {\Mor} \cd{(}\emph{var} \Mopt{\emph{initform} \Mopt{\emph{svar}}}\cd{)}}}
+\def\GrossKeyOptVars{\Mstar{\emph{var} {\Mor} \cd{(}\Mgroup{\emph{var} {\Mor} \cd{(}\emph{keyword} \emph{var}\cd{)}} \Mopt{\emph{initform} \Mopt{\emph{svar}}}\cd{)}}}
+\def\GrossAuxVars{\Mstar{\emph{var} {\Mor} \cd{(}\emph{var} \Mopt{\emph{initform}}\cd{)}}}
+\begin{lisp}
+(lambda (\Mstar{\emph{var}} \\
+~~~~~~~~~\Mopt{\cd{\&optional} \GrossOptVars} \\
+~~~~~~~~~\Mopt{\cd{\&rest} \emph{var}} \\
+~~~~~~~~~\Mopt{\cd{\&key} \GrossKeyOptVars 
+~~~~~~~~~~~~~~\Mopt{\cd{\&allow-other-keys}}} \\
+~~~~~~~~~\Mopt{\cd{\&aux} \GrossAuxVars}) \\
+~~~\Mchoice{\Mstar\emph{declaration} {\Mor} \emph{documentation-string}} \\
+~~~\Mstar{\emph{\,form}})
+\end{lisp}
+\endgroup
+
+Каждый элемент лямбда списка является или спецификатором параметра или \emph{ключевым
+ символом лямбда списка}. Ключевые символы лямбда списка начинаются с символа
+\cd{\&}.
+Следует отметить, что ключевые символы лямбда списка не является ключевыми
+символами в обычном понимании. Они не принадлежат пакету keyword. Они являются
+обычными символами, имена которых начинается амперсандом. Такая терминология
+запутывает, но так сложилась история.
+
+Лямбда список имеет пять частей, любая или все могут быть пустыми:
+
+\begin{itemize}
+
+\item
+Спецификаторы для \emph{обязательных параметров}. К ним относятся все
+спецификаторы параметров до первого ключевого символа лямбда списка. Если такой
+ключевой символ отсутствует, все спецификаторы считаются обязательными.
+
+\item
+Спецификаторы для \emph{необязательных} параметров.
+Если указан ключевой символ лямбда списка \cd{\&optional}, спецификаторы
+\emph{необязательных} параметров будут следовать после ключевого символа
+\cd{\&optional} и до следующего ключевого слова, или до конца списка.
+
+\item
+Спецификатор для \emph{неопределенного количества или оставшегося (rest)} параметра. Если указан ключевой символ
+лямбда списка \cd{\&rest}, за ним должен следовать только один спецификатор
+\emph{оставшегося (rest)} параметра, за которым может следовать другой ключевой символ или
+лямбда список может заканчиваться.
+
+\item
+Спецификатор для \emph{именованных (keyword)} параметров. Если указан ключевой
+символ лямбда списка \cd{\&key}, все спецификаторы после данного символа до
+следующего ключевого символа или конца списка являются спецификаторами
+\emph{именованных} параметров. За спецификаторами именованных параметров
+опционально может использовать ключевой символ лямбда списка \cd{\&allow-others-keys}.
+
+\item
+Спецификатор для \emph{вспомогательных (aux)} переменных. Они не являются
+параметрами. Если указан ключевой символ лямбда списка \cd{\&aux}, все
+спецификаторы после него являются спецификаторами вспомогательных переменных.
+\end{itemize}
+
+Когда функция, заданная лямбда-выражением, применяется к аргументам, то эти
+аргументы и параметры вычисляются слева направо.
+В простейшем случае, в лямбда списке присутствуют только обязательные
+параметры. Каждый из них задается просто именем переменной \emph{var}
+параметра.
+Когда функция применяется, аргументов должно быть столько же, сколько и
+параметров, и каждый параметр связывается с одним аргументом. В общем случае,
+каждый параметр связывается как лексическая переменная, если только с помощью
+декларации не указано, что связь должна осуществляться, как для специальной
+переменной. Смотрите \cdf{defvar}, \cdf{proclaim}, \cdf{declare}.
+
+В более общем случае, если указано \emph{n} обязательных параметров
+(\emph{n} может равняться нулю), тогда должно быть как мимимум \emph{n}
+аргументов, и обязательные параметры будут связаны с \emph{n} первыми
+аргументами.
+
+Если указаны необязательные параметры, тогда каждый из них будет оработан так,
+как описано ниже. Если осталось некоторое количество аргументов, тогда
+переменная параметра \cd{var} будет связана с оставшимся аргументом. Принцип
+такой же, как и для обязательных параметров. Если не осталось аргументов, тогда
+выполняется часть \emph{initform}, и переменная
+параметра связывается с ее результатом (или с {\false}, если форма
+\emph{initform} не была задана).
+Если в спецификаторе указано имя еще одной переменной \emph{svar}, то она
+связывается с \emph{true}, если аргумент был задан, и с \emph{false}
+аргумент не был задан (и в таком случае выполняется \emph{initform}).
+Переменная \emph{svar} называется \emph{supplied-p} параметр. Она
+связывается не с аргументом, а со значением, которое показывается был ли задан
+аргумент для данного параметра или нет.
+
+После того, как все \emph{необязательные} параметры были обработаны, могут
+быть указан \emph{оставшийся (rest)} параметр.
+Если \emph{оставшийся (rest)} параметр указан, он будет связан со списком все
+оставшихся необработанных аргументов. Если таких аргументов не осталось,
+\emph{оставшийся (rest)} параметр будет связан с пустым списком. Если в лямбда
+списке отсутствуют \emph{оставшийся (rest)} параметр и \emph{именованные
+  (keyword)} параметры, то необработанных аргументов оставаться не должно (иначе
+будет ошибка).
+
+Далее обрабатываются все \emph{именованные (keyword)} параметры.
+Для этих параметров обрабатываются те же аргументы, что и для
+\emph{оставшегося (rest)} параметра.
+Безусловно, возможно указывать и \cd{\&rest} и \cd{\&key}. В таком случае
+оставшиеся аргументы используются для обеих целей:
+все оставшиеся аргументы составляются в список для \cd{\&rest} параметра и они
+также обрабатываются, как \cd{\&key} параметры. Только в этой ситуации один
+аргумент может обрабатываться более чем для одного параметра.
+Если указан \cd{\&key}, должно остаться четное количество аргументов. Они будут
+обработаны попарно. Первый аргумент в паре должен быть ключевым символом,
+который задает имя параметра, второй аргумент должен быть соответствующим
+значением.
+
+В каждом именованном параметре спецификатор должен быть назван \emph{var} для
+переменной параметра. FIXME
+Если явно указан ключевой символ, тогда он будет использоваться для имени
+параметра. В противном случае используется имя переменной \cdf{var} для поиска
+ключевого символа в аргументах. Таким образом:
+\begin{lisp}
+(defun foo (\cd{\&key} radix (type 'integer)) ...)
+\end{lisp}
+означает то же, что и
+\begin{lisp}
+(defun foo (\cd{\&key} ((:radix radix)) ((:type type) 'integer)) ...)
+\end{lisp}
+
+Спецификатор именованого (keyword) параметра, как и все спецификаторы
+параметров, обрабатывается слева направо.
+Для каждого спецификатора именованного параметра, если в паре аргумента, в
+которой ключевой символ совпадает с именем параметра (сравнение производится с
+помощью \cdf{eq}), тогда переменная параметра связывается значением из этой
+пары.
+Если имеется более одной пар аргументов с одинаковым именем, то это не ошибка. В таком
+случае используется наиболее левая пара.
+Если пары аргументов не нашлось, тогда выполняется \emph{initform} и
+переменная параметра связыванется с этим значением (или с {\false}, если
+\emph{initform} не задана). Переменная \emph{svar} используется в тех же
+целях, что и для \emph{необязательных} параметров. Она будет связана с
+\emph{true} если была необходимая пара аргументов, иначе с \emph{false}.
+
+Если пара аргументов содержит ключевой символ, который не
+присутствует в спецификаторах параметров в лямбда списке, то или возникнет
+ошибка или возможны следующие условия:
+
+\begin{itemize}
+\item
+\cd{\&allow-other-keys} был указан в лямбда списке.
+
+\item
+Где-то среди именованных аргументов есть пара, в которой есть ключевой символ
+\cd{:allow-other-keys} и значение не равно {\false}.
+\end{itemize}
+
+В случае возникновения одного из этих условий, можно использовать именованные
+аргументы, которые не имеют соответствующих параметров (эти аргументы будут
+доступны, как оставшийся \cd{\&rest} параметр). 
+Целью этого механизма является возможность объединять лямбда списки разных
+функции без необходмиости копировать все спецификаторы именованных (keyword)
+параметров. Например функция обертка может передать часть именованных аргументов
+в обернутую функцию без необходимости явного ручного указания их всех. 
+
+После того как все спецификаторы были обработаны, слева направо обрабатываются
+спецификаторы вспомогательных параметров. Для каждого из них выполняется
+\emph{initform} и переменная \emph{var} связывается с этим результатом (или
+с {\false}, если \emph{initform} не определена). С \cd{\&aux} переменными
+можно делать то же, что и со специальной формой \cdf{let*}:
+\begin{lisp}
+(lambda (x y \&aux (a (car x)) (b 2) c) ...) \\
+~~~\EQ\ (lambda (x y) (let* ((a (car x)) (b 2) c) ...))
+\end{lisp}
+
+Что использовать зависит только от стиля.
+
+Когда какая-либо форма \emph{initform} выполняется в каком-либо спецификаторе
+параметра, данная форма может ссылаться на любую переменную параметра, стоящую
+слева от данной формы, включая supplied-p переменные, и может рассчитывать на
+то, что другие переменные параметров еще не связаны (включая переменную данного
+параметра).
+
+После того как был обработан лямбда список, выполняются формы в теле лямбда
+выражения. Эти формы могут ссылаться на аргументы функции, используя именя
+параметров. При выходе из функции, как с помощью нормального возврата, так и с
+помощью нелокального выхода, связывания параметров, и лексическеие, и
+специальные, упраздняются. В случае создания <<замыкания>> над данными
+связываниями, связи упраздняются не сразу, а сначала сохраняются, чтобы
+потом быть вновь восстановленными.
+
+\noindent
+Примеры использования \cd{\&optional} и \cd{\&rest} параметров:
+\begin{lisp}
+((lambda (a b) (+ a (* b 3))) 4 5) \EV\ 19 \\
+((lambda (a \cd{\&optional} (b 2)) (+ a (* b 3))) 4 5) \EV\ 19 \\
+((lambda (a \cd{\&optional} (b 2)) (+ a (* b 3))) 4) \EV\ 10 \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x))) \\*
+~~~\EV\ (2 {\false} 3 {\false} {\false}) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6) \\*
+~~~\EV\ (6 t 3 {\false} {\false}) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6 3) \\*
+~~~\EV\ (6 t 3 t {\false}) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6 3 8) \\*
+~~~\EV\ (6 t 3 t (8)) \\
+((lambda (\cd{\&optional} (a 2 b) (c 3 d) \cd{\&rest} x) (list a b c d x)) \\*
+~6 3 8 9 10 11) \\*
+~~~\EV\ (6 t 3 t (8 9 10 11))
+\end{lisp}
+Примеры \cd{\&key} параметров:
+\begin{lisp}
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2) \\*
+~~~\EV\ (1 2 {\nil} {\nil}) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :c 6) \\*
+~~~\EV\ (1 2 6 {\nil}) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :d 8) \\*
+~~~\EV\ (1 2 {\nil} 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :c 6 :d 8) \\*
+~~~\EV\ (1 2 6 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) 1 2 :d 8 :c 6) \\*
+~~~\EV\ (1 2 6 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) :a 1 :d 8 :c 6) \\*
+~~~\EV\ (:a 1 6 8) \\
+((lambda (a b \cd{\&key} c d) (list a b c d)) :a :b :c :d) \\
+~~~\EV\ (:a :b :d {\nil})
+\end{lisp}
+Пример смешения всех:
+\begin{lisp}
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1)   \EV\ (1 3 {\nil} 1 ())
+\end{lisp}
+
+\begin{lisp}
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 2)   \EV\ (1 2 {\nil} 1 ()) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~:c 7)   \EV\ (:c 7 {\nil} :c ()) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 6 :c 7)   \EV\ (1 6 7 1 (:c 7)) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 6 :d 8)   \EV\ (1 6 {\nil} 8 (:d 8)) \\
+ \\
+((lambda (a \cd{\&optional} (b 3) \cd{\&rest} x \cd{\&key} c (d a)) \\*
+~~~(list a b c d x)) \\*
+~1 6 :d 8 :c 9 :d 10)   \EV\ (1 6 9 8 (:d 8 :c 9 :d 10))
+\end{lisp}
+
+В лямбда-выражении, которое стоит на первом месте в списке формы вызова функции
+допускаются все ключевые символы лямбда списка, хотя и не очень то они полезны в
+этом качестве.
+Гораздо полезнее они используются в глобальных функциях, определенных с помощью
+\cdf{defun}.
+
+Все символы, что начиаются на \cd{\&} обычно зарезервированы для использования в
+качестве ключевых символов лямбда списка, и не должны использоваться для имен
+переменных.
+Реализации Common Lisp'а могут также предоставлять свои дополнительные ключевые
+символы лямбда списка.
+
+\begin{defun}[Constant]
+lambda-list-keywords
+
+Значение \cdf{lambda-list-keywords} является списком всех ключевых символов
+лямбда списка, используемых в данной реализации, включая те, которые
+используются только в \cdf{defmacro}. Этот список должен содержать как минимум
+символы \cd{\&optional}, \cd{\&rest}, \cd{\&key}, \cd{\&allow-other-keys}, \cd{\&aux}, \cd{\&body}, \cd{\&whole}
+и \cd{\&environment}.
+\end{defun}
+
+Вот пример использования \cd{\&allow-other-keys} и \cd{:allow-other-keys}, 
+рассматривающий функция, которая принимает два своих именованных аргумента и
+также дополнительные именованные аргументы, которые затем передаются
+\cdf{make-array}:
+\begin{lisp}
+(defun array-of-strings (str dims \cd{\&rest} keyword-pairs \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~\cd{\&key} (start 0) end \cd{\&allow-other-keys}) \\*
+~~(apply \#'make-array dims \\*
+~~~~~~~~~:initial-element (subseq str start end) \\
+~~~~~~~~~:allow-other-keys t \\*
+~~~~~~~~~keyword-pairs))
+\end{lisp}
+
+Такая функция принимает строку и информацию о размерности и возвращает массив с
+заданной размерностью, каждый из элементов которого равен заданной
+строке. Именованные аргументы \cd{:start} и \cd{:end}, как обчыно (смотрите
+главу~\ref{KSEQUE}), можно использовать для указания того, что должна
+использоваться подстрока. Кроме того, использование \cd{\&allow-other-keys} в
+лямбда списке указывает на то, что вызов этой функции может содержать
+дополнительные именованные аргументы. Для доступа к ним используется \cd{\&rest}
+аргумент. Эти дополнительные именованные аргументы передаются в
+\cdf{make-array}. \cdf{make-array} не принимает именованные аргументы
+\cd{:start} и \cd{:end}, и было бы ошибкой допустить их использование. Однако
+указание \cd{:allow-other-keys} равное не-{\false} значению позволяет передавать
+любые другие именованные аргументы, включая \cd{:start} и \cd{:end}, и они были
+бы приняты и проигнорированы.
+
+\begin{defun}[Constant]
+lambda-parameters-limit
+
+Значение \cdf{lambda-parameters-limir} является положительным целым, которое
+невключительно является верхней границей допустимого количества имен параметров,
+которые могут использоваться в лямбда списке.
+Значение зависит от реализации, но не может быть менее 50.
+Разработчики поощряются за создание данной границы как можно большей без потери
+производительности. 
+Смотрите \cdf{call-arguments-list}.
+\end{defun}
+
+\section{Формы верхнего уровня}
+
+Стандартный путь взаимодействия с реализацией Common Lisp через
+\emph{read-eval-print loop} \emph{цикл чтение-выполнение-печать}: система
+повторно читает форму из некоторого источника ввода (клавиатура, файл),
+выполняет ее, затем выводит результат(ы) в некоторое устройство вывода (дисплей,
+другой файл). Допускается любая форма (выполняемый объект данных), однако
+существуют некоторые формы разработанные для удобного применения в качестве форм 
+\emph{верхнего уровня}.
+Эти специальные формы верхнего уровня могут использоваться для определения
+глобальных функции (globally named functions), макросов, создания деклараций и
+определения глобальных значений для специальных переменных.
+
+Макросы обычно определяются с помощью специальной формы \cdf{defmacro}.
+Этот механизм достаточно сложен. Для подробностей смотрите главу~\ref{MACROS}.
+
+\subsection{Определение именованных функций}
+
+Специальная форма \cdf{defun} обычно обозначает определение именованных функций.
+
+\begin{defmac}
+defun name lambda-list <{declaration}* | doc-string> {\,form}*
+
+Выполнение формы \cdf{defun} приводит к тому, что символ \emph{name}
+становиться глобальным именем для функции определенной лямбда-выражением.
+\begin{lisp}
+(lambda \emph{lambda-list} \Mstar{\emph{declaration} {\Mor} \emph{doc-string}} \Mstar{\emph{\,form}})
+\end{lisp}
+определеяется в лексическом окружении, в котором выполнялась форма
+\cdf{defun}. А так как формы \cdf{defun} обычно выполняются на самом верхнем
+уровне, лямбда-выражение обычно выполняется в нулевом лексическом окружении.
+
+\begin{newer}
+X3J13 проголосовал в марте 1989 \issue{FUNCTION-NAME} расширить \cdf{defun} до
+принятия любого имени функции (символ или список, у которого \emph{car} элемент
+раен \cdf{setf}---смотрите раздел~\ref{FUNCTION-NAME-SECTION}), в качестве
+парметра \emph{name}.
+
+Так теперь можно записать
+\begin{lisp}
+(defun (setf cadr) ...)
+\end{lisp}
+для определения \cdf{setf}-определения для функции \cdf{cadr}. Это более удобно,
+чем использование \cdf{defsetf} или \cdf{define-modify-macro}.
+\end{newer}
+
+Если указана необязательная строка документации \emph{doc-string}, тогда они
+присоединяется к символу \emph{name} в качестве строки документации типа
+\cdf{function}, смотрите \cdf{documentation}. Если после \emph{doc-string} нет
+деклараций, строка документации может быть использована только при условии
+существования хотя бы одной формы после нее, иначе она будет использована в
+качестве \emph{form} функции. Указывать более чем одну \emph{doc-string} является ошибкой.
+
+\emph{forms} составляют тело определяемой функции. Они выполняются как неявный \cdf{progn}.
+
+Тело оперделяемой функции неявно заключается в конструкцию \cdf{block}, имя
+которой совпадает с \emph{именем (name)} функции. Таким образом
+\cdf{return-from} может быть использовано для выхода из функции.
+
+Другие учетные действия специальные для некоторой реализации могут также
+выполнятся в \cdf{defun}. \emph{name} возвращается в качестве значения формы
+\cdf{defun}.
+Например:
+\begin{lisp}
+(defun discriminant (a b c) \\
+~~(declare (number a b c)) \\
+~~"Compute the discriminant for a quadratic equation. \\
+~~~Given a, b, and c, the value b{\Xcircumflex}2-4*a*c is calculated. \\
+~~~The quadratic equation a*x{\Xcircumflex}2+b*x+c=0 has real, multiple, \\
+~~~or complex roots depending on whether this calculated \\
+~~~value is positive, zero, or negative, respectively." \\
+~~(- (* b b) (* 4 a c))) \\
+~~~\EV\ discriminant \\
+~~~\textrm{and now} (discriminant 1 2/3 -2) \EV\ 76/9
+\end{lisp}
+
+Пользователю разрешено использовать \cdf{defun} для переопределения функции, например, для
+установки корректной версии некорректного определения.
+Пользователю также разрешено переопределять макрос на функцию.
+Однако является ошибкой, попытка переопределить имя специальной формы (смотрите
+таблицу~\ref{SPECIAL-FORM-TABLE}) на функцию.
+\end{defmac}
+
+\subsection{Определение глобальных переменных и констант}
+
+Специальные формы \cdf{defvar} и \cdf{defparameter} используются для определения
+глобальных переменных.
+Специальная форма \cdf{defconstant} используется для определения констант.
+
+\begin{defmac}
+defvar name [initial-value [documentation]] \\
+defparameter name initial-value [documentation] \\
+defconstant name initial-value [documentation]
+
+\cdf{defvar} рекомендуется для декларации использования в программе специальных
+переменных.
+\begin{lisp}
+(defvar \emph{variable})
+\end{lisp}
+указывает на то, что переменная \emph{variable} будет специальной
+(\cdf{special}) (смотрите \cdf{proclaim}), и может выполнять некоторые учетные
+действия, зависимые от реализации.
+
+
+Если для формы указан второй аргумент,
+\begin{lisp}
+(defvar \emph{variable} \emph{initial-value})
+\end{lisp}
+тогда переменная \emph{variable}, если она еще не была проинициализирована,
+инициализируется результатом выполнения формы \emph{initial-value}. Форма
+\emph{initial-value} не выполняется, если в этом нет необходимости. Это
+полезно, если форма \emph{initial-value} выполняет что-то
+трудоемкое, как, например, создание большого структуры данных.
+
+Инициализация производится присвоением глобального значения переменной, если
+только не существует специального связывания этой переменной.
+Обычно, такого связывания быть не должно. FIXME.
+
+
+\cdf{defvar} также предоставляют хорошее место для комметария описывающего
+значение переменной, тогда как обычное \cd{special} указание соблазняет
+задекларировать несколько переменных за один раз и не предоставляет возможности
+прокомментировать их.
+\begin{lisp}
+(defvar *visible-windows* 0 \\
+~~"Number of windows at least partially visible on the screen")
+\end{lisp}
+
+\cdf{defparameter} подобен \cdf{defvar}, но \cdf{defparameter} требует
+обязательной формы \emph{initial-value}, и всего выполняет эту форму, и
+присваивает результат переменной. Семантическое различие заключается в том, что
+\cdf{defvar} предназначена декларировать переменную, изменяемую программой,
+тогда как \cdf{defparameter} предназначена для декларации переменной, как
+константы, которая может быть изменена (и во время выполнения программы), для
+изменения поведения программы. Таким образом \cdf{defparameter} не указывает,
+что количество никогда не изменяется, в частности, она не разрешает 
+компилятору предположить то, что значение может быть вкомпилировано в
+программу.
+
+\cdf{defconstant} похожа на \cdf{defparameter}, но в отличие от последней,
+указывает, что значение переменной \emph{name} фиксировано и позволяет
+компилятору предположить, что значение может быть вкомпилировано в
+программу. Однако, если компилятор выбирает путь замены ссылок на имя константы
+на значения этой константы в компилируемом коде для оптимизации, он должен
+позаботиться о том, чтобы такие <<копии>> были эквивалентны \cdf{eql}
+объектам-значениям констант. Например, компилятор может спокойно копировать
+числа, но должен позаботиться об этом правиле, если значение константы
+является списком.
+
+Если для переменной на момент вызова формы \cdf{defconstant} существует
+специальные связывания, то возникает ошибка (но реализации могут проверять, а
+могут и не проверять этот факт).
+
+Если имя задекларировано с помощью \cdf{defconstant} быть константой,
+последующие присваивания и связывания данной специальной переменной будут
+являются ошибкой. Это справедливо для системозависимых констант, например,
+\cdf{t} и \cdf{most-positive-fixnum}.
+Компилятор может также сигнализировать о связывании лексической переменной с
+одинаковым именем.
+
+Для любой из этих конструкций, документация должна быть строкой. Строка
+присоединяется к имени переменной, параметра или константы как тип документации
+\cdf{variable}, смотрите функцию \cdf{documentation}.
+
+\begin{new}
+X3J13 проголосовал в марте 1988
+\issue{DEFVAR-DOCUMENTATION}
+для уточнения того, что \emph{documentation-string}
+не выполняется и должна представлять строку, когда выполняется \cdf{defvar},
+\cdf{defparameter} или \cdf{defconstant}.
+
+Например, форма
+\begin{lisp}
+(defvar *avoid-registers* nil "Compilation control switch \#43")
+\end{lisp}
+законна, но
+\begin{lisp}
+(defvar *avoid-registers* nil \\*
+~~(format nil "Compilation control switch \#{\Xtilde}D" \\*
+~~~~~~~~~~(incf *compiler-switch-number*)))
+\end{lisp}
+ошибочна, так как вызов \cdf{format} не является дословно строкой.
+
+С другой стороны, форма
+\begin{lisp}
+(defvar *avoid-registers* nil \\*
+~~\#.(format nil "Compilation control switch \#{\Xtilde}D" \\*
+~~~~~~~~~~~~(incf *compiler-switch-number*)))
+\end{lisp}
+Может использоваться для вышеназванной цели, потому что вызов \cdf{format}
+выполняется на во время чтения кода \cdf{read}, когда форма \cdf{defvar}
+выполняется, в ней указана строка, которая являлась результатом вызова
+\cdf{format}.
+\end{new}
+
+Эти конструкции обычно используются только как формы верхнего уровня. Значения
+возвращаемые каждой из этих конструкций это задекларированные имена \emph{name}.
+\end{defmac}
+
+\subsection{Контроль времени выполнения}
+
+\begin{newer}
+X3J13 проголосовал в марте 1989 \issue{EVAL-WHEN-NON-TOP-LEVEL}
+полностью переработать \cdf{eval-when} для разрешения некоторых проблем, касательно ее
+использования в отличных от контекста верхнего уровня. Новое определение
+совместимо со старым, но старые ключевые символы были упразднены.
+
+\begin{defspec}
+eval-when ({situation}*) {\,form}*
+
+  Тело формы \cdf{eval-when} выполняется как неявный \cdf{progn}, но только в
+  ниже перечисленных ситуациях. Каждая ситуация \emph{situatuon} должна быть
+  одним символов, \cd{:compile-toplevel}, \cd{:load-toplevel} или \cd{:execute}.
+
+
+  Использование \cd{:compile-toplevel} и \cd{:load-toplevel} контролирует, что и
+  когда выполняется для форм верхнего уровня. Использование \cd{:execute}
+  контролирует будет ли производится выполнения форм не верхнего уровня.
+
+  Конструкция \cdf{eval-when} может быть более понятна в терминах модели того,
+  как компилятор файлов, \cdf{compile-file}, выполняет формы в файле для
+  компиляции.
+
+  Формы следующие друг за другом читаются из файла с помощью компилятора файла
+  используя \cdf{read}. Эти формы верхнего уровня обычно обрабатываются в том,
+  что мы называем режим <<времени некомпиляции (not-compile-time
+  mode)>>. Существует и другой режим, называемый режим <<времени-компиляции
+  (compile-time-too mode)>>, которые вступает в игру для форм верхнего
+  уровня. Специальная форма \cdf{eval-when} используется для аннотации программы
+  таким образом, чтобы предоставить программе, осуществлять выбор режима.
+
+  Обработка форм верхнего уровня в компиляторе файла работает так, как
+  рассказано ниже:
+
+\begin{itemize}
+
+   \item Если форма является макровызовом, она разворачивается и результат
+     обрабатывается, как форма верхнего уровня в том же режиме обработки
+     (времени-компиляции или времени-некомпиляции, (compile-time-too или not-compile-time).
+
+   \item Если форма \cdf{progn} (или \cdf{locally}), каждая из форм из их тел
+     обрабатываются, как формы верхнего уровня в том же режиме обработки.
+
+   \item Если форма \cdf{compiler-let}, \cdf{macrolet} или
+     \cdf{symbol-macrolet}, компилятор файла создает соотвествующие связывания и
+     рекурсивно обрабатывает тела форм, как неявный \cdf{progn} верхнего уровня
+     в контексте установленных связей в том же режиме обработки.
+
+   \item Если форма \cdf{eval-when}, она обрабатывается в соответствии со
+     следующей таблицей:
+     \begin{flushleft}
+     \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}c@{}cccl@{}}
+     LT&CT&EX&CTTM&Action \\ \hlinesp
+       yes & yes &--   & --  &    обработать тело в режиме время-компиляции \\
+       yes & no  &yes  & yes &    обработать тело в режиме время-компиляции \\
+       yes & no  &--   & no  &    обработать тело в режиме время-некомпиляции \\
+       yes & no  &no   & --  &    обработать тело в режиме время-некомпиляции \\
+       no  & yes &--   & --  &    выполнить тело \\
+       no  & no  &yes  & yes &    выполнить тело \\
+       no  & no  &--   & no  &    ничего не делать \\
+       no  & no  &no   & --  &    ничего не делать \\
+       \hline
+     \end{tabular*}
+     \end{flushleft}
+     В этой таблице столбец LT спрашивает присутствует ли \cd{:load-toplevel} в
+     ситуациях указанных в форме \cdf{eval-when}.
+     CT соответственно указывает на \cd{:compile-toplevel} и EX на
+     \cd{:execute}. Столбец CTTM спрашивает встречается ли форма \cdf{eval-when}
+     в режиме времени-компиляции. Фраза <<обработка тела>> означает обработку
+     последовательно форм тела, как неявного \cdf{progn} верхнего уровня в
+     указанном режиме, и <<выполнение тела>> означает выполнение форм тела
+     последовательно, как неявный \cdf{progn} в динамическом контексте
+     выполнения компилятора и в лексическом окружении, в котором встретилась \cdf{eval-when}.
+
+   \item В противном случае, форма верхнего уровня, которая не представлена в
+     специальных случаях. Если в режиме времени-компиляции, компилятор сначала
+     выполняет форму и затем выполняет обычную обработку компилятором. Если
+     установлен режим времени-некомпиляции, выполняется только обычная обработка
+     компилятором (смотрите раздел~\ref{COMPILER-SECTION}).
+     Любые подформы обрабатываются как формы не верхнего уровня.
+\end{itemize}
+
+  Следует отметить, что формы верхнего уровня обрабатываются гарантированно в
+  порядке, в котором они текстово представлены в файле, и каждая форма верхнего
+  уровня прочтенная компилятором обрабатывается перед тем, как следующая будет
+  прочтена.
+  Однако, порядок обработки (включая, в частности, раскрытие макросов) подформ,
+  которые не являются формами верхнего уровня, не определен.
+
+  Для формы \cdf{eval-when}, которая не является формой верхнего уровня в
+  компиляторе файлов (то есть либо в интерпретаторе, либо \cdf{compile}, либо в
+  компиляторе файлов, но не на верхнем уровне), если указана ситуация
+  \cd{:execute}, тело формы обрабатывается как неявный \cdf{progn}. В противном
+  случае, тело игнорируется и форма \cdf{eval-when} имеет значение \cdf{nil}.
+
+  Для сохранения обратной совместимости, \emph{situation} может также быть
+  \cdf{compile}, \cdf{load} или \cdf{eval}.
+  Внутри формы верхнего уровня \cdf{eval-when}, они имеют значения
+  \cd{:compile-toplevel}, \cd{:load-toplevel} и \cd{:execute} соответственно.
+  Однако их поведение не определено при использовании в \cdf{eval-when} не
+  верхнего уровня.
+
+  Следующие правила являются логическим продолжением предыдущих определений:
+
+  \begin{itemize}
+
+   \item Никогда не случится так, что выполнение одного \cdf{eval-when}
+     выражения приведет к выполнению тела более чем один раз.
+
+   \item Старый ключевой символ \cd{eval} был неправильно использован, потому
+     что выполнение тела не нуждается в \cd{eval}. Например, когда определение
+     функции
+     \begin{lisp}
+     (defun foo () (eval-when (:execute) (print 'foo)))
+     \end{lisp}
+     скомпилируется
+     вызов \cdf{print} должен быть скомпилирован, а не выполнен во время
+     компиляции.
+
+   \item Макросы, предназначенные для использования в качестве форм верхнего
+     уровня, должны контролировать все побочные эффекты, которые будут сделаны
+     формами в процессе развертывания.
+     Разворачиватель макроса сам по себе не должен порождать никаких побочных
+     эффектов.
+     
+\begin{lisp}
+(defmacro foo () \\*
+~~(really-foo)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;{\rm Wrong}\\*
+~~{\Xbq}(really-foo)) \\
+\\
+(defmacro foo () \\*
+~~{\Xbq}(eval-when (:compile-toplevel \\*
+~~~~~~~~~~~~~~~:load-toplevel :execute)~~~~~;{\rm Right} \\*
+~~~~(really-foo)))
+\end{lisp}
+     Соблюдение этого правила будет значит, что такие макросы будут вести себя
+     интуитивно понятно при вызовах в формах не верхнего уровня.
+
   \item Расположение связывания переменной окруженной \cdf{eval-when}
     захватывает связывание, потому что режим <<время-компиляции>> не может
     случиться (потому что \cdf{eval-when} не может быть формой верхнего уровня)
@@ -2225,29 +2484,18 @@ into
 
 \end{itemize}
 
-Here are some additional examples.
-
 Вот несколько дополнительных примеров.
 \begin{lisp} 
 (let ((x 1)) \\*
 ~~(eval-when (:execute :load-toplevel :compile-toplevel) \\*
 ~~~~(setf (symbol-function 'foo1) \#'(lambda () x))))
 \end{lisp}
- The \cdf{eval-when} in the preceding expression is not at top level,
-       so only the \cd{:execute}
-       keyword is considered.  At compile time, this has no effect.
-       At load time (if the \cdf{let} is at top level), or at execution time
-       (if the \cdf{let} is embedded in some other form which does not execute
-       until later), this sets \cd{(symbol-function 'foo1)} to a function that
-       returns \cd{1}.
-
 \cdf{eval-when} в предыдущем выражении не является формой верхнего уровня, таким
 образом только ключевой символ \cd{:execute} берется во внимаение. В время
 компиляции, это не будет иметь эффекта. В время загрузки (если \cdf{let} форма
 верхнего уровня) или во время выполнения (если форма \cdf{let} вложена в
 какую-либо другую форму, которая еще не была выполнена), этот код установит
 в \cd{(symbol-function 'foo1)} функцию которая возвращает \cd{1}.
-
 \begin{lisp}
 (eval-when (:execute :load-toplevel :compile-toplevel) \\*
 ~~(let ((x 2)) \\*
@@ -2255,20 +2503,12 @@ Here are some additional examples.
 ~~~~~~(setf (symbol-function 'foo2) \#'(lambda () x)))))
 \end{lisp}
 
- If the preceding expression occurs at the top level of a file to be compiled,
-       it has \emph{both} a compile time \emph{and} a load-time effect of setting
-       \cd{(symbol-function 'foo2)} to a function that returns \cd{2}.
-
 Если предыдущее выражение находилось на верхнем уровне в компилируемом файле, оно
 будет выполнятся в обоих случаях, и во время компиляции и во время загрузки.
 \begin{lisp}
 (eval-when (:execute :load-toplevel :compile-toplevel) \\*
 ~~(setf (symbol-function 'foo3) \#'(lambda () 3)))
 \end{lisp}
- If the preceding expression occurs at the top level of a file to be compiled,
-       it has \emph{both} a compile time \emph{and}
-       a load-time effect of setting the
-       function cell of \cd{foo3} to a function that returns \cd{3}.
 
 Если предыдущее выражение находилось на верхнем уровне в компилируемом файле, оно
 будет выполняться в обоих случаях, и во время компиляции и во время загрузки.
@@ -2277,7 +2517,6 @@ Here are some additional examples.
 ~~(eval-when (:compile-toplevel)  \\*
 ~~~~(print 'foo4)))
 \end{lisp}
-  The preceding expression always does nothing; it simply returns \cdf{nil}.
 
 Предыдущее выражение ничего не делает, оно просто возвращает \cdf{nil}.
 
@@ -2286,11 +2525,6 @@ Here are some additional examples.
 ~~(eval-when (:execute) \\*
 ~~~~(print 'foo5)))
 \end{lisp}
-  If the preceding form occurs at the top level of a file to be compiled,
-       \cd{foo5} is
-       printed at compile time. If this form occurs in a non-top-level
-       position, nothing is printed at compile time. Regardless of context,
-       nothing is ever printed at load time or execution time.
 
 Если предыдущее выражение находилось на верхнем уровне в компилируемом файле,
 \cd{foo5} будет выведено во время компиляции. Если эта форма была не на верхнем
@@ -2303,15 +2537,11 @@ Here are some additional examples.
 ~~~~(print 'foo6)))
 \end{lisp}
 
-    If the preceding form occurs at the top level of a file to be compiled,
-       \cd{foo6} is
-       printed at compile time.  If this form occurs in a non-top-level
-       position, nothing is printed at compile time. Regardless of context,
-       nothing is ever printed at load time or execution time.
-
 Если предыдущая форма находилась на верхнем уровне в компилируемом файле,
 \cd{foo6} будет выведено во время компиляции. Если форма была не на верхнем
 уровне, ничего не будет выведено во время компиляции. Вне зависимости от
 контекста, ничего не будет выведение во время загрузки или выполнения кода.
 \end{defspec}
+
 \end{newer}
+\fi

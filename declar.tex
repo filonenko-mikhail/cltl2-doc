@@ -3,7 +3,9 @@
 
 \clearpage\def\pagestatus{ULTIMATE}
 
-\chapter{Declarations Декларации}
+\ifx \rulang\Undef
+
+\chapter{Declarations}
 \label{DECLAR}
 
 Declarations allow you to specify extra information about your program
@@ -18,46 +20,23 @@ by the Lisp system to aid the programmer by performing extra error checking
 or producing more efficient compiled code.  Declarations are also
 a good way to add documentation to a program.
 
-Декларации позволяют вам указать Lisp системе дополнительную информацию о вашей
-программе. С одним исключением, декларации абсолютно необязательные и
-корректность деклараций не означает коррекность программы. Исключение из
-исключения в том, что декларации \cdf{special} \emph{влияют} на интерпретацию
-связывания переменной и ссылки на нее, и \emph{должны} указывается там, где
-необходимо.
-Все другие декларации носят рекомендательный характер, и могут использовать Lisp
-системой для создания дополнительных проверок ошибок или более производительного
-скомпилированного кода. Декларации также являются хорошим способом
-задокументировать программу.
-
 Note that it is considered an error for a program to violate a
 declaration (such as a \cdf{type} declaration), but an implementation is
 not required to detect such errors (though such detection, where
 feasible, is to be encouraged).
 
-Следует отметить, что нарушение декларации рассматривается, как ошибка (как,
-например, для декларации \cdf{type}), но реализация может не замечать этих
-ошибок (хотя их обнаружение где это возможно, поощряется).
-
-\section{Declaration Syntax Синтаксис декларации}
+\section{Declaration Syntax}
 \label{DECLARE-SYNTAX-SECTION}
 
 The \cdf{declare} construct is used for embedding declarations within
 executable code.  Global declarations and declarations that are computed
 by a program are established by the \cdf{proclaim} construct.
 
-Конструкция \cdf{declare} используется для встраивания деклараций внутрь
-выполняемого кода. Глобальные декларации и декларации, вычисленные программой,
-устанавливаются конструкцией \cdf{proclaim}.
-
 \begin{newer}
 X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
 to introduce the new macro \cdf{declaim}, which is guaranteed
 to be recognized appropriately by the compiler and is often more convenient
 than \cdf{proclaim} for establishing global declarations.
-
-Добавлен новый макрос \cdf{declaim}, который гарантированно 
-распознается компилятором, и часто более удобен, чем \cdf{proclaim} для
-установки глобальных деклараций. FIXME
 \end{newer}
 
 \begin{defspec}
@@ -94,29 +73,6 @@ In the first edition, the above list failed to mention the forms
 their individual descriptions in the first edition specified that declarations
 may appear in those forms.
 \end{new}
-
-Форма \cdf{declare} известна как \emph{декларация}.
-Декларации могут использоваться только в начале тел соотвествующих специальных
-форм. То есть декларация может использоваться в этой специальной форме, как
-выражение, и все предыдущие  выражение (если есть) также должны быть формами
-\cdf{declare} (или, в некоторых случаях, строками документации).
-Декларации могут использоваться в лямбда-выражениях и нижеперечисленных формах.
-\begin{lisp}
-\hskip 12pc\=\kill
-\cdf{define-setf-method}\>\cdf{labels} \\*
-\cdf{defmacro}\>\cdf{let} \\*
-\cdf{defsetf}\>\cdf{let*} \\*
-\cdf{deftype}\>\cdf{locally} \\
-\cdf{defun}\>\cdf{macrolet} \\
-\cdf{do}\>\cdf{multiple-value-bind} \\
-\cdf{do*}\>\cdf{prog} \\
-\cdf{do-all-symbols}\>\cdf{prog*} \\
-\cdf{do-external-symbols}\>\cdf{with-input-from-string} \\
-\cdf{do-symbols}\>\cdf{with-open-file} \\
-\cdf{dolist}\>\cdf{with-open-stream} \\*
-\cdf{dotimes}\>\cdf{with-output-to-string} \\*
-\cdf{flet} 
-\end{lisp}
 
 X3J13 voted in June 1989 \issue{CONDITION-RESTARTS} to add \cdf{with-condition-restarts}
 and also \issue{DATA-IO} to add \cdf{print-unreadable-object}
@@ -162,9 +118,6 @@ It is an error to attempt to evaluate a declaration.
 Those special forms that permit declarations to appear
 perform explicit checks for their presence.
 
-Вычисление декларации является ошибкой. Эти специальные формы, которые позволяют
-использовать декларации, явно проверяют их наличие.
-
 \beforenoterule
 \begin{incompatibility}
 In MacLisp, \cdf{declare} is a special form
@@ -189,10 +142,6 @@ It is permissible for a macro call to expand into a declaration
 and be recognized as such, provided that the macro call
 appears where a declaration may legitimately appear.
 (However, a macro call may not appear in place of a \emph{decl-spec}.)
-
-Макровызовы могут раскрываться в декларации, при условии, что макровызов указан
-в том месте, где могут быть указаны декларации.
-(Однако, макровызов не может использоваться в форме declare на месте \emph{decl-spec}.)
 
 \begin{new}
 X3J13 voted in March 1988
@@ -226,22 +175,6 @@ appear.  For example, in
 the \cdf{type} declaration applies only to the outer binding of \cdf{x},
 and not to the binding made in the \cdf{let}.
 
-Каждая форма \emph{decl-spec} является списком, у которого \emph{car} элемент
-это символ, указывающий на тип декларации. Декларации могут быть разделены на
-два класса: одни относятся к связыванию переменных, другие нет.
-(Декларация \cdf{special} является исключением, она попадает в оба класса, это
-будет описано ниже.) 
-Те, которые касаются связываний переменных, применяются только к связываниям,
-созданным в форме, в которой они используются. Например, в 
-\begin{lisp}
-(defun foo (x) \\
-~~(declare (type float x)) ... \\
-~~(let ((x 'a)) ...) \\
-~~...)
-\end{lisp}
-декларация \cdf{type} применяется только для внешнего связывания \cd{x}, а не
-для связывания, созданного в \cdf{let}.
-
 \beforenoterule
 \begin{incompatibility}
 This represents a difference from MacLisp, in which type
@@ -257,15 +190,6 @@ As an example of a pervasive declaration,
 \end{lisp}
 advises that everywhere within the body of \cdf{foo} the function
 \cdf{floor} should not be open-coded but called as an out-of-line subroutine.
-
-Декларации, которые не воздействуют на связывания переменных, воздействуют на
-весь код тела в специальной форме.
-Например,
-\begin{lisp}
-(defun foo (x y) (declare (notinline floor)) ...)
-\end{lisp}
-рекомендует, что везде внутри тела функции \cd{foo}, \cdf{floor} должна быть
-вызвана как отдельная подпрограмма, а не встроена в код.
 
 Some special forms contain pieces of code that, properly speaking,
 are not part of the body of the special form.  Examples of this
@@ -309,46 +233,6 @@ parameter binding has not been declared to be \cdf{special}.
 (The \cdf{special} declaration of \cdf{z} does not appear in the body
 of the \cdf{defun}, but in an inner construct, and therefore does not
 affect the binding of the parameter.)
-
-Некоторые специальные формы содержат части кода, которые, правильнее говоря, на
-являются телом этой формы. Это например код инициализации перменных и форма
-результата для циклов.
-Во всех случаях, такой дополнительный код оказывается под воздействием
-всеобъемлемых деклараций, которые указаны перед телом специальной формы.
-Невсеобъемлемые декларации не оказывают воздействия на этот код, за исключением
-(конечно) ситуаций, когда код находится в области действия переменной, для
-которой использовалась декларация.
-Например:
-\begin{lisp}
-(defun few (x \cd{\&optional} (y *print-circle*)) \\*
-~~(declare (special *print-circle*)) \\*
-~~...)
-\end{lisp}
-Ссылка на \cd{*print-circle*} в первой строке примера является специальной, так
-как указана соответствующая декларация.
-\begin{lisp}
-(defun nonsense (k x z) \\*
-~~(foo z x)~~~~~~~~~~~~~~~;\textrm{Первый вызов \cdf{foo}} \\*
-~~(let ((j (foo k x))~~~~~;\textrm{Второй вызов \cdf{foo}} \\*
-~~~~~~~~(x (* k k))) \\*
-~~~~(declare (inline foo) (special x z)) \\*
-~~~~(foo x j z)))~~~~~~~~~;\textrm{Третий вызов \cdf{foo}}
-\end{lisp}
-В этом примере, декларация \cdf{inline} применяется только ко второму и третьему вызову
-\cd{foo}.
-Декларация \cdf{special} для переменной \cd{x} указывает, что форма \cdf{let}
-создаст специальное связывание для \cd{x} и тем самым ссылки в теле формы также
-будут специальными.
-Ссылка на \cd{x} во втором вызове \cd{foo} является специальной.
-Ссылка на \cd{x} в первом вызове \cd{foo} является локальной, а не специальной.
-Декларация \cdf{special} для \cd{z} указывает на то, что ссылка в вызове
-\cd{foo} будет специальной. Это значит ссылка не будет указывать на параметр
-функции \cd{nonsense}, так как для параметра декларации \cdf{special} не
-указано.
-(Декларация \cdf{special} переменной \cd{z} указывается не в теле \cdf{defun}, а
-в теле внутренней конструкции \cdf{let}. Таким образом она не воздействует на
-связывание параметра функции.)
-
 
 \begin{new}
 X3J13 voted in January 1989
@@ -522,13 +406,6 @@ Because \cdf{proclaim} is a function, its argument is always evaluated.
 This allows a program to compute a declaration and then put
 it into effect by calling \cdf{proclaim}.
 
-Функция \cdf{proclaim} в качестве аргумета принимает \emph{decl-spec}, и
-применяет указания в глобальном пространстве. (Такие глобальные декларации
-называются \emph{прокламации}.)
-Так как \cdf{proclaim} является функцией, то ее аргумент вычисляется всегда.
-Это позволяет программам вычислять декларацию и затем для применения помещать ее
-в вызов \cdf{proclaim}.
-
 Any variable names
 mentioned are assumed to refer to the dynamic values of the
 variable.  For example, the proclamation
@@ -540,16 +417,6 @@ specifies that the dynamic value of \cdf{tolerance} should always
 be a floating-point number.
 Similarly, any function-names mentioned are assumed to refer to
 the global function definition.
-
-Любые упоминаемые имена переменных указывают на значения
-динамических переменных. Например, выполненная прокламация
-\begin{lisp}
-(proclaim '(type float tolerance))
-\end{lisp}
-указывает на то, что динамическое значение \cd{tolerance} должно быть всегда
-числом с плавающей точкой.
-Подобным образом, любые упоминаемые имена функций указывают на глобальные
-определения функций.
 
 A proclamation constitutes a universal declaration, always in force
 unless locally shadowed.  For example,
@@ -563,19 +430,6 @@ compiler (but in the situation
 \end{lisp}
 it will be compiled out-of-line anyway in the body of \cdf{foo},
 because of the shadowing local declaration to that effect).
-
-Прокламации содержат универсальные декларации, которые всегда действуют, кроме
-случаев сокрытия их локальными декларациями. Например,
-\begin{lisp}
-(proclaim '(inline floor))
-\end{lisp}
-рекомендует то, что \cdf{floor} должна быть встроена в места ее вызова. Но в
-ситуации 
-\begin{lisp}
-(defun foo (x y) (declare (notinline floor)) ...)
-\end{lisp}
-\cdf{floor} будет вызываться как отдельная функция, так как локальная декларация
-скрыла прокламацию.
 
 \begin{newer}
 X3J13 voted in January 1989 \issue{SPECIAL-TYPE-SHADOWING}
@@ -612,22 +466,6 @@ be used with caution.  The usual way to define a globally special
 variable is with \cdf{defvar} or \cdf{defparameter}.
 \end{defun}
 
-Специальный случай, когда \cdf{proclaim} обрабатывает \cdf{special}, то
-\emph{decl-spec} применяется ко всем связываниям и ссылкам на упомянутую 
-переменную.
-Например, после
-\begin{lisp}
-(proclaim '(special x))
-\end{lisp}
-в определении функции
-\begin{lisp}
-(defun example (x) ...)
-\end{lisp}
-параметр \cd{x} будет связан, как специальная (динамическая) переменная, а не
-лексическая (статическая). Такой прием должен использоваться аккуратно. Обычный
-способ определить глобальную специальную переменную это использовать
-\cdf{defvar} или \cdf{defparameter}.
-
 \begin{newer}
 X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
 to clarify that the compiler is not required to treat
@@ -651,29 +489,15 @@ If a call to this macro appears at top level in a file
   unspecified whether or not the compile-time side effects of a 
   \cdf{declaim} persist after the file has been compiled
   (see section~\ref{COMPILER-SECTION}).
-
-Этот макрос синтаксически похож на \cdf{declare} и семантически на
-\cdf{proclaim}. Это выполняемая форма и она может использоваться везде, где
-может \cdf{proclaim}. Однако, формы \emph{decl-spec} не вычисляются.
-
-Если вызов этого макроса произошел на верхнем уровне в файле, обрабатываемом
-компилятором, то прокламации также будут выполнены во время компиляции. 
-  As with other defining macros, it is 
-  unspecified whether or not the compile-time side effects of a 
-  \cdf{declaim} persist after the file has been compiled
-  (see section~\ref{COMPILER-SECTION}). FIXME
 \end{defmac}
 \end{newer}
 
-\section{Declaration Specifiers Спецификаторы деклараций}
+\section{Declaration Specifiers}
 \label{DECLARATION-SPECIFIERS-SECTION}
 
 Here is a list of valid declaration specifiers for use in
 \cdf{declare}.  A construct is said to be ``affected'' by a declaration
 if it occurs within the scope of a declaration.
-
-Ниже представлен список спецификаторов деклараций для использования в
-\cdf{declare}.
 
 \begin{flushdesc}
 \item[\cdf{special}]
@@ -730,56 +554,6 @@ As a matter of style, use of \cdf{special} proclamations should be
 avoided.  The \cdf{defvar} and \cdf{defparameter} macros
 are the conventional means for proclaiming special variables
 in a program.
-
-\item[\cdf{special}]
-\cd{(special \emph{var1} \emph{var2} ...)} указывает на то, что все указанные
-переменные должны рассматриваться как \emph{специальные}.
-Данный спецификатор воздействует как на связывания переменных, так и на ссылки
-на эти переменные в коде.
-Все указанные связывания переменных будут динамическими, и ссылки будут
-осуществляться на эти связывания, а не на связывания определенные локально.
-Например:
-\begin{lisp}
-(defun hack (thing *mod*)~~~~~~~;\textrm{Связывание параметра} \\
-~~(declare (special *mod*))~~~~~; \textrm{\cd{*mod*} доступно для \cd{hack1},} \\
-~~(hack1 (car thing)))~~~~~~~~~~; \textrm{но связывание \cdf{thing} нет} \\
- \\
-(defun hack1 (arg) \\
-~~(declare (special *mod*))~~~~~;\textrm{Декларируем что ссылка на \cd{*mod*}} \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~; \textrm{внутри \cd{hack1} будет специальной} \\
-~~(if (atom arg) *mod* \\
-~~~~~~(cons (hack1 (car arg)) (hack1 (cdr arg)))))
-\end{lisp}
-Следует отметить, что по правилам хорошего тона, имена специальных переменных
-окружаются звездочками.
-
-Декларация \cdf{special} \emph{не} охватывает все связывания.
-Внутренние связывания переменных неявно скрывают декларацию \cdf{special} и
-должны быть явно передекларированы в специальные.
-(Однако прокламация \cdf{special} имеет глобальный эффект. Это сделано для
-совместимости с MacLisp'ом.)
-Например:
-\begin{lisp}
-(proclaim '(special x))~~~~~;\textrm{\cdf{x} всегда специальная} \\
- \\
-(defun example (x y) \\
-~~(declare (special y)) \\
-~~(let ((y 3) (x (* x 2))) \\
-~~~~(print (+ y (locally (declare (special y)) y))) \\
-~~~~(let ((y 4)) (declare (special y)) (foo x))))
-\end{lisp}
-В вышеприведенном коде, внешние и внутренние связывания переменной \cd{y}
-являются специальными и, таким образом, действуют в динамической области
-видимости. Однако среднее связывание действует в лексической области
-видимости. Два аргумента \cdf{+} различаются, один содержит значение \cd{3}
-лексически связанной переменной \cd{y}, другой содержит значение специальной
-переменной \cd{y}.
-Все связывания и переменной \cd{x} и ссылки на нее является специальными,
-так как в коде использовалась прокламация \cdf{special}.
-
-В целях стиля, необходимо избегать использование прокламаций \cdf{special}. Для
-объявления специальных переменных предназначены макросы \cdf{defvar} и
-\cdf{defparameter}.
 
 \item[\cdf{type}]
 \cd{(type \emph{type} \emph{var1} \emph{var2} ...)} affects
@@ -921,7 +695,6 @@ to alter the meaning of the
 \cdf{function} type specifier when used in \cdf{type} declarations
 (see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
 \end{new}
-
 
 \item[\emph{type}]
 \cd{(\emph{type} \emph{var1} \emph{var2} ...)}
@@ -1154,12 +927,6 @@ to issue a warning if a variable so declared is ever referred to
 or is also declared special, or if a variable is lexical, never referred to,
 and not declared to be ignored.
 
-\item[\cdf{ignore}]
-\cd{(ignore \emph{var1} \emph{var2} ... \emph{varn})} применяется только для
-связываний переменных и указывает на то, что связывания указанных переменных
-никогда не используются. Желательно, чтобы компилятор выдавал предупреждение, если
-переменная не используется и не задекларирована игнорироваться.
-
 \item[\cdf{optimize}]
 \cd{(optimize (\emph{quality1} \emph{value1}) (\emph{quality2} \emph{value2})...)}
 advises the compiler that each \emph{quality} should be given attention
@@ -1194,39 +961,6 @@ For example:
 ~~~~(declare (fixnum i)) \\*
 ~~~~)))
 \end{lisp}
-
-\item[\cdf{optimize}]
-\cd{(optimize (\emph{quality1} \emph{value1}) (\emph{quality2}
-  \emph{value2})...)}
-рекомендует компилятору использовать указанные значения для свойств компилятора.
-Свойство компилятора является символом. Стандратные свойства включают 
-\cdf{speed} (скомпилированного кода), \cdf{space} (и размер кода и run-time
-space), \cdf{safety} (проверка ошибок во время выполнения) и
-\cdf{compilation-speed} (скорость процесса компиляции).
-
-Также реализацией могут представляться другие свойства. \emph{value} должно быть
-неотрицательным целым числом, обычно на интервале \cd{0} и \cd{3}. Значение
-\cd{0} означает, что свойство полностью не важно, и \cd{3}, что свойство
-полностью важно.
-\cd{1} и \cd{2} промежуточные значение, \cd{1} <<нормальный>> или <<обычный>>
-уровень.
-Для наизначимого уровня существует аббревиатура, то есть \cd{(\emph{quality} 3)}
-можно записать, как просто \emph{quality}.
-Например:
-\begin{lisp}
-(defun often-used-subroutine (x y) \\*
-~~(declare (optimize (safety 2))) \\*
-~~(error-check x y) \\*
-~~(hairy-setup x) \\
-~~(do ((i 0 (+ i 1)) \\*
-~~~~~~~(z x (cdr z))) \\*
-~~~~~~((null z) i) \\
-~~~~;; This inner loop really needs to burn. \\*
-~~~~(declare (optimize speed)) \\*
-~~~~(declare (fixnum i)) \\*
-~~~~)))
-\end{lisp}
-
 
 \item[\cdf{declaration}]
 \cd{(declaration \emph{name1} \emph{name2} ...)} advises the compiler
@@ -1277,13 +1011,6 @@ using \cdf{declaim}, to ensure that the compiler will process them properly.
 ~~(member x '(strange weird odd peculiar)))
 \end{lisp}
 \end{newer}
-
-\item[\cdf{declaration}]
-\cd{(declaration \emph{name1} \emph{name2} ...)} декларирует компилятору, что
-каждая \emph{namej} является нестандартным именем декларации.
-Целью является сообщить одному компилятор не создавать предупреждений для
-деклараций, которые используются для другого компилятора.
-
 \end{flushdesc}
 
 \begin{newer}
@@ -1508,15 +1235,7 @@ in any case
 if a declaration specifier is not one of those defined above and has not been
 declared in a \cdf{declaration} declaration.
 
-Реализация может поддерживать другие спецификаторы деклараций (специфичные для
-нее).
-С другой стороны, компилятор Common Lisp может игнорировать некорые виды
-деклараций (например, неподдерживаемые компилятором), за исключением
-спецификатора декларации \cdf{declaration}.
-Однако, разработчики компиляторов поощряются в том, чтобы выдавать
-предупреждение об использовании неизвестных деклараций.
-
-\section{Type Declaration for Forms Декларация типов для форм}
+\section{Type Declaration for Forms}
 
 Frequently it is useful to declare that the value produced
 by the evaluation of some form will be of a particular type.
@@ -1525,13 +1244,6 @@ held by a bound variable, but there is no easy way to declare
 the type of the value of an unnamed form.  For this purpose the \cdf{the}
 special form is defined; \cd{(the \emph{type} \emph{form})} means
 that the value of \emph{form} is declared to be of type \emph{type}.
-
-Часто бывает полезно задекларировать, что значение, возвращаемое некоторой
-формой будет принадлежать определенному типу.
-Использование \cdf{declare} может применяться только к значениям связанным с
-переменной, но не для безымянных форм. Для этих целей определена специальная
-форма \cdf{the}.  \cd{(the \emph{type} \emph{form})} означает, что значение
-формы \emph{form} будет принадлежать типу \emph{type}.
 
 \begin{defspec}
 the value-type form
@@ -1560,23 +1272,6 @@ of multiple values:
 ~~~~~(gethash the-key the-string-table))
 \end{lisp}
 
-Вычисляется форма \emph{form}. То, что будет вычислено, будет возвращено из
-формы \emph{the}. Дополнительно будет осуществлена проверка на принадлежность
-возвращенного значения типу \emph{value-type} (его форма не выполняется) и в
-случае несовпадения выдана ошибка. (Реализация может и не осуществлять эту
-проверку. Однако поощряется такая проверка при работе в интерпретаторе.) В целом
-эта форма декларирует, что пользователь гарантирует, что значение формы всегда
-принадлежит заданному типу.
-Например:
-\begin{lisp}
-(the string (copy-seq x))~~~~~;\textrm{Результат будет строкой} \\
-(the integer (+ x 3))~~~~~~~~~;\textrm{Результат \cdf{+} будет целым числом} \\
-(+ (the integer x) 3)~~~~~~~~~;\textrm{The value of \cdf{x} will be an integer} \\
-(the (complex rational) (* z 3)) \\
-(the (unsigned-byte 8) (logand x mask))
-\end{lisp}
-
-
 \begin{newer}
 X3J13 voted in June 1989 \issue{THE-AMBIGUITY}
 to clarify that \emph{value-type} may be any valid type specifier whatsoever.
@@ -1603,3 +1298,395 @@ and \cd{(the single-float \emph{x})}.
 \end{incompatibility}
 \afternoterule
 \end{defspec}
+
+%RUSSIAN
+\else
+
+\chapter{Декларации}
+\label{DECLAR}
+
+Декларации позволяют вам указать Lisp системе дополнительную информацию о вашей
+программе. С одним исключением, декларации абсолютно необязательные и
+корректность деклараций не означает коррекность программы. Исключение из
+исключения в том, что декларации \cdf{special} \emph{влияют} на интерпретацию
+связывания переменной и ссылки на нее, и \emph{должны} указывается там, где
+необходимо.
+Все другие декларации носят рекомендательный характер, и могут использовать Lisp
+системой для создания дополнительных проверок ошибок или более производительного
+скомпилированного кода. Декларации также являются хорошим способом
+задокументировать программу.
+
+Следует отметить, что нарушение декларации рассматривается, как ошибка (как,
+например, для декларации \cdf{type}), но реализация может не замечать этих
+ошибок (хотя их обнаружение где это возможно, поощряется).
+
+\section{Синтаксис декларации}
+\label{DECLARE-SYNTAX-SECTION}
+
+Конструкция \cdf{declare} используется для встраивания деклараций внутрь
+выполняемого кода. Глобальные декларации и декларации, вычисленные программой,
+устанавливаются конструкцией \cdf{proclaim}.
+
+\begin{newer}
+X3J13 проголосова в июне 1989
+\issue{PROCLAIM-ETC-IN-COMPILE-FILE}
+ввести новый макрос \cdf{declaim}, который гарантированно 
+распознается компилятором, и часто более удобен, чем \cdf{proclaim} для
+установки глобальных деклараций. FIXME
+\end{newer}
+
+\begin{defspec}
+declare {decl-spec}*
+
+Форма \cdf{declare} известна как \emph{декларация}.
+Декларации могут использоваться только в начале тел соотвествующих специальных
+форм. То есть декларация может использоваться в этой специальной форме, как
+выражение, и все предыдущие  выражение (если есть) также должны быть формами
+\cdf{declare} (или, в некоторых случаях, строками документации).
+Декларации могут использоваться в лямбда-выражениях и нижеперечисленных формах.
+\begin{lisp}
+\hskip 12pc\=\kill
+\cdf{define-setf-method}\>\cdf{labels} \\*
+\cdf{defmacro}\>\cdf{let} \\*
+\cdf{defsetf}\>\cdf{let*} \\*
+\cdf{deftype}\>\cdf{locally} \\
+\cdf{defun}\>\cdf{macrolet} \\
+\cdf{do}\>\cdf{multiple-value-bind} \\
+\cdf{do*}\>\cdf{prog} \\
+\cdf{do-all-symbols}\>\cdf{prog*} \\
+\cdf{do-external-symbols}\>\cdf{with-input-from-string} \\
+\cdf{do-symbols}\>\cdf{with-open-file} \\
+\cdf{dolist}\>\cdf{with-open-stream} \\*
+\cdf{dotimes}\>\cdf{with-output-to-string} \\*
+\cdf{flet} 
+\end{lisp}
+
+Вычисление декларации является ошибкой. Специальные формы, которые позволяют
+использовать декларации, явно проверяют их наличие.
+
+Макровызовы могут раскрываться в декларации, при условии, что макровызов указан
+в том месте, где могут быть указаны декларации.
+(Однако, макровызов не может использоваться в форме declare на месте \emph{decl-spec}.)
+
+Каждая форма \emph{decl-spec} является списком, у которого \emph{car} элемент
+это символ, указывающий на тип декларации. Декларации могут быть разделены на
+два класса: одни относятся к связыванию переменных, другие нет.
+(Декларация \cdf{special} является исключением, она попадает в оба класса, это
+будет описано ниже.) 
+Те, которые касаются связываний переменных, применяются только к связываниям,
+созданным в форме, в которой они используются. Например, в 
+\begin{lisp}
+(defun foo (x) \\
+~~(declare (type float x)) ... \\
+~~(let ((x 'a)) ...) \\
+~~...)
+\end{lisp}
+декларация \cdf{type} применяется только для внешнего связывания \cd{x}, а не
+для связывания, созданного в \cdf{let}.
+
+Декларации, которые не воздействуют на связывания переменных, воздействуют на
+весь код тела в специальной форме.
+Например,
+\begin{lisp}
+(defun foo (x y) (declare (notinline floor)) ...)
+\end{lisp}
+рекомендует, что везде внутри тела функции \cd{foo}, \cdf{floor} должна быть
+вызвана как отдельная подпрограмма, а не встроена в код.
+
+Некоторые специальные формы содержат части кода, которые, правильнее говоря, на
+являются телом этой формы. Это например код инициализации перменных и форма
+результата для циклов.
+Во всех случаях, такой дополнительный код оказывается под воздействием
+всеобъемлемых деклараций, которые указаны перед телом специальной формы.
+Невсеобъемлемые декларации не оказывают воздействия на этот код, за исключением
+(конечно) ситуаций, когда код находится в области действия переменной, для
+которой использовалась декларация.
+Например:
+\begin{lisp}
+(defun few (x \cd{\&optional} (y *print-circle*)) \\*
+~~(declare (special *print-circle*)) \\*
+~~...)
+\end{lisp}
+Ссылка на \cd{*print-circle*} в первой строке примера является специальной, так
+как указана соответствующая декларация.
+\begin{lisp}
+(defun nonsense (k x z) \\*
+~~(foo z x)~~~~~~~~~~~~~~~;\textrm{Первый вызов \cdf{foo}} \\*
+~~(let ((j (foo k x))~~~~~;\textrm{Второй вызов \cdf{foo}} \\*
+~~~~~~~~(x (* k k))) \\*
+~~~~(declare (inline foo) (special x z)) \\*
+~~~~(foo x j z)))~~~~~~~~~;\textrm{Третий вызов \cdf{foo}}
+\end{lisp}
+В этом примере, декларация \cdf{inline} применяется только ко второму и третьему вызову
+\cd{foo}.
+Декларация \cdf{special} для переменной \cd{x} указывает, что форма \cdf{let}
+создаст специальное связывание для \cd{x} и тем самым ссылки в теле формы также
+будут специальными.
+Ссылка на \cd{x} во втором вызове \cd{foo} является специальной.
+Ссылка на \cd{x} в первом вызове \cd{foo} является локальной, а не специальной.
+Декларация \cdf{special} для \cd{z} указывает на то, что ссылка в вызове
+\cd{foo} будет специальной. Это значит ссылка не будет указывать на параметр
+функции \cd{nonsense}, так как для параметра декларации \cdf{special} не
+указано.
+(Декларация \cdf{special} переменной \cd{z} указывается не в теле \cdf{defun}, а
+в теле внутренней конструкции \cdf{let}. Таким образом она не воздействует на
+связывание параметра функции.)
+\end{defspec}
+
+\begin{defun}[Function]
+proclaim decl-spec
+
+Функция \cdf{proclaim} в качестве аргумета принимает \emph{decl-spec}, и
+применяет указания в глобальном пространстве. (Такие глобальные декларации
+называются \emph{прокламации}.)
+Так как \cdf{proclaim} является функцией, то ее аргумент вычисляется всегда.
+Это позволяет программам вычислять декларацию и затем для применения помещать ее
+в вызов \cdf{proclaim}.
+
+Любые упоминаемые имена переменных указывают на значения
+динамических переменных. Например, выполненная прокламация
+\begin{lisp}
+(proclaim '(type float tolerance))
+\end{lisp}
+указывает на то, что динамическое значение \cd{tolerance} должно быть всегда
+числом с плавающей точкой.
+Подобным образом, любые упоминаемые имена функций указывают на глобальные
+определения функций.
+
+Прокламации содержат универсальные декларации, которые всегда действуют, кроме
+случаев сокрытия их локальными декларациями. Например,
+\begin{lisp}
+(proclaim '(inline floor))
+\end{lisp}
+рекомендует то, что \cdf{floor} должна быть встроена в места ее вызова. Но в
+ситуации 
+\begin{lisp}
+(defun foo (x y) (declare (notinline floor)) ...)
+\end{lisp}
+\cdf{floor} будет вызываться как отдельная функция, так как локальная декларация
+скрыла прокламацию.
+
+Специальный случай, когда \cdf{proclaim} обрабатывает \cdf{special}, то
+\emph{decl-spec} применяется ко всем связываниям и ссылкам на упомянутую 
+переменную.
+Например, после
+\begin{lisp}
+(proclaim '(special x))
+\end{lisp}
+в определении функции
+\begin{lisp}
+(defun example (x) ...)
+\end{lisp}
+параметр \cd{x} будет связан, как специальная (динамическая) переменная, а не
+лексическая (статическая). Такой прием должен использоваться аккуратно. Обычный
+способ определить глобальную специальную переменную это использовать
+\cdf{defvar} или \cdf{defparameter}.
+\end{defun}
+
+\begin{newer}
+
+\begin{defmac}
+declaim {decl-spec}*
+
+Этот макрос синтаксически похож на \cdf{declare} и семантически на
+\cdf{proclaim}. Это выполняемая форма и она может использоваться везде, где
+может \cdf{proclaim}. Однако, формы \emph{decl-spec} не вычисляются.
+
+Если вызов этого макроса произошел на верхнем уровне в файле, обрабатываемом
+компилятором, то прокламации также будут выполнены во время компиляции. 
+  As with other defining macros, it is 
+  unspecified whether or not the compile-time side effects of a 
+  \cdf{declaim} persist after the file has been compiled
+  (see section~\ref{COMPILER-SECTION}). FIXME
+\end{defmac}
+\end{newer}
+
+\section{Спецификаторы деклараций}
+\label{DECLARATION-SPECIFIERS-SECTION}
+
+Ниже представлен список спецификаторов деклараций для использования в
+\cdf{declare}.
+
+\begin{flushdesc}
+
+\item[\cdf{special}]
+\cd{(special \emph{var1} \emph{var2} ...)} указывает на то, что все указанные
+переменные должны рассматриваться как \emph{специальные}.
+Данный спецификатор воздействует как на связывания переменных, так и на ссылки
+на эти переменные в коде.
+Все указанные связывания переменных будут динамическими, и ссылки будут
+осуществляться на эти связывания, а не на связывания определенные локально.
+Например:
+\begin{lisp}
+(defun hack (thing *mod*)~~~~~~~;\textrm{Связывание параметра} \\
+~~(declare (special *mod*))~~~~~; \textrm{\cd{*mod*} доступно для \cd{hack1},} \\
+~~(hack1 (car thing)))~~~~~~~~~~; \textrm{но связывание \cdf{thing} нет} \\
+ \\
+(defun hack1 (arg) \\
+~~(declare (special *mod*))~~~~~;\textrm{Декларируем что ссылка на \cd{*mod*}} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~; \textrm{внутри \cd{hack1} будет специальной} \\
+~~(if (atom arg) *mod* \\
+~~~~~~(cons (hack1 (car arg)) (hack1 (cdr arg)))))
+\end{lisp}
+Следует отметить, что по правилам хорошего тона, имена специальных переменных
+окружаются звездочками.
+
+Декларация \cdf{special} \emph{не} охватывает все связывания.
+Внутренние связывания переменных неявно скрывают декларацию \cdf{special} и
+должны быть явно передекларированы в специальные.
+(Однако прокламация \cdf{special} имеет глобальный эффект. Это сделано для
+совместимости с MacLisp'ом.)
+Например:
+\begin{lisp}
+(proclaim '(special x))~~~~~;\textrm{\cdf{x} всегда специальная} \\
+ \\
+(defun example (x y) \\
+~~(declare (special y)) \\
+~~(let ((y 3) (x (* x 2))) \\
+~~~~(print (+ y (locally (declare (special y)) y))) \\
+~~~~(let ((y 4)) (declare (special y)) (foo x))))
+\end{lisp}
+В вышеприведенном коде, внешние и внутренние связывания переменной \cd{y}
+являются специальными и, таким образом, действуют в динамической области
+видимости. Однако среднее связывание действует в лексической области
+видимости. Два аргумента \cdf{+} различаются, один содержит значение \cd{3}
+лексически связанной переменной \cd{y}, другой содержит значение специальной
+переменной \cd{y}.
+Все связывания и переменной \cd{x} и ссылки на нее является специальными,
+так как в коде использовалась прокламация \cdf{special}.
+
+В целях стиля, необходимо избегать использование прокламаций \cdf{special}. Для
+объявления специальных переменных предназначены макросы \cdf{defvar} и
+\cdf{defparameter}.
+
+\item[\cdf{type}]
+\cd{(type \emph{type} \emph{var1} \emph{var2} ...)} применяются только для
+связываний переменный и указывает на то, что переменные будут принимать значения
+только указанного типа.
+В частности, значения присваиваемые переменным с помощью \cdf{setq}, как и
+первоначальные значения, должны быть заданного типа.
+
+\item[\emph{type}]
+\cd{(\emph{type} \emph{var1} \emph{var2} ...)}
+является аббревиатурой для \cd{(type \emph{type} \emph{var1} \emph{var2} ...)},
+при условии, что \emph{type} один из символов из таблицы~\ref{TYPE-SYMBOLS-TABLE}.
+
+\item[\cdf{ftype}]
+\cd{(ftype \emph{type} \emph{function-name-1} \emph{function-name-2} ...)}
+указывает но то, что именованная функция будет принимать и возвращать заданный
+типы, как в следующем примере:
+\begin{lisp}
+(declare (ftype (function (integer list) t) nth) \\*
+~~~~~~~~~(ftype (function (number) float) sin cos))
+\end{lisp}
+Следует отметить, что соблюдаются правила лексической области видимости. Если
+одна из указанных функций лексически ограничена (с помощью \cdf{flet} или
+\cdf{labels}), то декларация примениться для локального определения, а не для глобального.
+
+\item[\cdf{inline}]
+\cd{(inline \emph{function1} \emph{function2} ...)}  указывает, что \emph{было бы
+  неплохо} встроить код указанных функций непосредственно в место вызова.
+Это может ускорить работу программы, но затруднить отладку (например, вызовы
+встроенных функций не могут быть протрассированы).
+Помните, компилятор может игнорирвать эту декларацию.
+
+Следует отметить, что соблюдаются правила лексической области видимости. Если
+одна из указанных функций лексически ограничена (с помощью \cdf{flet} или
+\cdf{labels}), то декларация примениться для локального определения, а не для
+глобального.
+
+\item[\cdf{notinline}]
+\cd{(notinline \emph{function1} \emph{function2} ...)} 
+указывает на то, что встраивать код указанных функций в место вызова \emph{не
+  нужно}.
+Эта декларация обязательна.
+Компилятор \emph{не} может ее игнорировать.
+
+Следует отметить, что соблюдаются правила лексической области видимости. Если
+одна из указанных функций лексически ограничена (с помощью \cdf{flet} или
+\cdf{labels}), то декларация примениться для локального определения, а не для
+глобального.
+
+\item[\cdf{ignore}]
+\cd{(ignore \emph{var1} \emph{var2} ... \emph{varn})} применяется только для
+связываний переменных и указывает на то, что связывания указанных переменных
+никогда не используются. Желательно, чтобы компилятор выдавал предупреждение, если
+переменная не используется и не задекларирована игнорироваться.
+
+\item[\cdf{optimize}]
+\cd{(optimize (\emph{quality1} \emph{value1}) (\emph{quality2}
+  \emph{value2})...)}
+рекомендует компилятору использовать указанные значения для свойств компилятора.
+Свойство компилятора является символом. Стандратные свойства включают 
+\cdf{speed} (скомпилированного кода), \cdf{space} (и размер кода и run-time
+space), \cdf{safety} (проверка ошибок во время выполнения) и
+\cdf{compilation-speed} (скорость процесса компиляции).
+
+Также реализацией могут представляться другие свойства. \emph{value} должно быть
+неотрицательным целым числом, обычно на интервале \cd{0} и \cd{3}. Значение
+\cd{0} означает, что свойство полностью не важно, и \cd{3}, что свойство
+полностью важно.
+\cd{1} и \cd{2} промежуточные значение, \cd{1} <<нормальный>> или <<обычный>>
+уровень.
+Для наизначимого уровня существует аббревиатура, то есть \cd{(\emph{quality} 3)}
+можно записать, как просто \emph{quality}.
+Например:
+\begin{lisp}
+(defun often-used-subroutine (x y) \\*
+~~(declare (optimize (safety 2))) \\*
+~~(error-check x y) \\*
+~~(hairy-setup x) \\
+~~(do ((i 0 (+ i 1)) \\*
+~~~~~~~(z x (cdr z))) \\*
+~~~~~~((null z) i) \\
+~~~~;; This inner loop really needs to burn. \\*
+~~~~(declare (optimize speed)) \\*
+~~~~(declare (fixnum i)) \\*
+~~~~)))
+\end{lisp}
+
+\item[\cdf{declaration}]
+\cd{(declaration \emph{name1} \emph{name2} ...)} сообщается компилятору, что
+каждая \emph{namej} является нестандартным именем декларации.
+Целью является указать одному компилятор не создавать предупреждений для
+деклараций, которые используются для другого компилятора.
+\end{flushdesc}
+
+Реализация может поддерживать другие спецификаторы деклараций (специфичные для
+нее).
+С другой стороны, компилятор Common Lisp может игнорировать некорые виды
+деклараций (например, неподдерживаемые компилятором), за исключением
+спецификатора декларации \cdf{declaration}.
+Однако, разработчики компиляторов поощряются в том, чтобы выдавать
+предупреждение об использовании неизвестных деклараций.
+
+\section{Декларация типов для форм}
+
+Часто бывает полезно задекларировать, что значение, возвращаемое некоторой
+формой будет принадлежать определенному типу.
+Использование \cdf{declare} может применяться только к значениям связанным с
+переменной, но не для безымянных форм. Для этих целей определена специальная
+форма \cdf{the}.  \cd{(the \emph{type} \emph{form})} означает, что значение
+формы \emph{form} будет принадлежать типу \emph{type}.
+
+\begin{defspec}
+the value-type form
+
+Вычисляется форма \emph{form}. То, что будет вычислено, будет возвращено из
+формы \emph{the}. Дополнительно будет осуществлена проверка на принадлежность
+возвращенного значения типу \emph{value-type} (его форма не выполняется) и в
+случае несовпадения выдана ошибка. (Реализация может и не осуществлять эту
+проверку. Однако поощряется такая проверка при работе в интерпретаторе.) В целом
+эта форма декларирует, что пользователь гарантирует, что значение формы всегда
+принадлежит заданному типу.
+Например:
+\begin{lisp}
+(the string (copy-seq x))~~~~~;\textrm{Результат будет строкой} \\
+(the integer (+ x 3))~~~~~~~~~;\textrm{Результат \cdf{+} будет целым числом} \\
+(+ (the integer x) 3)~~~~~~~~~;\textrm{Значением \cdf{x} будет целое число} \\
+(the (complex rational) (* z 3)) \\
+(the (unsigned-byte 8) (logand x mask))
+\end{lisp}
+\end{defspec}
+
+\fi

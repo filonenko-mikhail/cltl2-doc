@@ -1,1431 +1,214 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Package System Functions and Variables Функции и переменные для
-системы пакетов</title> 
+<head><title>Precision, Contagion, and Coercion</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-11 14:56:00"> 
+<meta name="date" content="2012-03-13 16:31:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 1137--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 74--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse64.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse62.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse62.html#tailclmse62.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch12.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch12.html#tailclmch12.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse63.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch11.html#clmse63.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">11.7   </span> <a 
- id="x79-18700011.7"></a>Package System Functions and Variables Функции и переменные для
-системы пакетов</h3>
-<!--l. 1140--><p class="noindent" >Some of the functions and variables in this section are described in previous
-sections but are included here for completeness.
-<!--l. 1144--><p class="indent" >   Некоторые из функций и переменных в этом разделе были описаны в
-предыдущих разделах, но включены сюда для завершенности.
-<div class=obsolete>
-<!--l. 1148--><p class="indent" >   It is up to each implementation&#x2019;s compiler to ensure that when a compiled ﬁle
-is loaded, all of the symbols in the ﬁle end up in the same packages that they
-would occupy if the Lisp source ﬁle were loaded. In most compilers, this will be
-accomplished by treating certain package operations as though they are
-surrounded by (eval-when (compile load eval) ...); see <a 
-href="clmse30.html#x40-74003r18">eval-when</a>. These operations
-are <a 
-href="#x79-187007r174">make-package</a>, <a 
-href="#x79-187016r176">in-package</a>, <a 
-href="#x79-188053r193">shadow</a>, <a 
-href="#x79-188050r192">shadowing-import</a>, <a 
-href="#x79-188040r189">export</a>, <a 
-href="#x79-188043r190">unexport</a>,
-<a 
-href="#x79-188057r194">use-package</a>, <a 
-href="#x79-188060r195">unuse-package</a>, and <a 
-href="#x79-188046r191">import</a>. To guarantee proper compilation in all
-Common Lisp implementations, these functions should appear only at top level
-within a ﬁle. As a matter of style, it is suggested that each ﬁle contain
-only one package, and that all of the package setup forms appear near
-the start of the ﬁle. This is discussed in more detail, with examples, in
-section <a 
-href="clmse65.html#x81-19500011.9">11.9<!--tex4ht:ref: PACKAGE-EXAMPLE-SECTION --></a>.
-</div>
-<div class=newer>
-<!--l. 1166--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx79-187001"></a>to cancel the speciﬁcations of the preceding
-paragraph in order to support a model of ﬁle compilation in which the compiler
-need never take special note of ordinary function calls; only special forms and
-macros are recognized as aﬀecting the state of the compilation process. As part of
-this change <a 
-href="#x79-187016r176">in-package</a> was changed to be a macro rather than a function and its
-functionality was restricted. The actions of <a 
-href="#x79-188053r193">shadow</a>, <a 
-href="#x79-188050r192">shadowing-import</a>,
-<a 
-href="#x79-188057r194">use-package</a>, <a 
-href="#x79-188046r191">import</a>, <a 
-href="#x79-188030r186">intern</a>, and <a 
-href="#x79-188040r189">export</a> for compilation purposes may be
-accomplished with the new macro <a 
-href="#x79-188064r196">defpackage</a>.
-</div>
+href="clmch12.html#clmse63.html" >Up</a><tt>&#x003E;</tt></p></div>
                                                                           
 
                                                                           
-<div class=implementation>
-<!--l. 1181--><p class="noindent" ><b>Implementation note:</b> In the past, some Lisp compilers have read the entire ﬁle into
-Lisp before processing any of the forms. Other compilers have arranged for the loader to
-do all of its intern operations before evaluating any of the top-level forms. Neither of
-these techniques will work in a straightforward way in Common Lisp because of the
-presence of multiple packages.
-</div>
-<!--l. 1192--><p class="indent" >   For the functions described here, all optional arguments named <i>package</i>
-default to the current value of <a 
-href="#x79-187003r173">*package*</a>. Where a function takes an argument
-that is either a symbol or a list of symbols, an argument of <a 
-href="clmse31.html#x42-77002r19">nil</a> is treated as an
-empty list of symbols. Any argument described as a package name may be either a
-string or a symbol. If a symbol is supplied, its print name will be used
-as the package name; if a string is supplied, the user must take care to
-specify the same capitalization used in the package name, normally all
-uppercase.
-<!--l. 1201--><p class="indent" >   Для описанных здесь функций, все необязательные аргументы с именем
-<i>package</i> имеют зачение по-умолчанию <a 
-href="#x79-187003r173">*package*</a>. Там, где функция
-принимает аргумент, который может быть символом или списком символов,
-значение <a 
-href="clmse31.html#x42-77002r19">nil</a> расценивается, как пустой список символов. Любой аргумент,
-описанный как имя пакета, может быть символом или строкой. Если указан
-символ, то используется его выводимое имя. Если строка, то пользователь
-должен позаботиться о преобразовании регистра символов в верхний там, где
-это необходимо.
-<div class=defun>
-<!--l. 1210--><p class="noindent" ><i>[Variable]</i><a 
- id="dx79-187002"></a><a 
- id="x79-187003r173"></a><b> *package*</b>
-<!--l. 1212--><p class="noindent" >The value of this variable must be a package; this package is said to be the current
-package. The initial value of <a 
-href="#x79-187003r173">*package*</a> is the user package.
-<!--l. 1217--><p class="indent" >   Значение этой переменной должно быть объектом пакета. Этот пакет
-называется текущим. Первоначальное значение <a 
-href="#x79-187003r173">*package*</a> является пакетом
-common-lisp-user. <div class=newer> X3J13 voted in March 1989 <a 
- id="dx79-187004"></a>to specify that the forthcoming
-ANSI Common Lisp will use the package name common-lisp-user instead of
-user.
-</div>
-<!--l. 1225--><p class="indent" >   The function <a 
-href="clmse122.html#x150-305002r778">load</a> rebinds <a 
-href="#x79-187003r173">*package*</a> to its current value. If some form in the
-ﬁle changes the value of <a 
-href="#x79-187003r173">*package*</a> during loading, the old value will be restored
-when the loading is completed.
-<!--l. 1229--><p class="indent" >   Функция <a 
-href="clmse122.html#x150-305002r778">load</a> пересвязывает <a 
-href="#x79-187003r173">*package*</a> в текущее значение. Если
-некоторая форма в файле во время загрузки изменяет значение <a 
-href="#x79-187003r173">*package*</a>,
+   <h3 class="sectionHead"><span class="titlemark">12.1   </span> <a 
+ id="x80-17800012.1"></a>Precision, Contagion, and Coercion</h3>
+<!--l. 77--><p class="noindent" >In general, computations with ﬂoating-point numbers are only approximate. The
+<i>precision</i> of a ﬂoating-point number is not necessarily correlated at all with the
+<i>accuracy</i> of that number. For instance, 3.142857142857142857 is a more precise
+approximation to π than 3.14159, but the latter is more accurate. The
+precision refers to the number of bits retained in the representation. When an
+operation combines a short ﬂoating-point number with a long one, the result
+will be a long ﬂoating-point number. This rule is made to ensure that
+as much accuracy as possible is preserved; however, it is by no means a
+guarantee. Common Lisp numerical routines do assume, however, that the
+accuracy of an argument does not exceed its precision. Therefore when two
+small ﬂoating-point numbers are combined, the result will always be a
+small ﬂoating-point number. This assumption can be overridden by ﬁrst
+explicitly converting a small ﬂoating-point number to a larger representation.
+(Common Lisp never converts automatically from a larger size to a smaller
+one.)
+<!--l. 96--><p class="indent" >   Rational computations cannot overﬂow in the usual sense (though of course
+there may not be enough storage to represent one), as integers and ratios may in
+principle be of any magnitude. Floating-point computations may get exponent
+overﬂow or underﬂow; this is an error.
+<div class=newer>
+<!--l. 105--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx80-178001"></a>to address certain problems relating to
+ﬂoating-point overﬂow and underﬂow, but certain parts of the proposed solution
+were not adopted, namely to add the macro without-ﬂoating-underﬂow-traps to
+the language and to require certain behavior of ﬂoating-point overﬂow and
+underﬂow. The committee agreed that this area of the language requires more
+discussion before a solution is standardized.
+<!--l. 113--><p class="indent" >   For the record, the proposal that was considered and rejected (for the nonce)
+introduced a macro without-ﬂoating-underﬂow-traps that would execute its body
+in such a way that, within its dynamic extent, a ﬂoating-point underﬂow must not
+signal an error but instead must produce either a denormalized number or zero as
+the result. The rejected proposal also speciﬁed the following treatment of overﬂow
+and underﬂow:
+      <ul class="itemize1">
+      <li class="itemize">A ﬂoating-point computation that overﬂows should signal an error of
+      type <a 
+href="clmse153.html#x187-475069r1017">ﬂoating-point-overﬂow</a>.
                                                                           
 
                                                                           
-старое значение будет восстановлено после завершения загрузки.
-<div class=newer>
-<!--l. 1234--><p class="indent" >   X3J13 voted in October 1988 <a 
- id="dx79-187005"></a>to require <a 
-href="clmse127.html#x157-318011r799">compile-ﬁle</a> to rebind <a 
-href="#x79-187003r173">*package*</a> to its
-current value.
+      </li>
+      <li class="itemize">Unless the dynamic extent of a use of without-ﬂoating-underﬂow-traps,
+      a ﬂoating-point computation that underﬂows should signal an error of
+      type <a 
+href="clmse153.html#x187-475071r1018">ﬂoating-point-underﬂow</a>. A result that can be represented only in
+      denormalized form must be considered an underﬂow in implementations
+      that support denormalized ﬂoating-point numbers.</li></ul>
+<!--l. 131--><p class="noindent" >These points refer to conditions <a 
+href="clmse153.html#x187-475069r1017">ﬂoating-point-overﬂow</a> and <a 
+href="clmse153.html#x187-475071r1018">ﬂoating-point-underﬂow</a>
+that were approved by X3J13 and are described in section <a 
+href="clmse153.html#x187-47500029.5">29.5<!--tex4ht:ref: PREDEFINED-CONDITIONS-SECTION --></a>.
 </div>
-</div>
-<div class=defun>
-<!--l. 1239--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-187006"></a><a 
- id="x79-187007r174"></a><b> make-package</b>  <i>package-name</i> &#x0026;key  <i>:nicknames</i> <i>:use</i>
-<!--l. 1241--><p class="noindent" >This creates and returns a new package with the speciﬁed package name. As
-described above, this argument may be either a string or a symbol. The
-:nicknames argument must be a list of strings to be used as alternative names for
-the package. Once again, the user may supply symbols in place of the strings, in
-which case the print names of the symbols are used. These names and nicknames
-must not conﬂict with any existing package names; if they do, a correctable error
-is signaled.
-<!--l. 1251--><p class="indent" >   The :use argument is a list of packages or the names (strings or symbols) of
-packages whose external symbols are to be inherited by the new package. These
-packages must already exist. If not supplied, :use defaults to a list of one package,
-the lisp package.
-<!--l. 1256--><p class="indent" >   Это функция создает и возвращает новый пакет с указанным именем. Как
-было описано выше, аргументом может быть или символ, или строка.
-Аргумент :nicknames должен быть списком строк, которые будут
-псевдонимами. И здесь пользователь вместо строк может указывать символы,
-в случае которых будут использоваться выводимые имена. Это имя и
-псевдонимы не могут конфликтовать с уже имеющимися именами пакетов.
-Если конфликт произошел, сигнализируется ошибка с возможностью
-исправления.
-<div class=newer>
-<!--l. 1265--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx79-187008"></a>to specify that the forthcoming ANSI Common
-Lisp will use the package name common-lisp instead of lisp.
-</div>
+<!--l. 139--><p class="indent" >   When rational and ﬂoating-point numbers are compared or combined by a
+numerical function, the rule of <i>ﬂoating-point contagion</i> is followed: when a
+rational meets a ﬂoating-point number, the rational is ﬁrst converted to a
+                                                                          
+
+                                                                          
+ﬂoating-point number of the same format. For functions such as <a 
+href="clmse108.html#x133-242002r592">+</a> that take
+more than two arguments, it may be that part of the operation is carried
+out exactly using rationals and then the rest is done using ﬂoating-point
+arithmetic.
 <div class=new>
-<!--l. 1271--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-187009"></a>to change the speciﬁcation of <a 
-href="#x79-187007r174">make-package</a> so
-that the default value for the :use argument is unspeciﬁed. Portable code should
-specify :use &#x2019;(&#x0022;COMMON-LISP&#x0022;) explicitly.
+<!--l. 149--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx80-178002"></a>to apply the rule of ﬂoating-point contagion
+stated above to the case of <i>combining</i> rational and ﬂoating-point numbers. For
+<i>comparing</i>, the following rule is to be used instead: When a rational number and a
+ﬂoating-point number are to be compared by a numerical function, in eﬀect the
+ﬂoating-point number is ﬁrst converted to a rational number as if by the function
+<a 
+href="clmse68.html#x85-187004r220">rational</a>, and then an exact comparison of two rational numbers is performed. It is
+of course valid to use a more eﬃcient implementation than actually calling the
+function <a 
+href="clmse68.html#x85-187004r220">rational</a>, as long as the result of the comparison is the same. In
+the case of complex numbers, the real and imaginary parts are handled
+separately.
 <div class=rationale>
-<!--l. 1278--><p class="noindent" ><b>Rationale:</b> Many existing implementations of Common Lisp happen to have violated
-the ﬁrst edition speciﬁcation, providing as the default not only the lisp package but also
+<!--l. 164--><p class="noindent" ><b>Rationale:</b> In general, accuracy cannot be preserved in combining operations, but it can
+be preserved in comparisons, and preserving it makes that part of Common Lisp
+algebraically a bit more tractable. In particular, this change prevents the breakdown of
+transitivity. Let a be the result of (/ 10.0 single-ﬂoat-epsilon), and let j be the result of
+(ﬂoor a). (Note that (= a (+ a 1.0)) is true, by the deﬁnition of <a 
+href="clmse72.html#x89-191059r316">single-ﬂoat-epsilon</a>.)
+Under the old rules, all of (&#x003C;= a j), (&#x003C; j (+ j 1)), and (&#x003C;= (+ j 1) a) would be
+true; transitivity would then imply that (&#x003C; a a) ought to be true, but of course it is
+false, and therefore transitivity fails. Under the new rule, however, (&#x003C;= (+ j 1) a) is
+false.
+</div>
+</div>
+<!--l. 181--><p class="indent" >   For functions that are mathematically associative (and possibly commutative),
+a Common Lisp implementation may process the arguments in any manner
+consistent with associative (and possibly commutative) rearrangement. This does
+not aﬀect the order in which the argument forms are evaluated, of course; that
+order is always left to right, as in all Common Lisp function calls. What is left
+loose is the order in which the argument values are processed. The point of all this
+is that implementations may diﬀer in which automatic coercions are applied
+because of diﬀering orders of argument processing. As an example, consider this
+expression: <div class=lisp><div class=tabbing>
                                                                           
 
                                                                           
-(or instead) a package containing implementation-dependent language extensions. This is
-for good reason: usually it is much more convenient to the user for the default :use list to
-be the entire, implementation-dependent, extended language rather than only the
-facilities speciﬁed in this book. The X3J13 vote simply legitimizes existing
-practice.
-</div>
-</div>
-</div>
-<div class=obsolete>
-<div class=defun>
-<!--l. 1295--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-187010"></a><a 
- id="x79-187011r175"></a><b> in-package</b>  <i>package-name</i> &#x0026;key  <i>:nicknames</i> <i>:use</i>
-<!--l. 1297--><p class="noindent" >The <a 
-href="#x79-187016r176">in-package</a> function is intended to be placed at the start of a ﬁle
-containing a subsystem that is to be loaded into some package other than
-user.
-<!--l. 1302--><p class="indent" >   If there is not already a package named <i>package-name</i>, this function is similar
-to <a 
-href="#x79-187007r174">make-package</a>, except that after the new package is created, <a 
-href="#x79-187003r173">*package*</a> is set to
-it. This binding will remain in force until changed by the user (perhaps with
-another <a 
-href="#x79-187016r176">in-package</a> call) or until the <a 
-href="#x79-187003r173">*package*</a> variable reverts to its old value at
-the completion of a <a 
-href="clmse122.html#x150-305002r778">load</a> operation.
-<!--l. 1309--><p class="indent" >   If there is an existing package whose name is <i>package-name</i>, the assumption is
-that the user is re-loading a ﬁle after making some changes. The existing package
-is augmented to reﬂect any new nicknames or new packages in the :use
-list (with the usual error checking), and <a 
-href="#x79-187003r173">*package*</a> is then set to this
-package.
-</div>
-</div>
-<div class=new>
-<!--l. 1318--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-187012"></a>to specify that <a 
-href="#x79-187016r176">in-package</a> returns the
-new package, that is, the value of <a 
-href="#x79-187003r173">*package*</a> after the operation has been
-executed.
-</div>
-<div class=newer>
-<!--l. 1325--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx79-187013"></a>to specify that the forthcoming ANSI
-Common Lisp will use the package name common-lisp-user instead of
-user.
-</div>
-<div class=newer>
-<!--l. 1331--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx79-187014"></a>to restrict the functionality of <a 
-href="#x79-187016r176">in-package</a> and to
-                                                                          
-
-                                                                          
-make it a macro. This is an incompatible change.
-<!--l. 1335--><p class="indent" >   Making <a 
-href="#x79-187016r176">in-package</a> a macro rather than a function means that there is no need
-to require <a 
-href="clmse127.html#x157-318011r799">compile-ﬁle</a> to handle it specially. Since <a 
-href="#x79-188064r196">defpackage</a> is also deﬁned
-to have side eﬀects on the compilation environment, there is no need
-to require any of the package functions to be treated specially by the
-compiler.
-<div class=defmac>
-<div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Macro]</i><b> in-package </b><a 
- id="dx79-187015"></a><a 
- id="x79-187016r176"></a> name
+class="tabbing">(+ 1/3 2/3 1.0D0 1.0 1.0E-15)
 </td></tr></table>
-<!--l. 1344--><p class="indent" >
-</div>
-<!--l. 1344--><p class="noindent" ><span class="paragraphHead"><a 
- id="x79-18800011.7"></a></span>
-   This macro causes <a 
-href="#x79-187003r173">*package*</a> to be set to the package named <i>name</i>, which
-must be a symbol or string. The <i>name</i> is not evaluated. An error is signaled if the
-package does not already exist. Everything this macro does is also performed at
-compile time if the call appears at top level.
-<!--l. 1351--><p class="indent" >   Этот макрос пересвязывает переменную <a 
-href="#x79-187003r173">*package*</a> с пакетом, имя
-которого указано в параметре <i>name</i>. Параметр <i>name</i> может быть строкой
-или символом. Форма <i>name</i> не вычисляется. В случае отсутствия пакета,
-сигнализируется ошибка. Кроме того, в случае вызова в качестве формы
-верхнего уровня, этот макрос работает и во время компиляции.
+<!--l. 194--><p class="indent" >
 </div>
 </div>
-<div class=defun>
-<!--l. 1361--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188001"></a><a 
- id="x79-188002r177"></a><b> ﬁnd-package</b>  <i>name</i>
-<!--l. 1363--><p class="noindent" >The <i>name</i> must be a string that is the name or nickname for a package. This
-argument may also be a symbol, in which case the symbol&#x2019;s print name is used.
-The package with that name or nickname is returned; if no such package
-exists, <a 
-href="#x79-188002r177">ﬁnd-package</a> returns <a 
-href="clmse31.html#x42-77002r19">nil</a>. The matching of names observes case (as in
-<a 
-href="clmse101.html#x124-246002r595">string=</a>).
-<!--l. 1370--><p class="indent" >   Параметр <i>name</i> должен быть строкой, которая является именем или
+<!--l. 195--><p class="noindent" >One implementation might process the arguments from left to right, ﬁrst adding 1/3
+and 2/3 to get 1, then converting that to a double-precision ﬂoating-point number
+for combination with 1.0D0, then successively converting and adding 1.0 and
+1.0E-15. Another implementation might process the arguments from right to left,
+ﬁrst performing a single-precision ﬂoating-point addition of 1.0 and 1.0E-15 (and
+probably losing some accuracy in the process!), then converting the sum to
+double precision and adding 1.0D0, then converting 2/3 to double-precision
+ﬂoating-point and adding it, and then converting 1/3 and adding that. A third
+implementation might ﬁrst scan all the arguments, process all the rationals ﬁrst to
+keep that part of the computation exact, then ﬁnd an argument of the
+largest ﬂoating-point format among all the arguments and add that, and
+then add in all other arguments, converting each in turn (all in a perhaps
+misguided attempt to make the computation as accurate as possible). In any
+case, all three strategies are legitimate. The user can of course control
+the order of processing explicitly by writing several calls; for example:
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(+ (+ 1/3 2/3) (+ 1.0D0 1.0E-15) 1.0)
+</td></tr></table>
+<!--l. 215--><p class="indent" >
+</div>
+</div>
+<!--l. 216--><p class="noindent" >The user can also control all coercions simply by writing calls to coercion functions
+explicitly.
+<!--l. 219--><p class="indent" >   In general, then, the type of the result of a numerical function is a
+ﬂoating-point number of the largest format among all the ﬂoating-point
+arguments to the function; but if the arguments are all rational, then the
+result is rational (except for functions that can produce mathematically
+irrational results, in which case a single-format ﬂoating-point number may
+result).
+<!--l. 226--><p class="indent" >   There is a separate rule of complex contagion. As a rule, complex numbers
+never result from a numerical function unless one or more of the arguments is
                                                                           
 
                                                                           
-псевдонимом искомого пакета. Этот параметр может также быть символов, в
-случае которого используется выводимое имя. В результате возвращается
-объект пакета с указанным именем или псевдонимом. Если пакет найден не
-был, то <a 
-href="#x79-188002r177">ﬁnd-package</a> возвращает <a 
-href="clmse31.html#x42-77002r19">nil</a>. Сравнение имен регистрозависимо (как в
-<a 
-href="clmse101.html#x124-246002r595">string=</a>).
-<div class=new>
-<!--l. 1378--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188003"></a>to allow <a 
-href="#x79-188002r177">ﬁnd-package</a> to accept a package object,
-in which case the package is simply returned (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1385--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188004"></a><a 
- id="x79-188005r178"></a><b> package-name</b>  <i>package</i>
-<!--l. 1387--><p class="noindent" >The argument must be a package. This function returns the string that names
-that package.
-<!--l. 1391--><p class="indent" >   Аргумент должен быть объектом пакета. Данная функция возвращает
-строку имени указанного пакета.
-<div class=new>
-<!--l. 1395--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188006"></a>to allow <a 
-href="#x79-188005r178">package-name</a> to accept a package name
-or nickname, in which case the primary name of the package so speciﬁed is
-returned (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-<div class=new>
-<!--l. 1403--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188007"></a>to add a function to delete packages. One
-consequence of this vote is that <a 
-href="#x79-188005r178">package-name</a> will return <a 
-href="clmse31.html#x42-77002r19">nil</a> instead of a package
-name if applied to a deleted package object. See <a 
-href="#x79-188027r185">delete-package</a>.
-</div>
-</div>
-<div class=defun>
-<!--l. 1412--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188008"></a><a 
- id="x79-188009r179"></a><b> package-nicknames</b>  <i>package</i>
-<!--l. 1414--><p class="noindent" >The argument must be a package. This function returns the list of nickname
-strings for that package, not including the primary name.
-<!--l. 1418--><p class="indent" >   Аргумент должен быть объектом пакета. Эта функция возвращает список
-псевдонимов для заданного пакета, не включая главное имя. <div class=new> X3J13 voted in
-January 1989 <a 
- id="dx79-188010"></a>to allow <a 
-href="#x79-188009r179">package-nicknames</a> to accept a package name or nickname,
-in which case the nicknames of the package so speciﬁed are returned (see
+complex. (Exceptions to this rule occur among the irrational and transcendental
+functions, speciﬁcally <a 
+href="clmse67.html#x84-184004r198">expt</a>, <a 
+href="clmse67.html#x84-184008r199">log</a>, <a 
+href="clmse67.html#x84-184011r200">sqrt</a>, <a 
+href="clmse67.html#x84-185017r209">asin</a>, <a 
+href="clmse67.html#x84-185019r210">acos</a>, <a 
+href="clmse67.html#x84-185035r217">acosh</a>, and <a 
+href="clmse67.html#x84-185037r218">atanh</a>; see
 section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-                                                                          
-
-                                                                          
-<div class=defun>
-<!--l. 1429--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188011"></a><a 
- id="x79-188012r180"></a><b> rename-package</b>  <i>package</i> <i>new-name</i> &#x0026;optional  <i>new-nicknames</i>
-<!--l. 1431--><p class="noindent" >The old name and all of the old nicknames of <i>package</i> are eliminated and are
-replaced by <i>new-name</i> and <i>new-nicknames</i>. The <i>new-name</i> argument is a string or
-symbol; the <i>new-nicknames</i> argument, which defaults to <a 
-href="clmse31.html#x42-77002r19">nil</a>, is a list of strings or
-symbols.
-<!--l. 1437--><p class="indent" >   Старое имя и все старые псевдонимы пакета <i>package</i> удаляются и
-заменяются на <i>new-name</i> и <i>new-nicknames</i>. Аргумент <i>new-name</i> может быть
-строкой или символом. Аргумент <i>new-nicknames</i>, который по-умолчанию <a 
-href="clmse31.html#x42-77002r19">nil</a>,
-является списком строк или символов. <div class=new> X3J13 voted in January 1989 <a 
- id="dx79-188013"></a>to clarify
-that the <i>package</i> argument may be either a package object or a package name (see
-section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-<div class=new>
-<!--l. 1449--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188014"></a>to specify that <a 
-href="#x79-188012r180">rename-package</a> returns
-<i>package</i>.
-</div>
-</div>
-<div class=defun>
-<!--l. 1455--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188015"></a><a 
- id="x79-188016r181"></a><b> package-use-list</b>  <i>package</i>
-<!--l. 1457--><p class="noindent" >A list of other packages used by the argument package is returned.
-<!--l. 1460--><p class="indent" >   Данная функция возвращает список пакетов, используемых указанным в
-параметре пакетом. <div class=new> X3J13 voted in January 1989 <a 
- id="dx79-188017"></a>to clarify that the
-<i>package</i> argument may be either a package object or a package name (see
-section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1469--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188018"></a><a 
- id="x79-188019r182"></a><b> package-used-by-list</b>  <i>package</i>
-<!--l. 1471--><p class="noindent" >A list of other packages that use the argument package is returned.
-<!--l. 1474--><p class="indent" >   Данная функция возвращает список пакетов, использующих указанный
-в параметре пакет. <div class=new> X3J13 voted in January 1989 <a 
- id="dx79-188020"></a>to clarify that the
-<i>package</i> argument may be either a package object or a package name (see
-section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-                                                                          
-
-                                                                          
-<!--l. 1483--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188021"></a><a 
- id="x79-188022r183"></a><b> package-shadowing-symbols</b>  <i>package</i>
-<!--l. 1485--><p class="noindent" >A list is returned of symbols that have been declared as shadowing symbols in this
-package by <a 
-href="#x79-188053r193">shadow</a> or <a 
-href="#x79-188050r192">shadowing-import</a>. All symbols on this list are present in
-the speciﬁed package.
-<!--l. 1490--><p class="indent" >   Данная функция возвращает список символов, которые были
-задекларированы, как скрывающие символы, с помощью <a 
-href="#x79-188053r193">shadow</a> или
+href="clmse67.html#x84-18300012.5">12.5<!--tex4ht:ref: TRANSCENDENTAL-SECTION --></a>.) When a non-complex number meets a complex number, the
+non-complex number is in eﬀect ﬁrst converted to a complex number by providing
+an imaginary part of zero.
+<!--l. 238--><p class="indent" >   If any computation produces a result that is a ratio of two integers such that
+the denominator evenly divides the numerator, then the result is immediately
+converted to the equivalent integer. This is called the rule of <i>rational
+canonicalization</i>.
+<!--l. 243--><p class="indent" >   If the result of any computation would be a complex rational with a zero
+imaginary part, the result is immediately converted to a non-complex
+rational number by taking the real part. This is called the rule of <i>complex
+canonicalization</i>. Note that this rule does <i>not</i> apply to complex numbers whose
+components are ﬂoating-point numbers. Whereas #C(5 0) and 5 are not distinct
+values in Common Lisp (they are always <a 
+href="clmse33.html#x44-78004r45">eql</a>), #C(5.0 0.0) and 5.0 are always
+distinct values in Common Lisp (they are never <a 
+href="clmse33.html#x44-78004r45">eql</a>, although they are
 <a 
-href="#x79-188050r192">shadowing-import</a>. Все символы в этом списке является <i>родственными</i>
-указанному пакету.
-<div class=new>
-<!--l. 1495--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188023"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1502--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188024"></a><a 
- id="x79-188025r184"></a><b> list-all-packages</b>
-<!--l. 1504--><p class="noindent" >This function returns a list of all packages that currently exist in the Lisp
-system.
-<!--l. 1508--><p class="indent" >   Эта функция возвращает список всех пакетов, которые существуют в
-Lisp&#x2019;овой системе.
-</div>
-<div class=new>
-<div class=defun>
-<!--l. 1514--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188026"></a><a 
- id="x79-188027r185"></a><b> delete-package</b>  <i>package</i>
-<!--l. 1516--><p class="noindent" >X3J13 voted in January 1989 <a 
- id="dx79-188028"></a>to add the <a 
-href="#x79-188027r185">delete-package</a> function, which deletes
-the speciﬁed <i>package</i> from all package system data structures. The <i>package</i>
-argument may be either a package or the name of a package.
-<!--l. 1523--><p class="indent" >   If <i>package</i> is a name but there is currently no package of that name, a
-correctable error is signaled. Continuing from the error makes no deletion attempt
-but merely returns <a 
-href="clmse31.html#x42-77002r19">nil</a> from the call to <a 
-href="#x79-188027r185">delete-package</a>.
-<!--l. 1528--><p class="indent" >   If <i>package</i> is a package object that has already been deleted, no error is
-signaled and no deletion is attempted; instead, <a 
-href="#x79-188027r185">delete-package</a> immediately returns
-<a 
-href="clmse31.html#x42-77002r19">nil</a>.
-<!--l. 1532--><p class="indent" >   If the package speciﬁed for deletion is currently used by other packages, a
-correctable error is signaled. Continuing from this error, the eﬀect of the function
-<a 
-href="#x79-188060r195">unuse-package</a> is performed on all such other packages so as to remove their
-dependency on the speciﬁed package, after which <a 
-href="#x79-188027r185">delete-package</a> proceeds
-to delete the speciﬁed package as if no other package had been using
-it.
+href="clmse33.html#x44-78008r47">equalp</a>).
                                                                           
 
                                                                           
-<!--l. 1539--><p class="indent" >   If any symbol had the speciﬁed package as its home package before the call to
-<a 
-href="#x79-188027r185">delete-package</a>, then its home package is unspeciﬁed (that is, the contents of its
-package cell are unspeciﬁed) after the <a 
-href="#x79-188027r185">delete-package</a> operation has been
-completed. Symbols in the deleted package are not modiﬁed in any other
-way.
-<!--l. 1545--><p class="indent" >   The name and nicknames of the <i>package</i> cease to be recognized package
-names. The package object is still a package, but anonymous; <a 
-href="clmse32.html#x43-80041r42">packagep</a> will be
-true of it, but <a 
-href="#x79-188005r178">package-name</a> applied to it will return <a 
-href="clmse31.html#x42-77002r19">nil</a>.
-<!--l. 1549--><p class="indent" >   The eﬀect of any other package operation on a deleted package object is
-undeﬁned. In particular, an attempt to locate a symbol within a deleted
-package (using <a 
-href="#x79-188030r186">intern</a> or <a 
-href="#x79-188034r187">ﬁnd-symbol</a>, for example) will have unspeciﬁed
-results.
-<!--l. 1554--><p class="indent" >   <a 
-href="#x79-188027r185">delete-package</a> returns <a 
-href="clmse31.html#x42-77004r20">t</a> if the deletion succeeds, and <a 
-href="clmse31.html#x42-77002r19">nil</a> otherwise.
-</div>
-</div>
-<div class=defun>
-<!--l. 1559--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188029"></a><a 
- id="x79-188030r186"></a><b> intern</b>  <i>string</i> &#x0026;optional  <i>package</i>
-<!--l. 1561--><p class="noindent" >The <i>package</i>, which defaults to the current package, is searched for a symbol with
-the name speciﬁed by the <i>string</i> argument. This search will include inherited
-symbols, as described in section <a 
-href="clmse60.html#x76-18400011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>. If a symbol with the speciﬁed name is
-found, it is returned. If no such symbol is found, one is created and is installed in
-the speciﬁed package as an internal symbol (as an external symbol if the package
-is the keyword package); the speciﬁed package becomes the home package of the
-created symbol.
-<div class=newer>
-<!--l. 1574--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx79-188031"></a>to specify that <a 
-href="#x79-188030r186">intern</a> may in eﬀect perform the
-search using a copy of the argument string in which some or all of the
-implementation-deﬁned attributes have been removed from the characters of the
-string. It is implementation-dependent which attributes are removed.
-</div>
-<!--l. 1582--><p class="indent" >   Two values are returned. The ﬁrst is the symbol that was found or created.
-The second value is <a 
-href="clmse31.html#x42-77002r19">nil</a> if no pre-existing symbol was found, and takes on one of
-three values if a symbol was found: <div class=indentdesc>
-      <ul><li><b>
-:internal </b></li>The  symbol  was  directly  present  in  the  package  as  an  internal
-      symbol.
-      <li><b>
-                                                                          
-
-                                                                          
-:external </b></li>The symbol was directly present as an external symbol.
-      <li><b>
-:inherited </b></li>The symbol was inherited via <a 
-href="#x79-188057r194">use-package</a> (which implies that the
-      symbol is internal).</ul>
-</div>
-<div class=new>
-<!--l. 1598--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188032"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-<div class=incompatibility>
-<!--l. 1605--><p class="noindent" ><b>Compatibility note:</b> Conceptually, <a 
-href="#x79-188030r186">intern</a> translates a string to a symbol. In MacLisp
-and several other dialects of Lisp, <a 
-href="#x79-188030r186">intern</a> can take either a string or a symbol as its
-argument; in the latter case, the symbol&#x2019;s print name is extracted and used as the string.
-However, this leads to some confusing issues about what to do if <a 
-href="#x79-188030r186">intern</a> ﬁnds a symbol
-that is not <a 
-href="clmse33.html#x44-81002r46">eq</a> to the argument symbol. To avoid such confusion, Common Lisp requires
-the argument to be a string.
-</div>
-</div>
-<div class=defun>
-<!--l. 1617--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188033"></a><a 
- id="x79-188034r187"></a><b> ﬁnd-symbol</b>  <i>string</i> &#x0026;optional  <i>package</i>
-<!--l. 1619--><p class="noindent" >This is identical to <a 
-href="#x79-188030r186">intern</a>, but it never creates a new symbol. If a symbol with the
-speciﬁed name is found in the speciﬁed package, directly or by inheritance, the
-symbol found is returned as the ﬁrst value and the second value is as speciﬁed for
-<a 
-href="#x79-188030r186">intern</a>. If the symbol is not accessible in the speciﬁed package, both values are
-<a 
-href="clmse31.html#x42-77002r19">nil</a>.
-<div class=new>
-<!--l. 1628--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188035"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1635--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188036"></a><a 
- id="x79-188037r188"></a><b> unintern</b>  <i>symbol</i> &#x0026;optional  <i>package</i>
-<!--l. 1637--><p class="noindent" >If the speciﬁed symbol is present in the speciﬁed <i>package</i>, it is removed from that
-package and also from the package&#x2019;s shadowing-symbols list if it is present
-there. Moreover, if the <i>package</i> is the home package for the symbol, the
-symbol is made to have no home package. Note that in some circumstances
-the symbol may continue to be accessible in the speciﬁed package by
-                                                                          
-
-                                                                          
-inheritance. <a 
-href="#x79-188037r188">unintern</a> returns <a 
-href="clmse31.html#x42-77004r20">t</a> if it actually removed a symbol, and <a 
-href="clmse31.html#x42-77002r19">nil</a>
-otherwise.
-<!--l. 1647--><p class="indent" >   <a 
-href="#x79-188037r188">unintern</a> should be used with caution. It changes the state of the package
-system in such a way that the consistency rules do not hold across the
-change.
-<div class=new>
-<!--l. 1652--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188038"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-<div class=incompatibility>
-<!--l. 1659--><p class="noindent" ><b>Compatibility note:</b> The equivalent of this in MacLisp is remob.
-</div>
-</div>
-<div class=defun>
-<!--l. 1665--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188039"></a><a 
- id="x79-188040r189"></a><b> export</b>  <i>symbols</i> &#x0026;optional  <i>package</i>
-<!--l. 1667--><p class="noindent" >The <i>symbols</i> argument should be a list of symbols, or possibly a single symbol.
-These symbols become accessible as external symbols in <i>package</i> (see
-section <a 
-href="clmse60.html#x76-18400011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). <a 
-href="#x79-188040r189">export</a> returns <a 
-href="clmse31.html#x42-77004r20">t</a>.
-<!--l. 1673--><p class="indent" >   By convention, a call to <a 
-href="#x79-188040r189">export</a> listing all exported symbols is placed near the
-start of a ﬁle to advertise which of the symbols mentioned in the ﬁle are intended
-to be used by other programs.
-<div class=new>
-<!--l. 1678--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188041"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1685--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188042"></a><a 
- id="x79-188043r190"></a><b> unexport</b>  <i>symbols</i> &#x0026;optional  <i>package</i>
-<!--l. 1687--><p class="noindent" >The argument should be a list of symbols, or possibly a single symbol. These
-symbols become internal symbols in <i>package</i>. It is an error to unexport a
-symbol from the keyword package (see section <a 
-href="clmse60.html#x76-18400011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). <a 
-href="#x79-188043r190">unexport</a> returns
-<a 
-href="clmse31.html#x42-77004r20">t</a>.
-<div class=new>
-<!--l. 1695--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188044"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-                                                                          
-
-                                                                          
-<!--l. 1702--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188045"></a><a 
- id="x79-188046r191"></a><b> import</b>  <i>symbols</i> &#x0026;optional  <i>package</i>
-<!--l. 1704--><p class="noindent" >The argument should be a list of symbols, or possibly a single symbol. These
-symbols become internal symbols in <i>package</i> and can therefore be referred to
-without having to use qualiﬁed-name (colon) syntax. <a 
-href="#x79-188046r191">import</a> signals a correctable
-error if any of the imported symbols has the same name as some distinct
-symbol already accessible in the package (see section <a 
-href="clmse60.html#x76-18400011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). <a 
-href="#x79-188046r191">import</a> returns
-<a 
-href="clmse31.html#x42-77004r20">t</a>.
-<div class=newer>
-<!--l. 1715--><p class="indent" >   X3J13 voted in June 1987 <a 
- id="dx79-188047"></a>to clarify that if any symbol to be imported has no
-home package then <a 
-href="#x79-188046r191">import</a> sets the home package of the symbol to the <i>package</i> to
-which the symbol is being imported.
-</div>
-<div class=new>
-<!--l. 1722--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188048"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1729--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188049"></a><a 
- id="x79-188050r192"></a><b> shadowing-import</b>  <i>symbols</i> &#x0026;optional  <i>package</i>
-<!--l. 1731--><p class="noindent" >This is like <a 
-href="#x79-188046r191">import</a>, but it does not signal an error even if the importation of a
-symbol would shadow some symbol already accessible in the package. In addition
-to being imported, the symbol is placed on the shadowing-symbols list of <i>package</i>
-(see section <a 
-href="clmse61.html#x77-18500011.5">11.5<!--tex4ht:ref: NAME-CONFLICTS-SECTION --></a>). <a 
-href="#x79-188050r192">shadowing-import</a> returns <a 
-href="clmse31.html#x42-77004r20">t</a>.
-<!--l. 1739--><p class="indent" >   <a 
-href="#x79-188050r192">shadowing-import</a> should be used with caution. It changes the state of the
-package system in such a way that the consistency rules do not hold across the
-change.
-<div class=new>
-<!--l. 1744--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188051"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1751--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188052"></a><a 
- id="x79-188053r193"></a><b> shadow</b>  <i>symbols</i> &#x0026;optional  <i>package</i>
-<!--l. 1753--><p class="noindent" >The argument should be a list of symbols, or possibly a single symbol. The print
-name of each symbol is extracted, and the speciﬁed <i>package</i> is searched for a
-symbol of that name. If such a symbol is present in this package (directly, not by
-inheritance), then nothing is done. Otherwise, a new symbol is created with this
-print name, and it is inserted in the <i>package</i> as an internal symbol. The symbol is
-                                                                          
-
-                                                                          
-also placed on the shadowing-symbols list of the <i>package</i> (see section <a 
-href="clmse61.html#x77-18500011.5">11.5<!--tex4ht:ref: NAME-CONFLICTS-SECTION --></a>).
-<a 
-href="#x79-188053r193">shadow</a> returns <a 
-href="clmse31.html#x42-77004r20">t</a>.
-<div class=newer>
-<!--l. 1765--><p class="indent" >   X3J13 voted in March 1988 <a 
- id="dx79-188054"></a>to change <a 
-href="#x79-188053r193">shadow</a> to accept strings as well
-as well as symbols (a string in the <i>symbols</i> list being treated as a print
-name), and to clarify that if a symbol of speciﬁed name is already in the
-<i>package</i> but is not yet on the shadowing-symbols list for that <i>package</i>, then
-<a 
-href="#x79-188053r193">shadow</a> does add it to the shadowing-symbols list rather than simply doing
-nothing.
-</div>
-<!--l. 1774--><p class="indent" >   <a 
-href="#x79-188053r193">shadow</a> should be used with caution. It changes the state of the package
-system in such a way that the consistency rules do not hold across the
-change.
-<div class=new>
-<!--l. 1779--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188055"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1786--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188056"></a><a 
- id="x79-188057r194"></a><b> use-package</b>  <i>packages-to-use</i> &#x0026;optional  <i>package</i>
-<!--l. 1788--><p class="noindent" >The <i>packages-to-use</i> argument should be a list of packages or package names, or
-possibly a single package or package name. These packages are added to the
-use-list of <i>package</i> if they are not there already. All external symbols in the
-packages to use become accessible in <i>package</i> as internal symbols (see
-section <a 
-href="clmse60.html#x76-18400011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>). It is an error to try to use the keyword package. <a 
-href="#x79-188057r194">use-package</a> returns
-<a 
-href="clmse31.html#x42-77004r20">t</a>.
-<div class=new>
-<!--l. 1799--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188058"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=defun>
-<!--l. 1806--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-188059"></a><a 
- id="x79-188060r195"></a><b> unuse-package</b>  <i>packages-to-unuse</i> &#x0026;optional  <i>package</i>
-<!--l. 1808--><p class="noindent" >The <i>packages-to-unuse</i> argument should be a list of packages or package names, or
-possibly a single package or package name. These packages are removed from the
-use-list of <i>package</i>. <a 
-href="#x79-188060r195">unuse-package</a> returns <a 
-href="clmse31.html#x42-77004r20">t</a>.
-<div class=new>
-<!--l. 1815--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188061"></a>to clarify that the <i>package</i> argument may be
-                                                                          
-
-                                                                          
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-</div>
-<div class=new>
-<!--l. 1823--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-188062"></a>to add a macro <a 
-href="#x79-188064r196">defpackage</a> to the language
-to make it easier to create new packages, alleviating the burden on the
-programmer to perform the various setup operations in exactly the correct
-sequence.
-<div class=defmac>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Macro]</i><b> defpackage </b><a 
- id="dx79-188063"></a><a 
- id="x79-188064r196"></a> deﬁned-package-name  {option}*
-</td></tr></table>
-<!--l. 1832--><p class="indent" >
-</div>
-<!--l. 1832--><p class="noindent" ><span class="paragraphHead"><a 
- id="x79-18900011.7"></a></span>
-   This creates a new package, or modiﬁes an existing one, whose name is
-<i>deﬁned-package-name</i>. The <i>deﬁned-package-name</i> may be a string or a symbol; if
-it is a symbol, only its print name matters, and not what package, if any, the
-symbol happens to be in. The newly created or modiﬁed package is returned as
-the value of the <a 
-href="#x79-188064r196">defpackage</a> form.
-<!--l. 1841--><p class="indent" >   Each standard <i>option</i> is a list of a keyword (the name of the option) and
-associated arguments. No part of a <a 
-href="#x79-188064r196">defpackage</a> form is evaluated. Except for the
-:size option, more than one option of the same kind may occur within the same
-<a 
-href="#x79-188064r196">defpackage</a> form.
-<!--l. 1846--><p class="indent" >   The standard options for <a 
-href="#x79-188064r196">defpackage</a> are as follows. In every case, any option
-argument called <i>package-name</i> or <i>symbol-name</i> may be a string or a symbol; if it
-is a symbol, only its print name matters, and not what package, if any, the symbol
-happens to be in.
-<div class=flushdesc>
-<!--l. 1854--><p class="indent" >
-      <ul><li><b>
-(:size <i>integer</i>) </b></li>This speciﬁes approximately the number of symbols expected
-                                                                          
-
-                                                                          
-      to be in the package. This is purely an eﬃciency hint to the storage
-      allocator,  so  that  implementations  using  hash  tables  as  part  of
-      the  package  data  structure  (the  usual  technique)  will  not  have  to
-      incrementally expand the package as new symbols are added to it (for
-      example, as a large ﬁle is read while “in” that package).
-      <li><b>
-(:nicknames  {<i><i></i></i>}* package-name) </b></li>The speciﬁed names become nicknames of
-      the package being deﬁned. If any of the speciﬁed nicknames already
-      refers to an existing package, a continuable error is signaled exactly as
-      for the function <a 
-href="#x79-187007r174">make-package</a>.
-      <li><b>
-(:shadow  {<i><i></i></i>}* symbol-name) </b></li>Symbols with the speciﬁed names are created as
-      shadows in the package being deﬁned, just as with the function <a 
-href="#x79-188053r193">shadow</a>.
-      <li><b>
-(:shadowing-import-from <i>package-name</i> {<i><i></i></i>}* symbol-name) </b></li>Symbols    with
-      the speciﬁed names are located in the speciﬁed package. These symbols
-      are imported into the package being deﬁned, shadowing other symbols
-      if necessary, just as with the function <a 
-href="#x79-188050r192">shadowing-import</a>. In no case will
-      symbols be created in a package other than the one being deﬁned; a
-      continuable error is signaled if for any <i>symbol-name</i> there is no symbol
-      of that name accessible in the package named <i>package-name</i>.
-      <li><b>
-(:use  {<i><i></i></i>}* package-name) </b></li>The package being deﬁned is made to “use” (inherit
-      from) the packages speciﬁed by this option, just as with the function
-      <a 
-href="#x79-188057r194">use-package</a>. If no :use option is supplied, then a default list is assumed
-      as for <a 
-href="#x79-187007r174">make-package</a>.
-      <!--l. 1888--><p class="noindent" >X3J13   voted   in   January   1989   <a 
- id="dx79-189001"></a>to   change   the   speciﬁcation   of
-      <a 
-href="#x79-187007r174">make-package</a>  so  that  the  default  value  for  the  :use  argument  is
-      unspeciﬁed.  This  change  aﬀects  <a 
-href="#x79-188064r196">defpackage</a>  as  well.  Portable  code
-      should specify (:use &#x2019;(&#x0022;COMMON-LISP&#x0022;)) explicitly.
-      <li><b>
-(:import-from <i>package-name</i> {<i><i></i></i>}* symbol-name) </b></li>Symbols with the speciﬁed
-      names are located in the speciﬁed package. These symbols are imported
-      into the package being deﬁned, just as with the function <a 
-href="#x79-188046r191">import</a>. In
-                                                                          
-
-                                                                          
-      no case will symbols be created in a package other than the one being
-      deﬁned; a continuable error is signaled if for any <i>symbol-name</i> there is
-      no symbol of that name accessible in the package named <i>package-name</i>.
-      <li><b>
-(:intern  {<i><i></i></i>}* symbol-name) </b></li>Symbols with the speciﬁed names are located or
-      created in the package being deﬁned, just as with the function <a 
-href="#x79-188030r186">intern</a>.
-      Note that the action of this option may be aﬀected by a :use option,
-      because an inherited symbol will be used in preference to creating a
-      new one.
-      <li><b>
-(:export  {<i><i></i></i>}* symbol-name) </b></li>Symbols with the speciﬁed names are located or
-      created in the package being deﬁned and then exported, just as with
-      the function <a 
-href="#x79-188040r189">export</a>. Note that the action of this option may be aﬀected
-      by a :use, :import-from, or :shadowing-import-from option, because an
-      inherited or imported symbol will be used in preference to creating a
-      new one.</ul>
-</div>
-<!--l. 1920--><p class="indent" >   The order in which options appear in a <a 
-href="#x79-188064r196">defpackage</a> form does not matter; part
-of the convenience of <a 
-href="#x79-188064r196">defpackage</a> is that it sorts out the options into the
-correct order for processing. Options are processed in the following order:
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">1.  :shadow and :shadowing-import-from
-</td></tr></table>
-<!--l. 1925--><p class="indent" >                                                                  <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">2.  :use</td></tr></table>
-<!--l. 1926--><p class="indent" >                                              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">3.  :import-from and :intern</td></tr></table>
-<!--l. 1927--><p class="indent" >                                                               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">4.  :export</td></tr></table>
-<!--l. 1929--><p class="indent" >
-</div>
-<!--l. 1930--><p class="noindent" >Shadows are established ﬁrst in order to avoid spurious name conﬂicts when use links
-are established. Use links must occur before importing and interning so that those
-operations may refer to normally inherited symbols rather than creating new ones.
-Exports are performed last so that symbols created by any of the other
-options, in particular, shadows and imported symbols, may be exported.
-                                                                          
-
-                                                                          
-Note that exporting an inherited symbol implicitly imports it ﬁrst (see
-section <a 
-href="clmse60.html#x76-18400011.4">11.4<!--tex4ht:ref: EXPORT-IMPORT-SECTION --></a>).
-<!--l. 1939--><p class="indent" >   If no package named <i>deﬁned-package-name</i> already exists, <a 
-href="#x79-188064r196">defpackage</a> creates
-it. If such a package does already exist, then no new package is created. The
-existing package is modiﬁed, if possible, to reﬂect the new deﬁnition. The results
-are undeﬁned if the new deﬁnition is not consistent with the current state of the
-package.
-<!--l. 1946--><p class="indent" >   An error is signaled if more than one :size option appears.
-<!--l. 1948--><p class="indent" >   An error is signaled if the same <a 
-href="clmse55.html#x70-178002r165">symbol-name</a> argument (in the sense of
-comparing names with <a 
-href="clmse101.html#x124-246002r595">string=</a>) appears more than once among the arguments
-to all the :shadow, :shadowing-import-from, :import-from, and :intern
-options.
-<!--l. 1953--><p class="indent" >   An error is signaled if the same <a 
-href="clmse55.html#x70-178002r165">symbol-name</a> argument (in the sense of
-comparing names with <a 
-href="clmse101.html#x124-246002r595">string=</a>) appears more than once among the arguments to
-all the :intern and :export options.
-<!--l. 1957--><p class="indent" >   Other kinds of name conﬂicts are handled in the same manner that
-the underlying operations <a 
-href="#x79-188057r194">use-package</a>, <a 
-href="#x79-188046r191">import</a>, and <a 
-href="#x79-188040r189">export</a> would handle
-them.
-<!--l. 1961--><p class="indent" >   Implementations may support other <a 
-href="#x79-188064r196">defpackage</a> options. Every implementation
-should signal an error on encountering a <a 
-href="#x79-188064r196">defpackage</a> option it does not
-support.
-<!--l. 1965--><p class="indent" >   The function <a 
-href="clmse127.html#x157-318011r799">compile-ﬁle</a> should treat top-level <a 
-href="#x79-188064r196">defpackage</a> forms in the same
-way it would treat top-level calls to package-aﬀecting functions (as described at
-the beginning of section <a 
-href="#x79-18700011.7">11.7<!--tex4ht:ref: PACKAGE-FUNCTIONS-SECTION --></a>).
-<!--l. 1970--><p class="indent" >   Here is an example of a call to <a 
-href="#x79-188064r196">defpackage</a> that “plays it safe” by using only
-strings as names. <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(cl:defpackage &#x0022;MY-VERY-OWN-PACKAGE&#x0022;
-</td></tr></table>
-<!--l. 1973--><p class="indent" >                                                              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:size 496)</td></tr></table>
-<!--l. 1974--><p class="indent" >                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:nicknames &#x0022;MY-PKG&#x0022; &#x0022;MYPKG&#x0022; &#x0022;MVOP&#x0022;)</td></tr></table>
-<!--l. 1975--><p class="indent" >                                               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:use &#x0022;COMMON-LISP&#x0022;)</td></tr></table>
-<!--l. 1976--><p class="indent" >                                               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:shadow &#x0022;CAR&#x0022; &#x0022;CDR&#x0022;)</td></tr></table>
-<!--l. 1977--><p class="indent" >                  <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:shadowing-import-from &#x0022;BRAND-X-LISP&#x0022; &#x0022;CONS&#x0022;)</td></tr></table>
-<!--l. 1978--><p class="indent" >   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:import-from &#x0022;BRAND-X-LISP&#x0022; &#x0022;GC&#x0022; &#x0022;BLINK-FRONT-PANEL-LIGHTS&#x0022;)</td></tr></table>
-<!--l. 1979--><p class="indent" >              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:export &#x0022;EQ&#x0022; &#x0022;CONS&#x0022; &#x0022;MY-VERY-OWN-FUNCTION&#x0022;))</td></tr></table>
-<!--l. 1981--><p class="indent" >
-                                                                          
-
-                                                                          
-</div>
-</div>
-<!--l. 1982--><p class="noindent" >The preceding <a 
-href="#x79-188064r196">defpackage</a> example is designed to operate correctly even if the
-package current when the form is read happens not to “use” the common-lisp
-package. (Note the use in this example of the nickname cl for the common-lisp
-package.) Moreover, neither reading in nor evaluating this <a 
-href="#x79-188064r196">defpackage</a> form will
-ever create any symbols in the current package. Note too the use of uppercase
-letters in the strings.
-<!--l. 1990--><p class="indent" >   Here, for the sake of contrast, is a rather similar use of <a 
-href="#x79-188064r196">defpackage</a> that “plays
-the whale” by using all sorts of permissible syntax. <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(defpackage my-very-own-package
-</td></tr></table>
-<!--l. 1994--><p class="indent" >                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:export :EQ common-lisp:cons my-very-own-function)</td></tr></table>
-<!--l. 1995--><p class="indent" >                                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:nicknames &#x0022;MY-PKG&#x0022; #:MyPkg)</td></tr></table>
-<!--l. 1996--><p class="indent" >                                               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:use &#x0022;COMMON-LISP&#x0022;)</td></tr></table>
-<!--l. 1997--><p class="indent" >                                                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:shadow &#x0022;CAR&#x0022;)</td></tr></table>
-<!--l. 1998--><p class="indent" >                                                              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:size 496)</td></tr></table>
-<!--l. 1999--><p class="indent" >                                                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:nicknames mvop)</td></tr></table>
-<!--l. 2000--><p class="indent" >       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:import-from &#x0022;BRAND-X-LISP&#x0022; &#x0022;GC&#x0022; Blink-Front-Panel-Lights)</td></tr></table>
-<!--l. 2001--><p class="indent" >                                             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:shadow common-lisp::cdr)</td></tr></table>
-<!--l. 2002--><p class="indent" >                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (:shadowing-import-from &#x0022;BRAND-X-LISP&#x0022; CONS))</td></tr></table>
-<!--l. 2004--><p class="indent" >
-</div>
-</div>
-<!--l. 2005--><p class="noindent" >This example has exactly the same eﬀect on the newly created package but may
-create useless symbols in other packages. The use of explicit package tags is
-particularly confusing; for example, this <a 
-href="#x79-188064r196">defpackage</a> form will cause the symbol
-<a 
-href="clmse86.html#x106-224004r445">cdr</a> to be shadowed <i>in the new package</i>; it will not be shadowed in the
-package common-lisp. The fact that the name “CDR” was speciﬁed by a
-package-qualiﬁed reference to a symbol in the common-lisp package is a red
-herring. The moral is that the syntactic ﬂexibility of <a 
-href="#x79-188064r196">defpackage</a>, as in other
-parts of Common Lisp, yields considerable convenience when used with
-commonsense competence, but unutterable confusion when used with Malthusian
-profusion.
-<div class=implementation>
-                                                                          
-
-                                                                          
-<!--l. 2019--><p class="noindent" ><b>Implementation note:</b> An implementation of <a 
-href="#x79-188064r196">defpackage</a> might choose to transform all
-the <i>package-name</i> and <i>symbol-name</i> arguments into strings at macro expansion time,
-rather than at the time the resulting expansion is executed, so that even if source code is
-expressed in terms of strange symbols in the <a 
-href="#x79-188064r196">defpackage</a> form, the binary ﬁle resulting
-from compiling the source code would contain only strings. The purpose of this is simply
-to minimize the creation of useless symbols in production code. This technique is
-permitted as an implementation strategy but is not a behavior required by the
-speciﬁcation of <a 
-href="#x79-188064r196">defpackage</a>.
-</div>
-<!--l. 2033--><p class="indent" >   Note that <a 
-href="#x79-188064r196">defpackage</a> is not capable by itself of deﬁning mutually recursive
-packages, for example two packages each of which uses the other. However,
-nothing prevents one from using <a 
-href="#x79-188064r196">defpackage</a> to perform much of the initial setup
-and then using functions such as <a 
-href="#x79-188057r194">use-package</a>, <a 
-href="#x79-188046r191">import</a>, and <a 
-href="#x79-188040r189">export</a> to complete the
-links.
-<!--l. 2040--><p class="indent" >   The purpose of <a 
-href="#x79-188064r196">defpackage</a> is to encourage the user to put the entire deﬁnition
-of a package and its relationships to other packages in a single place. It may also
-encourage the designer of a large system to place the deﬁnitions of all
-relevant packages into a single ﬁle (say) that can be loaded before loading
-or compiling any code that depends on those packages. Such a ﬁle, if
-carefully constructed, can simply be loaded into the common-lisp-user
-package.
-<!--l. 2048--><p class="indent" >   Implementations and programming environments may also be better able to
-support the programming process (if only by providing better error checking)
-through global knowledge of the intended package setup.
-</div>
-</div>
-<div class=defun>
-<!--l. 2054--><p class="noindent" ><i>[Function]</i><a 
- id="dx79-189002"></a><a 
- id="x79-189003r197"></a><b> ﬁnd-all-symbols</b>  <i>string-or-symbol</i>
-<!--l. 2056--><p class="noindent" ><a 
-href="#x79-189003r197">ﬁnd-all-symbols</a> searches every package in the Lisp system to ﬁnd every symbol
-whose print name is the speciﬁed string. A list of all such symbols found is
-returned. This search is case-sensitive. If the argument is a symbol, its print name
-supplies the string to be searched for.
-</div>
-<div class=defmac>
-<div class=tabbing>
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Macro]</i><b> do-symbols </b><a 
- id="dx79-189004"></a><a 
- id="x79-189005r198"></a> (var [package [result-form]])
-</td></tr></table>
-<!--l. 2068--><p class="indent" >                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> {declaration}*  {tag | statement}* </td></tr></table>
-<!--l. 2069--><p class="indent" >
-</div>
-<!--l. 2069--><p class="noindent" ><span class="paragraphHead"><a 
- id="x79-19000011.7"></a></span>
-   <a 
-href="#x79-189005r198">do-symbols</a> provides straightforward iteration over the symbols of a
-package. The body is performed once for each symbol accessible in the
-<i>package</i>, in no particular order, with the variable <i>var</i> bound to the symbol.
-Then <i>result-form</i> (a single form, <i>not</i> an implicit <a 
-href="clmse38.html#x50-102002r80">progn</a>) is evaluated, and
-the result is the value of the <a 
-href="#x79-189005r198">do-symbols</a> form. (When the <i>result-form</i>
-is evaluated, the control variable <i>var</i> is still bound and has the value
-<a 
-href="clmse31.html#x42-77002r19">nil</a>.) If the <i>result-form</i> is omitted, the result is <a 
-href="clmse31.html#x42-77002r19">nil</a>. <a 
-href="clmse142.html#x173-367002r883">return</a> may be used
-to terminate the iteration prematurely. If execution of the body aﬀects
-which symbols are contained in the <i>package</i>, other than possibly to remove
-the symbol currently the value of <i>var</i> by using <a 
-href="#x79-188037r188">unintern</a>, the eﬀects are
-unpredictable.
-<div class=new>
-<!--l. 2084--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-190001"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-<div class=new>
-<!--l. 2091--><p class="indent" >   X3J13 voted in March 1988 <a 
- id="dx79-190002"></a>to specify that the body of a <a 
-href="#x79-189005r198">do-symbols</a> form may
-be executed more than once for the same accessible symbol, and users should take
-care to allow for this possibility.
-<!--l. 2097--><p class="indent" >   The point is that the same symbol might be accessible via more than one
-chain of inheritance, and it is implementationally costly to eliminate such
-duplicates. Here is an example: <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(setq *a* (make-package &#x2019;a))      ;Implicitly uses package common-lisp
-</td></tr></table>
-<!--l. 2101--><p class="indent" >
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(setq *b* (make-package &#x2019;b))      ;Implicitly uses package common-lisp</td></tr></table>
-<!--l. 2102--><p class="indent" >                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(setq *c* (make-package &#x2019;c :use &#x2019;(a b)))</td></tr></table>
-<!--l. 2103--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-                                                                          
-
-                                                                          
-<!--l. 2104--><p class="indent" >       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(do-symbols (x *c*) (print x))    ;Symbols in package common-lisp</td></tr></table>
-<!--l. 2105--><p class="indent" >   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                                  ; might be printed once or twice here</td></tr></table>
-<!--l. 2107--><p class="indent" >
-</div>
-</div>
-<!--l. 2109--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-190003"></a>to restrict user side eﬀects; see section <a 
-href="clmse43.html#x55-1420007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
-</div> <div class=new> Note that the <a 
-href="clmse42.html#x54-129002r106">loop</a> construct provides a kind of <a 
-href="clmse137.html#x168-349002r854">for</a> clause that can iterate over
-the symbols of a package (see chapter <a 
-href="clmch26.html#x162-33400026">26<!--tex4ht:ref: LOOP --></a>).
-</div>
-</div>
-<div class=defmac>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Macro]</i><b> do-external-symbols </b><a 
- id="dx79-190004"></a><a 
- id="x79-190005r199"></a> (var [package [result]])
-</td></tr></table>
-<!--l. 2121--><p class="indent" >                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> {declaration}*  {tag | statement}* </td></tr></table>
-<!--l. 2122--><p class="indent" >
-</div>
-<!--l. 2122--><p class="noindent" ><span class="paragraphHead"><a 
- id="x79-19100011.7"></a></span>
-   <a 
-href="#x79-190005r199">do-external-symbols</a> is just like <a 
-href="#x79-189005r198">do-symbols</a>, except that only the external
-symbols of the speciﬁed package are scanned. <div class=new> The clariﬁcation voted by X3J13 in
-March 1988 for <a 
-href="#x79-189005r198">do-symbols</a> <a 
- id="dx79-191001"></a>, regarding redundant executions of the body for the
-same symbol, applies also to <a 
-href="#x79-190005r199">do-external-symbols</a>.
-</div>
-<div class=new>
-<!--l. 2134--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-191002"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-<div class=new>
-<!--l. 2141--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-191003"></a>to restrict user side eﬀects; see section <a 
-href="clmse43.html#x55-1420007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
-</div>
-</div>
-<div class=defmac>
-                                                                          
-
-                                                                          
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Macro]</i><b> do-all-symbols </b><a 
- id="dx79-191004"></a><a 
- id="x79-191005r200"></a> (var [result-form])
-</td></tr></table>
-<!--l. 2149--><p class="indent" >                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> {declaration}*  {tag | statement}* </td></tr></table>
-<!--l. 2150--><p class="indent" >
-</div>
-<!--l. 2150--><p class="noindent" ><span class="paragraphHead"><a 
- id="x79-19200011.7"></a></span>
-   This is similar to <a 
-href="#x79-189005r198">do-symbols</a> but executes the body once for every symbol
-contained in every package. (This will not process every symbol whatsoever,
-because a symbol not accessible in any package will not be processed. Normally,
-uninterned symbols are not accessible in any package.) It is <i>not</i> in general the case
-that each symbol is processed only once, because a symbol may appear in many
-packages.
-<div class=new>
-<!--l. 2160--><p class="indent" >   The clariﬁcation voted by X3J13 in March 1988 for <a 
-href="#x79-189005r198">do-symbols</a> <a 
- id="dx79-192001"></a>, regarding
-redundant executions of the body for the same symbol, applies also to
-<a 
-href="#x79-191005r200">do-all-symbols</a>.
-</div>
-<div class=new>
-<!--l. 2168--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-192002"></a>to clarify that the <i>package</i> argument may be
-either a package object or a package name (see section <a 
-href="clmse58.html#x74-18200011.2">11.2<!--tex4ht:ref: PACKAGE-NAMES-SECTION --></a>).
-</div>
-<div class=new>
-<!--l. 2175--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-192003"></a>to restrict user side eﬀects; see section <a 
-href="clmse43.html#x55-1420007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
-</div>
-</div>
-<div class=new>
-<!--l. 2182--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-192004"></a>to add a new macro <a 
-href="#x79-192006r201">with-package-iterator</a> to the
-language.
-<div class=defmac>
-<div class=tabbing>
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Macro]</i><b> with-package-iterator </b><a 
- id="dx79-192005"></a><a 
- id="x79-192006r201"></a> (mname package-list  {symbol-type}+ )
-</td></tr></table>
-<!--l. 2188--><p class="indent" >                                                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> { form}* </td></tr></table>
-<!--l. 2189--><p class="indent" >
-</div>
-<!--l. 2189--><p class="noindent" ><span class="paragraphHead"><a 
- id="x79-19300011.7"></a></span>
-   The name <i>mname</i> is bound and deﬁned as if by <a 
-href="clmse39.html#x51-114010r95">macrolet</a>, with the body <i>form</i>s
-as its lexical scope, to be a “generator macro” such that each invocation of
-(<i>mname</i>) will return a symbol and that successive invocations will eventually
-deliver, one by one, all the symbols from the packages that are elements of the list
-that is the value of the expression <i>package-list</i> (which is evaluated exactly
-once).
-<!--l. 2198--><p class="indent" >   Each element of the <i>package-list</i> value may be either a package or the name of
-a package. As a further convenience, if the <i>package-list</i> value is itself a package or
-the name of a package, it is treated as if a singleton list containing that value had
-been provided. If the <i>package-list</i> value is <a 
-href="clmse31.html#x42-77002r19">nil</a>, it is considered to be an empty list
-of packages.
-<!--l. 2206--><p class="indent" >   At each invocation of the generator macro, there are two possibilities. If there
-is yet another unprocessed symbol, then four values are returned: <a 
-href="clmse31.html#x42-77004r20">t</a>, the symbol, a
-keyword indicating the accessibility of the symbol within the package (see below),
-and the package from which the symbol was accessed. If there are no more
-unprocessed symbols in the list of packages, then one value is returned:
-<a 
-href="clmse31.html#x42-77002r19">nil</a>.
-<!--l. 2215--><p class="indent" >   When the generator macro returns a symbol as its second value, the fourth
-value is always one of the packages present or named in the <i>package-list</i> value, and
-the third value is a keyword indicating accessibility: :internal means present in the
-package and not exported; :external means present and exported; and :inherited
-means not present (thus not shadowed) but inherited from some package used by
-the package that is the fourth value.
-<!--l. 2224--><p class="indent" >   Each <i>symbol-type</i> in an invocation of <a 
-href="#x79-192006r201">with-package-iterator</a> is not evaluated.
-More than one may be present; their order does not matter. They indicate the
-accessibility types of interest. A symbol is not returned by the generator macro
-unless its actual accessibility matches one of the <i>symbol-type</i> indicators. The
-standard <i>symbol-type</i> indicators are :internal, :external, and :inherited, but
-                                                                          
-
-                                                                          
-implementations are permitted to extend the syntax of <a 
-href="#x79-192006r201">with-package-iterator</a> by
-recognizing additional symbol accessibility types. An error is signaled if no
-<i>symbol-type</i> is supplied, or if any supplied <i>symbol-type</i> is not recognized by the
-implementation.
-<!--l. 2236--><p class="indent" >   The order in which symbols are produced by successive invocations of the
-generator macro is not necessarily correlated in any way with the order of the
-packages in the <i>package-list</i>. When more than one package is in the <i>package-list</i>,
-symbols accessible from more than one package may be produced once or more
-than once. Even when only one package is speciﬁed, symbols inherited in
-multiple ways via used packages may be produced once or more than
-once.
-<!--l. 2245--><p class="indent" >   The implicit interior state of the iteration over the list of packages and the
-symbols within them has dynamic extent. It is an error to invoke the generator
-macro once the <a 
-href="#x79-192006r201">with-package-iterator</a> form has been exited.
-<!--l. 2250--><p class="indent" >   Any number of invocations of <a 
-href="#x79-192006r201">with-package-iterator</a> and related macros may
-be nested, and the generator macro of an outer invocation may be called from
-within an inner invocation (provided, of course, that its name is visible or
-otherwise made available).
-<!--l. 2255--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx79-193001"></a>to restrict user side eﬀects; see section <a 
-href="clmse43.html#x55-1420007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
-<div class=rationale>
-<!--l. 2260--><p class="noindent" ><b>Rationale:</b> This facility is a bit more ﬂexible in some ways than <a 
-href="#x79-189005r198">do-symbols</a> and friends.
-In particular, it makes it possible to implement <a 
-href="clmse42.html#x54-129002r106">loop</a> clauses for iterating over packages
-in a way that is both portable and eﬃcient (see chapter <a 
-href="clmch26.html#x162-33400026">26<!--tex4ht:ref: LOOP --></a>).
-</div>
-</div>
-</div>
-                                                                          
-
-                                                                          
-   <!--l. 2271--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 253--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse64.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse62.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse62.html#tailclmse62.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch12.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch12.html#tailclmch12.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse63.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch11.html#clmse63.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 2271--><p class="indent" >   <a 
+href="clmch12.html#clmse63.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 253--><p class="indent" >   <a 
  id="tailclmse63.html"></a>  
 </body></html> 

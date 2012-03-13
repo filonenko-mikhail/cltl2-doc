@@ -1,270 +1,672 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Structure Traversal and Side Eﬀects</title> 
+<head><title>Возврат и обработка нескольких значений</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-11 14:56:00"> 
+<meta name="date" content="2012-03-13 16:31:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 5626--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 6916--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse44.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse42.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse42.html#tailclmse42.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse43.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch7.html#clmse43.html" >Up</a><tt>&#x003E;</tt></p></div>
    <h3 class="sectionHead"><span class="titlemark">7.9   </span> <a 
- id="x55-1420007.9"></a>Structure Traversal and Side Eﬀects</h3>
-<!--l. 5629--><p class="noindent" >X3J13 voted in January 1989 <a 
- id="dx55-142001"></a>to restrict side eﬀects during the course of a built-in
-operation that can execute user-supplied code while traversing a data
-structure.
-<!--l. 5634--><p class="indent" >   Consider the following example: <div class=lisp> <div class=tabbing>
+ id="x55-1300007.9"></a>Возврат и обработка нескольких значений</h3>
+<a 
+ id="dx55-130001"></a>
+<!--l. 6919--><p class="noindent" >Обычно результатом вызова Lisp&#x2019;овой функции является один Lisp&#x2019;овый
+объект. Однако, иногда для функции удобно вычислить несколько объектов и
+вернуть их. Common Lisp представляет механизм для прямой обработки
+нескольких значений. Механизм удобнее и эффективнее, чем исполнение
+трюков со списками или глобальными переменными.
+<!--l. 6925--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.9.1   </span> <a 
+ id="x55-1310007.9.1"></a>Конструкции для обработки нескольких значений</h4>
+<!--l. 6927--><p class="noindent" >Обычно не используется несколько значений. Для возврата и обработки
+нескольких значений требуются специальные формы. Если вызывающий
+функцию код не требует нескольких значений, однако вызываемая
+функция их несколько, то для кода берется только первое значение.
+Все оставшиеся значения игнорируются. Если вызываемая функция
+возвращает ноль значений, вызывающий код в качестве значения получает
+<a 
+href="clmse31.html#x42-74002r18">nil</a>.
+<!--l. 6935--><p class="indent" >   <a 
+href="#x55-131002r105">values</a> — это главный примитив для возврата нескольких значений. Он
+принимает любое количество аргументов и возвращает столько же значений.
+Если последняя форма тела функции является <a 
+href="#x55-131002r105">values</a> с тремя аргументами,
+то вызов такой функции вернет три значения. Другие специальные формы
+также возвращают несколько значения, но они могут быть описаны в
+терминах <a 
+href="#x55-131002r105">values</a>. Некоторые встроенные Common Lisp функции, такая как
+<a 
+href="clmse68.html#x85-187012r224">ﬂoor</a>, возвращают несколько значений.
+<!--l. 6943--><p class="indent" >   Специальные формы обрабатывающие несколько значений представлены
+ниже: <div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(let ((x &#x2019;(apples peaches pumpkin pie)))
+class="tabbing">multiple-value-list
 </td></tr></table>
-<!--l. 5636--><p class="indent" >                                                            <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (dolist (z x)</td></tr></table>
-<!--l. 5637--><p class="indent" >                                                <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    (when (eq z &#x2019;peaches)</td></tr></table>
-<!--l. 5638--><p class="indent" >                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      (setf (cddr x) &#x2019;(mango kumquat)))</td></tr></table>
-<!--l. 5639--><p class="indent" >                                             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    (format t &#x0022; S &#x0022; (car z))))</td></tr></table>
-<!--l. 5641--><p class="indent" >
-</div>
-</div>
-<!--l. 5642--><p class="noindent" >Depending on the details of the implementation of <a 
-href="clmse42.html#x54-134002r111">dolist</a>, this bit of code could easily
-print <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">apples peaches mango kumquat
-</td></tr></table>
-<!--l. 5646--><p class="indent" >
-</div>
-</div>
-<!--l. 5647--><p class="noindent" >(which is perhaps what was intended), but it might as easily print <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">apples peaches pumpkin pie
-</td></tr></table>
-<!--l. 5650--><p class="indent" >
                                                                           
 
                                                                           
+<!--l. 6945--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">multiple-value-call</td></tr></table>
+<!--l. 6946--><p class="indent" >                                                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">multiple-value-prog1</td></tr></table>
+<!--l. 6947--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">multiple-value-bind</td></tr></table>
+<!--l. 6948--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">multiple-value-setq</td></tr></table>
+<!--l. 6950--><p class="indent" >
 </div>
 </div>
-<!--l. 5651--><p class="noindent" >Here is a plausible implementation of <a 
-href="clmse42.html#x54-134002r111">dolist</a> that produces the ﬁrst result: <div class=lisp>
+<!--l. 6951--><p class="noindent" >Они задают форму для вычисления и указывают куда поместить значения
+возвращаемые данной формой.
+<div class=defun>
+<!--l. 6954--><p class="noindent" ><i>[Function]</i><a 
+ id="dx55-131001"></a><a 
+ id="x55-131002r105"></a><b> values</b>  &#x0026;rest  <i>args</i>
+<!--l. 6956--><p class="noindent" >Все аргументы в таком же порядке возвращаются, как значения. Например,
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun polar (x y)
+</td></tr></table>
+<!--l. 6960--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (values (sqrt (+ (* x x) (* y y))) (atan y x)))</td></tr></table>
+<!--l. 6961--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 6962--><p class="indent" >                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(multiple-value-bind (r theta) (polar 3.0 4.0)</td></tr></table>
+<!--l. 6963--><p class="indent" >                                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (vector r theta))</td></tr></table>
+<!--l. 6964--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ #(5.0 0.9272952)</td></tr></table>
+<!--l. 6966--><p class="indent" >
+</div>
+</div>
+<!--l. 6968--><p class="indent" >   Выражение (values) возвращает ноль значений. Это стандартная идиома
+для возврата из функции нулевого количества значений.
+<!--l. 6971--><p class="indent" >   Иногда необходимо указать явно, что функция будет возвращать только
+одно значение. Например, функция <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun foo (x y)
+</td></tr></table>
+<!--l. 6974--><p class="indent" >                                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (ﬂoor (+ x y) y))</td></tr></table>
+<!--l. 6976--><p class="indent" >
+</div>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 6977--><p class="noindent" >будет возвращать два значения, потому что <a 
+href="clmse68.html#x85-187012r224">ﬂoor</a> возвращает два значения.
+Может быть второе значение не имеет смысла в данном контексте, или есть
+причины не тратить время на вычисления второго значения. Функция
+<a 
+href="#x55-131002r105">values</a> является стандартной идиомой для указания того, что будет
+возвращено только одно значение, как показано в следующем примере.
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun foo (x y)
+</td></tr></table>
+<!--l. 6983--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (values (ﬂoor (+ x y) y)))</td></tr></table>
+<!--l. 6985--><p class="indent" >
+</div>
+</div>
+<!--l. 6986--><p class="noindent" >Это работает, потому что <a 
+href="#x55-131002r105">values</a> возвращает только <i>одно</i> значения для каждой
+формы аргумента. Если форма аргумента возвращает несколько значений, то
+используется только первое, а остальные игнорируются.
+<!--l. 6990--><p class="indent" >   В Common Lisp&#x2019;е для вызывающго кода нет возможности различить, было
+ли возвращено просто одно значение или было возвращено только
+одно значение в с помощью <a 
+href="#x55-131002r105">values</a>. Например значения, возвращенные
+выражением (+ 1 2) и (values (+ 1 2)), идентичны во всех отношениях: они
+оба просто равны 3.
+</div>
+<div class=defun>
+<!--l. 6996--><p class="noindent" ><i>[Constant]</i><a 
+ id="dx55-131003"></a><a 
+ id="x55-131004r106"></a><b> multiple-values-limit</b>
+<!--l. 6998--><p class="noindent" >Значение <a 
+href="#x55-131004r106">multiple-values-limit</a> является положительным целым числом,
+которое невключительно указывает наибольшее возможное количество
+возвращаемых значений. Это значение зависит от реализации, но не может
+быть менее 20. (Разработчики рекомендуется делать это ограничение
+как можно большим без потери в производительности.) Смотрите
+<a 
+href="clmse29.html#x39-65005r12">lambda-parameters-limit</a> и <a 
+href="clmse37.html#x49-95006r70">call-arguments-limit</a>.
+</div>
+<div class=defun>
+<!--l. 7007--><p class="noindent" ><i>[Function]</i><a 
+ id="dx55-131005"></a><a 
+ id="x55-131006r107"></a><b> values-list</b>  <i>list</i>
+<!--l. 7009--><p class="noindent" >Все элементы списка <i>list</i> будут возвращены как несколько значений.
+Например: <div class=lisp><div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(values-list (list a b c))  ≡ (values a b c)
+</td></tr></table>
+<!--l. 7014--><p class="indent" >
+</div>
+</div>
+<!--l. 7015--><p class="noindent" >Можно обозначить так, <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(values-list <i>list</i>)  ≡ (apply #&#x2019;values <i>list</i>)
+</td></tr></table>
+<!--l. 7018--><p class="indent" >
+</div>
+</div>
+<!--l. 7019--><p class="noindent" >но <a 
+href="#x55-131006r107">values-list</a> может быть более ясным или эффективным.
+</div>
+<div class=defmac>
 <div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(defmacro dolist ((var listform &#x0026;optional (resultform ”nil))
+class="tabbing"> <i>[Macro]</i><b> multiple-value-list </b><a 
+ id="dx55-131007"></a><a 
+ id="x55-131008r108"></a> form
 </td></tr></table>
-<!--l. 5654--><p class="indent" >                                        <table  
+<!--l. 7024--><p class="indent" >
+</div>
+<!--l. 7024--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x55-1320007.9.1"></a></span>
+   <a 
+href="#x55-131008r108">multiple-value-list</a> вычисляет форму <i>form</i> и возвращает список из того
+количества значений, которое было возвращено формой. Например,
+<div class=lisp><div class=tabbing>
+<table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                  &#x0026;body body)</td></tr></table>
-<!--l. 5655--><p class="indent" >                                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (let ((tailvar (gensym &#x0022;DOLIST&#x0022;)))</td></tr></table>
-<!--l. 5656--><p class="indent" >                                <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ‘(do ((,tailvar ,listform (cdr ,tailvar)))</td></tr></table>
-<!--l. 5657--><p class="indent" >                                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">         ((null ,tailvar) ,resultform)</td></tr></table>
-<!--l. 5658--><p class="indent" >                                <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (let ((,var (car ,tailvar))) ,@body))</td></tr></table>
-<!--l. 5660--><p class="indent" >
+class="tabbing">(multiple-value-list (ﬂoor -3 4))  ⇒ (-1 1)
+</td></tr></table>
+<!--l. 7030--><p class="indent" >
+                                                                          
+
+                                                                          
 </div>
 </div>
-<!--l. 5661--><p class="noindent" >But here is a plausible implementation of <a 
-href="clmse42.html#x54-134002r111">dolist</a> that produces the second result: <div class=lisp>
+<!--l. 7031--><p class="noindent" >Таким образом, <a 
+href="#x55-131008r108">multiple-value-list</a> и <a 
+href="#x55-131006r107">values-list</a> являются антиподами.
+FIXME
+</div>
+<div class=defspec>
 <div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(defmacro dolist ((var listform &#x0026;optional (resultform ”nil))
+class="tabbing"> <i>[Special form]</i><b> multiple-value-call </b><a 
+ id="dx55-132001"></a><a 
+ id="x55-132002r109"></a> function  { form}*
 </td></tr></table>
-<!--l. 5664--><p class="indent" >                                        <table  
+<!--l. 7037--><p class="indent" >
+</div>
+<!--l. 7037--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x55-1330007.9.1"></a></span>
+   <a 
+href="#x55-132002r109">multiple-value-call</a> сначала вычисляет <i>function</i> для получения функции и
+затем вычисляет все формы <i>forms</i>. Все значения форм <i>forms</i> собираются
+вместе (все, а не только первые) и передаются как аргументы функции.
+Результат <a 
+href="#x55-132002r109">multiple-value-call</a> является тем, что вернула функция. Например:
+<div class=lisp><div class=tabbing>
+<table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                  &#x0026;body body)</td></tr></table>
-<!--l. 5665--><p class="indent" >                                     <table  
+class="tabbing">(+ (ﬂoor 5 3) (ﬂoor 19 4))
+</td></tr></table>
+<!--l. 7044--><p class="indent" >                                                      <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (let ((tailvar (gensym &#x0022;DOLIST&#x0022;)))</td></tr></table>
-<!--l. 5666--><p class="indent" >                                              <table  
+class="tabbing">    ≡ (+ 1 4)  ⇒ 5</td></tr></table>
+<!--l. 7045--><p class="indent" >                           <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ‘(do ((,tailvar ,listform))</td></tr></table>
-<!--l. 5667--><p class="indent" >                                     <table  
+class="tabbing">(multiple-value-call #&#x2019;+ (ﬂoor 5 3) (ﬂoor 19 4))</td></tr></table>
+<!--l. 7046--><p class="indent" >                                                 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">         ((null ,tailvar) ,resultform)</td></tr></table>
-<!--l. 5668--><p class="indent" >                               <table  
+class="tabbing">    ≡ (+ 1 2 4 3)  ⇒ 10</td></tr></table>
+<!--l. 7047--><p class="indent" >              <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (let ((,var (pop ,tailvar))) ,@body))</td></tr></table>
-<!--l. 5670--><p class="indent" >
+class="tabbing">(multiple-value-list <i>form</i>)  ≡ (multiple-value-call #&#x2019;list <i>form</i>)</td></tr></table>
+<!--l. 7049--><p class="indent" >
 </div>
 </div>
-<!--l. 5672--><p class="indent" >   The X3J13 recognizes and legitimizes varying implementation practices: in
-general it is an error for code executed during a “structure-traversing” operation
-to destructively modify the structure in a way that might aﬀect the ongoing
-traversal operation. The committee identiﬁed in particular the following special
-cases.
-<!--l. 5678--><p class="indent" >   For list traversal operations, the <i>cdr</i> chain may not be destructively
-modiﬁed.
+</div>
+<div class=defspec>
+<div class=tabbing>
                                                                           
 
                                                                           
-<!--l. 5681--><p class="indent" >   For array traversal operations, the array may not be adjusted (see
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Special form]</i><b> multiple-value-prog1 </b><a 
+ id="dx55-133001"></a><a 
+ id="x55-133002r110"></a> form  { form}*
+</td></tr></table>
+<!--l. 7054--><p class="indent" >
+</div>
+<!--l. 7054--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x55-1340007.9.1"></a></span>
+   <a 
+href="#x55-133002r110">multiple-value-prog1</a> вычисляет первую форму <i>form</i> и сохраняет все
+значения, возвращенные данной формой. Затем она слева направо
+вычисляет оставшиеся <i>формы</i>, игнорируя их значения. Значения,
+возвращенные первой формой, становяться результатом всей формы
 <a 
-href="clmse99.html#x121-243002r592">adjust-array</a>) and its ﬁll pointer, if any, may not be modiﬁed.
-<!--l. 5684--><p class="indent" >   For hash table operations (such as <a 
-href="clmse92.html#x113-234022r552">with-hash-table-iterator</a> and <a 
-href="clmse92.html#x113-234015r549">maphash</a>), new
-entries may not be added or deleted, <i>except</i> that the very entry being processed
-by user code may be changed or deleted.
-<!--l. 5689--><p class="indent" >   For package symbol operations (for example, <a 
-href="clmse63.html#x79-192006r201">with-package-iterator</a> and
+href="#x55-133002r110">multiple-value-prog1</a>. Смотрите <a 
+href="clmse38.html#x50-97002r72">prog1</a>, которая всегда возвращает одно
+значение.
+</div>
+<div class=defmac>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> multiple-value-bind </b><a 
+ id="dx55-134001"></a><a 
+ id="x55-134002r111"></a> ( {var}* ) values-form
+</td></tr></table>
+<!--l. 7064--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> {declaration}*  { form}* </td></tr></table>
+<!--l. 7065--><p class="indent" >
+</div>
+<!--l. 7065--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x55-1350007.9.1"></a></span>
+   Вычисляется <i>values-form</i> и каждое значение результата связывается
+соотвественно с переменными указанными в первом параметре. Если
+переменных больше, чем возвращаемых значений, для оставшихся
+переменных используется значение <a 
+href="clmse31.html#x42-74002r18">nil</a>. Если значений больше, чем
+переменных, лишние значения игнорируются. Переменные связываются со
+значениями только на время выполнения форм тела, которое является
+неявным <a 
+href="clmse38.html#x50-96002r71">progn</a>. Например: <div class=lisp><div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(multiple-value-bind (x) (ﬂoor 5 3) (list x))  ⇒ (1)
+</td></tr></table>
+<!--l. 7074--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(multiple-value-bind (x y) (ﬂoor 5 3) (list x y))  ⇒ (1 2)</td></tr></table>
+<!--l. 7075--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(multiple-value-bind (x y z) (ﬂoor 5 3) (list x y z))</td></tr></table>
+<!--l. 7076--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ⇒ (1 2 <a 
+href="clmse31.html#x42-74002r18">nil</a>)</td></tr></table>
+<!--l. 7078--><p class="indent" >
+</div>
+</div>
+</div>
+<div class=defmac>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> multiple-value-setq </b><a 
+ id="dx55-135001"></a><a 
+ id="x55-135002r112"></a> variables form
+</td></tr></table>
+<!--l. 7083--><p class="indent" >
+</div>
+<!--l. 7083--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x55-1360007.9.1"></a></span>
+   Аргумент <i>variables</i> должен быть списком переменных. Вычисляется
+форма <i>form</i> и переменным <i>присваиваются</i> (не связываются) значения,
+возвращенные этой формой. Если переменных больше, чем значений,
+осташимся переменным присваивается <a 
+href="clmse31.html#x42-74002r18">nil</a>. Если значений больше, чем
+переменных, лишние значения игнорируются.
+<!--l. 7090--><p class="indent" >   <a 
+href="#x55-135002r112">multiple-value-setq</a> всегда возвращает одно значение, которое является
+первым из возвращенных значений формы <i>form</i>, или <a 
+href="clmse31.html#x42-74002r18">nil</a>, если форма <i>form</i>
+вернула ноль значений.
+</div>
+<div class=defmac>
+<div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> nth-value </b><a 
+ id="dx55-136001"></a><a 
+ id="x55-136002r113"></a> n form
+</td></tr></table>
+<!--l. 7097--><p class="indent" >
+</div>
+<!--l. 7097--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x55-1370007.9.1"></a></span>
+   Формы аргументов <i>n</i> и <i>form</i> вычисляются. Значение <i>n</i> должно быть
+неотрицательным целым, и форма <i>form</i> должна возвращать любое
+количество значение. Целое число <i>n</i> используется, как индекс (начиная с
+нуля), для доступа к списку значений. Форма возвращает элемент в позиции
+<i>n</i> из списка результатов вычисления формы <i>form</i>. Если позиции не
+существует, возвращается <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+<!--l. 7106--><p class="indent" >   В качестве примера, <a 
+href="clmse68.html#x85-187020r228">mod</a> мог бы быть определен так: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun mod (number divisor)
+</td></tr></table>
+<!--l. 7108--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (nth-value 1 (ﬂoor number divisor)))</td></tr></table>
+<!--l. 7110--><p class="indent" >
+</div>
+</div>
+</div>
+<!--l. 7113--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.9.2   </span> <a 
+ id="x55-1380007.9.2"></a>Правила управления возвратом нескольких значений</h4>
+<!--l. 7115--><p class="noindent" >Часто случается так, что значение специальной формы или макроса
+определено как значение одного из подвыражений. Например, значение
 <a 
-href="clmse63.html#x79-189005r198">do-symbols</a>), new symbols may not be interned in, nor symbols uninterned from,
-the packages being traversed or any packages they use, <i>except</i> that the very
-symbol being processed by user code may be uninterned.
-<!--l. 5695--><p class="indent" >   X3J13 noted that this vote is intended to clarify restrictions on the use of
-structure traversal operations that are not themselves inherently destructive; for
-example, it applies to <a 
-href="clmse82.html#x101-219005r407">map</a> and <a 
-href="clmse42.html#x54-134002r111">dolist</a>. Destructive operators such as <a 
-href="clmse83.html#x102-220014r419">delete</a>
-require even more complicated restrictions and are addressed by a separate
-proposal.
-<!--l. 5701--><p class="indent" >   The X3J13 vote did not specify a complete list of the operations to
-which these restrictions apply. Table <a 
-href="#x55-1420021">7.1<!--tex4ht:ref: TRAVERSAL-OPERATIONS-TABLE --></a> shows what I believe to be a
-complete list of operations that traverse structures and take user code as a
-body (in the case of macros) or as a functional argument (in the case of
-functions).
-<!--l. 5707--><p class="indent" >   In addition, note that user code should not modify list structure that might be
-undergoing interpretation by the evaluator, whether explicitly invoked via <a 
-href="clmse110.html#x135-261002r620">eval</a> or
-implicitly invoked, for example as in the case of a hook function (a <a 
-href="clmse104.html#x128-250002r619">defstruct</a> print
-function, the value of <a 
-href="clmse110.html#x135-261005r621">*evalhook*</a> or <a 
-href="clmse110.html#x135-261007r622">*applyhook*</a>, etc.) that happens to be a
-closure of interpreted code. Similarly, <a 
-href="clmse104.html#x128-250002r619">defstruct</a> print functions and other hooks
-should not perform side eﬀects on data structures being printed or being
-processed by <a 
-href="clmse117.html#x144-287003r730">format</a>, or on a string given to <a 
-href="clmse113.html#x139-265018r648">make-string-input-stream</a>. You get
-the idea; be sensible.
-<!--l. 5718--><p class="indent" >   Note that an operation such as <a 
-href="clmse42.html#x54-137003r113">mapcar</a> or <a 
-href="clmse42.html#x54-134002r111">dolist</a> traverses not only <i>cdr</i>
-pointers (in order to chase down the list) but also <i>car</i> pointers (in order to obtain
-the elements themselves). The restriction against modiﬁcation appears to apply to
-all these pointers.
+href="clmse40.html#x52-109002r84">cond</a> является значением последнего подвыражения в исполняемой
+ветке.
+<!--l. 7120--><p class="indent" >   В большинстве таких случаев, если подвыражение возвращает несколько
+значений, тогда и оригинальная форма возвращает все эти значения.
+Эта <i>передача значений</i>, конечно, не будет иметь место, если не была
+выполнена специальная форма для обработки возврата нескольких
+значений.
+<!--l. 7125--><p class="indent" >   Неявно несколько значений может быть возвращены из специальных
+форм в соответствие со следующими правилами:
+                                                                          
+
+                                                                          
+<div class=flushdesc>
+<!--l. 7129--><p class="indent" >
+      <ul><li><b>
+<i>Вычисление и применение</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><a 
+href="clmse107.html#x132-241002r586">eval</a>  возвращает  несколько  значений,  если  переданная  ему
+           форму при вычислении вернула несколько значений.
+           </li>
+           <li class="itemize"><a 
+href="clmse37.html#x49-95002r68">apply</a>, <a 
+href="clmse37.html#x49-95004r69">funcall</a> и <a 
+href="#x55-132002r109">multiple-value-call</a> передают обратно несколько
+           значений из применяемой или вызываемой функции.</li></ul>
+      <li><b>
+<i>В контексте неявного <a 
+href="clmse38.html#x50-96002r71">progn</a></i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize">Специальная   форма   <a 
+href="clmse38.html#x50-96002r71">progn</a>   передает   обратно   несколько
+           значений полученных при вычислении последней подформы.
+           В другие ситуациях, называемых «неявный <a 
+href="clmse38.html#x50-96002r71">progn</a>», в которых
+           вычисляется  несколько  форм  и  результаты  всех,  кроме
+           последней формы, игнорируются, также передается обратно
+           несколько  значений  от  формы.  Такие  ситуации  включают
+           тело  лямбда-выражения,  в  частности  в  <a 
+href="clmse30.html#x40-67002r13">defun</a>,  <a 
+href="clmse45.html#x58-144004r118">defmacro</a>  и
+           <a 
+href="clmse24.html#x33-51002r6">deftype</a>.  Также  включаются  тела  конструкций  <a 
+href="clmse30.html#x40-71003r17">eval-when</a>,
+           <a 
+href="clmse39.html#x51-102002r76">progv</a>, <a 
+href="clmse39.html#x51-100002r74">let</a>, <a 
+href="clmse39.html#x51-101002r75">let*</a>, <a 
+href="clmse138.html#x169-343004r841">when</a>, <a 
+href="clmse138.html#x169-343006r842">unless</a>, <a 
+href="clmse41.html#x53-113002r87">block</a>, <a 
+href="#x55-134002r111">multiple-value-bind</a> и <a 
+href="clmse44.html#x56-139006r114">catch</a>.
+           И также включаются подвыражения условных конструкций
+           <a 
+href="clmse40.html#x52-110002r85">case</a>, <a 
+href="clmse40.html#x52-111002r86">typecase</a>, <a 
+href="clmse152.html#x186-456002r960">ecase</a>, <a 
+href="clmse152.html#x186-454002r958">etypecase</a>, <a 
+href="clmse152.html#x186-457002r961">ccase</a> и <a 
+href="clmse152.html#x186-455002r959">ctypecase</a>.</li></ul>
+      </ul>
 </div>
-   <div class="table">
+<div class=flushdesc>
+<!--l. 7165--><p class="indent" >
+      <ul><li><b>
+<i>Условные конструкции</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><a 
+href="clmse138.html#x169-343002r840">if</a> передает обратно несколько значений из любой выбранной
+           подформы (ветки <i>then</i> или <i>else</i>).
                                                                           
 
                                                                           
-<!--l. 5724--><p class="indent" >   <a 
- id="x55-1420021"></a><hr class="float"><div class="float" 
->
+           </li>
+           <li class="itemize"><a 
+href="clmse34.html#x45-79004r49">and</a> и <a 
+href="clmse34.html#x45-80002r50">or</a> передают обратно несколько значений из последней
+           подформы, но ни из какой другой непоследней подформы.
+           </li>
+           <li class="itemize"><a 
+href="clmse40.html#x52-109002r84">cond</a>              передает              обратно              несколько
+           значений из последней подформы неявного <a 
+href="clmse38.html#x50-96002r71">progn</a> выделенного
+           подвыражения.   Однако,   если   выделенное   подвыражение
+           является   «синглтоном»,   будет   возвращено   только   одно
+           значение (не-<a 
+href="clmse31.html#x42-74002r18">nil</a> значение предиката). Это верно, даже если
+           выражение «синглтон» является последним подвыражением
+           <a 
+href="clmse40.html#x52-109002r84">cond</a>. Нельзя рассматривать последнее подвыражение (x), как
+           будто оно (t x). Последнее подвыражение передает обратно
+           несколько значений из формы x.</li></ul>
+      <li><b>
+<i>Возврат из блока</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize">При  нормальном  завершении  конструкция  <a 
+href="clmse41.html#x53-113002r87">block</a>  передает
+           обратно несколько значений из ее последней подформы. Если
+           для завершения использовалась <a 
+href="clmse41.html#x53-114002r88">return-from</a> (или <a 
+href="clmse139.html#x170-346002r845">return</a>), тогда
+           <a 
+href="clmse41.html#x53-114002r88">return-from</a>  передает  обратно  несколько  значений  из  своей
+           подформы,  как  значения  всей  конструкции  <a 
+href="clmse41.html#x53-113002r87">block</a>.  Другие
+           конструкции, создающие неявные блоки, такие как <a 
+href="clmse139.html#x170-345002r843">do</a>, <a 
+href="clmse42.html#x54-122002r93">dolist</a>,
+           <a 
+href="clmse42.html#x54-123002r94">dotimes</a>,  <a 
+href="clmse42.html#x54-127002r102">prog</a>  и  <a 
+href="clmse42.html#x54-127004r103">prog*</a>,  также  передают  обратно  несколько
+           значений, заданных с помощью <a 
+href="clmse41.html#x53-114002r88">return-from</a> (или <a 
+href="clmse139.html#x170-346002r845">return</a>).
+           </li>
+           <li class="itemize"><a 
+href="clmse139.html#x170-345002r843">do</a>   передает   обратно   несколько   значений   из   последней
+           формы  подвыражения  выхода,  точно  также,  как  если  бы
+           подвыражение выхода было подвыражение <a 
+href="clmse40.html#x52-109002r84">cond</a>. Подобным
+           образом   действуют   <a 
+href="clmse42.html#x54-122002r93">dolist</a>   и   <a 
+href="clmse42.html#x54-123002r94">dotimes</a>.   Они   возвращают
+           несколько  значений  из  формы  <i>resultform</i>,  если  она  была
+           выполнена. Эти ситуации также являются примерами явного
+           использования <a 
+href="clmse41.html#x53-114002r88">return-from</a>.</li></ul>
+      <li><b>
+<i>Выход из ловушки исключения</i> </b></li>
                                                                           
 
                                                                           
-<div class=new>
-<br /> <div class="caption" 
-><span class="id">Table 7.1: </span><span  
-class="content">Structure Traversal Operations Subject to Side Eﬀect Restrictions</span></div><!--tex4ht:label?: x55-1420021 -->
-<div class="tabular"><table width="100%"><tr><td align="left" >adjoin                   </td><td align="left" >maphash           </td><td align="left" >reduce                       </td>
-</tr><tr><td align="left" >assoc                    </td><td align="left" >mapl                </td><td align="left" >remove                      </td>
-</tr><tr><td align="left" >assoc-if                  </td><td align="left" >maplist             </td><td align="left" >remove-duplicates        </td>
-</tr><tr><td align="left" >assoc-if-not            </td><td align="left" >member            </td><td align="left" >remove-if                   </td></tr><tr><td align="left" >count  </td><td align="left" >member-if </td><td align="left" >remove-if-not</td>
-</tr><tr><td align="left" >count-if                 </td><td align="left" >member-if-not    </td><td align="left" >search                       </td></tr><tr><td align="left" >count-if-not  </td><td align="left" >merge </td><td align="left" >set-diﬀerence</td>
-</tr><tr><td align="left" >delete                    </td><td align="left" >mismatch          </td><td align="left" >set-exclusive-or           </td></tr><tr><td align="left" >delete-duplicates  </td><td align="left" >nintersection </td><td align="left" >some</td>
-</tr><tr><td align="left" >delete-if                 </td><td align="left" >notany              </td><td align="left" >sort                          </td>
-</tr><tr><td align="left" >delete-if-not           </td><td align="left" >notevery            </td><td align="left" >stable-sort                 </td>
-</tr><tr><td align="left" >do-all-symbols        </td><td align="left" >nset-diﬀerence    </td><td align="left" >sublis                        </td>
-</tr><tr><td align="left" >do-external-symbols </td><td align="left" >nset-exclusive-or </td><td align="left" >subsetp                     </td>
-</tr><tr><td align="left" >do-symbols             </td><td align="left" >nsublis              </td><td align="left" >subst                        </td>
-</tr><tr><td align="left" >dolist                    </td><td align="left" >nsubst              </td><td align="left" >subst-if                      </td>
-</tr><tr><td align="left" >eval                      </td><td align="left" >nsubst-if            </td><td align="left" >subst-if-not                </td>
-</tr><tr><td align="left" >every                    </td><td align="left" >nsubst-if-not      </td><td align="left" >substitute                  </td>
-</tr><tr><td align="left" >ﬁnd                      </td><td align="left" >nsubstitute        </td><td align="left" >substitute-if               </td>
-</tr><tr><td align="left" >ﬁnd-if                   </td><td align="left" >nsubstitute-if     </td><td align="left" >substitute-if-not          </td>
-</tr><tr><td align="left" >ﬁnd-if-not              </td><td align="left" >nsubstitute-if-not</td><td align="left" >tree-equal                  </td>
-</tr><tr><td align="left" >intersection            </td><td align="left" >nunion              </td><td align="left" >union                        </td>
-</tr><tr><td align="left" >certain loop clauses  </td><td align="left" >position            </td><td align="left" >with-hash-table-iterator</td>
-</tr><tr><td align="left" >map                      </td><td align="left" >position-if          </td><td align="left" >with-input-from-string  </td>
-</tr><tr><td align="left" >mapc                    </td><td align="left" >position-if-not    </td><td align="left" >with-output-to-string   </td>
-</tr><tr><td align="left" >mapcan                 </td><td align="left" >rassoc               </td><td align="left" >with-package-iterator   </td>
-</tr><tr><td align="left" >mapcar                 </td><td align="left" >rassoc-if            </td>
-</tr><tr><td align="left" >mapcon                 </td><td align="left" >rassoc-if-not       </td></tr></table></div>
+           <ul class="itemize1">
+           <li class="itemize">Конструкция  <a 
+href="clmse44.html#x56-139006r114">catch</a>  возвращает  несколько  значений,  если
+           результат  формы  в  <a 
+href="clmse44.html#x56-141002r116">throw</a>,  которая  осуществляет  выход  из
+           этого catch, возвращает несколько значений.</li></ul>
+      <li><b>
+<i>Остальные ситуации</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><a 
+href="#x55-133002r110">multiple-value-prog1</a> передает обратно несколько значений из
+           его первой подформы. Однако, <a 
+href="clmse38.html#x50-97002r72">prog1</a> всегда возвращает одно
+           значение.
+           </li>
+           <li class="itemize"><a 
+href="clmse44.html#x56-140004r115">unwind-protect</a> возвращает несколько значений, если форма,
+           которую он защищает, вернула несколько значений.
+           </li>
+           <li class="itemize"><a 
+href="clmse50.html#x64-154002r126">the</a> возвращает несколько значений, если в нем содержащаяся
+           форма возвращает несколько значений.</li></ul>
+      </ul>
 </div>
+<!--l. 7236--><p class="indent" >   <a 
+href="clmse38.html#x50-97002r72">prog1</a>, <a 
+href="clmse38.html#x50-98002r73">prog2</a>, <a 
+href="clmse35.html#x47-87002r59">setq</a> и <a 
+href="#x55-135002r112">multiple-value-setq</a> — это формы, которые <i>никогда</i> не
+передают обратно несколько значений. Стандартный метод для явного
+указания возврата одного значения из формы x является запись (values
+x).
+<!--l. 7242--><p class="indent" >   Наиболее важное правило насчет нескольких значений: <b>Не важно
+сколько значений возвращает форма, если форма является
+аргументом в вызове функции, то будет использовано только одно
+значение (первое).</b>
+<!--l. 7247--><p class="indent" >   Например, если вы записали (cons (ﬂoor x)), тогда <a 
+href="clmse83.html#x103-205062r442">cons</a> всегда получить
+<i>только</i> один аргумент (что, конечно, является ошибкой), хотя и <a 
+href="clmse68.html#x85-187012r224">ﬂoor</a>
+возвращает два значения. Для того, чтобы поместить оба значения <a 
+href="clmse68.html#x85-187012r224">ﬂoor</a> в
+<a 
+href="clmse83.html#x103-205062r442">cons</a>, можно записать что-то вроде этого: (multiple-value-call #&#x2019;cons
+(ﬂoor x)). В обычном вызовае функции, каждый форма аргумента
+предоставляется только <i>один</i> аргумент. Если такая форма возвращает ноль
+значение, в качестве аргумента используется <a 
+href="clmse31.html#x42-74002r18">nil</a>. А если возвращает более
+одного значения, все они, кроме первого, игнорируются. Также и
+условные конструкции, например <a 
+href="clmse138.html#x169-343002r840">if</a>, которые проверяют значения формы,
                                                                           
 
                                                                           
-   </div><hr class="endfloat" />
-   </div>
+используют только одно первое значение, остальные игнорируются.
+Такие конструкции будут использовать <a 
+href="clmse31.html#x42-74002r18">nil</a> если форма вернула ноль
+значений.
                                                                           
 
                                                                           
-   <!--l. 5767--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 7259--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse44.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse42.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse42.html#tailclmse42.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse43.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch7.html#clmse43.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 5767--><p class="indent" >   <a 
+<!--l. 7259--><p class="indent" >   <a 
  id="tailclmse43.html"></a>  
 </body></html> 

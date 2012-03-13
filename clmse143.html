@@ -1,644 +1,533 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Miscellaneous Features</title> 
+<head><title>Dynamic Control of the Arrangement of Output</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-11 14:56:00"> 
+<meta name="date" content="2012-03-13 16:31:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 1878--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
-href="clmch27.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+   <!--l. 138--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse144.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse142.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse142.html#tailclmse142.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse143.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch26.html#clmse143.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">26.12   </span> <a 
- id="x174-36900026.12"></a>Miscellaneous Features</h3>
-<!--l. 1881--><p class="noindent" >The Loop Facility provides the <a 
-href="#x174-372002r887">named</a> construct to name a loop so that the
-Common Lisp special form <a 
-href="clmse41.html#x53-125002r104">return-from</a> can be used.
-<!--l. 1884--><p class="indent" >   The loop keywords <a 
-href="#x174-371002r884">initially</a> and <a 
-href="#x174-371006r886">ﬁnally</a> designate loop constructs that cause
-expressions to be evaluated before and after the loop body, respectively.
-<!--l. 1888--><p class="indent" >   The code for any <a 
-href="#x174-371002r884">initially</a> clauses is collected into one <a 
-href="clmse38.html#x50-102002r80">progn</a> in the order in
-which the clauses appeared in the loop. The collected code is executed once in the
-loop prologue after any implicit variable initializations.
-<!--l. 1893--><p class="indent" >   The code for any <a 
-href="#x174-371006r886">ﬁnally</a> clauses is collected into one <a 
-href="clmse38.html#x50-102002r80">progn</a> in the order in
-which the clauses appeared in the loop. The collected code is executed once in the
-loop epilogue before any implicit values are returned from the accumulation
-clauses. Explicit returns in the loop body, however, will exit the loop without
-executing the epilogue code.
-<!--l. 1900--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">26.12.1   </span> <a 
- id="x174-37000026.12.1"></a>Data Types</h4>
-<!--l. 1903--><p class="noindent" >Many loop constructs take a <i>type-spec</i> argument that allows you to specify certain
-data types for loop variables. While it is not necessary to specify a data type for
-any variable, by doing so you ensure that the variable has a correctly typed initial
-value. The type declaration is made available to the compiler for more eﬃcient
-<a 
-href="clmse42.html#x54-129002r106">loop</a> expansion. In some implementations, ﬁxnum and ﬂoat declarations
-are especially useful; the compiler notices them and emits more eﬃcient
-code.
-<!--l. 1916--><p class="indent" >   The <i>type-spec</i> argument has the following syntax: <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"><i>type-spec</i> ::= of-type <i>d-type-spec</i>
-</td></tr></table>
-<!--l. 1918--><p class="indent" >                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"><i>d-type-spec</i> ::= <i>type-speciﬁer</i> | (<i>d-type-spec</i> . <i>d-type-spec</i>)</td></tr></table>
-<!--l. 1920--><p class="indent" >
+href="clmch27.html#clmse143.html" >Up</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">27.3   </span> <a 
+ id="x175-35600027.3"></a>Dynamic Control of the Arrangement of Output</h3>
+<!--l. 140--><p class="noindent" >The following functions and macros support precise control of what should be
+done when a piece of output is too large to ﬁt in the space available. Three
+concepts underlie the way these operations work: <i>logical blocks</i>, <i>conditional
+newlines</i>, and <i>sections</i>. Before proceeding further, it is important to deﬁne these
+terms.
+<!--l. 146--><p class="indent" >   The ﬁrst line of ﬁgure <a 
+href="#x175-3560011">27.1<!--tex4ht:ref: PRETTY-PRINT-SECTIONS-FIGURE --></a> shows a schematic piece of output. The characters
+in the output are represented by hyphens. The positions of conditional newlines
+are indicated by digits. The beginnings and ends of logical blocks are indicated in
+the ﬁgure by “<a 
+href="clmse65.html#x82-180006r180">&#x003C;</a>” and “<a 
+href="clmse65.html#x82-180008r181">&#x003E;</a>” respectively.
+<!--l. 152--><p class="indent" >   The output as a whole is a logical block and the outermost section. This
+section is indicated by the 0&#x2019;s on the second line of ﬁgure <a 
+href="#x175-3560011">27.1<!--tex4ht:ref: PRETTY-PRINT-SECTIONS-FIGURE --></a>. Logical blocks
+nested within the output are speciﬁed by the macro <a 
+href="#x175-356005r855">pprint-logical-block</a>.
+Conditional newline positions are speciﬁed by calls on <a 
+href="#x175-356003r854">pprint-newline</a>.
+Each conditional newline deﬁnes two sections (one before it and one after
+it) and is associated with a third (the section immediately containing
+it).
+<!--l. 161--><p class="indent" >   The section after a conditional newline consists of all the output up to, but not
+including, (a) the next conditional newline immediately contained in the same
+logical block; or if (a) is not applicable, (b) the next newline that is at a lesser
+level of nesting in logical blocks; or if (b) is not applicable, (c) the end of the
+output.
+<!--l. 167--><p class="indent" >   The section before a conditional newline consists of all the output back to, but
+not including, (a) the previous conditional newline that is immediately
+contained in the same logical block; or if (a) is not applicable, (b) the
+beginning of the immediately containing logical block. The last four lines in
+ﬁgure <a 
+href="#x175-3560011">27.1<!--tex4ht:ref: PRETTY-PRINT-SECTIONS-FIGURE --></a> indicate the sections before and after the four conditional
+newlines.
+<!--l. 174--><p class="indent" >   The section immediately containing a conditional newline is the shortest
+section that contains the conditional newline in question. In ﬁgure <a 
+href="#x175-3560011">27.1<!--tex4ht:ref: PRETTY-PRINT-SECTIONS-FIGURE --></a>, the ﬁrst
+conditional newline is immediately contained in the section marked with 0&#x2019;s, the
                                                                           
 
                                                                           
-</div>
-<!--l. 1921--><p class="noindent" >A <i> type-speciﬁer</i> in this syntax can be any Common Lisp type speciﬁer. The
-<i>d-type-spec</i> argument is used for destructuring, as described in section <a 
-href="#x174-37100026.12.2">26.12.2<!--tex4ht:ref: LOOP-DESTRUCTURING-SECTION --></a>. If
-the <i>d-type-spec</i> argument consists solely of the types ﬁxnum, <a 
-href="clmse71.html#x88-206002r251">ﬂoat</a>, <a 
-href="clmse31.html#x42-77004r20">t</a>, or <a 
-href="clmse31.html#x42-77002r19">nil</a>, the
-of-type keyword is optional. The of-type construct is optional in these cases to
-provide backward compatibility; thus the following two expressions are the
-same:
+second and third conditional newlines are immediately contained in the
+section before the fourth conditional newline, and the fourth conditional
+newline is immediately contained in the section after the ﬁrst conditional
+newline.
+<!--l. 182--><p class="indent" >   <hr class="figure"><div class="figure" 
+>
+                                                                          
+
+                                                                          
+<a 
+ id="x175-3560011"></a>
+                                                                          
+
+                                                                          
+<br /> <div class="caption" 
+><span class="id">Figure 27.1: </span><span  
+class="content">Example of Logical Blocks, Conditional Newlines, and Sections</span></div><!--tex4ht:label?: x175-3560011 -->
 <div class=lisp>
 <div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; This expression uses the old syntax for type speciﬁers.
+class="tabbing">                 &#x003C;-1—&#x003C;–&#x003C;–2—3-&#x003E;–4–&#x003E;-&#x003E;
 </td></tr></table>
-<!--l. 1930--><p class="indent" >                                            <table  
+<!--l. 186--><p class="noindent" >
+<table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for i ﬁxnum upfrom 3 ...)</td></tr></table>
-<!--l. 1931--><p class="indent" >                                                                          <table  
+class="tabbing">                 000000000000000000000000000
+</td></tr></table>
+<!--l. 187--><p class="noindent" >                        <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 1932--><p class="indent" >                  <table  
+class="tabbing">                 11 111111111111111111111111</td></tr></table>
+<!--l. 188--><p class="noindent" >                                    <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; This expression uses the new syntax for type speciﬁers.</td></tr></table>
-<!--l. 1933--><p class="indent" >                                    <table  
+class="tabbing">                           22 222</td></tr></table>
+<!--l. 189--><p class="noindent" >                              <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for i of-type ﬁxnum upfrom 3 ...)</td></tr></table>
-<!--l. 1935--><p class="indent" >
+class="tabbing">                              333 3333</td></tr></table>
+<!--l. 190--><p class="noindent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                        44444444444444 44444</td></tr></table>
+<!--l. 192--><p class="noindent" >
 </div>
 </div>
-<!--l. 1937--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">26.12.2   </span> <a 
- id="x174-37100026.12.2"></a>Destructuring</h4>
-<!--l. 1940--><p class="noindent" >Destructuring allows you to bind a set of variables to a corresponding set of values
-anywhere that you can normally bind a value to a single variable. During <a 
-href="clmse42.html#x54-129002r106">loop</a>
-expansion, each variable in the variable list is matched with the values in
-the values list. If there are more variables in the variable list than there
-are values in the values list, the remaining variables are given a value of
+                                                                          
+
+                                                                          
+<!--l. 193--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 195--><p class="indent" >   Whenever possible, the pretty printer displays the entire contents of a section
+on a single line. However, if the section is too long to ﬁt in the space
+available, line breaks are inserted at conditional newline positions within the
+section.
+<div class=defun>
+<!--l. 200--><p class="noindent" ><i>[Function]</i><a 
+ id="dx175-356002"></a><a 
+ id="x175-356003r854"></a><b> pprint-newline</b>  <i>kind</i> &#x0026;optional  <i>stream</i>
+<!--l. 202--><p class="noindent" >The <i>stream</i> (which defaults to <a 
+href="clmse109.html#x135-244004r603">*standard-output*</a>) follows the standard
+conventions for stream arguments to printing functions (that is, <a 
+href="clmse31.html#x42-74002r18">nil</a> stands for
 <a 
-href="clmse31.html#x42-77002r19">nil</a>. If there are more values than variables listed, the extra values are
-discarded.
-<!--l. 1949--><p class="indent" >   Suppose you want to assign values from a list to the variables a, b, and c. You
-could use one <a 
-href="clmse137.html#x168-349002r854">for</a> clause to bind the variable numlist to the <i>car</i> of the speciﬁed
-expression, and then you could use another <a 
-href="clmse137.html#x168-349002r854">for</a> clause to bind the variables a, b,
-and c sequentially. <div class=lisp> <div class=tabbing>
+href="clmse109.html#x135-244004r603">*standard-output*</a> and <a 
+href="clmse31.html#x42-74004r19">t</a> stands for <a 
+href="clmse109.html#x135-244012r607">*terminal-io*</a>). The <i>kind</i> argument
+speciﬁes the style of conditional newline. It must be one of :linear, :ﬁll,
+:miser, or :mandatory. An error is signaled if any other value is supplied. If
+<i>stream</i> is a pretty printing stream created by <a 
+href="#x175-356005r855">pprint-logical-block</a>, a line
+break is inserted in the output when the appropriate condition below is
+satisﬁed. Otherwise, <a 
+href="#x175-356003r854">pprint-newline</a> has no eﬀect. The value <a 
+href="clmse31.html#x42-74002r18">nil</a> is always
+returned.
+<!--l. 214--><p class="indent" >   If <i>kind</i> is :linear, it speciﬁes a ‘linear-style&#x2019; conditional newline. A line break
+is inserted if and only if the immediately containing section cannot be
+printed on one line. The eﬀect of this is that line breaks are either inserted
+at every linear-style conditional newline in a logical block or at none of
+them.
+<!--l. 220--><p class="indent" >   If <i>kind</i> is :miser, it speciﬁes a ‘miser-style&#x2019; conditional newline. A line break is
+inserted if and only if the immediately containing section cannot be printed on
+one line and miser style is in eﬀect in the immediately containing logical block.
+The eﬀect of this is that miser-style conditional newlines act like linear-style
+conditional newlines, but only when miser style is in eﬀect. Miser style
+is in eﬀect for a logical block if and only if the starting position of the
+logical block is less than or equal to *print-miser-width* from the right
+margin.
+<!--l. 229--><p class="indent" >   If <i>kind</i> is :ﬁll, it speciﬁes a ‘ﬁll-style&#x2019; conditional newline. A line break is
+inserted if and only if either (a) the following section cannot be printed on the end
+of the current line, (b) the preceding section was not printed on a single line,
+or (c) the immediately containing section cannot be printed on one line
+and miser style is in eﬀect in the immediately containing logical block. If
+a logical block is broken up into a number of subsections by ﬁll-style
+conditional newlines, the basic eﬀect is that the logical block is printed with
+as many subsections as possible on each line. However, if miser style is
+in eﬀect, ﬁll-style conditional newlines act like linear-style conditional
                                                                           
 
                                                                           
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; Collect values by using FOR constructs.
-</td></tr></table>
-<!--l. 1955--><p class="indent" >                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for numlist in &#x2019;((1 2 4.0) (5 6 8.3) (8 9 10.4))</td></tr></table>
-<!--l. 1956--><p class="indent" >                                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      for a integer = (ﬁrst numlist)</td></tr></table>
-<!--l. 1957--><p class="indent" >                               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      and for b integer = (second numlist)</td></tr></table>
-<!--l. 1958--><p class="indent" >                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      and for c ﬂoat = (third numlist)</td></tr></table>
-<!--l. 1959--><p class="indent" >                                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      collect (list c b a))</td></tr></table>
-<!--l. 1960--><p class="indent" >                                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ ((4.0 2 1) (8.3 6 5) (10.4 9 8))</td></tr></table>
-<!--l. 1962--><p class="indent" >
+newlines.
+<!--l. 240--><p class="indent" >   If <i>kind</i> is :mandatory, it speciﬁes a ‘mandatory-style&#x2019; conditional newline. A
+line break is always inserted. This implies that none of the containing sections can
+be printed on a single line and will therefore trigger the insertion of line breaks at
+linear-style conditional newlines in these sections.
+<!--l. 246--><p class="indent" >   When a line break is inserted by any type of conditional newline, any blanks
+that immediately precede the conditional newline are omitted from the output
+and indentation is introduced at the beginning of the next line. By default, the
+indentation causes the following line to begin in the same horizontal position as
+the ﬁrst character in the immediately containing logical block. (The indentation
+can be changed via <a 
+href="#x175-359002r858">pprint-indent</a>.)
+<!--l. 253--><p class="indent" >   There are a variety of ways <i>un</i>conditional newlines can be introduced into the
+output (for example, via <a 
+href="clmse114.html#x141-263034r685">terpri</a> or by printing a string containing a newline
+character). As with mandatory conditional newlines, this prevents any of the
+containing sections from being printed on one line. In general, when an
+unconditional newline is encountered, it is printed out without suppression of the
+preceding blanks and without any indentation following it. However, if a per-line
+preﬁx has been speciﬁed (see <a 
+href="#x175-356005r855">pprint-logical-block</a>), that preﬁx will always be
+printed no matter how a newline originates.
 </div>
-</div>
-<!--l. 1963--><p class="noindent" >Destructuring makes this process easier by allowing the variables to be bound in
-parallel in each loop iteration. You can declare data types by using a
-list of <i>type-spec</i> arguments. If all the types are the same, you can use a
-shorthand destructuring syntax, as the second example following illustrates. <div class=lisp>
+<div class=defmac>
 <div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; Destructuring simpliﬁes the process.
+class="tabbing"> <i>[Macro]</i><b> pprint-logical-block </b><a 
+ id="dx175-356004"></a><a 
+ id="x175-356005r855"></a> (stream-symbol list
 </td></tr></table>
-<!--l. 1969--><p class="indent" >                                  <table  
+<!--l. 266--><p class="indent" >                                  <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for (a b c) (integer integer ﬂoat) in</td></tr></table>
-<!--l. 1970--><p class="indent" >                                     <table  
+class="tabbing"> [[ {:preﬁx | :per-line-preﬁx} p | :suﬃx s]] )</td></tr></table>
+<!--l. 267--><p class="indent" >                                                                 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      &#x2019;((1 2 4.0) (5 6 8.3) (8 9 10.4))</td></tr></table>
-<!--l. 1971--><p class="indent" >                                                <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      collect (list c b a)))</td></tr></table>
-<!--l. 1972--><p class="indent" >                                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ ((4.0 2 1) (8.3 6 5) (10.4 9 8))</td></tr></table>
-<!--l. 1973--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 1974--><p class="indent" >                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; If all the types are the same, this way is even simpler.</td></tr></table>
-<!--l. 1975--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for (a b c) ﬂoat in</td></tr></table>
-<!--l. 1976--><p class="indent" >                           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      &#x2019;((1.0 2.0 4.0) (5.0 6.0 8.3) (8.0 9.0 10.4))</td></tr></table>
-<!--l. 1977--><p class="indent" >                                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      collect (list c b a))</td></tr></table>
-<!--l. 1978--><p class="indent" >                           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ ((4.0 2.0 1.0) (8.3 6.0 5.0) (10.4 9.0 8.0))</td></tr></table>
-<!--l. 1980--><p class="indent" >
+class="tabbing"> { form}* </td></tr></table>
+<!--l. 268--><p class="indent" >
 </div>
-</div>
-<!--l. 1983--><p class="indent" >   If you use destructuring to declare or initialize a number of groups of variables
-into types, you can use the loop keyword <a 
-href="clmse34.html#x45-82004r51">and</a> to simplify the process further. <div class=lisp>
-<div class=tabbing>
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; Initialize and declare variables in parallel
-</td></tr></table>
-<!--l. 1987--><p class="indent" >                                           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; by using the AND construct.</td></tr></table>
-<!--l. 1988--><p class="indent" >                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop with (a b) ﬂoat = &#x2019;(1.0 2.0)</td></tr></table>
-<!--l. 1989--><p class="indent" >                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      and (c d) integer = &#x2019;(3 4)</td></tr></table>
-<!--l. 1990--><p class="indent" >                                                           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      and (e f)</td></tr></table>
-<!--l. 1991--><p class="indent" >                                            <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      return (list a b c d e f))</td></tr></table>
-<!--l. 1992--><p class="indent" >                                             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ (1.0 2.0 3 4 NIL NIL)</td></tr></table>
-<!--l. 1994--><p class="indent" >
-</div>
-</div>
-<!--l. 1996--><p class="indent" >   A data type speciﬁer for a destructuring pattern is a tree of type speciﬁers
-with the same shape as the tree of variables, with the following exceptions:
-      <ul class="itemize1">
-      <li class="itemize">When aligning the trees, an atom in the type speciﬁer tree that matches
-      a cons in the variable tree declares the same type for each variable.
-      </li>
-      <li class="itemize">A cons in the type speciﬁer tree that matches an atom in the variable
-      tree is a non-atomic type specifer.
-      </li></ul>
-<div class=lisp>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; Declare X and Y to be of type VECTOR and FIXNUM, respectively.
-</td></tr></table>
-<!--l. 2012--><p class="indent" >                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for (x y) of-type (vector ﬁxnum) in my-list do ...)</td></tr></table>
-<!--l. 2014--><p class="indent" >
-</div>
-</div>
-<!--l. 2018--><p class="indent" >   If <a 
-href="clmse31.html#x42-77002r19">nil</a> is used in a destructuring list, no variable is provided for its place. <div class=lisp>
-<div class=tabbing>
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for (a nil b) = &#x2019;(1 2 3)
-</td></tr></table>
-<!--l. 2021--><p class="indent" >                                              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      do (return (list a b)))</td></tr></table>
-<!--l. 2022--><p class="indent" >                                                              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ (1 3)</td></tr></table>
-<!--l. 2024--><p class="indent" >
-</div>
-</div>
-<!--l. 2026--><p class="indent" >   Note that nonstandard lists can specify destructuring. <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for (x . y) = &#x2019;(1 . 2)
-</td></tr></table>
-<!--l. 2028--><p class="indent" >                                                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      do (return y))</td></tr></table>
-<!--l. 2029--><p class="indent" >                                                                  <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ 2</td></tr></table>
-<!--l. 2030--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 2031--><p class="indent" >                                                  <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for ((a . b) (c . d))</td></tr></table>
-<!--l. 2032--><p class="indent" >                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">          of-type ((ﬂoat . ﬂoat) (integer . integer))</td></tr></table>
-<!--l. 2033--><p class="indent" >                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">          in &#x2019;(((1.2 . 2.4) (3 . 4)) ((3.4 . 4.6) (5 . 6)))</td></tr></table>
-<!--l. 2034--><p class="indent" >                                               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      collect (list a b c d))</td></tr></table>
-<!--l. 2035--><p class="indent" >                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ ((1.2 2.4 3 4) (3.4 4.6 5 6))</td></tr></table>
-<!--l. 2037--><p class="indent" >
-</div>
-</div>
-<!--l. 2039--><p class="indent" >   [It is worth noting that the destructuring facility of <a 
-href="clmse42.html#x54-129002r106">loop</a> predates, and diﬀers
-in some details from, that of <a 
-href="clmse48.html#x61-160003r141">destructuring-bind</a>, an extension that has been
-provided by many implementors of Common Lisp.—GLS]
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Loop clause]</i><b> initially </b><a 
- id="dx174-371001"></a><a 
- id="x174-371002r884"></a> {expr}*
-</td></tr></table>
-<!--l. 2045--><p class="indent" >                              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  <i>[Loop clause]</i><b> ﬁnally </b><a 
- id="dx174-371003"></a><a 
- id="x174-371004r885"></a> [do | doing]  {expr}* </td></tr></table>
-<!--l. 2046--><p class="indent" >                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  <i>[Loop clause]</i><b> ﬁnally </b><a 
- id="dx174-371005"></a><a 
- id="x174-371006r886"></a> return expr</td></tr></table>
-<!--l. 2048--><p class="indent" >
-</div>
-                                                                          
-
-                                                                          
-<!--l. 2048--><p class="noindent" ><span class="paragraphHead"><a 
- id="x174-37200026.12.2"></a></span>
-   The <a 
-href="#x174-371002r884">initially</a> construct causes the speciﬁed expression to be evaluated in the
-loop prologue, which precedes all loop code except for initial settings speciﬁed
-by constructs <a 
-href="clmse140.html#x171-362002r877">with</a>, <a 
-href="clmse137.html#x168-349002r854">for</a>, or <a 
-href="clmse137.html#x168-349004r855">as</a>. The <a 
-href="#x174-371006r886">ﬁnally</a> construct causes the speciﬁed
-expression to be evaluated in the loop epilogue after normal iteration
-terminates.
-<!--l. 2056--><p class="indent" >   The <i>expr</i> argument can be any non-atomic Common Lisp form.
-<!--l. 2058--><p class="indent" >   Clauses such as <a 
-href="clmse142.html#x173-367002r883">return</a>, <a 
-href="clmse138.html#x169-353002r859">always</a>, <a 
-href="clmse138.html#x169-353004r860">never</a>, and <a 
-href="clmse138.html#x169-353006r861">thereis</a> can bypass the <a 
-href="#x174-371006r886">ﬁnally</a>
-clause.
-<!--l. 2061--><p class="indent" >   The Common Lisp macro <a 
-href="clmse142.html#x173-367002r883">return</a> (or the <a 
-href="clmse142.html#x173-367002r883">return</a> loop construct) can
-be used after <a 
-href="#x174-371006r886">ﬁnally</a> to return values from a loop. The evaluation of the
+<!--l. 268--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x175-35700027.3"></a></span>
+   This macro causes printing to be grouped into a logical block. It returns
 <a 
-href="clmse142.html#x173-367002r883">return</a> form inside the <a 
-href="#x174-371006r886">ﬁnally</a> clause takes precedence over returning the
-accumulation from clauses speciﬁed by such keywords as <a 
-href="clmse158.html#x193-506022r1103">collect</a>, <a 
-href="clmse139.html#x170-357006r867">nconc</a>,
-<a 
-href="clmse139.html#x170-357002r865">append</a>, <a 
-href="clmse139.html#x170-359002r871">sum</a>, <a 
-href="clmse139.html#x170-358002r869">count</a>, <a 
-href="clmse139.html#x170-360002r873">maximize</a>, and <a 
-href="clmse139.html#x170-360006r875">minimize</a>; the accumulation values
-for these pre-empted clauses are not returned by the loop if <a 
-href="clmse142.html#x173-367002r883">return</a> is
-used.
-<!--l. 2070--><p class="indent" >   The constructs <a 
-href="clmse142.html#x173-366002r881">do</a>, <a 
-href="#x174-371002r884">initially</a>, and <a 
-href="#x174-371006r886">ﬁnally</a> are the only loop keywords that take
-an arbitrary number of (non-atomic) forms and group them as if by using an
-implicit <a 
-href="clmse38.html#x50-102002r80">progn</a>.
-<!--l. 2076--><p class="indent" >   Examples: <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; This example parses a simple printed string representation
-</td></tr></table>
-<!--l. 2078--><p class="indent" >                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; from BUFFER (which is itself a string) and returns the</td></tr></table>
-<!--l. 2079--><p class="indent" >                             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; index of the closing double-quote character.</td></tr></table>
-<!--l. 2080--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 2081--><p class="indent" >                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop initially (unless (char= (char buﬀer 0) #\&#x0022;)</td></tr></table>
-<!--l. 2082--><p class="indent" >                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                  (loop-ﬁnish))</td></tr></table>
-<!--l. 2083--><p class="indent" >                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      for i ﬁxnum from 1 below (string-length buﬀer)</td></tr></table>
-<!--l. 2084--><p class="indent" >                                  <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      when (char= (char buﬀer i) #\&#x0022;)</td></tr></table>
-<!--l. 2085--><p class="indent" >                                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">        return i)</td></tr></table>
-<!--l. 2086--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 2087--><p class="indent" >                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; The FINALLY clause prints the last value of I.</td></tr></table>
-<!--l. 2088--><p class="indent" >                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; The collected value is returned.</td></tr></table>
-<!--l. 2089--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 2090--><p class="indent" >                                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for i from 1 to 10</td></tr></table>
-<!--l. 2091--><p class="indent" >                                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      when (&#x003E; i 5)</td></tr></table>
+href="clmse31.html#x42-74002r18">nil</a>.
+<!--l. 272--><p class="indent" >   The <i>stream-symbol</i> must be a symbol. If it is <a 
+href="clmse31.html#x42-74002r18">nil</a>, it is treated the same as if it
+were <a 
+href="clmse109.html#x135-244004r603">*standard-output*</a>. If it is <a 
+href="clmse31.html#x42-74004r19">t</a>, it is treated the same as if it were <a 
+href="clmse109.html#x135-244012r607">*terminal-io*</a>.
+The run-time value of <i>stream-symbol</i> must be a stream (or <a 
+href="clmse31.html#x42-74002r18">nil</a> standing for
                                                                           
 
                                                                           
-<!--l. 2092--><p class="indent" >                                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">        collect i</td></tr></table>
-<!--l. 2093--><p class="indent" >
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td style="width:184;" 
-class="tabbing">      ﬁnally (print i)) </td><td style="width:400;" 
-class="tabbing-right">                                      ;Prints 1 line</td></tr></table>
-<!--l. 2094--><p class="indent" >                                                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">11</td></tr></table>
-<!--l. 2095--><p class="indent" >                                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ (6 7 8 9 10)</td></tr></table>
-<!--l. 2096--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 2097--><p class="indent" >                             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; Return both the count of collected numbers</td></tr></table>
-<!--l. 2098--><p class="indent" >                                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; as well as the numbers themselves.</td></tr></table>
-<!--l. 2099--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 2100--><p class="indent" >                                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop for i from 1 to 10</td></tr></table>
-<!--l. 2101--><p class="indent" >                                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      when (&#x003E; i 5)</td></tr></table>
-<!--l. 2102--><p class="indent" >                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">        collect i into number-list</td></tr></table>
-<!--l. 2103--><p class="indent" >                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">        and count i into number-count</td></tr></table>
-<!--l. 2104--><p class="indent" >                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      ﬁnally (return (values number-count number-list)))</td></tr></table>
-<!--l. 2105--><p class="indent" >                                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ 5 and (6 7 8 9 10)</td></tr></table>
-<!--l. 2107--><p class="indent" >
+<a 
+href="clmse109.html#x135-244004r603">*standard-output*</a> or <a 
+href="clmse31.html#x42-74004r19">t</a> standing for <a 
+href="clmse109.html#x135-244012r607">*terminal-io*</a>). The logical block is printed
+into this destination stream.
+<!--l. 279--><p class="indent" >   The body (which consists of the <i>form</i>s) can contain any arbitrary Lisp forms.
+Within the body, <i>stream-symbol</i> (or <a 
+href="clmse109.html#x135-244004r603">*standard-output*</a> if <i>stream-symbol</i> is <a 
+href="clmse31.html#x42-74002r18">nil</a>,
+or <a 
+href="clmse109.html#x135-244012r607">*terminal-io*</a> if <i>stream-symbol</i> is <a 
+href="clmse31.html#x42-74004r19">t</a>) is bound to a “pretty printing”
+stream that supports decisions about the arrangement of output and then
+forwards the output to the destination stream. All the standard printing
+functions (for example, <a 
+href="clmse114.html#x141-263006r673">write</a>, <a 
+href="clmse114.html#x141-263014r677">princ</a>, <a 
+href="clmse114.html#x141-263034r685">terpri</a>) can be used to send output to the
+pretty printing stream created by <a 
+href="#x175-356005r855">pprint-logical-block</a>. All and only the
+output sent to this pretty printing stream is treated as being in the logical
+block.
+<!--l. 290--><p class="indent" >   <a 
+href="#x175-356005r855">pprint-logical-block</a> and the pretty printing stream it creates have dynamic
+extent. It is undeﬁned what happens if output is attempted outside of this extent
+to the pretty printing stream created. It is unspeciﬁed what happens if, within
+this extent, any output is sent directly to the underlying destination stream (by
+calling <a 
+href="clmse114.html#x141-263028r682">write-char</a>, for example).
+<!--l. 296--><p class="indent" >   The :suﬃx, :preﬁx, and :per-line-preﬁx arguments must all be expressions that
+(at run time) evaluate to strings. The :suﬃx argument <i>s</i> (which defaults
+to the null string) speciﬁes a suﬃx that is printed just after the logical
+block. The :preﬁx and :per-line-preﬁx arguments are mutually exclusive. If
+neither :preﬁx nor :per-line-preﬁx is speciﬁed, a :preﬁx of the null string is
+assumed. The :preﬁx argument speciﬁes a preﬁx <i>p</i> that is printed before the
+beginning of the logical block. The :per-line-preﬁx speciﬁes a preﬁx <i>p</i> that is
+printed before the block and at the beginning of each subsequent line in the
+block. An error is signaled if :preﬁx and :per-line-preﬁx are both used or
+if a :suﬃx, :preﬁx, or :pre-line-preﬁx argument does not evaluate to a
+string.
+<!--l. 310--><p class="indent" >   The <i>list</i> is interpreted as being a list that the body is responsible for printing.
+(See <a 
+href="#x175-357002r856">pprint-exit-if-list-exhausted</a> and <a 
+href="#x175-358002r857">pprint-pop</a>.) If <i>list</i> does not (at run time)
+evaluate to a list, it is printed using <a 
+href="clmse114.html#x141-263006r673">write</a>. (This makes it easier to write printing
+functions that are robust in the face of malformed arguments.) If *print-circle*
+(and possibly also *print-shared*) is not <a 
+href="clmse31.html#x42-74002r18">nil</a> and <i>list</i> is a circular (or shared)
+reference to a cons, then an appropriate “#<i>n</i>#” marker is printed. (This makes it
+easy to write printing functions that provide full support for circularity and
+sharing abbreviation.) If *print-level* is not <a 
+href="clmse31.html#x42-74002r18">nil</a> and the logical block is at a
+dynamic nesting depth of greater than *print-level* in logical blocks, “#” is
+printed. (This makes it easy to write printing functions that provide full support
+for depth abbreviation.)
+                                                                          
+
+                                                                          
+<!--l. 325--><p class="indent" >   If any of the three preceding conditions occurs, the indicated output is printed
+on <i>stream-symbol</i> and the <i>body</i> is skipped along with the printing of the
+preﬁx and suﬃx. (If the body is not responsible for printing a list, then
+the ﬁrst two tests above can be turned oﬀ by supplying <a 
+href="clmse31.html#x42-74002r18">nil</a> for the <i>list</i>
+argument.)
+<!--l. 331--><p class="indent" >   In addition to the <i>list</i> argument of <a 
+href="#x175-356005r855">pprint-logical-block</a>, the arguments of
+the standard printing functions such as <a 
+href="clmse114.html#x141-263006r673">write</a>, <a 
+href="clmse114.html#x141-263010r675">print</a>, <a 
+href="clmse114.html#x141-263012r676">pprint</a>, print1, and
+<a 
+href="clmse114.html#x141-263012r676">pprint</a>, as well as the arguments of the standard <a 
+href="clmse114.html#x141-266003r692">format</a> directives such as
+~A, ~S, (and ~W) are all checked (when necessary) for circularity and
+sharing. However, such checking is not applied to the arguments of the
+functions <a 
+href="clmse114.html#x141-263032r684">write-line</a>, <a 
+href="clmse114.html#x141-263030r683">write-string</a>, and <a 
+href="clmse114.html#x141-263028r682">write-char</a> or to the literal text
+output by <a 
+href="clmse114.html#x141-266003r692">format</a>. A consequence of this is that you must use one of the
+latter functions if you want to print some literal text in the output that is
+not supposed to be checked for circularity or sharing. (See the examples
+below.)
+<div class=implementation>
+<!--l. 344--><p class="noindent" ><b>Implementation note:</b> Detection of circularity and sharing is supported by the pretty
+printer by in essence performing the requested output twice. On the ﬁrst pass,
+circularities and sharing are detected and the actual outputting of characters is
+suppressed. On the second pass, the appropriate “#<i>n</i>=” and “#<i>n</i>#” markers are
+inserted and characters are output.
+<!--l. 352--><p class="indent" >   A consequence of this two-pass approach to the detection of circularity and sharing is
+that the body of a <a 
+href="#x175-356005r855">pprint-logical-block</a> must not perform any side-eﬀects on the
+surrounding environment. This includes not modifying any variables that are bound
+outside of its scope. Obeying this restriction is facilitated by using <a 
+href="#x175-358002r857">pprint-pop</a>,
+instead of an ordinary <a 
+href="clmse84.html#x104-208003r473">pop</a> when traversing a list being printed by the body of a
+<a 
+href="#x175-356005r855">pprint-logical-block</a>.)
 </div>
 </div>
+<div class=defmac>
 <div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Loop clause]</i><b> named </b><a 
- id="dx174-372001"></a><a 
- id="x174-372002r887"></a> name
+class="tabbing"> <i>[Macro]</i><b> pprint-exit-if-list-exhausted </b><a 
+ id="dx175-357001"></a><a 
+ id="x175-357002r856"></a>
 </td></tr></table>
-<!--l. 2112--><p class="indent" >
+<!--l. 365--><p class="indent" >
 </div>
-<!--l. 2112--><p class="noindent" ><span class="paragraphHead"><a 
- id="x174-37300026.12.2"></a></span>
-   The <a 
-href="#x174-372002r887">named</a> construct allows you to assign a name to a <a 
-href="clmse42.html#x54-129002r106">loop</a> construct so that
-you can use the Common Lisp special form <a 
-href="clmse41.html#x53-125002r104">return-from</a> to exit the named
-loop.
-<!--l. 2117--><p class="indent" >   Only one name may be assigned per loop; the speciﬁed name becomes the
-name of the implicit block for the loop.
-<!--l. 2120--><p class="indent" >   If used, the <a 
-href="#x174-372002r887">named</a> construct must be the ﬁrst clause in the loop expression,
-coming right after the word <a 
-href="clmse42.html#x54-129002r106">loop</a>.
-<!--l. 2124--><p class="indent" >   Example: <div class=lisp> <div class=tabbing>
+                                                                          
+
+                                                                          
+<!--l. 365--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x175-35800027.3"></a></span>
+   <a 
+href="#x175-357002r856">pprint-exit-if-list-exhausted</a> tests whether or not the <i>list</i> argument of
+<a 
+href="#x175-356005r855">pprint-logical-block</a> has been exhausted (see <a 
+href="#x175-358002r857">pprint-pop</a>). If this list has been
+reduced to <a 
+href="clmse31.html#x42-74002r18">nil</a>, <a 
+href="#x175-357002r856">pprint-exit-if-list-exhausted</a> terminates the execution of the
+immediately containing <a 
+href="#x175-356005r855">pprint-logical-block</a> except for the printing of
+the suﬃx. Otherwise <a 
+href="#x175-357002r856">pprint-exit-if-list-exhausted</a> returns <a 
+href="clmse31.html#x42-74002r18">nil</a>. An error
+message is issued if <a 
+href="#x175-357002r856">pprint-exit-if-list-exhausted</a> is used anywhere other than
+syntactically nested within a call on <a 
+href="#x175-356005r855">pprint-logical-block</a>. It is undeﬁned what
+happens if <a 
+href="#x175-358002r857">pprint-pop</a> is executed outside of the dynamic extent of this
+<a 
+href="#x175-356005r855">pprint-logical-block</a>.
+</div>
+<div class=defmac>
+<div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> <i>[Macro]</i><b> pprint-pop </b><a 
+ id="dx175-358001"></a><a 
+ id="x175-358002r857"></a>
+</td></tr></table>
+<!--l. 381--><p class="indent" >
+</div>
+<!--l. 381--><p class="noindent" ><span class="paragraphHead"><a 
+ id="x175-35900027.3"></a></span>
+   <a 
+href="#x175-358002r857">pprint-pop</a> pops elements one at a time oﬀ the <i>list</i> argument of
+pprint-logical-block, taking care to obey *print-length*, *print-circle*, and
+*print-shared*. An error message is issued if it is used anywhere other than
+syntactically nested within a call on <a 
+href="#x175-356005r855">pprint-logical-block</a>. It is undeﬁned what
+happens if <a 
+href="#x175-358002r857">pprint-pop</a> is executed outside of the dynamic extent of this call on
+pprint-logical-block.
+<!--l. 389--><p class="indent" >   Each time <a 
+href="#x175-358002r857">pprint-pop</a> is called, it pops the next value oﬀ the list argument of
+<a 
+href="#x175-356005r855">pprint-logical-block</a> and returns it. However, before doing this, it performs three
+tests. If the remaining list is not a list (neither a cons nor <a 
+href="clmse31.html#x42-74002r18">nil</a>), “. ” is printed
+followed by the remaining list. (This makes it easier to write printing functions
+that are robust in the face of malformed arguments.) If *print-length* is <a 
+href="clmse31.html#x42-74002r18">nil</a>
+and <a 
+href="#x175-358002r857">pprint-pop</a> has already been called *print-length* times within the
+immediately containing logical block, “...” is printed. (This makes it easy to write
+printing functions that properly handle *print-length*.) If *print-circle* (and
+                                                                          
+
+                                                                          
+possibly also *print-shared*) is not <a 
+href="clmse31.html#x42-74002r18">nil</a>, and the remaining list is a circular
+(or shared) reference, then “. ” is printed followed by an appropriate
+“#<i>n</i>#” marker. (This catches instances of cdr circularity and sharing in
+lists.)
+<!--l. 404--><p class="indent" >   If any of the three preceding conditions occurs, the indicated output is
+printed on the pretty printing stream created by the immediately containing
+pprint-logical-block and the execution of the immediately containing
+pprint-logical-block is terminated except for the printing of the suﬃx.
+<!--l. 411--><p class="indent" >   If <a 
+href="#x175-356005r855">pprint-logical-block</a> is given a <i>list</i> argument of <a 
+href="clmse31.html#x42-74002r18">nil</a>—because it is not
+processing a list—<a 
+href="#x175-358002r857">pprint-pop</a> can still be used to obtain support for *print-length*
+(see the example function pprint-vector below). In this situation, the
+ﬁrst and third tests above are disabled and <a 
+href="#x175-358002r857">pprint-pop</a> always returns
+<a 
+href="clmse31.html#x42-74002r18">nil</a>.
+</div>
+<div class=defun>
+<!--l. 418--><p class="noindent" ><i>[Function]</i><a 
+ id="dx175-359001"></a><a 
+ id="x175-359002r858"></a><b> pprint-indent</b>  <i>relative-to</i> <i>n</i> &#x0026;optional  <i>stream</i>
+<!--l. 420--><p class="noindent" ><a 
+href="#x175-359002r858">pprint-indent</a> speciﬁes the indentation to use in a logical block. <i>Stream</i>
+(which defaults to <a 
+href="clmse109.html#x135-244004r603">*standard-output*</a>) follows the standard conventions for
+stream arguments to printing functions. The argument n speciﬁes the
+indentation in ems. If <i>relative-to</i> is :block, the indentation is set to the
+horizontal position of the ﬁrst character in the block plus <i>n</i> ems. If <i>relative-to</i>
+is :current, the indentation is set to the current output position plus <i>n</i>
+ems.
+<!--l. 429--><p class="indent" >   The argument <i>n</i> can be negative; however, the total indentation cannot be
+moved left of the beginning of the line or left of the end of the rightmost per-line
+preﬁx. Changes in indentation caused by <a 
+href="#x175-359002r858">pprint-indent</a> do not take eﬀect until
+after the next line break. In addition, in miser mode all calls on <a 
+href="#x175-359002r858">pprint-indent</a> are
+ignored, forcing the lines corresponding to the logical block to line up under the
+ﬁrst character in the block.
+<!--l. 436--><p class="indent" >   An error is signaled if a value other than :block or :current is supplied for
+<i>relative-to</i>. If <i>stream</i> is a pretty printing stream created by pprint-logical-block,
+<a 
+href="#x175-359002r858">pprint-indent</a> sets the indentation in the innermost dynamically enclosing logical
+block. Otherwise, <a 
+href="#x175-359002r858">pprint-indent</a> has no eﬀect. The value <a 
+href="clmse31.html#x42-74002r18">nil</a> is always
+returned.
+</div>
+<div class=defun>
+<!--l. 444--><p class="noindent" ><i>[Function]</i><a 
+ id="dx175-359003"></a><a 
+ id="x175-359004r859"></a><b> pprint-tab</b>  <i>kind</i> <i>colnum</i> <i>colinc</i> &#x0026;optional  <i>stream</i>
+<!--l. 446--><p class="noindent" ><a 
+href="#x175-359004r859">pprint-tab</a> speciﬁes tabbing as performed by the standard <a 
+href="clmse114.html#x141-266003r692">format</a> directive ~T.
+                                                                          
+
+                                                                          
+<i>Stream</i> (which defaults to <a 
+href="clmse109.html#x135-244004r603">*standard-output*</a>) follows the standard conventions
+for stream arguments to printing functions. The arguments <i>colnum</i> and colinc
+correspond to the two parameters to ~T and are in terms of ems. The
+<i>kind</i> argument speciﬁes the style of tabbing. It must be one of :line (tab
+as by ~T) :section (tab as by ~T, but measuring horizontal positions
+relative to the start of the dynamically enclosing section), :line-relative
+(tab as by ~@T), or :section-relative (tab as by ~@T, but measuring
+horizontal positions relative to the start of the dynamically enclosing
+section). An error is signaled if any other value is supplied for <i>kind</i>. If <i>stream</i>
+is a pretty printing stream created by <a 
+href="#x175-356005r855">pprint-logical-block</a>, tabbing is
+performed. Otherwise, <a 
+href="#x175-359004r859">pprint-tab</a> has no eﬀect. The value <a 
+href="clmse31.html#x42-74002r18">nil</a> is always
+returned.
+</div>
+<div class=defun>
+<!--l. 465--><p class="noindent" ><i>[Function]</i><a 
+ id="dx175-359005"></a><a 
+ id="x175-359006r860"></a><b> pprint-ﬁll</b>  <i>stream</i> <i>list</i> &#x0026;optional  <i>colon?</i> <i>atsign?</i><br 
+class="newline" /><i>[Function]</i><a 
+ id="dx175-359007"></a><a 
+ id="x175-359008r861"></a><b> pprint-linear</b>  <i>stream</i> <i>list</i> &#x0026;optional  <i>colon?</i> <i>atsign?</i><br 
+class="newline" /><i>[Function]</i><a 
+ id="dx175-359009"></a><a 
+ id="x175-359010r862"></a><b> pprint-tabular</b>  <i>stream</i> <i>list</i> &#x0026;optional  <i>colon?</i> <i>atsign?</i> <i>tabsize</i>
+<!--l. 469--><p class="noindent" >These three functions specify particular ways of pretty printing lists. <i>Stream</i>
+follows the standard conventions for stream arguments to printing functions. Each
+function prints parentheses around the output if and only if <i>colon?</i> (default <a 
+href="clmse31.html#x42-74004r19">t</a>)
+is not <a 
+href="clmse31.html#x42-74002r18">nil</a>. Each function ignores its <i>atsign?</i> argument and returns <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+(These two arguments are included in this way so that these functions
+can be used via ~/.../ and as <a 
+href="clmse146.html#x178-363006r866">set-pprint-dispatch</a> functions as well as
+directly.) Each function handles abbreviation and the detection of circularity
+and sharing correctly and uses <a 
+href="clmse114.html#x141-263006r673">write</a> to print <i>list</i> when given a non-list
+argument.
+<!--l. 481--><p class="indent" >   The function <a 
+href="#x175-359008r861">pprint-linear</a> prints a list either all on one line or with each
+element on a separate line. The function <a 
+href="#x175-359006r860">pprint-ﬁll</a> prints a list with as many
+elements as possible on each line. The function <a 
+href="#x175-359010r862">pprint-tabular</a> is the same as
+<a 
+href="#x175-359006r860">pprint-ﬁll</a> except that it prints the elements so that they line up in columns. This
+function takes an additional argument tabsize (default 16) that speciﬁes the
+column spacing in ems.
+</div>
+<!--l. 490--><p class="indent" >   As an example of the interaction of logical blocks, conditional newlines, and
+indentation, consider the function pprint-defun below. This function pretty prints
+a list whose <i>car</i> is <a 
+href="clmse30.html#x40-67002r13">defun</a> in the standard way assuming that the length of the list
+is exactly 4. <div class=lisp><div class=tabbing>
                                                                           
 
                                                                           
@@ -646,61 +535,705 @@ href="clmse42.html#x54-129002r106">loop</a>.
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">;;; Just name and return.
+class="tabbing">;;; Pretty printer function for DEFUN forms.
 </td></tr></table>
-<!--l. 2126--><p class="indent" >                                                         <table  
+<!--l. 495--><p class="indent" >                                                                          <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(loop named max</td></tr></table>
-<!--l. 2127--><p class="indent" >                                                  <table  
+class="tabbing"></td></tr></table>
+<!--l. 496--><p class="indent" >                                                  <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      for i from 1 to 10</td></tr></table>
-<!--l. 2128--><p class="indent" >                                                        <table  
+class="tabbing">(defun pprint-defun (list)</td></tr></table>
+<!--l. 497--><p class="indent" >                      <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      do (print i)</td></tr></table>
-<!--l. 2129--><p class="indent" >
+class="tabbing">  (pprint-logical-block (nil list :preﬁx &#x0022;(&#x0022; :suﬃx &#x0022;)&#x0022;)</td></tr></table>
+<!--l. 498--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write (ﬁrst list))</td></tr></table>
+<!--l. 499--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write-char #\space)</td></tr></table>
+<!--l. 500--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-newline :miser)</td></tr></table>
+<!--l. 501--><p class="indent" >                                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-indent :current 0)</td></tr></table>
+<!--l. 502--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write (second list))</td></tr></table>
+<!--l. 503--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write-char #\space)</td></tr></table>
+<!--l. 504--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-newline :ﬁll)</td></tr></table>
+<!--l. 505--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write (third list))</td></tr></table>
+<!--l. 506--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-indent :block 1)</td></tr></table>
+<!--l. 507--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write-char #\space)</td></tr></table>
+<!--l. 508--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-newline :linear)</td></tr></table>
+<!--l. 509--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write (fourth list))))</td></tr></table>
+<!--l. 511--><p class="indent" >
+</div>
+</div>
+<!--l. 513--><p class="indent" >   Suppose that one evaluates the following: <div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td style="width:281;" 
-class="tabbing">      do (return-from max &#x2019;done)) </td><td style="width:303;" 
-class="tabbing-right">                          ;Prints 1 line</td></tr></table>
-<!--l. 2130--><p class="indent" >                                                                         <table  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(pprint-defun &#x2019;(defun prod (x y) (* x y)))
+</td></tr></table>
+<!--l. 516--><p class="indent" >
+</div>
+</div>
+<!--l. 518--><p class="indent" >   If the line width available is greater than or equal to 26, all of the output
+appears on one line. If the width is reduced to 25, a line break is inserted at the
+linear-style conditional newline before (* X Y), producing the output shown
+below. The (pprint-indent :block 1) causes (* X Y) to be printed at a relative
+indentation of 1 in the logical block. <div class=lisp><div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">1</td></tr></table>
-<!--l. 2131--><p class="indent" >                                                            <table  
+class="tabbing">(DEFUN PROD (X Y)
+</td></tr></table>
+<!--l. 525--><p class="indent" >                                                               <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ DONE</td></tr></table>
-<!--l. 2133--><p class="indent" >
+class="tabbing">  (* X Y))</td></tr></table>
+<!--l. 527--><p class="indent" >
+</div>
+</div>
+<!--l. 529--><p class="indent" >   If the width is 15, a line break is also inserted at the ﬁll-style conditional
+newline before the argument list. The argument list lines up under the function
+name because of the call on (pprint-indent :current 0) before the printing of the
+function name. <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(DEFUN PROD
+</td></tr></table>
+<!--l. 534--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (X Y)</td></tr></table>
+<!--l. 535--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (* X Y))</td></tr></table>
+<!--l. 537--><p class="indent" >
+</div>
+</div>
+<!--l. 539--><p class="indent" >   If *print-miser-width* were greater than or equal to 14, the output would have
+been entirely in miser mode. All indentation changes are ignored in miser mode
+and line breaks are inserted at miser-style conditional newlines. The result would
+have been as follows: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(DEFUN
+</td></tr></table>
+<!--l. 545--><p class="indent" >                                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> PROD</td></tr></table>
+<!--l. 546--><p class="indent" >                                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> (X Y)</td></tr></table>
+<!--l. 547--><p class="indent" >                                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"> (* X Y))</td></tr></table>
+<!--l. 549--><p class="indent" >
+</div>
+</div>
+<!--l. 551--><p class="indent" >   As an example of the use of a per-line preﬁx, consider that evaluating the
+expression <div class=lisp><div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(pprint-logical-block (nil nil :per-line-preﬁx &#x0022;;;; &#x0022;)
+</td></tr></table>
+<!--l. 553--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (pprint-defun &#x2019;(defun prod (x y) (* x y))))</td></tr></table>
+<!--l. 555--><p class="indent" >
+</div>
+</div>
+<!--l. 556--><p class="noindent" >produces the output <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; (DEFUN PROD
+</td></tr></table>
+<!--l. 558--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;        (X Y)</td></tr></table>
+<!--l. 559--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;   (* X Y))</td></tr></table>
+<!--l. 561--><p class="indent" >
+</div>
+</div>
+<!--l. 562--><p class="noindent" >with a line width of 20 and <a 
+href="clmse31.html#x42-74002r18">nil</a> as the value of the printer control variable
+*print-miser-width*.
+<!--l. 565--><p class="indent" >   (If *print-miser-width* were not <a 
+href="clmse31.html#x42-74002r18">nil</a> the output <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; (DEFUN
+</td></tr></table>
+<!--l. 567--><p class="indent" >                                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  PROD</td></tr></table>
+<!--l. 568--><p class="indent" >                                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (X Y)</td></tr></table>
+<!--l. 569--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;;  (* X Y))</td></tr></table>
+<!--l. 571--><p class="indent" >
+</div>
+</div>
+<!--l. 572--><p class="noindent" >might appear instead.)
+<!--l. 574--><p class="indent" >   As a more complex (and realistic) example, consider the function pprint-let
+below. This speciﬁes how to pretty print a <a 
+href="clmse39.html#x51-100002r74">let</a> in the standard style. It is more
+complex than pprint-defun because it has to deal with nested structure. Also,
+unlike pprint-defun, it contains complete code to print readably any possible list
+that begins with the symbol <a 
+href="clmse39.html#x51-100002r74">let</a>. The outermost <a 
+href="#x175-356005r855">pprint-logical-block</a> handles the
+printing of the input list as a whole and speciﬁes that parentheses should be
+printed in the output. The second <a 
+href="#x175-356005r855">pprint-logical-block</a> handles the list
+of binding pairs. Each pair in the list is itself printed by the innermost
+                                                                          
+
+                                                                          
+<a 
+href="#x175-356005r855">pprint-logical-block</a>. (A <a 
+href="clmse42.html#x54-118002r90">loop</a> is used instead of merely decomposing the pair
+into two elements so that readable output will be produced no matter
+whether the list corresponding to the pair has one element, two elements, or
+(being malformed) has more than two elements.) A space and a ﬁll-style
+conditional newline are placed after each pair except the last. The loop at
+the end of the topmost <a 
+href="#x175-356005r855">pprint-logical-block</a> prints out the forms in the
+body of the <a 
+href="clmse39.html#x51-100002r74">let</a> separated by spaces and linear-style conditional newlines.
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; Pretty printer function for LET forms,
+</td></tr></table>
+<!--l. 592--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">;;; carefully coded to handle malformed binding pairs.</td></tr></table>
+<!--l. 593--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 594--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun pprint-let (list)</td></tr></table>
+<!--l. 595--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (pprint-logical-block (nil list :preﬁx &#x0022;(&#x0022; :suﬃx &#x0022;)&#x0022;)</td></tr></table>
+<!--l. 596--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write (pprint-pop))</td></tr></table>
+<!--l. 597--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 598--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (write-char #\space)</td></tr></table>
+<!--l. 599--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-logical-block</td></tr></table>
+<!--l. 600--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (nil (pprint-pop) :preﬁx &#x0022;(&#x0022; :suﬃx &#x0022;)&#x0022;)</td></tr></table>
+<!--l. 601--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 602--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (loop (pprint-logical-block</td></tr></table>
+<!--l. 603--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                (nil (pprint-pop) :preﬁx &#x0022;(&#x0022; :suﬃx &#x0022;)&#x0022;)</td></tr></table>
+<!--l. 604--><p class="indent" >                             <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 605--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (loop (write (pprint-pop))</td></tr></table>
+<!--l. 606--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                    (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 607--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                    (write-char #\space)</td></tr></table>
+<!--l. 608--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                    (pprint-newline :linear)))</td></tr></table>
+<!--l. 609--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 610--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (write-char #\space)</td></tr></table>
+<!--l. 611--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">            (pprint-newline :ﬁll)))</td></tr></table>
+<!--l. 612--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-indent :block 1)</td></tr></table>
+<!--l. 613--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (loop (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 614--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (write-char #\space)</td></tr></table>
+<!--l. 615--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (pprint-newline :linear)</td></tr></table>
+<!--l. 616--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (write (pprint-pop)))))</td></tr></table>
+<!--l. 618--><p class="indent" >
+                                                                          
+
+                                                                          
+</div>
+</div>
+<!--l. 620--><p class="indent" >   Suppose that the following is evaluated with *print-level* having the value 4
+and *print-circle* having the value <a 
+href="clmse31.html#x42-74004r19">t</a>. <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(pprint-let &#x2019;#1=(let (x (*print-length* (f (g 3)))
+</td></tr></table>
+<!--l. 623--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      (z . 2) (k (car y)))</td></tr></table>
+<!--l. 624--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                  (setq x (sqrt z)) #1#))</td></tr></table>
+<!--l. 626--><p class="indent" >
+</div>
+</div>
+<!--l. 628--><p class="indent" >   If the line length is greater than or equal to 77, the output produced appears
+on one line. However, if the line length is 76, line breaks are inserted at the
+linear-style conditional newlines separating the forms in the body and the output
+below is produced. Note that the degenerate binding pair X is printed readably
+even though it fails to be a list; a depth abbreviation marker is printed in
+place of (G 3); the binding pair (Z . 2) is printed readably even though
+it is not a proper list; and appropriate circularity markers are printed.
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">#1=(LET (X (*PRINT-LENGTH* (F #)) (Z . 2) (K (CAR Y)))
+</td></tr></table>
+<!--l. 637--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (SETQ X (SQRT Z))</td></tr></table>
+<!--l. 638--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     #1#)</td></tr></table>
+<!--l. 640--><p class="indent" >
+</div>
+</div>
+<!--l. 642--><p class="indent" >   If the line length is reduced to 35, a line break is inserted at one of the ﬁll-style
+conditional newlines separating the binding pairs. <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">#1=(LET (X (*PRINT-PRETTY* (F #))
+</td></tr></table>
+<!--l. 645--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (Z . 2) (K (CAR Y)))</td></tr></table>
+<!--l. 646--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     (SETQ X (SQRT Z))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 647--><p class="indent" >                                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">     #1#)</td></tr></table>
+<!--l. 649--><p class="indent" >
+</div>
+</div>
+<!--l. 651--><p class="indent" >   Suppose that the line length is further reduced to 22 and *print-length* is
+set to 3. In this situation, line breaks are inserted after both the ﬁrst
+and second binding pairs. In addition, the second binding pair is itself
+broken across two lines. Clause (b) of the description of ﬁll-style conditional
+newlines prevents the binding pair (Z . 2) from being printed at the end of
+the third line. Note that the length abbreviation hides the circularity
+from view and therefore the printing of circularity markers disappears.
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(LET (X
+</td></tr></table>
+<!--l. 660--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (*PRINT-LENGTH*</td></tr></table>
+<!--l. 661--><p class="indent" >                                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       (F #))</td></tr></table>
+<!--l. 662--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (Z . 2) ...)</td></tr></table>
+<!--l. 663--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (SETQ X (SQRT Z))</td></tr></table>
+<!--l. 664--><p class="indent" >                                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  ...)</td></tr></table>
+<!--l. 666--><p class="indent" >
+</div>
+</div>
+<!--l. 668--><p class="indent" >   The function <a 
+href="#x175-359010r862">pprint-tabular</a> could be deﬁned as follows: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun pprint-tabular (s list &#x0026;optional (c? t) a? (size 16))
+</td></tr></table>
+<!--l. 670--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (declare (ignore a?))</td></tr></table>
+<!--l. 671--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (pprint-logical-block</td></tr></table>
+<!--l. 672--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (s list :preﬁx (if c? &#x0022;(&#x0022; &#x0022;&#x0022;) :suﬃx (if c? &#x0022;)&#x0022; &#x0022;&#x0022;))</td></tr></table>
+<!--l. 673--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 674--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (loop (write (pprint-pop) :stream s)</td></tr></table>
+<!--l. 675--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (pprint-exit-if-list-exhausted)</td></tr></table>
+<!--l. 676--><p class="indent" >                                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (write-char #\space s)</td></tr></table>
+<!--l. 677--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (pprint-tab :section-relative 0 size s)</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 678--><p class="indent" >                                       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (pprint-newline :ﬁll s))))</td></tr></table>
+<!--l. 680--><p class="indent" >
+</div>
+</div>
+<!--l. 682--><p class="indent" >   Evaluating the following with a line length of 25 produces the output shown.
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(princ &#x0022;Roads &#x0022;)
+</td></tr></table>
+<!--l. 684--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(pprint-tabular nil &#x2019;(elm main maple center) nil nil 8)</td></tr></table>
+<!--l. 685--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 686--><p class="indent" >                                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">Roads ELM     MAIN</td></tr></table>
+<!--l. 687--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      MAPLE   CENTER</td></tr></table>
+<!--l. 689--><p class="indent" >
+</div>
+</div>
+<!--l. 691--><p class="indent" >   The function below prints a vector using #(...) notation. <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun pprint-vector (v)
+</td></tr></table>
+<!--l. 693--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (pprint-logical-block (nil nil :preﬁx &#x0022;#(&#x0022; :suﬃx &#x0022;)&#x0022;)</td></tr></table>
+<!--l. 694--><p class="indent" >                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (let ((end (length v)) (i 0))</td></tr></table>
+<!--l. 695--><p class="indent" >                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">      (when (plusp end)</td></tr></table>
+<!--l. 696--><p class="indent" >                                               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (loop (pprint-pop)</td></tr></table>
+<!--l. 697--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (write (aref v i))</td></tr></table>
+<!--l. 698--><p class="indent" >                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (if (= (incf i) end) (return nil))</td></tr></table>
+<!--l. 699--><p class="indent" >                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (write-char #\space)</td></tr></table>
+<!--l. 700--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              (pprint-newline :ﬁll))))))</td></tr></table>
+<!--l. 702--><p class="indent" >
+</div>
+</div>
+<!--l. 704--><p class="indent" >   Evaluating the following with a line length of 15 produces the output shown.
+<div class=lisp><div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(pprint-vector &#x2019;#(12 34 567 8 9012 34 567 89 0 1 23))
+</td></tr></table>
+<!--l. 706--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 707--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">#(12 34 567 8</td></tr></table>
+<!--l. 708--><p class="indent" >                                                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  9012 34 567</td></tr></table>
+<!--l. 709--><p class="indent" >                                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  89 0 1 23)</td></tr></table>
+<!--l. 711--><p class="indent" >
 </div>
 </div>
                                                                           
 
                                                                           
-                                                                          
-
-                                                                          
-                                                                          
-
-                                                                          
-                                                                          
-
-                                                                          
-   <!--l. 7--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
-href="clmch27.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+   <!--l. 713--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse144.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse142.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse142.html#tailclmse142.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse143.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch26.html#clmse143.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 7--><p class="indent" >   <a 
- id="tailclmse143.html"></a>   
+href="clmch27.html#clmse143.html" >Up</a><tt>&#x003E;</tt></p></div>
+<!--l. 713--><p class="indent" >   <a 
+ id="tailclmse143.html"></a>  
 </body></html> 

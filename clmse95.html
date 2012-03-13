@@ -1,121 +1,148 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Array Access</title> 
+<head><title>Fill Pointers</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-11 14:56:00"> 
+<meta name="date" content="2012-03-13 16:31:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 315--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 714--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse96.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse94.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse94.html#tailclmse94.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse95.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch17.html#clmse95.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">17.2   </span> <a 
- id="x117-23900017.2"></a>Array Access</h3>
-<!--l. 317--><p class="noindent" >The function <a 
-href="#x117-239002r563">aref</a> is normally used for accessing an element of an array. Other
-access functions, such as <a 
-href="#x117-239004r564">svref</a>, <a 
-href="clmse100.html#x123-245002r593">char</a>, and <a 
-href="clmse97.html#x119-241002r574">bit</a>, may be more eﬃcient in specialized
-circumstances.
-<div class=defun>
-<!--l. 322--><p class="noindent" ><i>[Function]</i><a 
- id="dx117-239001"></a><a 
- id="x117-239002r563"></a><b> aref</b>  <i>array</i> &#x0026;rest  <i>subscripts</i>
-<!--l. 324--><p class="noindent" >This accesses and returns the element of array speciﬁed by the subscripts.
-The number of subscripts must equal the rank of the array, and each
-subscript must be a non-negative integer less than the corresponding array
-dimension.
-<!--l. 330--><p class="indent" >   <a 
-href="#x117-239002r563">aref</a> is unusual among the functions that operate on arrays in that it
-completely ignores ﬁll pointers. <a 
-href="#x117-239002r563">aref</a> can access without error any array element,
-whether active or not. The generic sequence function <a 
-href="clmse81.html#x100-218002r399">elt</a>, however, observes the
-ﬁll pointer; accessing an element beyond the ﬁll pointer with <a 
-href="clmse81.html#x100-218002r399">elt</a> is an
-error.
-<div class=new>
-<!--l. 337--><p class="indent" >   Note that this remark, predating the design of the Common Lisp Object
-System, uses the term “generic” in a generic sense and not necessarily in the
-technical sense used by CLOS (see chapter <a 
-href="clmch2.html#x9-170002">2<!--tex4ht:ref: DTYPES --></a>).
+   <h3 class="sectionHead"><span class="titlemark">17.5   </span> <a 
+ id="x117-22200017.5"></a>Fill Pointers</h3>
+<!--l. 717--><p class="noindent" >Several functions for manipulating a ﬁll pointer are provided in Common Lisp to
+make it easy to incrementally ﬁll in the contents of a vector and, more
+generally, to allow eﬃcient varying of the length of a vector. For example, a
+string with a ﬁll pointer has most of the characteristics of a PL/I varying
+string.
+<!--l. 724--><p class="indent" >   The ﬁll pointer is a non-negative integer no larger than the total number of
+elements in the vector (as returned by <a 
+href="clmse93.html#x115-220006r534">array-dimension</a>); it is the number of
+“active” or “ﬁlled-in” elements in the vector. The ﬁll pointer constitutes the “active
+length” of the vector; all vector elements whose index is less than the ﬁll pointer
+are active, and the others are inactive. Nearly all functions that operate on the
+contents of a vector will operate only on the active elements. An important
+exception is <a 
+href="clmse92.html#x114-219002r530">aref</a>, which can be used to access any vector element whether
+in the active region of the vector or not. It is important to note that
+vector elements not in the active region are still considered part of the
+vector.
+<div class=implementation>
+<!--l. 738--><p class="noindent" ><b>Implementation note:</b> An implication of this rule is that vector elements outside the
+active region may not be garbage-collected.
 </div>
-<!--l. 343--><p class="indent" >   <a 
-href="clmse36.html#x48-93002r66">setf</a> may be used with <a 
-href="#x117-239002r563">aref</a> to destructively replace an array element with a
-new value.
-<!--l. 346--><p class="indent" >   Under some circumstances it is desirable to write code that will extract an
-element from an array a given a list z of the indices, in such a way that the
-code works regardless of the rank of the array. This is easy using <a 
-href="clmse37.html#x49-101002r77">apply</a>: <div class=lisp>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(apply #&#x2019;aref a z)
-</td></tr></table>
-<!--l. 352--><p class="indent" >
+<!--l. 744--><p class="indent" >   Only vectors (one-dimensional arrays) may have ﬁll pointers; multidimensional
+arrays may not. (Note, however, that one can create a multidimensional array
+that is displaced to a vector that has a ﬁll pointer.)
+<div class=defun>
+<!--l. 749--><p class="noindent" ><i>[Function]</i><a 
+ id="dx117-222001"></a><a 
+ id="x117-222002r554"></a><b> array-has-ﬁll-pointer-p</b>  <i>array</i>
+<!--l. 751--><p class="noindent" >The argument must be an array. <a 
+href="#x117-222002r554">array-has-ﬁll-pointer-p</a> returns <a 
+href="clmse31.html#x42-74004r19">t</a> if the array has
+a ﬁll pointer, and otherwise returns <a 
+href="clmse31.html#x42-74002r18">nil</a>. Note that array-has-ﬁll-pointer-p always
+returns <a 
+href="clmse31.html#x42-74002r18">nil</a> if the array is not one-dimensional.
+</div>
+<div class=defun>
                                                                           
 
                                                                           
+<!--l. 760--><p class="noindent" ><i>[Function]</i><a 
+ id="dx117-222003"></a><a 
+ id="x117-222004r555"></a><b> ﬁll-pointer</b>  <i>vector</i>
+<!--l. 762--><p class="noindent" >The ﬁll pointer of vector is returned. It is an error if the vector does not have a ﬁll
+pointer.
+<!--l. 766--><p class="indent" >   <a 
+href="clmse36.html#x48-90002r64">setf</a> may be used with <a 
+href="#x117-222004r555">ﬁll-pointer</a> to change the ﬁll pointer of a vector. The ﬁll
+pointer of a vector must always be an integer between zero and the size of the
+vector (inclusive).
 </div>
-</div>
-<!--l. 353--><p class="noindent" >(The length of the list must of course equal the rank of the array.) This construction
-may be used with <a 
-href="clmse36.html#x48-93002r66">setf</a> to alter the element so selected to some new value w: <div class=lisp>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(setf (apply #&#x2019;aref a z) w)
-</td></tr></table>
-<!--l. 358--><p class="indent" >
-</div>
+<div class=defun>
+<!--l. 771--><p class="noindent" ><i>[Function]</i><a 
+ id="dx117-222005"></a><a 
+ id="x117-222006r556"></a><b> vector-push</b>  <i>new-element</i> <i>vector</i>
+<!--l. 773--><p class="noindent" >vector must be a one-dimensional array that has a ﬁll pointer, and new-element
+may be any object. <a 
+href="#x117-222006r556">vector-push</a> attempts to store new-element in the
+element of the vector designated by the ﬁll pointer, and to increase the ﬁll
+pointer by 1. If the ﬁll pointer does not designate an element of the vector
+(speciﬁcally, when it gets too big), it is unaﬀected and <a 
+href="#x117-222006r556">vector-push</a> returns <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+Otherwise, the store and increment take place and <a 
+href="#x117-222006r556">vector-push</a> returns the
+former value of the ﬁll pointer (1 less than the one it leaves in the vector);
+thus the value of <a 
+href="#x117-222006r556">vector-push</a> is the index of the new element pushed. <div class=new> It
+is instructive to compare <a 
+href="#x117-222006r556">vector-push</a>, which is a function, with <a 
+href="clmse84.html#x104-206060r471">push</a>,
+which is a macro that requires a place suitable for <a 
+href="clmse36.html#x48-90002r64">setf</a>. A vector with a ﬁll
+pointer eﬀectively contains the place to be modiﬁed in its <a 
+href="#x117-222004r555">ﬁll-pointer</a>
+slot.
 </div>
 </div>
 <div class=defun>
-<!--l. 361--><p class="noindent" ><i>[Function]</i><a 
- id="dx117-239003"></a><a 
- id="x117-239004r564"></a><b> svref</b>  <i>simple-vector</i> <i>index</i>
-<!--l. 363--><p class="noindent" >The ﬁrst argument must be a simple general vector, that is, an object of type
-simple-vector. The element of the simple-vector speciﬁed by the integer index is
+<!--l. 792--><p class="noindent" ><i>[Function]</i><a 
+ id="dx117-222007"></a><a 
+ id="x117-222008r557"></a><b> vector-push-extend</b>  <i>new-element</i> <i>vector</i> &#x0026;optional  <i>extension</i>
+<!--l. 794--><p class="noindent" ><a 
+href="#x117-222008r557">vector-push-extend</a> is just like <a 
+href="#x117-222006r556">vector-push</a> except that if the ﬁll pointer gets too
+large, the vector is extended (using <a 
+href="clmse96.html#x118-223002r559">adjust-array</a>) so that it can contain more
+elements. If, however, the vector is not adjustable, then <a 
+href="#x117-222008r557">vector-push-extend</a> signals
+an error.
+<div class=newer>
+<!--l. 802--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx117-222009"></a>to clarify that <a 
+href="#x117-222008r557">vector-push-extend</a> regards an
+array as not adjustable if and only if <a 
+href="clmse93.html#x115-220019r540">adjustable-array-p</a> is false of that
+array.
+</div>
+<!--l. 809--><p class="indent" >   The optional argument extension, which must be a positive integer, is the
+minimum number of elements to be added to the vector if it must be extended; it
+defaults to a “reasonable” implementation-dependent value.
+</div>
+                                                                          
+
+                                                                          
+<div class=defun>
+<!--l. 815--><p class="noindent" ><i>[Function]</i><a 
+ id="dx117-222010"></a><a 
+ id="x117-222011r558"></a><b> vector-pop</b>  <i>vector</i>
+<!--l. 817--><p class="noindent" >vector must be a one-dimensional array that has a ﬁll pointer. If the ﬁll pointer is
+zero, <a 
+href="#x117-222011r558">vector-pop</a> signals an error. Otherwise the ﬁll pointer is decreased by 1,
+and the vector element designated by the new value of the ﬁll pointer is
 returned.
-<!--l. 369--><p class="indent" >   The index must be non-negative and less than the length of the vector.
-<!--l. 372--><p class="indent" >   <a 
-href="clmse36.html#x48-93002r66">setf</a> may be used with <a 
-href="#x117-239004r564">svref</a> to destructively replace a simple-vector element
-with a new value.
-<!--l. 375--><p class="indent" >   <a 
-href="#x117-239004r564">svref</a> is identical to <a 
-href="#x117-239002r563">aref</a> except that it requires its ﬁrst argument to be a
-simple vector. In some implementations of Common Lisp, <a 
-href="#x117-239004r564">svref</a> may be
-faster than <a 
-href="#x117-239002r563">aref</a> in situations where it is applicable. See also <a 
-href="clmse100.html#x123-245004r594">schar</a> and
-<a 
-href="clmse97.html#x119-241004r575">sbit</a>.
 </div>
                                                                           
 
                                                                           
-   <!--l. 381--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 824--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse96.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse94.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse94.html#tailclmse94.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse95.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch17.html#clmse95.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 381--><p class="indent" >   <a 
+<!--l. 824--><p class="indent" >   <a 
  id="tailclmse95.html"></a>  
 </body></html> 

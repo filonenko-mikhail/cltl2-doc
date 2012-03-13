@@ -3,7 +3,9 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Type Specif{\kern0pt}iers Спецификаторы типов}    % Avoid ligature
+\ifx \rulang\Undef
+
+\chapter{Type Specifiers}    % Avoid ligature
 \label{DTSPEC}
 
 In Common Lisp, types are named by Lisp objects, specifically symbols and lists,
@@ -13,33 +15,18 @@ specializations of simpler types.
 Symbols or lists may also be abbreviations for types that could
 be specified in other ways.
 
-В Common Lisp'е, типы указываются с помощью Lisp объектов, преимущественно
-символами и списками, называемых \emph{спецификаторами типов}. Символы задают
-предопределенные классы объектов, тогда как списки обычно указывают на
-комбинации или специализации простых типов.
-Символы и списки могут быть также аббревиатурами для типов, которые в свою
-очередь могут быть указаны в других типах. FIXME. 
-
-\section{Type Specifier Symbols Символы как спецификаторы типов}
+\section{Type Specifier Symbols}
 
 The type symbols defined by the system include those shown in
 table~\ref{TYPE-SYMBOLS-TABLE}.
 In addition, when a structure type is defined using \cdf{defstruct},
 the name of the structure type becomes a valid type symbol.
 
-Символы определяющие типа определены системой, включая те, что перечислены в
-таблице~\ref{TYPE-SYMBOLS-TABLE}.
-В дополнение, когда определяется структура с использованием \cdf{defstruct}, имя
-структуры автоматически становиться корректным символом типа.
-
 \begin{new}%CORR
 \emph{Notice of correction.}
 In the first edition, the type specifiers \cdf{signed-byte} and
 \cdf{unsigned-byte} were inadvertently omitted from
 table~\ref{TYPE-SYMBOLS-TABLE}.
-
-В первой редактции спецификаторы типов \cdf{signed-byte} и \cdf{unsigned-byte}
-были неумышленно забыты в таблице~\ref{TYPE-SYMBOLS-TABLE}.
 \end{new}
 
 \begin{newer}
@@ -63,7 +50,7 @@ many other type specifiers as names of classes (see chapter~\ref{CLOS})
 or of conditions (see chapter~\ref{CONDITION}).
 \end{newer}
 
-\section{Type Specifier Lists Списки как спецификаторы типов}
+\section{Type Specifier Lists}
 
 If a type specifier is a list, the \emph{car}
 of the list is a symbol, and the rest of the list is subsidiary
@@ -72,35 +59,21 @@ type information.  In many cases a subsidiary item may be
 by writing \cdf{*}.  For example, to completely specify
 a vector type, one must mention the type of the elements
 and the length of the vector, as for example
-
-Если спецификатор типа является списком, \emph{car} данного списка является
-символом, и остаток списка --- вспомогательная информация. В большинстве случаев
-вспомогательная информация может быть \emph{неопределена}. Неопределенная
-дополнительная информация указывается с помощью \cdf{*}. Например, для полного
-описания векторного типа, должны быть укзаны тип элементов векторы и его длина
-этого вектора:
 \begin{lisp}
 (vector double-float 100)
 \end{lisp}
 To leave the length unspecified, one would write
-
-Для указания неопределенной длины, можно записать:
-
 \begin{lisp}
 (vector double-float *)
 \end{lisp}
 
 To leave the element type unspecified, one would write
-
-Для указания неопределенного тип элемента, можно записать:
 \begin{lisp}
 (vector * 100)
 \end{lisp}
 \begin{newer}
 \noindent
 One may also leave both length and element type unspecified:
-
-Можно также оставить неопределенными и тип элемента и длину:
 \begin{lisp}
 (vector * *)
 \end{lisp}
@@ -108,10 +81,6 @@ One may also leave both length and element type unspecified:
 Suppose that two type specifiers are the same except that the first
 has a \cdf{*} where the second has a more explicit specification.
 Then the second denotes a subtype of the type denoted by the first.
-
-Допустим, что два спецификатора типов являются одинаковыми за исключением того,
-что первый содержит \cdf{*}, а второй содержит более явную спецификацию.
-Тогда второй тип является подтипом первого типа.
 
 \begin{table}[t]
 \caption{Standard Type Specifier Symbols Стандартные символы для обозначения типов}
@@ -156,14 +125,7 @@ by the symbol in its \emph{car}).  For example,
 and \cd{(vector * *)} may be abbreviated to \cd{(vector)} and then to
 simply \cdf{vector}.
 
-Для удобства существует следующее правило: если список в конце содержит
-незаданные элементы (\cdf{*}), то они могут быть опущены.
-Если все, за исключением первого, элементы не специфированы, то данный список
-может быть упрощен вплоть до упразднения скобок и превращения его в простой
-символ, который был в \emph{car}. Например, \cd{(vector * *)} может быть записан
-как \cd{(vector)} и затем до \cdf{vector}.
-
-\section{Predicating Type Specifiers Предикаты как спецификаторы типов}
+\section{Predicating Type Specifiers}
 \label{PREDICATING-TYPE-SPECIFIERS-SECTION}
 
 A type specifier list \cd{(satisfies \emph{predicate-name})} denotes
@@ -175,16 +137,6 @@ scoping problems.)  For example, the type \cd{(satisfies numberp)} is the
 same as the type \cdf{number}.
 The call \cd{(typep x '(satisfies p))} results in applying \cdf{p} to \cdf{x}
 and returning \cdf{t} if the result is true and {\nil} if the result is false.
-
-Такой список, как \cd{(satisfies \emph{имя-предиката})}, задает тип, которому
-принадлежит множество объектов, удовлетворяющие предикату {\it
-  имя-предиката}. \emph{имя-предиката} должен быть символом, указывающим на
-глобальную функцию с одним аргументов.
-(Требуется именно имя, так как лямбда-выражение недопустимо в связи с проблемами
-видимости.) Например, тип \cd{(satisfies numberp)} является тем же, что и
-\cdf{number}.
-Вызов \cd{(typep x '(satisfies p))} применяет \cdf{p} к \cdf{x} и возвращает
-\cdf{t}, если результат true, и {\nil} в противном случае.
 
 \begin{obsolete}
 As an example, the type \cdf{string-char} could be defined as
@@ -204,26 +156,16 @@ It is not a good idea for
 a predicate appearing in a \cdf{satisfies} type specifier to
 cause any side effects when invoked.
 
-Это не очень хорошая идея для предиката, что указан в \cdf{satisfies}, порождать
-побочные эффекты.
-
-\section{Type Specifiers That Combine Комбинированные спецификаторы типов}
+\section{Type Specifiers That Combine}
 
 The following type specifier lists define a type in terms of
 other types or objects.
-
-Следущие списки специфкаторы типов, определяют новый тип в терминах других типов
-или объектов.
 
 \begin{flushdesc}
 \item[\cd{(member \emph{object1} \emph{object2} ...)}]
 This denotes the set
 containing precisely those objects named.  An object is of
 this type if and only if it is \cdf{eql} to one of the specified objects.
-
-Такая запись обозначает тип, как множество содержащее определенный набор объектов. Объект
-принадлежит данному типу тогда и только тогда, когда он равен \cdf{eql} одному из
-заданных объектов. FIXME.
 
 \beforenoterule
 \begin{incompatibility}
@@ -244,14 +186,6 @@ It denotes the set of the one object named;  an object is of
 this type if and only if it is \cdf{eql} to \emph{object}.  While
 \cd{(eql \emph{object})} denotes the same type as \cd{(member \emph{object})},
 only \cd{(eql \emph{object})} may be used as a CLOS parameter specializer.
-
-Такой специализатор может быть использован для определения CLOS
-методов. Смотрите раздел~\ref{Introduction-to-Methods-SECTION} и
-\cdf{find-method}.
-Он задает множество из одного объекта. Объект принадлежит такому типу тогда и
-только тогда, когда он \cdf{eql} для первого \emph{объекта}. Несмотря на то, что
-\cd{(eql \emph{объект})} обозначает то же, что и \cd{(member \emph{объект})},
-только \cd{(eql \emph{объект})} может быть использован для определения CLOS метода.
 \end{flushdesc}
 \end{newer}
 
@@ -260,14 +194,9 @@ only \cd{(eql \emph{object})} may be used as a CLOS parameter specializer.
 This denotes the set of all those objects that
 are \emph{not} of the specified type.
 
-Такая запись задает тип множества объектов, которые \emph{не} являются типом {\it
-  type}.
-
 \item[\cd{(and \emph{type1} \emph{type2} ...)}]
 This denotes the intersection of
 the specified types.
-
-Такая запись задает пересечение указанных типов.
 
 \beforenoterule
 \begin{incompatibility}
@@ -287,17 +216,6 @@ type specifiers.  For example, suppose there were a function \cdf{primep}
 that takes an integer and says whether it is prime.  Suppose also that
 it is an error to give any object other than an integer to \cdf{primep}.
 Then the type specifier
-
-Когда \cdf{typep} обрабатывает спецификатор типа \cdf{and}, она производит
-проверку на принадлежность к каждому подтипу слева направо и моментально
-останавливает проверку, в случае первого случившегося отрицательного
-результата. Таким образом, спецификатор \cdf{and} ведет себя подобно форме
-\cdf{and}. Цель такого сходства --- позволить спецификатору типа \cdf{satisfies}
-зависеть от фильтрации предыдущим спецификатором типа. Например, предположим,
-что есть функция \cdf{primep}, что принимает целое и возвращает {\true}, если оно
-простое. Также предположим, что является ошибочным передавать любой объект, не
-являющийся целым, в \cdf{primep}. Тогда спецификатор будет выглядеть так:
-
 \begin{lisp}
 (and integer (satisfies primep))
 \end{lisp}
@@ -305,19 +223,12 @@ is guaranteed never to result in an error because the function \cdf{primep}
 will not be invoked unless the object in question has already been
 determined to be an integer.
 
-никогда не вызовет ошибку, так как функция \cdf{primep} никогда не будет вызвана
-с объектом, который не удовлетворяет предыдущему типу integer.
-
 \item[\cd{(or \emph{type1} \emph{type2} ...)}]
 This denotes the union of the
 specified types.  For example, the type \cdf{list} by definition is the same as
 \cd{(or null cons)}.  Also, the value returned by the function
 \cdf{position} is always of type \cd{(or null (integer 0 *))}
 (either {\nil} or a non-negative integer).
-
-Такая запись обозначает объединение типов. Например, тип \cdf{list} совпадает с
-\cd{(or null cons)}. Также, значение, возвращаемое функцией \cdf{position} всегда
-принадлежит типу \cd{(or null (integer 0 *))} (или {\nil} или неотрицательное число).
 
 \beforenoterule
 \begin{incompatibility}
@@ -331,13 +242,9 @@ when \cdf{typep} processes an \cdf{or} type specifier, it always
 tests each of the component types in order from left to right
 and stops processing as soon as one component of the union has
 been found to which the object in question belongs.
-
-Также как и для \cdf{and}, когда \cdf{typep} обрабатывает спецификатор типа
-\cdf{or}, она поочередно проверяет каждый подтип объедиения слева направо и
-завершает обработку, как только принадлежность подтипу установлена.
 \end{flushdesc}
 
-\section{Type Specifiers That Specialize Уточняющие спецификаторы типов}
+\section{Type Specifiers That Specialize}
 \label{SPECIALIZED-TYPE-SPECIFIER-SECTION}
 
 Some type specifier lists denote \emph{specializations} of
@@ -347,12 +254,6 @@ implementation.  As an example, consider the type \cd{(array short-float)}.
 Implementation A may choose to provide a specialized representation
 for arrays of short floating-point numbers, and implementation B
 may choose not to.
-
-Некоторые списки, представляющие типы, с помощью символов могут быть более
-специализированы. Такие подробности могут быть отражены, как более эффективная
-реализация. Например, предположим что \cd{(array short-float)}. Реализация A,
-может выбрать специализированное представление для массива коротких с плавающей
-точкой, а реализация B может выбрать более общее представление.
 
 If you should want to create an array for the
 express purpose of holding only short-float objects, you may
@@ -365,24 +266,10 @@ can provide.''  Implementation A will then produce a specialized
 array of type \cd{(array short-float)}, and implementation B
 will produce an ordinary array of type \cd{(array t)}.
 
-Если вы хотите создать массива в целях хранения только коротких с плавающей
-точкой, вы можете опционально указать для \cdf{make-array} тип элементов
-\cdf{short-float}. Это \emph{не потребует} от \cdf{make-array} создать объект типа
-\cd{(array short-float)}; это просто позволит ей выбрать такой тип. Запрос
-можно объяснить так: <<Предоставь наиболее специализированный массив, который
-может хранить короткие с плавающей точкой, который только может предоставить
-реализация>>. Реализация A тогда предоставит специализированный массив типа
-\cd{(array short-float)}, а реализация B --- простой массив типа \cd{(array t)}.
-
 If one were then to ask whether the array were actually of type
 \cd{(array short-float)}, implementation A would say ``yes,'' but
 implementation B would say ``no.''  This is a property of \cdf{make-array}
 and similar functions: what you ask for is not necessarily what you get. 
-
-На вопрос, действительно ли тип созданного массива \cd{(array short-float)},
-реализация A ответит <<да>>, но реализация B ответит <<нет>>. Это свойство
-\cdf{make-array} и подобных ей функций: то, что вы просите, необязательно
-является тем, что вы получите.
 
 \begin{obsolete}
 Types can therefore be used for two different purposes:
@@ -396,18 +283,6 @@ On the other hand, if the predicate \cdf{typep} is used to test
 whether an object is of type \cd{(array short-float)},
 only objects actually of that specialized type can satisfy the test;
 in implementation B no object can pass that test.
-
-Таким образом, типы могут быть использованы для двух различных целей:
-\emph{декларации} и \emph{распознавания} FIXME. Декларация в
-\cdf{make-array}, которая декларирует
-элементы могут быть только короткие с плавающей точкой допускает
-оптимизацию. Так же, дакларация того, что переменная принимает только значения
-типа \cd{(array short-float)} означает, что переменная может принимать только
-значения, которые могут быть возвращены функцией \cdf{make-array} с указанным
-типом \cdf{short-float}. С другой стороны, если для проверки, принадлежит ли
-объект типу \cd{(array short-float)}, используется предикат \cdf{typep}, только
-объекты удовлетворяющие данному условию могут пройти проверку; в реализации B ни
-один объект не пройдет проверки. 
 \end{obsolete}
 
 \begin{new}
@@ -441,8 +316,6 @@ may be used only for declaration, the symbol form (simply the name
 \end{new}
 
 The valid list-format names for data types are as follows:
-
-Далее перечисленны возможные имена типов, которые задаются списком:
 
 \begin{flushdesc}
 \item[\cd{(array \emph{element-type} \emph{dimensions})}]
@@ -561,50 +434,6 @@ For example, \cdf{find} applied to an array always returns either \cdf{nil}
 or an object whose type is the element type of the array.
 \end{new}
 
-\item[\cd{(array \emph{тип-элемента} \emph{размерность})}]
-Такая запись обозначает множество специализированных массивов, элементы которых
-приндлежат типу \emph{тип-элемента} и размерность которых равна \emph{размерность}.
-For declaration purposes, this type encompasses those arrays
-that can result by specifying \emph{element-type} as the element type
-to the function \cdf{make-array}; this may be different
-from what the type means for discrimination purposes.
-\emph{тип-элемента} должен быть корректным спецификатором типа или не уточнен с
-помощью \cdf{*}.
-\emph{размерность} может быть неотрицительным целым определяющим размер массива,
-может быть списком неотрицательных целых, определяющих размер каждого измерения
-(размер какого-либо измерения может быть не указан \cdf{*}), может быть не
-указана \cdf{*}.
-Например,
-\begin{lisp}
-(array integer 3)~~~~~~~~~~~;\textrm{Трехэлементный массив целых} \\
-(array integer (* * *))~~~~~;\textrm{Трехмерный массив целых} \\
-(array * (4 5 6))~~~~~~~~~~~;\textrm{Трехмерный массив, размеры измерений
-  4,5,6} \\
-(array character (3 *))~~~~~;\textrm{Двумерный массив символов} \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~\textrm{у которого только три строки} \\
-(array short-float {\emptylist})~~~~~~;\textrm{Ранг массива равен нулю, массив содержит} \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~\textrm{короткие с плавающие точкой}
-\end{lisp}
-Следует отметить, что \cd{(array~t)} является правильным подмножеством
-\cd{(array~*)}.
-Причиной тому является то. что \cd{(array~t)} это можество массивов, которые
-могут содержать любой Common Lisp объект (элементы типа \cdf{t}, которые включают
-все элементы). С другой стороны, \cd{(array~*)} является множеством всех
-массивов, включая, например, массивы, которые могут хранить только строковые
-символы. Сейчас \cd{(array character)} не является подмножеством \cd{(array~t)};
-два множества фактически непересекаются, потому что \cd{(array character)} не
-является множеством всех массивов, которые могут хранить строковые символы, а
-является множеством массивов, которые специализированы хранить именно символы и
-никакие другие объекты. FIXME. Поэтому проверка, может ли массив \cdf{foo} хранить
-строковые символы, не может быть такой:
-\begin{lisp}
-(typep foo '(array character))
-\end{lisp}
-, а должна быть такой:
-\begin{lisp}
-(subtypep 'character (array-element-type foo))
-\end{lisp}
-Смотрите \cdf{array-element-type}.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -630,40 +459,6 @@ is still not a legitimate test of whether the array
 \end{lisp}
 to determine that question.
 
-X3J13 also voted in January 1989
-\issue{DECLARE-ARRAY-TYPE-ELEMENT-REFERENCES}
-to specify that within the lexical scope of an array type declaration,
-it is an error for an array element, when referenced, not to be
-of the exact declared element type.  A compiler may, for example,
-treat every reference to an element of a declared array as if
-the reference were surrounded by a \cdf{the} form mentioning the
-declared array element type (\emph{not} the upgraded array element type).  Thus
-\begin{lisp}
-(defun snarf-hex-digits (the-array) \\*
-~~(declare (type (array (unsigned-byte 4) 1) the-array)) \\*
-~~(do ((j (- (length array) 1) (- j 1)) \\*
-~~~~~~~(val 0 (logior (ash val 4) \\*
-~~~~~~~~~~~~~~~~~~~~~~(aref the-array j)))) \\*
-~~~~~~((< j 0) val)))
-\end{lisp}
-may be treated as
-\begin{lisp}
-(defun snarf-hex-digits (the-array) \\*
-~~(declare (type (array (unsigned-byte 4) 1) the-array)) \\*
-~~(do ((j (- (length array) 1) (- j 1)) \\*
-~~~~~~~(val 0 (logior (ash val 4) \\*
-~~~~~~~~~~~~~~~~~~~~~~(the (unsigned-byte 4) \\*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~(aref the-array j))))) \\*
-~~~~~~((< j 0) val)))
-\end{lisp}
-The declaration amounts to a promise by the user that the \cdf{aref}
-will never produce a value outside the interval 0 to 15, even if
-in that particular implementation the array element type
-\cd{(unsigned-byte 4)} is upgraded to, say, \cd{(unsigned-byte 8)}.
-If~such upgrading does occur, then values outside that range may in fact
-be stored in \cdf{the-array}, as long as the code in \cdf{snarf-hex-digits}
-never sees them.
-
 As a general rule, a compiler would be justified in transforming
 \begin{lisp}
 (aref (the (array \emph{elt-type} ...) \emph{a}) ...)
@@ -684,11 +479,6 @@ This is equivalent
 to \cd{(array \emph{element-type} \emph{dimensions})} except that it additionally
 specifies that objects of the type are \emph{simple} arrays
 (see section~\ref{ARRAY-TYPE-SECTION}).
-
-\item[\cd{(simple-array \emph{тип-элемента} \emph{размерности})}]
-Данная запись эквивалентна \cd{(array \emph{тип-элемента} \emph{размерности})} за
-исключением того, что дополнительно определяет, что объекты будут \emph{простыми}
-массивами (смотрите раздел~\ref{ARRAY-TYPE-SECTION}).
 
 \item[\cd{(vector \emph{element-type} \emph{size})}]
 This denotes the set of
@@ -717,30 +507,10 @@ to eliminate the type \cdf{string-char} and to redefine the type
 types, the types of whose elements are subtypes of the type \cdf{character}.
 \end{newer}
 
-\item[\cd{(vector \emph{тип-элемента} \emph{размер})}]
-Такой тип обозначает множество специализированный одномерных массивов, все элементы
-которых принадлежат типу \cd{тип-элемента} и размер которого равен
-\cd{размер}. Такой тип полностью эквивалентен \cd{(array \emph{тип-элемента}
-  (\emph{размер}))}.
-Например:
-\begin{lisp}
-(vector double-float)~~~~~;\textrm{Векторы двойных } \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~;~\textrm{чисел с плавающей точкой} \\
-(vector * 5)~~~~~~~~~~~~~~;\textrm{Векторы длинной пять элементов} \\
-(vector t 5)~~~~~~~~~~~~~~;\textrm{Общие векторы длинной пять элементов FIXME} \\
-(vector (mod 32) *)~~~~~~~;\textrm{Вектора целых чисел между 0 и 31}
-\end{lisp}
-
 \item[\cd{(simple-vector \emph{size})}]
 This is the same
 as \cd{(vector t \emph{size})} except that it additionally specifies
 that its elements are \emph{simple} general vectors.
-
-\item[\cd{(simple-vector \emph{размер})}]
-This is the same
-as \cd{(vector t \emph{size})} except that it additionally specifies
-that its elements are \emph{simple} general vectors.
-Такая запись означает то же, что и \cd{(vector t \emph{размер})}.
 
 \item[\cd{(complex \emph{type})}]
 Every element of this type is a
@@ -754,10 +524,6 @@ As an example, Gaussian integers might be
 described as \cd{(complex integer)}, even in implementations
 where giving two integers to the function \cdf{complex} results
 in an object of type \cd{(complex rational)}.
-
-\item[\cd{(copmlex \emph{тип})}]
-Каждый элемент такого типа является комплексным числом, у которого
-действительная и мнимая части принадлежат типу \emph{тип}.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -782,16 +548,6 @@ member of the types specified by the \emph{value-type} form.  The
 may appear in the list of argument types.
 The \emph{value-type} may be a \cdf{values} type specifier
 in order to indicate the types of multiple values.
-
-\item[\cd{(function (\emph{тип-аргумента-1} \emph{тип-аргумента-2} ...) \emph{тип-значения})}]
-\relax Этот тип может использоваться только для декларации и не может для
-распознавания; \cdf{typep} будет сигнализировать ошибку, если ей будет передан
-такой спецификатор типа. Каждый элемент такого типа является функцией, которая
-принимает аргументы типов перечисленных с помощью форм \emph{тип-аргумента-j}
-и возвращает значение типа \emph{тип-значения}. В форме типов аргументов могут
-использоваться маркеры \cd{\&optional}, \cd{\&rest} и
-\cd{\&key}. \emph{тип-значения} может быть спецификатором типа \cdf{values} в
-случае, если функция возвращает несколько значений.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -947,24 +703,13 @@ The
 they thereby indicate the parameter list of a
 function that, when given to \cdf{multiple-value-call} along with
 the values, would be suitable for receiving those values.
-
-\item[\cd{(values \emph{тип-значения-1} \emph{тип-значения-2} ...)}]
-Данный тип используется только в двух случаях: только как \emph{тип-значения}
-для спецификатора типа \emph{функции} и в специальной форме \cdf{the}. Данный
-спецификатор используется для задания типов в случаях возврата нескольких
-значений.
-В списке с типами могут использоваться маркеры \cd{\&optional}, \cd{\&rest} и \cd{\&key}.
 \end{flushdesc}
 
-
-\section{Type Specifiers That Abbreviate Спецификаторы типов, являющиеся абревиатурами}
+\section{Type Specifiers That Abbreviate}
 
 The following type specifiers are, for the most part,
 abbreviations for other type specifiers that would be far too
 verbose to write out explicitly (using, for example, \cdf{member}).
-
-Следующие спецификаторы типов по большей части являются абревиатурами для других
-типов, которые долго печатать, например, в функции \cdf{member}.
 
 \begin{flushdesc}
 \item[\cd{(integer \emph{low} \emph{high})}]
@@ -982,27 +727,10 @@ values of \emph{smallest} and \emph{largest}
 The type \cd{(integer 0 1)}
 is so useful that it has the special name \cdf{bit}.
 
-\item[\cd{(integer \emph{наименьшее} \emph{наибольшее})}]
-Задает целые числа между \emph{наименьшим} и
-\emph{наибольшим}. \emph{Наименьшее} и \emph{наибольшее} должны быть
-каждое или целое, или список с одним целым, или не заданы.
-Целое задает включаемое граничное значение, список из целого задает невключаемое
-граничное значение и \cdf{*} означает отсутствие граничного значения, и тем самым
-задает границы минус или плюс бесконечность соответственно.
-Тип \cdf{fixnum} является именем для \cd{(integer \emph{наименьшее}
- \emph{наибольшее})}, в котором \emph{наибольшее} и \emph{наименьшее}
-значения зависят от реализации (см. \cdf{most-negative-fixnum} и
-\cdf{most-positive-fixnum}).
-Тип \cd{(integer 0 1)} оказался так полезен, что имеет отдельное имя \cdf{bit}.
-
 \item[\cd{(mod \emph{n})}]
 Denotes the set of non-negative integers less than \emph{n}.
 This is equivalent to \cd{(integer 0 $n-1$)}
 or to \cd{(integer 0 (\emph{n}))}.
-
-\item[\cd{(mod \emph{n})}]
-Задает множество неотрицательных целых меньших чем \cdf{n}. Является эквивалентом
-для \cd{(integer 0 $n-1$)} или \cd{(integer 0 (\emph{n}))}.
 
 \item[\cd{(signed-byte \emph{s})}]
 Denotes the set of integers that can be represented
@@ -1011,25 +739,12 @@ equivalent to
 \cd{(integer $-2^{s-1}$ $2^{s-1}-1$)}.
 Simply \cdf{signed-byte} or \cd{(signed-byte *)} is the same as \cdf{integer}.
 
-\item[\cd{(signed-byte \emph{s})}]
-Задает множество целых, которые могут быть представлены в виде байта с \cdf{s}
-количеством бит. Является эквивалентом для \cd{(integer
-  $-2^{s-1}$ $2^{s-1}-1$)}.
-\cdf{signed-byte} или \cd{(signed-byte *)} являются тем же, что и \cdf{integer}.
-
 \item[\cd{(unsigned-byte \emph{s})}]
 Denotes the set of non-negative integers that can be
 represented in a byte of \emph{s} bits.  This is equivalent to \cd{(mod
 $2^{s}$)}, that is, \cd{(integer 0 $2^{s}-1$)}.
 Simply \cdf{unsigned-byte} or \cd{(unsigned-byte *)} is the same as
 \cd{(integer 0 *)}, the set of non-negative integers.
-
-\item[\cd{(unsigned-byte \emph{s})}]
-Задает множество неотрицательных целых, которые могут быть представлены в виде байта с \cdf{s}
-количеством бит. Является эквивалентом для \cd{(mod
-$2^{s}$)}, и для \cd{(integer 0 $2^{s}-1$)}.
-\cdf{unsigned-byte} или \cd{(unsigned-byte *)} являются тем же, что и
-\cd{(integer 0 *)}, а именно, множеством неотрицательных целых.
 
 \item[\cd{(rational \emph{low} \emph{high})}]
 Denotes the rationals between
@@ -1039,14 +754,6 @@ A rational is an inclusive limit,
 a list of a rational is an exclusive limit, and
 \cdf{*} means that a limit does not exist
 and so effectively denotes minus or plus infinity, respectively.
-
-\item[\cd{(rational \emph{наименьшее} \emph{наибольшее})}]
-Задает рациональные числа между \emph{наименьшим} и
-\emph{наибольшим}. Наименьшее и наибольшее могут быть рациональными, списком
-из одного рационального, или не заданы.
-Рациональное число задает включаемое граничное значение, список из
-рационального задает невключаемое граничное значение и \cdf{*} означает, что
-предела для множества нет, и значением может быть минус или плюс бесконечность соответственно.
 
 \item[\cd{(float \emph{low} \emph{high})}]
 Denotes the set of floating-point numbers between
@@ -1066,24 +773,6 @@ In a similar manner, one may use:
 \end{lisp}
 In this case, if a limit is a floating-point
 number (or a list of one), it must be one of the appropriate format.
-
-\item[\cd{(float \emph{наименьшее} \emph{наибольшее})}]
-Задает числа с плавающей точкой  между \emph{наименьшим} и
-\emph{наибольшим}. Наименьшее и наибольшее могут быть числами с плавющей точкой, списком
-из одного такого числа, или не заданы.
-Рациональное число задает включаемое граничное значение, список из
-рационального задает невключаемое граничное значение и \cdf{*} означает, что
-предела для множества нет, и значением может быть минус или плюс бесконечность
-соответственно.
-
-Таким же образом определяются следующие типы:
-\begin{lisp}
-(short-float \emph{low} \emph{high}) \\
-(single-float \emph{low} \emph{high}) \\
-(double-float \emph{low} \emph{high}) \\
-(long-float \emph{low} \emph{high})
-\end{lisp}
-В этих случаях границы должны быть в том же формате, что и сам тип.
 \end{flushdesc}
 
 \begin{newer}
@@ -1133,20 +822,10 @@ strings of the indicated size.
 
 \penalty-3000%manual
 
-\item[\cd{(base-string \emph{размер})}]
-Обозначает то же, что и \cd{(vector base-character \emph{размер})}: множество
-базовых строк определенного размера.
-
-\penalty-3000%manual
-
 \item[\cd{(simple-base-string \emph{size})}]
 Means the same
 as \cd{(simple-array base-character (\emph{size}))}: the set of simple base
 strings of the indicated size.
-
-\item[\cd{(simple-base-string \emph{размер})}]
-Обозначает то же, что и \cd{(simple-array base-character \emph{размер})}: множество
-простых базовых строк определенного размера.
 \end{flushdesc}
 \end{newer}
 
@@ -1155,33 +834,19 @@ strings of the indicated size.
 Means the same as \cd{(array bit (\emph{size}))}:
 the set of bit-vectors of the indicated size.
 
-\item[\cd{(bit-vector \emph{размер})}]
-Обозначает то же, что и \cd{(array bit (\emph{размер}))}: множество битовых
-векторов определенного размера.
-
 \item[\cd{(simple-bit-vector \emph{size})}]
 This means the same as
 \cd{(simple-array bit (\emph{size}))}: the set of bit-vectors of
 the indicated size.
-
-\item[\cd{(simple-bit-vector \emph{размер})}]
-Обозначает то же, что и \cd{(simple-array bit (\emph{размер}))}: множество битовых
-векторов определенного размера.
 \end{flushdesc}
 
-\section{Defining New Type Specifiers Определение новых спецификаторов}
+\section{Defining New Type Specifiers}
 
 New type specifiers can come into existence in two ways.
 First, defining a new structure type with \cdf{defstruct} automatically
 causes the name of the structure to be a new type specifier symbol.
 Second, the \cdf{deftype} special form can be used to define new type-specifier
 abbreviations.
-
-Новые спецификаторы появляются двумя способами.
-Первый, определение нового типа структуры с помощью \cdf{defstruct} автоматически
-создает новый тип с именем, как у структуры.
-Второй, использование \cdf{deftype} для создания новых абревиатур для
-спецификаторов типов.
 
 \begin{defmac}
 deftype name lambda-list <{declaration}* | doc-string> {\,form}*
@@ -1199,36 +864,15 @@ is interpreted as a new type specifier for which the original specifier
 was an abbreviation.  The \emph{name} is returned as the value of the
 \cdf{deftype} form.
 
-Данный макрос весьма схож с формой \cdf{defmacro}: \emph{name} является
-символом, который будет определять имя будущего спецификатора типа,
-\cdf{lambda-list} является лямбда списком (и может содержать маркеры \cd{\&optional} и
-\cd{\&rest}) и \emph{forms} составляют тело функции. Если мы рассмотрим
-спецификатор типа, как список, содержащий имя и несколько форм аргументов, то
-формы аргументов (невычисленные) будут связаны с параметрами из лямбда списка
-\emph{lambda-list}. Затем будут выполнены формы тела, как неявный \cdf{progn},
-и значение последней формы будет интепретировано, как новый спецификатор типа,
-для которого исходный спецификатор является абревиатурой. \emph{name}
-возвращается, как значение формы \cdf{deftype}.
-
 \cdf{deftype} differs from \cdf{defmacro} in that if no \emph{initform}
 is specified for an \cd{\&optional} parameter, the default value
 is \cdf{*}, not {\nil}.
-
-\cdf{deftype} отличается от \cdf{defmacro} в том, что если для необязательного \cd{\&optional}
-параметра значение по умолчанию \emph{initform} не задано, то используется
-\cdf{*}, а не {\nil}.
 
 If the optional documentation string \emph{doc-string} is present,
 then it is attached to the \emph{name}
 as a documentation string of type \cdf{type}; see \cdf{documentation}.
 
-Если указана необязательная строка документации \emph{doc-string}, тогда она
-присоединяется к имени \cdf{name}, как строка документации типа \cdf{type};
-смотрите \cdf{documentation}.
-
 Here are some examples of the use of \cdf{deftype}:
-
-Вот несколько примеров использования \cdf{deftype}:
 \begin{lisp}
 (deftype mod (n) {\Xbq}(integer 0 (,n))) \\
  \\
@@ -1263,16 +907,6 @@ would mean \cd{(array * (* *))}, the set of two-dimensional arrays.
 This would unfortunately fail to convey the constraint that the two
 dimensions be the same; \cd{(square-matrix bit)} has the same problem.
 A better definition is
-
-Если имя типа заданного с помощью \cdf{deftype} используется просто как символ
-спецификатора типа, тогда оно интерпретируется как списк специфирующий тип с
-аргументами по умолчанию \cdf{*}. Например, используя код выше,
-\cdf{square-matrix} будет означать \cd{(array * (* *))}, множество двумерных
-массивов.
-В таком случае к несчастью нарушается правило о том, что количество строк в
-матрице должно совпадать с количеством столбцов; \cd{(square-matrix bit)} имеет
-ту же проблему.
-Лучшим решением будет
 \begin{lisp}
 (defun equidimensional (a) \\
 ~~(or (< (array-rank a) 2) \\
@@ -1302,13 +936,10 @@ environment.
 
 \end{defmac}
 
-\section{Type Conversion Function Функция преобразования}
+\section{Type Conversion Function}
 
 The following function may be used to convert an object to an
 equivalent object of another type.
-
-Следующие функции могут быть использованы для преобразования объекта в
-эквивалентный объект другого типа.
 
 \begin{defun}[Function]
 coerce object result-type
@@ -1322,15 +953,6 @@ by \cdf{typep}, then it is simply returned.
 It is not generally
 possible to convert any object to be of any type whatsoever; only certain
 conversions are permitted:
-
-\emph{result-type} должен быть спецификатором типа; \emph{object} будет
-сконверитрован в <<эквивалентный>> объект заданного типа.
-Если преобразование не может быть осуществлено, будет сгенерирована ошибка.
-В частности, \cd{(coerce x 'nil)} всегда сигнализирует ошибку.
-Если \emph{object} уже принадлежит заданному типу, это проверяется предикатом
-\cdf{typep}, тогда даный объект будет возвращен.
-В общем случае невозможно преобразовать любой объект в в объекто любого другого
-типа. Допускаются только следующие преобразования.
 \begin{itemize}
 \item
 Any sequence type may be converted to any other sequence type, provided
@@ -1349,26 +971,6 @@ copying it; in this, \cd{(coerce \emph{sequence} \emph{type})} differs from
 copy the argument \emph{sequence}.  In particular, if one specifies
 \cdf{sequence}, then the argument may simply be returned if it already is
 a \cdf{sequence}.
-\begin{lisp}
-(coerce '(a b c) 'vector) \EV\ \#(a b c)
-\end{lisp}
-
-\item
-Любой тип последовательности может быть сконвертирован в другой тип
-последовательности. Новый тип последовательности будет содержать все
- объекты из старой последовательности (если это невозможно, тогда возникнет
-ошибка). Если \cdf{result-type} задан как \cdf{array}, тогда будет использоваться
-\cd{(array t)}. Также может использоваться специализированный тип такой, как \cdf{string} или \cd{(vector
-  (complex short-float))}; конечно, результат может быть более общим типом, в
-зависимости от реализации.
-Элементы новой последовательности будут эквивалентны \cdf{eql} соответствующим
-элементам старой последовательности.
-Если последовательность уже принадлежит заданному типу, она может быть просто
-возвращена без копирования. В таком случае \cd{(coerce
-  \emph{последовательность} \emph{тип})} отлчается от \cd{(concatenate
-  \emph{тип} \emph{последовательность})}, так как последняя требует
-копирования аргумента \emph{последовательность}.
-
 \begin{lisp}
 (coerce '(a b c) 'vector) \EV\ \#(a b c)
 \end{lisp}
@@ -1424,18 +1026,6 @@ the object is converted to a \cdf{single-float}.
 \end{lisp}
 
 \item
-Любое некомплексное число может быть приведено к \cdf{short-float},
-\cdf{single-float}, \cdf{double-float} или \cdf{long-float}. Если тип указан с
-плавающей точкой и \emph{объект} не является числом с плавающей точкой, тогда
-объект преобразовывается в \cdf{single-float}.
-
-\begin{lisp}
-(coerce 0 'short-float) \EV\ 0.0S0 \\
-(coerce 3.5L0 'float) \EV\ 3.5L0 \\
-(coerce 7/2 'float) \EV\ 3.5
-\end{lisp}
-
-\item
 Any number can be converted to a complex number.
 If the number is not already complex, then a zero imaginary part
 is provided by coercing the integer zero to the type of the given real part.
@@ -1452,27 +1042,7 @@ back to type \cdf{rational}.)
 \end{lisp}
 
 \item
-Любое число может быть приведено к комплексному. Если число еще не является
-комплексным, тогда мнимая часть будет равна нулю, который будет преобразован в
-тип, соответствующий типу действительной части. (Если полученная действительная
-часть является рациональным числом, тогда результат немедленно будет
-преобразован из комплексного обратно в рациональный.)
-
-\begin{lisp}
-(coerce 4.5s0 'complex) \EV\ \#C(4.5S0 0.0S0) \\
-(coerce 7/2 'complex) \EV\ 7/2 \\
-(coerce \#C(7/2 0) '(complex double-float)) \\
-~~~\EV\ \#C(3.5D0 0.0D0)
-\end{lisp}
-
-\item
 Any object may be coerced to type \cdf{t}.
-\begin{lisp}
-(coerce x 't) \EQ\ (identity x) \EQ\ x
-\end{lisp}
-
-\item
-Любой объект может быть приведен к типу \cdf{t}.
 \begin{lisp}
 (coerce x 't) \EQ\ (identity x) \EQ\ x
 \end{lisp}
@@ -1492,15 +1062,6 @@ the symbol or if the symbol names a macro or special form.
 A list \emph{x} whose \emph{car} is the symbol \cdf{lambda}
 is coerced to a function as if by execution of \cd{(eval {\Xbq}\#',\emph{x})},
 that is, of \cd{(eval (list 'function~\emph{x}))}.
-
-Символ или лямбда-выражение может быть преобразовано к функции.
-Символ приводится к типу \cdf{function}, как если бы к нему была применена
-функция \cdf{symbol-function}. Если символ не связан (\cdf{fboundp} symbol ->
-false), или символ связан с макросом или специальной формой сигнализируется
-ошибка.
-Список \emph{x}, чей \emph{car} является символом \cdf{lambda} приводится к
-функции, как если бы было вычислено выражение \cd{(eval {\Xbq}\#',\emph{x})},
-или \cd{(eval (list 'function~\emph{x}))}.
 \end{itemize}
 \end{newer}
 
@@ -1511,22 +1072,12 @@ problems.  The functions \cdf{rational}, \cdf{rationalize},
 such purposes.  Similarly, coercions from characters to integers
 are purposely not provided; \cdf{char-code} or \cdf{char-int} may be
 used explicitly to perform such conversions.
-
-Приведение чисел с плавающей точкой к рациональным и рациональныхк целым
-\emph{не} предоставляется в связи с проблемами округления. Для этого могут
-использоваться функции \cdf{rational}, \cdf{rationalize},
-\cdf{floor}, \cdf{ceiling}, \cdf{truncate} и \cdf{round}. Также не предоставляется
-приведение строковых символов к целым числам. В этих целях можно использовать
-\cdf{char-code} или \cdf{char-int}.
 \end{defun}
 
-\section{Determining the Type of an Object Определение типа объекта}
+\section{Determining the Type of an Object}
 
 The following function may be used to obtain a type specifier
 describing the type of a given object.
-
-Следующие функции могут быть использованы для получения спецификатора,
-обозначающего тип заданного объекта.
 
 \begin{defun}[Function]
 type-of object
@@ -1589,30 +1140,8 @@ to \emph{x} must return either \emph{type} itself or a subtype of \emph{type}
 that \cdf{subtypep} can recognize in that implementation.
 
 \item
-Пусть \emph{x} является объектом, и \cd{(typep \emph{x} \emph{тип})}
-вычисляется в true, и \emph{тип} один из:
-
-\begin{flushleft}
-\cf
-\begin{tabular}{@{}llll@{}}
-array          & float        & package        & sequence \\
-bit-vector     & function     & pathname       & short-float \\
-character      & hash-table   & random-state~~ & single-float \\
-complex        & integer      & ratio          & stream \\
-condition      & long-float~~ & rational       & string \\
-cons           & null         & readtable      & symbol \\
-double-float~~ & number       & restart        & vector
-\end{tabular}
-\end{flushleft}
-
-\item
 For any object \emph{x}, \cd{(subtypep (type-of \emph{x}) (class-of \emph{x}))}
 must produce the values \cdf{t} and \cdf{t}.
-
-\item
-Для любого объекта \emph{x}, \cd{(subtypep (type-of \emph{x}) (class-of
-  \emph{x}))}
-должно вернуть значения \cdf{t} и \cdf{t}.
 
 \item
 For every object \emph{x}, \cd{(typep \emph{x} (type-of \emph{x}))}
@@ -1620,19 +1149,9 @@ must be true.  (This implies that \cdf{type-of} can never return \cdf{nil},
 for no object is of type \cdf{nil}.)
 
 \item
-Для каждого объекта \emph{x}, \cd{(typep \emph{x} (type-of \emph{x}))}
-должно быть true. (Это означает, что \cdf{type-of} никогда не может вернуть
-\cdf{nil}, так как нет объектов принадлежащий типу \cdf{nil}.)
-
-\item
 \cdf{type-of} never returns \cdf{t} and never uses
 a \cdf{satisfies}, \cdf{and}, \cdf{or}, \cdf{not},
 or \cdf{values} type specifier in its result.
-
-\item
-\cdf{type-of} никогда не возвращает \cdf{t} и никогда не использует
-спецификаторы типа \cdf{satisfies}, \cdf{and}, \cdf{or}, \cdf{not} или \cdf{values} в
-качестве результата.
 
 \item
 For objects of CLOS metaclass \cdf{structure-class} or of \cdf{standard-class},
@@ -1642,15 +1161,6 @@ In particular,
 for any object created by a \cdf{defstruct} constructor function,
 where the \cdf{defstruct} had the name \emph{name} and no \cd{:type} option,
 \cdf{type-of} will return \emph{name}.
-
-\item
-Для объектов CLOS метакласса \cdf{structure-class} или \cdf{standard-class},
-\cdf{type-of} возвращает имя класса, получаемое с помощью \cdf{class-of}, если оно
-имеется, в противном случае возвращается сам класс.
-В частности, для любого объекта созданного с помощью \cdf{defstruct}
-функции-конструктора, и \cdf{defstruct} имело имя \emph{name} и не имело опции
-\cd{:type}, \cdf{type-of} вернет \emph{name}.
-
 \end{itemize}
 
 As an example, \cd{(type-of "acetylcholinesterase")}
@@ -1662,25 +1172,14 @@ As another example, it is permitted for
 \cd{(signed-byte 16)} or \cd{(integer 1729 1729)} or \cd{(integer 1685 1750)}
 % Bach's "St. Matthew Passion"
 or even \cd{(mod 1730)}, but not \cdf{rational} or \cdf{number}, because
-
-В качестве примера, \cd{(type-of "acetylcholinesterase")} может вернуть
-\cdf{string} или \cdf{simple-string} или \cd{(simple-string ~20)}, но не
-\cdf{array} или \cdf{simple-vector}.
-Другой пример, \cd{(type-of 1729)} может вернуть \cdf{integer} или \cdf{fixnum}
-или \cd{(signed-byte 16)} или \cd{(integer 1729 1729)} или \cd{(integer 1685
-  1750)} или даже \cd{(mod 1730)}, но не \cdf{rational} или \cdf{number}, потому что
 \begin{lisp}
 (typep (+ (expt 9 3) (expt 10 3)) 'integer)
 \end{lisp}
 is true, \cdf{integer} is in the list of types mentioned above, and
-
-является true, \cdf{integer} содержится в списке упомянутом выше, и 
 \begin{lisp}
 (subtypep (type-of (+ (expt 1 3) (expt 12 3))) 'integer)
 \end{lisp}
 would be false if \cdf{type-of} were to return \cdf{rational} or \cdf{number}.
-
-будет false, если \cdf{type-of} вернет \cdf{rational} или \cdf{number}.
 % Ramanujan and Hardy?
 \end{new}
 \end{defun}
@@ -1750,3 +1249,681 @@ Furthermore, if a type \emph{A} is a subtype of type \emph{B}, then
 \end{defun}
 
 \end{new}
+
+\else
+
+
+\chapter{Спецификаторы типов}    % Avoid ligature
+\label{DTSPEC}
+
+В Common Lisp'е, типы указываются с помощью Lisp объектов, преимущественно
+символами и списками, называемых \emph{спецификаторами типов}. Символы задают
+предопределенные классы объектов, тогда как списки обычно указывают на
+комбинации или специализации простых типов.
+Символы и списки могут быть также аббревиатурами для типов, которые в свою
+очередь могут быть указаны в других типах. FIXME. 
+
+\section{Символы как спецификаторы типов}
+
+Символы определяющие типа определены системой, включая те, что перечислены в
+таблице~\ref{TYPE-SYMBOLS-TABLE}.
+В дополнение, когда определяется структура с использованием \cdf{defstruct}, имя
+структуры автоматически становиться корректным символом типа.
+
+\section{Списки как спецификаторы типов}
+
+Если спецификатор типа является списком, \emph{car} данного списка является
+символом, и остаток списка --- вспомогательная информация. В большинстве случаев
+вспомогательная информация может быть \emph{неопределена}. Неопределенная
+дополнительная информация указывается с помощью \cdf{*}. Например, для полного
+описания векторного типа, должны быть укзаны тип элементов векторы и его длина
+этого вектора:
+\begin{lisp}
+(vector double-float 100)
+\end{lisp}
+
+Для указания неопределенной длины, можно записать:
+\begin{lisp}
+(vector double-float *)
+\end{lisp}
+
+Для указания неопределенного тип элемента, можно записать:
+\begin{lisp}
+(vector * 100)
+\end{lisp}
+\begin{newer}
+
+Можно также оставить неопределенными и тип элемента и длину:
+\begin{lisp}
+(vector * *)
+\end{lisp}
+\end{newer}
+
+Допустим, что два спецификатора типов являются одинаковыми за исключением того,
+что первый содержит \cdf{*}, а второй содержит более явную спецификацию.
+Тогда второй тип является подтипом первого типа.
+
+\begin{table}[t]
+\caption{Стандартные символы для обозначения типов}
+\label{TYPE-SYMBOLS-TABLE}
+\divide\tabcolsep by 2\relax
+\begin{flushleft}
+\cf
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}l@{\extracolsep{\fill}}l@{\extracolsep{\fill}}l@{}}
+array&fixnum&package&simple-string \\
+atom&float&pathname&simple-vector \\
+bignum&function&random-state&single-float \\
+bit&hash-table&ratio&standard-char \\
+bit-vector&integer&rational&stream \\
+character&keyword&readtable&string \\
+\textrm{[}common\textrm{]}&list&sequence&\textrm{[}string-char\textrm{]} \\
+compiled-function&long-float&short-float&symbol \\
+complex&nil&signed-byte&t \\
+cons&null&simple-array&unsigned-byte \\
+double-float&number&simple-bit-vector&vector
+\end{tabular*}
+\end{flushleft}
+
+\end{table}
+
+Для удобства существует следующее правило: если список в конце содержит
+незаданные элементы (\cdf{*}), то они могут быть опущены.
+Если все, за исключением первого, элементы не специфированы, то данный список
+может быть упрощен вплоть до упразднения скобок и превращения его в простой
+символ, который был в \emph{car}. Например, \cd{(vector * *)} может быть записан
+как \cd{(vector)} и затем до \cdf{vector}.
+
+\section{Предикаты как спецификаторы типов}
+\label{PREDICATING-TYPE-SPECIFIERS-SECTION}
+
+Такой список, как \cd{(satisfies \emph{имя-предиката})}, задает тип, которому
+принадлежит множество объектов, удовлетворяющие предикату {\it
+  имя-предиката}. \emph{имя-предиката} должен быть символом, указывающим на
+глобальную функцию с одним аргументов.
+(Требуется именно имя, так как лямбда-выражение недопустимо в связи с проблемами
+видимости.) Например, тип \cd{(satisfies numberp)} является тем же, что и
+\cdf{number}.
+Вызов \cd{(typep x '(satisfies p))} применяет \cdf{p} к \cdf{x} и возвращает
+\cdf{t}, если результат true, и {\nil} в противном случае.
+
+Это не очень хорошая идея для предиката, что указан в \cdf{satisfies}, порождать
+побочные эффекты.
+
+\section{Комбинированные спецификаторы типов}
+
+Следущие списки специфкаторы типов, определяют новый тип в терминах других типов
+или объектов.
+
+\begin{flushdesc}
+\item[\cd{(member \emph{object1} \emph{object2} ...)}]
+
+Такая запись обозначает тип, как множество содержащее определенный набор объектов. Объект
+принадлежит данному типу тогда и только тогда, когда он равен \cdf{eql} одному из
+заданных объектов. FIXME.
+\end{flushdesc}
+
+\begin{newer}
+\begin{flushdesc}
+\item[\cd{(eql \emph{object})}]
+
+Такой специализатор может быть использован для определения CLOS
+методов. Смотрите раздел~\ref{Introduction-to-Methods-SECTION} и
+\cdf{find-method}.
+Он задает множество из одного объекта. Объект принадлежит такому типу тогда и
+только тогда, когда он \cdf{eql} для первого \emph{объекта}. Несмотря на то, что
+\cd{(eql \emph{объект})} обозначает то же, что и \cd{(member \emph{объект})},
+только \cd{(eql \emph{объект})} может быть использован для определения CLOS метода.
+\end{flushdesc}
+\end{newer}
+
+\begin{flushdesc}
+\item[\cd{(not \emph{type})}]
+
+Такая запись задает тип множества объектов, которые \emph{не} являются типом {\it
+  type}.
+\item[\cd{(and \emph{type1} \emph{type2} ...)}]
+
+Такая запись задает пересечение указанных типов.
+
+Когда \cdf{typep} обрабатывает спецификатор типа \cdf{and}, она производит
+проверку на принадлежность к каждому подтипу слева направо и моментально
+останавливает проверку, в случае первого случившегося отрицательного
+результата. Таким образом, спецификатор \cdf{and} ведет себя подобно форме
+\cdf{and}. Цель такого сходства --- позволить спецификатору типа \cdf{satisfies}
+зависеть от фильтрации предыдущим спецификатором типа. Например, предположим,
+что есть функция \cdf{primep}, что принимает целое и возвращает {\true}, если оно
+простое. Также предположим, что является ошибочным передавать любой объект, не
+являющийся целым, в \cdf{primep}. Тогда спецификатор будет выглядеть так:
+\begin{lisp}
+(and integer (satisfies primep))
+\end{lisp}
+никогда не вызовет ошибку, так как функция \cdf{primep} никогда не будет вызвана
+с объектом, который не удовлетворяет предыдущему типу integer.
+
+\item[\cd{(or \emph{type1} \emph{type2} ...)}]
+
+Такая запись обозначает объединение типов. Например, тип \cdf{list} совпадает с
+\cd{(or null cons)}. Также, значение, возвращаемое функцией \cdf{position} всегда
+принадлежит типу \cd{(or null (integer 0 *))} (или {\nil} или неотрицательное число).
+
+Также как и для \cdf{and}, когда \cdf{typep} обрабатывает спецификатор типа
+\cdf{or}, она поочередно проверяет каждый подтип объедиения слева направо и
+завершает обработку, как только принадлежность подтипу установлена.
+\end{flushdesc}
+
+\section{Уточняющие спецификаторы типов}
+\label{SPECIALIZED-TYPE-SPECIFIER-SECTION}
+
+Некоторые списки, представляющие типы, с помощью символов могут быть более
+специализированы. Такие подробности могут быть отражены, как более эффективная
+реализация. Например, предположим что \cd{(array short-float)}. Реализация A,
+может выбрать специализированное представление для массива коротких с плавающей
+точкой, а реализация B может выбрать более общее представление.
+
+Если вы хотите создать массива в целях хранения только коротких с плавающей
+точкой, вы можете опционально указать для \cdf{make-array} тип элементов
+\cdf{short-float}. Это \emph{не потребует} от \cdf{make-array} создать объект типа
+\cd{(array short-float)}; это просто позволит ей выбрать такой тип. Запрос
+можно объяснить так: <<Предоставь наиболее специализированный массив, который
+может хранить короткие с плавающей точкой, который только может предоставить
+реализация>>. Реализация A тогда предоставит специализированный массив типа
+\cd{(array short-float)}, а реализация B --- простой массив типа \cd{(array t)}.
+
+На вопрос, действительно ли тип созданного массива \cd{(array short-float)},
+реализация A ответит <<да>>, но реализация B ответит <<нет>>. Это свойство
+\cdf{make-array} и подобных ей функций: то, что вы просите, необязательно
+является тем, что вы получите.
+
+Далее перечисленны возможные имена типов, которые задаются списком:
+
+\begin{flushdesc}
+\item[\cd{(array \emph{тип-элемента} \emph{размерность})}]
+Такая запись обозначает множество специализированных массивов, элементы которых
+приндлежат типу \emph{тип-элемента} и размерность которых равна \emph{размерность}.
+\emph{тип-элемента} должен быть корректным спецификатором типа или не уточнен с
+помощью \cdf{*}.
+\emph{размерность} может быть неотрицительным целым определяющим размер массива,
+может быть списком неотрицательных целых, определяющих размер каждого измерения
+(размер какого-либо измерения может быть не указан \cdf{*}), может быть не
+указана \cdf{*}.
+Например,
+\begin{lisp}
+(array integer 3)~~~~~~~~~~~;\textrm{Трехэлементный массив целых} \\
+(array integer (* * *))~~~~~;\textrm{Трехмерный массив целых} \\
+(array * (4 5 6))~~~~~~~~~~~;\textrm{Трехмерный массив, размеры измерений
+  4,5,6} \\
+(array character (3 *))~~~~~;\textrm{Двумерный массив символов} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~\textrm{у которого только три строки} \\
+(array short-float {\emptylist})~~~~~~;\textrm{Ранг массива равен нулю, массив содержит} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~\textrm{короткие с плавающие точкой}
+\end{lisp}
+Следует отметить, что \cd{(array~t)} является правильным подмножеством
+\cd{(array~*)}.
+Причиной тому является то. что \cd{(array~t)} это можество массивов, которые
+могут содержать любой Common Lisp объект (элементы типа \cdf{t}, которые включают
+все элементы). С другой стороны, \cd{(array~*)} является множеством всех
+массивов, включая, например, массивы, которые могут хранить только строковые
+символы. Сейчас \cd{(array character)} не является подмножеством \cd{(array~t)};
+два множества фактически непересекаются, потому что \cd{(array character)} не
+является множеством всех массивов, которые могут хранить строковые символы, а
+является множеством массивов, которые специализированы хранить именно символы и
+никакие другие объекты. FIXME. Поэтому проверка, может ли массив \cdf{foo} хранить
+строковые символы, не может быть такой:
+\begin{lisp}
+(typep foo '(array character))
+\end{lisp}
+, а должна быть такой:
+\begin{lisp}
+(subtypep 'character (array-element-type foo))
+\end{lisp}
+Смотрите \cdf{array-element-type}.
+
+\item[\cd{(simple-array \emph{тип-элемента} \emph{размерности})}]
+Данная запись эквивалентна \cd{(array \emph{тип-элемента} \emph{размерности})} за
+исключением того, что дополнительно определяет, что объекты будут \emph{простыми}
+массивами (смотрите раздел~\ref{ARRAY-TYPE-SECTION}).
+\item[\cd{(vector \emph{тип-элемента} \emph{размер})}]
+Такой тип обозначает множество специализированный одномерных массивов, все элементы
+которых принадлежат типу \cd{тип-элемента} и размер которого равен
+\cd{размер}. Такой тип полностью эквивалентен \cd{(array \emph{тип-элемента}
+  (\emph{размер}))}.
+Например:
+\begin{lisp}
+(vector double-float)~~~~~;\textrm{Векторы двойных } \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~;~\textrm{чисел с плавающей точкой} \\
+(vector * 5)~~~~~~~~~~~~~~;\textrm{Векторы длинной пять элементов} \\
+(vector t 5)~~~~~~~~~~~~~~;\textrm{Общие векторы длинной пять элементов FIXME} \\
+(vector (mod 32) *)~~~~~~~;\textrm{Вектора целых чисел между 0 и 31}
+\end{lisp}
+
+\item[\cd{(simple-vector \emph{размер})}]
+Такая запись означает то же, что и \cd{(vector t \emph{размер})}.
+
+\item[\cd{(copmlex \emph{тип})}]
+Каждый элемент такого типа является комплексным числом, у которого
+действительная и мнимая части принадлежат типу \emph{тип}.
+
+\item[\cd{(function (\emph{тип-аргумента-1} \emph{тип-аргумента-2} ...) \emph{тип-значения})}]
+\relax Этот тип может использоваться только для декларации и не может для
+распознавания; \cdf{typep} будет сигнализировать ошибку, если ей будет передан
+такой спецификатор типа. Каждый элемент такого типа является функцией, которая
+принимает аргументы типов перечисленных с помощью форм \emph{тип-аргумента-j}
+и возвращает значение типа \emph{тип-значения}. В форме типов аргументов могут
+использоваться маркеры \cd{\&optional}, \cd{\&rest} и
+\cd{\&key}. \emph{тип-значения} может быть спецификатором типа \cdf{values} в
+случае, если функция возвращает несколько значений.
+
+\item[\cd{(values \emph{тип-значения-1} \emph{тип-значения-2} ...)}]
+Данный тип используется только в двух случаях: только как \emph{тип-значения}
+для спецификатора типа \emph{функции} и в специальной форме \cdf{the}. Данный
+спецификатор используется для задания типов в случаях возврата нескольких
+значений.
+В списке с типами могут использоваться маркеры \cd{\&optional}, \cd{\&rest} и
+\cd{\&key}.
+\end{flushdesc}
+
+\section{Спецификаторы типов, являющиеся абревиатурами}
+
+Следующие спецификаторы типов по большей части являются абревиатурами для других
+типов, которые долго печатать, например, в функции \cdf{member}.
+\begin{flushdesc}
+
+\item[\cd{(integer \emph{наименьшее} \emph{наибольшее})}]
+Задает целые числа между \emph{наименьшим} и
+\emph{наибольшим}. \emph{Наименьшее} и \emph{наибольшее} должны быть
+каждое или целое, или список с одним целым, или не заданы.
+Целое задает включаемое граничное значение, список из целого задает невключаемое
+граничное значение и \cdf{*} означает отсутствие граничного значения, и тем самым
+задает границы минус или плюс бесконечность соответственно.
+Тип \cdf{fixnum} является именем для \cd{(integer \emph{наименьшее}
+ \emph{наибольшее})}, в котором \emph{наибольшее} и \emph{наименьшее}
+значения зависят от реализации (см. \cdf{most-negative-fixnum} и
+\cdf{most-positive-fixnum}).
+Тип \cd{(integer 0 1)} оказался так полезен, что имеет отдельное имя \cdf{bit}.
+
+\item[\cd{(mod \emph{n})}]
+Задает множество неотрицательных целых меньших чем \cdf{n}. Является эквивалентом
+для \cd{(integer 0 $n-1$)} или \cd{(integer 0 (\emph{n}))}.
+
+\item[\cd{(signed-byte \emph{s})}]
+Задает множество целых, которые могут быть представлены в виде байта с \cdf{s}
+количеством бит. Является эквивалентом для \cd{(integer
+  $-2^{s-1}$ $2^{s-1}-1$)}.
+\cdf{signed-byte} или \cd{(signed-byte *)} являются тем же, что и \cdf{integer}.
+
+\item[\cd{(unsigned-byte \emph{s})}]
+Задает множество неотрицательных целых, которые могут быть представлены в виде байта с \cdf{s}
+количеством бит. Является эквивалентом для \cd{(mod
+$2^{s}$)}, и для \cd{(integer 0 $2^{s}-1$)}.
+\cdf{unsigned-byte} или \cd{(unsigned-byte *)} являются тем же, что и
+\cd{(integer 0 *)}, а именно, множеством неотрицательных целых.
+
+\item[\cd{(rational \emph{наименьшее} \emph{наибольшее})}]
+Задает рациональные числа между \emph{наименьшим} и
+\emph{наибольшим}. Наименьшее и наибольшее могут быть рациональными, списком
+из одного рационального, или не заданы.
+Рациональное число задает включаемое граничное значение, список из
+рационального задает невключаемое граничное значение и \cdf{*} означает, что
+предела для множества нет, и значением может быть минус или плюс бесконечность соответственно.
+
+\item[\cd{(float \emph{наименьшее} \emph{наибольшее})}]
+Задает числа с плавающей точкой  между \emph{наименьшим} и
+\emph{наибольшим}. Наименьшее и наибольшее могут быть числами с плавющей точкой, списком
+из одного такого числа, или не заданы.
+Рациональное число задает включаемое граничное значение, список из
+рационального задает невключаемое граничное значение и \cdf{*} означает, что
+предела для множества нет, и значением может быть минус или плюс бесконечность
+соответственно.
+
+Таким же образом определяются следующие типы:
+\begin{lisp}
+(short-float \emph{low} \emph{high}) \\
+(single-float \emph{low} \emph{high}) \\
+(double-float \emph{low} \emph{high}) \\
+(long-float \emph{low} \emph{high})
+\end{lisp}
+В этих случаях границы должны быть в том же формате, что и сам тип.
+\end{flushdesc}
+
+\begin{newer}
+\begin{flushdesc}
+\item[\cd{(real \emph{наименьшее} \emph{наибольшее})}]
+Задает действительные числа между \emph{наименьшим} и \emph{наибольшим}. Пределы
+\emph{наименьшее} и \emph{наибольшее} должны каждый быть действительными числами, или
+списками одного действительного числа, или не заданы.
+Действительное число задает включаемое граничное значение, список из
+действительного числа задает невключаемое граничное значие и \cdf{*} означает,
+что предела для множества нет, и значением может быть минус или плюс
+бесконечность, соответственно.
+\end{flushdesc}
+\end{newer}
+
+\begin{newer}
+\begin{flushdesc}
+\item[\cd{(base-string \emph{размер})}]
+Обозначает то же, что и \cd{(vector base-character \emph{размер})}: множество
+базовых строк определенного размера.
+
+\item[\cd{(simple-base-string \emph{размер})}]
+Обозначает то же, что и \cd{(simple-array base-character \emph{размер})}: множество
+простых базовых строк определенного размера.
+\end{flushdesc}
+\end{newer}
+
+\begin{flushdesc}
+
+\item[\cd{(bit-vector \emph{размер})}]
+Обозначает то же, что и \cd{(array bit (\emph{размер}))}: множество битовых
+векторов определенного размера.
+
+\item[\cd{(simple-bit-vector \emph{размер})}]
+Обозначает то же, что и \cd{(simple-array bit (\emph{размер}))}: множество битовых
+векторов определенного размера.
+\end{flushdesc}
+
+\section{Определение новых спецификаторов}
+
+Новые спецификаторы появляются двумя способами.
+Первый, определение нового типа структуры с помощью \cdf{defstruct} автоматически
+создает новый тип с именем, как у структуры.
+Второй, использование \cdf{deftype} для создания новых абревиатур для
+спецификаторов типов.
+
+\begin{defmac}
+deftype name lambda-list <{declaration}* | doc-string> {\,form}*
+
+Данный макрос весьма схож с формой \cdf{defmacro}: \emph{name} является
+символом, который будет определять имя будущего спецификатора типа,
+\cdf{lambda-list} является лямбда списком (и может содержать маркеры \cd{\&optional} и
+\cd{\&rest}) и \emph{forms} составляют тело функции. Если мы рассмотрим
+спецификатор типа, как список, содержащий имя и несколько форм аргументов, то
+формы аргументов (невычисленные) будут связаны с параметрами из лямбда списка
+\emph{lambda-list}. Затем будут выполнены формы тела, как неявный \cdf{progn},
+и значение последней формы будет интепретировано, как новый спецификатор типа,
+для которого исходный спецификатор является абревиатурой. \emph{name}
+возвращается, как значение формы \cdf{deftype}.
+
+\cdf{deftype} отличается от \cdf{defmacro} в том, что если для необязательного \cd{\&optional}
+параметра значение по умолчанию \emph{initform} не задано, то используется
+\cdf{*}, а не {\nil}.
+
+Если указана необязательная строка документации \emph{doc-string}, тогда она
+присоединяется к имени \cdf{name}, как строка документации типа \cdf{type};
+смотрите \cdf{documentation}.
+
+Вот несколько примеров использования \cdf{deftype}:
+\begin{lisp}
+(deftype mod (n) {\Xbq}(integer 0 (,n))) \\
+ \\
+(deftype list () '(or null cons))
+\end{lisp}
+
+\begin{lisp}
+(deftype square-matrix (\cd{\&optional} type size) \\*
+~~"SQUARE-MATRIX includes all square two-dimensional arrays." \\*
+~~{\Xbq}(array ,type (,size ,size))) \\
+ \\
+(square-matrix short-float 7)  \textrm{means}  (array short-float (7 7)) \\
+ \\
+(square-matrix bit)  \textrm{means}  (array bit (* *))
+\end{lisp}
+
+\begin{lisp}
+(deftype square-matrix (\cd{\&optional} type size) \\*
+~~"SQUARE-MATRIX includes all square two-dimensional arrays." \\*
+~~{\Xbq}(array ,type (,size ,size))) \\
+ \\
+(square-matrix short-float 7)  \textrm{означает}  (array short-float (7 7)) \\
+ \\
+(square-matrix bit)  \textrm{означает}  (array bit (* *))
+\end{lisp}
+
+Если имя типа заданного с помощью \cdf{deftype} используется просто как символ
+спецификатора типа, тогда оно интерпретируется как списк специфирующий тип с
+аргументами по умолчанию \cdf{*}. Например, используя код выше,
+\cdf{square-matrix} будет означать \cd{(array * (* *))}, множество двумерных
+массивов.
+В таком случае к несчастью нарушается правило о том, что количество строк в
+матрице должно совпадать с количеством столбцов; \cd{(square-matrix bit)} имеет
+ту же проблему.
+Лучшим решением будет
+\begin{lisp}
+(defun equidimensional (a) \\
+~~(or (< (array-rank a) 2) \\
+~~~~~~(apply \#'= (array-dimensions a)))) \\
+ \\
+(deftype square-matrix (\cd{\&optional} type size) \\
+~~{\Xbq}(and (array ,type (,size ,size)) \\
+~~~~~~~~(satisfies equidimensional)))
+\end{lisp}
+
+\end{defmac}
+
+\section{Функция преобразования}
+
+Следующие функции могут быть использованы для преобразования объекта в
+эквивалентный объект другого типа.
+
+\begin{defun}[Function]
+coerce object result-type
+
+\emph{result-type} должен быть спецификатором типа; \emph{object} будет
+сконверитрован в <<эквивалентный>> объект заданного типа.
+Если преобразование не может быть осуществлено, будет сгенерирована ошибка.
+В частности, \cd{(coerce x 'nil)} всегда сигнализирует ошибку.
+Если \emph{object} уже принадлежит заданному типу, это проверяется предикатом
+\cdf{typep}, тогда даный объект будет возвращен.
+В общем случае невозможно преобразовать любой объект в в объекто любого другого
+типа. Допускаются только следующие преобразования.
+\begin{itemize}
+
+\item
+Любой тип последовательности может быть сконвертирован в другой тип
+последовательности. Новый тип последовательности будет содержать все
+ объекты из старой последовательности (если это невозможно, тогда возникнет
+ошибка). Если \cdf{result-type} задан как \cdf{array}, тогда будет использоваться
+\cd{(array t)}. Также может использоваться специализированный тип такой, как \cdf{string} или \cd{(vector
+  (complex short-float))}; конечно, результат может быть более общим типом, в
+зависимости от реализации.
+Элементы новой последовательности будут эквивалентны \cdf{eql} соответствующим
+элементам старой последовательности.
+Если последовательность уже принадлежит заданному типу, она может быть просто
+возвращена без копирования. В таком случае \cd{(coerce
+  \emph{последовательность} \emph{тип})} отлчается от \cd{(concatenate
+  \emph{тип} \emph{последовательность})}, так как последняя требует
+копирования аргумента \emph{последовательность}.
+
+\begin{lisp}
+(coerce '(a b c) 'vector) \EV\ \#(a b c)
+\end{lisp}
+
+\end{itemize}
+
+\begin{itemize}
+\item
+Любое некомплексное число может быть приведено к \cdf{short-float},
+\cdf{single-float}, \cdf{double-float} или \cdf{long-float}. Если тип указан с
+плавающей точкой и \emph{объект} не является числом с плавающей точкой, тогда
+объект преобразовывается в \cdf{single-float}.
+
+\begin{lisp}
+(coerce 0 'short-float) \EV\ 0.0S0 \\
+(coerce 3.5L0 'float) \EV\ 3.5L0 \\
+(coerce 7/2 'float) \EV\ 3.5
+\end{lisp}
+
+\item
+Любое число может быть приведено к комплексному. Если число еще не является
+комплексным, тогда мнимая часть будет равна нулю, который будет преобразован в
+тип, соответствующий типу действительной части. (Если полученная действительная
+часть является рациональным числом, тогда результат немедленно будет
+преобразован из комплексного обратно в рациональный.)
+
+\begin{lisp}
+(coerce 4.5s0 'complex) \EV\ \#C(4.5S0 0.0S0) \\
+(coerce 7/2 'complex) \EV\ 7/2 \\
+(coerce \#C(7/2 0) '(complex double-float)) \\
+~~~\EV\ \#C(3.5D0 0.0D0)
+\end{lisp}
+
+\item
+Любой объект может быть приведен к типу \cdf{t}.
+\begin{lisp}
+(coerce x 't) \EQ\ (identity x) \EQ\ x
+\end{lisp}
+
+\end{itemize}
+\begin{newer}
+\begin{itemize}
+\item
+Символ или лямбда-выражение может быть преобразовано к функции.
+Символ приводится к типу \cdf{function}, как если бы к нему была применена
+функция \cdf{symbol-function}. Если символ не связан (\cdf{fboundp} symbol ->
+false), или символ связан с макросом или специальной формой сигнализируется
+ошибка.
+Список \emph{x}, чей \emph{car} является символом \cdf{lambda} приводится к
+функции, как если бы было вычислено выражение \cd{(eval {\Xbq}\#',\emph{x})},
+или \cd{(eval (list 'function~\emph{x}))}.
+\end{itemize}
+\end{newer}
+
+Приведение чисел с плавающей точкой к рациональным и рациональныхк целым
+\emph{не} предоставляется в связи с проблемами округления. Для этого могут
+использоваться функции \cdf{rational}, \cdf{rationalize},
+\cdf{floor}, \cdf{ceiling}, \cdf{truncate} и \cdf{round}. Также не предоставляется
+приведение строковых символов к целым числам. В этих целях можно использовать
+\cdf{char-code} или \cdf{char-int}.
+\end{defun}
+
+\section{Определение типа объекта}
+
+Следующие функции могут быть использованы для получения спецификатора,
+обозначающего тип заданного объекта.
+
+\begin{defun}[Function]
+type-of object
+
+
+\begin{new}
+\begin{itemize}
+\item
+Пусть \emph{x} является объектом, и \cd{(typep \emph{x} \emph{тип})}
+вычисляется в true, и \emph{тип} один из:
+
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}llll@{}}
+array          & float        & package        & sequence \\
+bit-vector     & function     & pathname       & short-float \\
+character      & hash-table   & random-state~~ & single-float \\
+complex        & integer      & ratio          & stream \\
+condition      & long-float~~ & rational       & string \\
+cons           & null         & readtable      & symbol \\
+double-float~~ & number       & restart        & vector
+\end{tabular}
+\end{flushleft}
+
+\item
+Для любого объекта \emph{x}, \cd{(subtypep (type-of \emph{x}) (class-of
+  \emph{x}))}
+должно вернуть значения \cdf{t} и \cdf{t}.
+
+\item
+Для каждого объекта \emph{x}, \cd{(typep \emph{x} (type-of \emph{x}))}
+должно быть true. (Это означает, что \cdf{type-of} никогда не может вернуть
+\cdf{nil}, так как нет объектов принадлежащий типу \cdf{nil}.)
+
+\item
+\cdf{type-of} никогда не возвращает \cdf{t} и никогда не использует
+спецификаторы типа \cdf{satisfies}, \cdf{and}, \cdf{or}, \cdf{not} или \cdf{values} в
+качестве результата.
+
+\item
+Для объектов CLOS метакласса \cdf{structure-class} или \cdf{standard-class},
+\cdf{type-of} возвращает имя класса, получаемое с помощью \cdf{class-of}, если оно
+имеется, в противном случае возвращается сам класс.
+В частности, для любого объекта созданного с помощью \cdf{defstruct}
+функции-конструктора, и \cdf{defstruct} имело имя \emph{name} и не имело опции
+\cd{:type}, \cdf{type-of} вернет \emph{name}.
+\end{itemize}
+
+В качестве примера, \cd{(type-of "acetylcholinesterase")} может вернуть
+\cdf{string} или \cdf{simple-string} или \cd{(simple-string ~20)}, но не
+\cdf{array} или \cdf{simple-vector}.
+Другой пример, \cd{(type-of 1729)} может вернуть \cdf{integer} или \cdf{fixnum}
+или \cd{(signed-byte 16)} или \cd{(integer 1729 1729)} или \cd{(integer 1685
+  1750)} или даже \cd{(mod 1730)}, но не \cdf{rational} или \cdf{number}, потому что
+\begin{lisp}
+(typep (+ (expt 9 3) (expt 10 3)) 'integer)
+\end{lisp}
+является true, \cdf{integer} содержится в списке упомянутом выше, и 
+\begin{lisp}
+(subtypep (type-of (+ (expt 1 3) (expt 12 3))) 'integer)
+\end{lisp}
+будет false, если \cdf{type-of} вернет \cdf{rational} или \cdf{number}.
+
+\end{new}
+\end{defun}
+
+\section{Обновление типа}
+
+X3J13 voted in January 1989
+\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
+to add new functions by which a program
+can determine, in a given Common Lisp implementation, how that
+implementation will \emph{upgrade} a type when constructing an array
+specialized to contain elements of that type,
+or a complex number specialized to contain parts of that type.
+
+X3J13 проголосовал в январе 1989
+\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
+добавить новые функция, с помощью которых программы смогут установить, в данной
+реализации Common Lisp'а, как данная реализация будет \emph{обновлять} тип,
+когда создает массив для некого заданного типа элментов, или комплексное число с
+заданными типами частей.
+
+\begin{defun}[Function]
+upgraded-array-element-type type
+
+Функция возвращает спецификатор типа, наиболее близкий к указанному, как если бы
+указанный использовался в функции \cdf{make-array}.
+Результат обязательно является супертипом для заданного \emph{type}.
+Кроме того, если тип \emph{A} является подтипом \emph{B}, тогда 
+\cd{(upgraded-array-element-type \emph{A})} является подтипом
+\cd{(upgraded-array-element-type \emph{B})}.
+
+Путь, по которому обновляется тип элемента массива, зависит только от запрашиваемого
+типа элемента и не зависит от других свойств массива, таких как размер, ранг, 
+расширяемость, наличия или отсутствия указателя заполнения, или отностильности.
+
+Следует отметить, что \cdf{upgraded-array-element-type} может быть определен,
+как
+\begin{lisp}
+(defun upgraded-array-element-type (type) \\
+~~(array-element-type (make-array 0 :element-type type)))
+\end{lisp}
+но, это определение и имеет недостаток в виде создания и удаления массива. Умная
+реализация конечно может имитировать создание для таких случаев.
+\end{defun}
+
+
+\begin{defun}[Function]
+upgraded-complex-part-type type
+
+A type specifier is returned, indicating the element type
+of the most specialized complex number representation capable of having
+parts of the specified argument \emph{type}.
+The result is necessarily a supertype of the given \emph{type}.
+Furthermore, if a type \emph{A} is a subtype of type \emph{B}, then
+\cd{(upgraded-complex-part-type \emph{A})} is a subtype of
+\cd{(upgraded-complex-part-type \emph{B})}.
+
+Функция возвращает спецификатор типа, указывающий на тип наиболее
+приближенной для указанного типа \emph{type} для частей комплексного числа.
+Результат обязательно должен быть супертипом для переданного \emph{type}.
+Кроме того, если тип \emph{A} является подтипом \emph{B}, тогда
+\cd{(upgraded-complex-part-type \emph{A})} является подтипом 
+\cd{(upgraded-complex-part-type \emph{B})}.
+\end{defun}
+
+\fi

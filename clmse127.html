@@ -1,1383 +1,388 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>The Compiler</title> 
+<head><title>Environment Inquiries</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-11 14:56:00"> 
+<meta name="date" content="2012-03-13 16:31:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 14--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 1608--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse128.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch25.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch25.html#tailclmch25.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse126.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse126.html#tailclmse126.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse127.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch25.html#clmse127.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">25.1   </span> <a 
- id="x157-31800025.1"></a>The Compiler</h3>
-<div class=obsolete>
-<!--l. 17--><p class="noindent" >The compiler is a program that may make code run faster by translating
-programs into an implementation-dependent form that can be executed more
-eﬃciently by the computer. Most of the time you can write programs without
-worrying about the compiler; compiling a ﬁle of code should produce an
-equivalent but more eﬃcient program. When doing more esoteric things, you may
-need to think carefully about what happens at “compile time” and what
-happens at “load time.” Then the diﬀerence between the syntaxes #. and #,
-becomes important, and the <a 
-href="clmse30.html#x40-74003r18">eval-when</a> construct becomes particularly
-useful.
-</div>
-<div class=newer>
-                                                                          
-
-                                                                          
-<!--l. 31--><p class="noindent" >X3J13 voted in January 1989 <a 
- id="dx157-318001"></a>to remove #, from the language.
-</div>
-   Most declarations are not used by the Common Lisp interpreter; they may be
-used to give advice to the compiler. The compiler may attempt to check your
-advice and warn you if it is inconsistent.
-   Unlike most other Lisp dialects, Common Lisp recognizes special declarations
-in interpreted code as well as compiled code. This potential source of
-incompatibility between interpreted and compiled code is thereby eliminated in
-Common Lisp.
-   The internal workings of a compiler will of course be highly
-implementation-dependent. The following functions provide a standard interface
-to the compiler, however.
-<div class=defun>
-   <i>[Function]</i><a 
- id="dx157-318002"></a><a 
- id="x157-318003r797"></a><b> compile</b>  <i>name</i> &#x0026;optional  <i>deﬁnition</i>
-   <div class=obsolete>If deﬁnition is supplied, it should be a lambda-expression, the interpreted
-function to be compiled. If it is not supplied, then name should be a symbol with
-a deﬁnition that is a lambda-expression; that deﬁnition is compiled and
-the resulting compiled code is put back into the symbol as its function
-deﬁnition.
-</div>
-<div class=newer>
-   X3J13 voted in October 1988 <a 
- id="dx157-318004"></a>to restate the preceding paragraph more
-precisely and to extend the capabilities of <a 
-href="#x157-318003r797">compile</a>. If the optional deﬁnition
-argument is supplied, it may be either a lambda-expression (which is coerced to a
-function) or a function to be compiled; if no deﬁnition is supplied, the
-<a 
-href="clmse35.html#x47-89007r56">symbol-function</a> of the symbol is extracted and compiled. It is permissible for the
-symbol to have a macro deﬁnition rather than a function deﬁnition; both macros
-and functions may be compiled.
-   It is an error if the function to be compiled was deﬁned interpretively in a
-non-null lexical environment. (An implementation is free to extend the behavior of
-<a 
-href="#x157-318003r797">compile</a> to compile such functions properly, but portable programs may not
-depend on this capability.) The consequences of calling <a 
-href="#x157-318003r797">compile</a> on a function that
-is already compiled are unspeciﬁed.
-</div>
-<div class=obsolete>
-   The deﬁnition is compiled and a compiled-function object produced. If name is
-a non-<a 
-href="clmse31.html#x42-77002r19">nil</a> symbol, then the compiled-function object is installed as the global
-function deﬁnition of the symbol and the symbol is returned. If name is
-                                                                          
-
-                                                                          
-<a 
-href="clmse31.html#x42-77002r19">nil</a>, then the compiled-function object itself is returned. For example: <div class=lisp>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">
-</td></tr></table>
-<!--l. 89--><p class="indent" >                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td style="width:242;" 
-class="tabbing">(defun foo ...)  ⇒ foo        </td><td  
-class="tabbing">;A function deﬁnition</td></tr></table>
-<!--l. 90--><p class="indent" >                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td style="width:242;" 
-class="tabbing">(compile &#x2019;foo)  ⇒ foo             </td><td  
-class="tabbing">;Compile it</td></tr></table>
-<!--l. 91--><p class="indent" >               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td style="width:242;" 
-class="tabbing">                                         </td><td  
-class="tabbing">;Now foo runs faster (maybe)</td></tr></table>
-<!--l. 92--><p class="indent" >
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(compile <a 
-href="clmse31.html#x42-77002r19">nil</a>
-</td></tr></table>
-<!--l. 93--><p class="indent" >                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">         &#x2019;(lambda (a b c) (- (* b b) (* 4 a c))))</td></tr></table>
-<!--l. 94--><p class="indent" >     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    ⇒ a compiled function of three arguments that computes b<sup>2</sup> − 4ac</td></tr></table>
-<!--l. 96--><p class="indent" >
-</div>
-</div>
-</div>
-<div class=newer>
-<!--l. 100--><p class="noindent" >X3J13 voted in June 1989 <a 
- id="dx157-318005"></a>to specify that <a 
-href="#x157-318003r797">compile</a> returns two additional values
-indicating whether the compiler issued any diagnostics (see section <a 
-href="#x157-32100025.1.1">25.1.1<!--tex4ht:ref: COMPILER-DIAGNOSTICS-SECTION --></a>).
-</div>
-<div class=newer>
-<!--l. 107--><p class="noindent" >X3J13 voted in March 1989 <a 
- id="dx157-318006"></a>to extend <a 
-href="#x157-318003r797">compile</a> to accept as a name any
-function-name (a symbol or a list whose car is <a 
-href="clmse36.html#x48-93002r66">setf</a>—see section <a 
-href="clmse35.html#x47-860007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>). One may
-write (compile &#x2019;(setf cadr)) to compile the <a 
-href="clmse36.html#x48-93002r66">setf</a> expansion function for
-<a 
-href="clmse86.html#x106-224008r447">cadr</a>.
-</div>
-</div>
-<div class=obsolete>
-<div class=defun>
-   <i>[Function]</i><a 
- id="dx157-318007"></a><a 
- id="x157-318008r798"></a><b> compile-ﬁle</b>  <i>input-pathname</i> &#x0026;key  <i>:output-ﬁle</i>
-   The input-pathname must be a valid ﬁle speciﬁer, such as a pathname. The
-defaults for input-ﬁlename are taken from the variable *default-pathname-defaults*.
-The ﬁle should be a Lisp source ﬁle; its contents are compiled and written as a
-binary object ﬁle.
-</div>
-</div>
-                                                                          
-
-                                                                          
-<div class=newer>
-   X3J13 voted in March 1989 <a 
- id="dx157-318009"></a>to add two new keyword arguments :verbose and
-:print to <a 
-href="#x157-318011r799">compile-ﬁle</a> by analogy with <a 
-href="clmse122.html#x150-305002r778">load</a>. The new function deﬁnition is as
-follows.
-<div class=defun>
-   <i>[Function]</i><a 
- id="dx157-318010"></a><a 
- id="x157-318011r799"></a><b> compile-ﬁle</b>  <i>input-pathname</i> &#x0026;key  <i>:output-ﬁle</i> <i>:verbose</i>
-<i>:print</i>
-   The :verbose argument (which defaults to the value of *compile-verbose*), if
-true, permits <a 
-href="#x157-318011r799">compile-ﬁle</a> to print a message in the form of a comment to
-<a 
-href="clmse112.html#x138-264004r637">*standard-output*</a> indicating what ﬁle is being compiled and other useful
-information.
-   The :print argument (which defaults to the value of *compile-print*), if true,
-causes information about top-level forms in the ﬁle being compiled to be printed
-to <a 
-href="clmse112.html#x138-264004r637">*standard-output*</a>. Exactly what is printed is implementation-dependent;
-nevertheless something will be printed.
-</div>
-</div>
-<div class=new>
-   X3J13 voted in March 1988 <a 
- id="dx157-318012"></a>to specify exactly which streams may be used as
-pathnames (see section <a 
-href="clmse119.html#x147-30100023.1.6">23.1.6<!--tex4ht:ref: PATHNAME-FUNCTIONS --></a>).
-</div> <div class=newer> X3J13 voted in June 1989 <a 
- id="dx157-318013"></a>to clarify that supplying a wild pathname as the
-input-pathname argument to <a 
-href="#x157-318011r799">compile-ﬁle</a> has implementation-dependent
-consequences; <a 
-href="#x157-318011r799">compile-ﬁle</a> might signal an error, for example, or might compile all
-ﬁles that match the wild pathname.
-</div>
-<div class=newer>
-   X3J13 voted in June 1989 <a 
- id="dx157-318014"></a>to require <a 
-href="#x157-318011r799">compile-ﬁle</a> to accept logical pathnames
-(see section <a 
-href="clmse119.html#x147-29500023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
-</div>
-   The :output-ﬁle argument may be used to specify an output pathname; it
-defaults in a manner appropriate to the implementation&#x2019;s ﬁle system
-conventions.
-<div class=newer>
-   X3J13 voted in June 1989 <a 
- id="dx157-318015"></a>to specify that <a 
-href="#x157-318011r799">compile-ﬁle</a> returns three values: the
-<a 
-href="clmse119.html#x147-301010r743">truename</a> of the output ﬁle (or <a 
-href="clmse31.html#x42-77002r19">nil</a> if the ﬁle could not be created) and
-two values indicating whether the compiler issued any diagnostics (see
-section <a 
-href="#x157-32100025.1.1">25.1.1<!--tex4ht:ref: COMPILER-DIAGNOSTICS-SECTION --></a>).
-</div>
-                                                                          
-
-                                                                          
-<div class=newer>
-   X3J13 voted in October 1988 <a 
- id="dx157-318016"></a>to specify that <a 
-href="#x157-318011r799">compile-ﬁle</a>, like <a 
-href="clmse122.html#x150-305002r778">load</a>,
-rebinds <a 
-href="clmse63.html#x79-187003r173">*package*</a> to its current value. If some form in the ﬁle changes the
-value of <a 
-href="clmse63.html#x79-187003r173">*package*</a>, the old value will be restored when compilation is
-completed.
-</div>
-<div class=newer>
-   X3J13 voted in June 1989 <a 
- id="dx157-318017"></a>to specify restrictions on conforming programs to
-ensure consistent handling of symbols and packages.
-   In order to guarantee that compiled ﬁles can be loaded correctly, the user must
-ensure that the packages referenced in the ﬁle are deﬁned consistently at compile
-and load time. Conforming Common Lisp programs must satisfy the following
-requirements.
+   <h3 class="sectionHead"><span class="titlemark">25.4   </span> <a 
+ id="x157-30900025.4"></a>Environment Inquiries</h3>
+<!--l. 1610--><p class="noindent" >Environment inquiry functions provide information about the environment in
+which a Common Lisp program is being executed. They are described here in two
+categories: ﬁrst, those dealing with determination and measurement of time, and
+second, all the others, most of which deal with identiﬁcation of the computer
+hardware and software.
+<!--l. 1617--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">25.4.1   </span> <a 
+ id="x157-31000025.4.1"></a>Time Functions</h4>
+<!--l. 1620--><p class="noindent" >Time is represented in three diﬀerent ways in Common Lisp: Decoded Time,
+Universal Time, and Internal Time. The ﬁrst two representations are used
+primarily to represent calendar time and are precise only to one second. Internal
+Time is used primarily to represent measurements of computer time (such as run
+time) and is precise to some implementation-dependent fraction of a second, as
+speciﬁed by <a 
+href="#x157-310012r789">internal-time-units-per-second</a>. Decoded Time format is used only for
+absolute time indications. Universal Time and Internal Time formats are used for
+both absolute and relative times.
+<!--l. 1632--><p class="indent" >   Decoded Time format represents calendar time as a number of components:
       <ul class="itemize1">
-      <li class="itemize">The value of <a 
-href="clmse63.html#x79-187003r173">*package*</a> when a top-level form in the ﬁle is processed by
-      <a 
-href="#x157-318011r799">compile-ﬁle</a> must be the same as the value of <a 
-href="clmse63.html#x79-187003r173">*package*</a> when the code
-      corresponding to that top-level form in the compiled ﬁle is executed
-      by the loader. In particular, any top-level form in a ﬁle that alters the
-      value of <a 
-href="clmse63.html#x79-187003r173">*package*</a> must change it to a package of the same name at
-      both compile and load time; moreover, if the ﬁrst non-atomic top-level
-      form in the ﬁle is not a call to <a 
-href="clmse63.html#x79-187016r176">in-package</a>, then the value of <a 
-href="clmse63.html#x79-187003r173">*package*</a>
-      at the time <a 
-href="clmse122.html#x150-305002r778">load</a> is called must be a package with the same name as the
-      package that was the value of <a 
-href="clmse63.html#x79-187003r173">*package*</a> at the time <a 
-href="#x157-318011r799">compile-ﬁle</a> was
-      called.
+      <li class="itemize">Second: an integer between 0 and 59, inclusive.
       </li>
-      <li class="itemize">For  every  symbol  appearing  lexically  within  a  top-level  form  that
-      was accessible in the package that was the value of <a 
-href="clmse63.html#x79-187003r173">*package*</a> during
-      processing of that top-level form at compile time, but whose home
-      package was another package, at load time there must be a symbol with
-      the same name that is accessible in both the load-time <a 
-href="clmse63.html#x79-187003r173">*package*</a> and
-      in the package with the same name as the compile-time home package.
+      <li class="itemize">Minute: an integer between 0 and 59, inclusive.
       </li>
-      <li class="itemize">For every symbol in the compiled ﬁle that was an external symbol in
-      its home package at compile time, there must be a symbol with the
-      same name that is an external symbol in the package with the same
-      name at load time.</li></ul>
+      <li class="itemize">Hour: an integer between 0 and 23, inclusive.
+      </li>
+      <li class="itemize">Date: an integer between 1 and 31, inclusive (the upper limit actually
+      depends on the month and year, of course).
                                                                           
 
                                                                           
-<!--l. 223--><p class="noindent" >If any of these conditions do not hold, the package in which <a 
-href="clmse122.html#x150-305002r778">load</a> looks for the aﬀected
-symbols is unspeciﬁed. Implementations are permitted to signal an error or
-otherwise deﬁne this behavior.
-<!--l. 227--><p class="indent" >   These requirements are merely an explicit statement of the status quo,
-namely that users cannot depend on any particular behavior if the package
-environment at load time is inconsistent with what existed at compile
-time.
+      </li>
+      <li class="itemize">Month: an integer between 1 and 12, inclusive; 1 means January, 12
+      means December.
+      </li>
+      <li class="itemize">Year: an integer indicating the year A.D. However, if this integer is
+      between 0 and 99, the “obvious” year is used; more precisely, that year
+      is assumed that is equal to the integer modulo 100 and within ﬁfty
+      years of the current year (inclusive backwards and exclusive forwards).
+      Thus, in the year 1978, year 28 is 1928 but year 27 is 2027. (Functions
+      that return time in this format always return a full year number.)</li></ul>
+<div class=incompatibility>
+<!--l. 1662--><p class="noindent" ><b>Compatibility note:</b> This is incompatible with the Lisp Machine Lisp deﬁnition in two
+ways. First, in Lisp Machine Lisp a year between 0 and 99 always has 1900 added to it.
+Second, in Lisp Machine Lisp time functions return the abbreviated year number
+between 0 and 99 rather than the full year number. The incompatibility is prompted by
+the imminent arrival of the twenty-ﬁrst century. Note that (mod year 100) always
+reliably converts a year number to the abbreviated form, while the inverse conversion
+can be very diﬃcult.
 </div>
-<div class=newer>
-   X3J13 voted in March 1989 <a 
- id="dx157-318018"></a>to specify that <a 
-href="#x157-318011r799">compile-ﬁle</a> must bind *readtable*
-to its current value at the time <a 
-href="#x157-318011r799">compile-ﬁle</a> is called; the dynamic extent of the
-binding should encompass all of the ﬁle-loading activity. This allows a portable
-program to include forms such as <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(in-package &#x0022;FOO&#x0022;)
-</td></tr></table>
-<!--l. 241--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 242--><p class="indent" >                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(eval-when (:execute :load-toplevel :compile-toplevel)</td></tr></table>
-<!--l. 243--><p class="indent" >                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (setq *readtable* foo:my-readtable))</td></tr></table>
-<!--l. 245--><p class="indent" >
-</div>
-</div>
-<!--l. 246--><p class="noindent" >without performing a net global side eﬀect on the loading environment. Such
-statements allow the remainder of such a ﬁle to be read either as interpreted code
-or by <a 
-href="#x157-318011r799">compile-ﬁle</a> in a syntax determined by an alternative readtable.
-</div>
-<div class=newer>
-   X3J13 voted in June 1989 <a 
- id="dx157-318019"></a>to require that <a 
-href="#x157-318011r799">compile-ﬁle</a> bind two new variables
-*compile-ﬁle-pathname* and *compile-ﬁle-truename*; the dynamic extent of the
-bindings should encompass all of the ﬁle-compiling activity.
-</div>
-<div class=newer>
-<div class=defun>
-   <i>[Variable]</i><a 
- id="dx157-318020"></a><a 
- id="x157-318021r800"></a><b> *compile-verbose*</b>
-   X3J13 voted in March 1989 <a 
- id="dx157-318022"></a>to add *compile-verbose*. This variable provides
-the default for the :verbose argument to <a 
-href="#x157-318011r799">compile-ﬁle</a>. Its initial value is
-implementation-dependent.
-                                                                          
-
-                                                                          
-   A proposal was submitted to X3J13 in October 1989 to rename this
-*compile-ﬁle-verbose* for consistency.
-</div>
-</div>
-<div class=newer>
-<div class=defun>
-   <i>[Variable]</i><a 
- id="dx157-318023"></a><a 
- id="x157-318024r801"></a><b> *compile-print*</b>
-   X3J13 voted in March 1989 <a 
- id="dx157-318025"></a>to add *compile-print*. This variable
-provides the default for the :print argument to <a 
-href="#x157-318011r799">compile-ﬁle</a>. Its initial value is
-implementation-dependent.
-   A proposal was submitted to X3J13 in October 1989 to rename this
-*compile-ﬁle-print* for consistency.
-</div>
-</div>
-<div class=newer>
-<div class=defun>
-   <i>[Variable]</i><a 
- id="dx157-318026"></a><a 
- id="x157-318027r802"></a><b> *compile-ﬁle-pathname*</b>
-   X3J13 voted in June 1989 <a 
- id="dx157-318028"></a>to introduce *compile-ﬁle-pathname*; it is initially
-<a 
-href="clmse31.html#x42-77002r19">nil</a> but <a 
-href="#x157-318011r799">compile-ﬁle</a> binds it to a pathname that represents the ﬁle name
-given as the ﬁrst argument to <a 
-href="#x157-318011r799">compile-ﬁle</a> merged with the defaults (see
-merge-pathname).
-</div>
-<div class=defun>
-   <i>[Variable]</i><a 
- id="dx157-318029"></a><a 
- id="x157-318030r803"></a><b> *compile-ﬁle-truename*</b>
-   X3J13 voted in June 1989 <a 
- id="dx157-318031"></a>to introduce *compile-ﬁle-truename*; it is initially
-<a 
-href="clmse31.html#x42-77002r19">nil</a> but <a 
-href="#x157-318011r799">compile-ﬁle</a> binds it to the “true name” of the pathname of the ﬁle being
-compiled. See <a 
-href="clmse119.html#x147-301010r743">truename</a>.
-</div>
-</div>
-<div class=newer>
-<div class=defspec>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Special form]</i><b> load-time-value </b><a 
- id="dx157-318032"></a><a 
- id="x157-318033r804"></a> form [read-only-p]
-</td></tr></table>
-<!--l. 310--><p class="indent" >
-                                                                          
-
-                                                                          
-</div>
-<!--l. 310--><p class="noindent" ><span class="paragraphHead"><a 
- id="x157-31900025.1"></a></span>
-   X3J13 voted in March 1989 <a 
- id="dx157-319001"></a>to add a mechanism for delaying evaluation of a
-form until it can be done in the run-time environment.
-<!--l. 315--><p class="indent" >   If a <a 
-href="#x157-318033r804">load-time-value</a> expression is seen by <a 
-href="#x157-318011r799">compile-ﬁle</a>, the compiler performs
-its normal semantic processing (such as macro expansion and translation into
-machine code) on the form, but arranges for the execution of the form to
-occur at load time in a null lexical environment, with the result of this
-evaluation then being treated as an immediate quantity (that is, as if
-originally quoted) at run time. It is guaranteed that the evaluation of the
-form will take place only once when the ﬁle is loaded, but the order of
-evaluation with respect to the execution of top-level forms in the ﬁle is
-unspeciﬁed.
-<!--l. 326--><p class="indent" >   If a <a 
-href="#x157-318033r804">load-time-value</a> expression appears within a function compiled with
-<a 
-href="#x157-318003r797">compile</a>, the form is evaluated at compile time in a null lexical environment. The
-result of this compile-time evaluation is treated as an immediate quantity in the
-compiled code.
-<!--l. 331--><p class="indent" >   In interpreted code, form is evaluated (by <a 
-href="clmse110.html#x135-261002r620">eval</a>) in a null lexical environment
-and one value is returned. Implementations that implicitly compile (or partially
-compile) expressions passed to <a 
-href="clmse110.html#x135-261002r620">eval</a> may evaluate the form only once, at the time
-this compilation is performed. This is intentionally similar to the freedom that
-implementations are given for the time of expanding macros in interpreted
-code.
-<!--l. 339--><p class="indent" >   If the same (as determined by <a 
-href="clmse33.html#x44-81002r46">eq</a>) list (load-time-value form) is evaluated or
-compiled more than once, it is unspeciﬁed whether the form is evaluated only
-once or is evaluated more than once. This can happen both when an
-expression being evaluated or compiled shares substructure and when the
-same expression is passed to <a 
-href="clmse110.html#x135-261002r620">eval</a> or to <a 
-href="#x157-318003r797">compile</a> multiple times. Since a
-<a 
-href="#x157-318033r804">load-time-value</a> expression may be referenced in more than one place and may be
-evaluated multiple times by the interpreter, it is unspeciﬁed whether each
-execution returns a “fresh” object or returns the same object as some other
-execution. Users must use caution when destructively modifying the resulting
-object.
-<!--l. 351--><p class="indent" >   If two lists (load-time-value form) are <a 
-href="clmse33.html#x44-81007r48">equal</a> but not <a 
-href="clmse33.html#x44-81002r46">eq</a>, their values always
-come from distinct evaluations of form. Coalescing of these forms is not
-                                                                          
-
-                                                                          
-permitted.
-<!--l. 355--><p class="indent" >   The optional read-only-p argument designates whether the result may be
-considered a read-only constant. If <a 
-href="clmse31.html#x42-77002r19">nil</a> (the default), the result must be considered
-ordinary, modiﬁable data. If <a 
-href="clmse31.html#x42-77004r20">t</a>, the result is a read-only quantity that may, as
-appropriate, be copied into read-only space and may, as appropriate, be shared
-with other programs. The read-only-p argument is not evaluated and only the
-literal symbols <a 
-href="clmse31.html#x42-77004r20">t</a> and <a 
-href="clmse31.html#x42-77002r19">nil</a> are permitted.
-<!--l. 364--><p class="indent" >   This new feature addresses the same set of needs as the now-defunct #, reader
-syntax but in a cleaner and more general manner. Note that #, syntax was
-reliably useful only inside quoted structure (though this was not explicitly
-mentioned in the ﬁrst edition), whereas a <a 
-href="#x157-318033r804">load-time-value</a> form must appear
-outside quoted structure in a for-evaluation position.
-<!--l. 371--><p class="indent" >   See <a 
-href="clmse122.html#x150-305022r783">make-load-form</a>.
-</div>
-</div>
-<div class=defun>
-   <i>[Function]</i><a 
- id="dx157-319002"></a><a 
- id="x157-319003r805"></a><b> disassemble</b>  <i>name-or-compiled-function</i>
-   The argument should be a function object, a lambda-expression, or a symbol
-with a function deﬁnition. If the relevant function is not a compiled function, it is
-ﬁrst compiled. In any case, the compiled code is then “reverse-assembled” and
-printed out in a symbolic format. This is primarily useful for debugging the
-compiler, but also often of use to the novice who wishes to understand the
-workings of compiled code.
-<div class=implementation>
-   <b>Implementation note:</b> Implementors are encouraged to make the output readable,
-preferably with helpful comments.
-</div>
-<div class=newer>
-   X3J13 voted in March 1988 <a 
- id="dx157-319004"></a>to clarify that when <a 
-href="#x157-319003r805">disassemble</a> compiles a
-function, it never installs the resulting compiled-function object in the
-<a 
-href="clmse35.html#x47-89007r56">symbol-function</a> of a symbol.
-</div>
-<div class=newer>
-   X3J13 voted in March 1989 <a 
- id="dx157-319005"></a>to extend <a 
-href="#x157-319003r805">disassemble</a> to accept as a name any
-function-name (a symbol or a list whose car is <a 
-href="clmse36.html#x48-93002r66">setf</a>—see section <a 
-href="clmse35.html#x47-860007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>). Thus one
-may write (disassemble &#x2019;(setf cadr)) to disassemble the <a 
-href="clmse36.html#x48-93002r66">setf</a> expansion function for
-<a 
-href="clmse86.html#x106-224008r447">cadr</a>.
-</div>
-                                                                          
-
-                                                                          
-</div>
-<div class=new>
-<div class=defun>
-   <i>[Function]</i><a 
- id="dx157-319006"></a><a 
- id="x157-319007r806"></a><b> function-lambda-expression</b>  <i>fn</i>
-   X3J13 voted in January 1989 <a 
- id="dx157-319008"></a>to add a new function to allow the source code
-for a deﬁned function to be recovered. (The committee noted that the ﬁrst edition
-provided no portable way to recover a lambda-expression once it had been
-compiled or evaluated to produce a function.)
-   This function takes one argument, which must be a function, and returns three
-values.
-   The ﬁrst value is the deﬁning lambda-expression for the function, or <a 
-href="clmse31.html#x42-77002r19">nil</a> if
-that information is not available. The lambda-expression may have been
-preprocessed in some ways but should nevertheless be of a form suitable as
-an argument to the function <a 
-href="#x157-318003r797">compile</a> or for use in the <a 
-href="clmse35.html#x47-88006r54">function</a> special
-form.
-   The second value is <a 
-href="clmse31.html#x42-77002r19">nil</a> if the function was deﬁnitely produced by
-closing a lambda-expression in the null lexical environment; it is some
-non-<a 
-href="clmse31.html#x42-77002r19">nil</a> value if the function might have been closed in some non-null lexical
-environment.
-   The third value is the “name” of the function; this is <a 
-href="clmse31.html#x42-77002r19">nil</a> if the name is
-not available or if the function had no name. The name is intended for
-debugging purposes only and may be any Lisp object (not necessarily one that
-would be valid for use as a name in a <a 
-href="clmse30.html#x40-69002r13">defun</a> or <a 
-href="clmse35.html#x47-88006r54">function</a> special form, for
-example).
-<div class=implementation>
-   <b>Implementation note:</b> An implementation is always free to return the values <a 
-href="clmse31.html#x42-77002r19">nil</a>, <a 
-href="clmse31.html#x42-77004r20">t</a>,
-<a 
-href="clmse31.html#x42-77002r19">nil</a> from this function but is encouraged to make more useful information available as
-appropriate. For example, it may not be desirable for ﬁles of compiled code to retain the
-source lambda-expressions for use after the ﬁle is loaded, but it is probably
-desirable for functions produced by “in-core” calls to <a 
-href="clmse110.html#x135-261002r620">eval</a>, <a 
-href="#x157-318003r797">compile</a>, or <a 
-href="clmse30.html#x40-69002r13">defun</a> to
-retain the deﬁning lambda-expression for debugging purposes. The function
-<a 
-href="#x157-319007r806">function-lambda-expression</a> makes this information, if retained, accessible in a standard
-and portable manner.
-</div>
-</div>
-</div>
-<div class=newer>
-<div class=defmac>
-                                                                          
-
-                                                                          
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Macro]</i><b> with-compilation-unit </b><a 
- id="dx157-319009"></a><a 
- id="x157-319010r807"></a> ( {option-name option-value}* )  { form}*
-</td></tr></table>
-<!--l. 463--><p class="indent" >
-</div>
-<!--l. 463--><p class="noindent" ><span class="paragraphHead"><a 
- id="x157-32000025.1"></a></span>
-   X3J13 voted in March 1989 <a 
- id="dx157-320001"></a>to add <a 
-href="#x157-319010r807">with-compilation-unit</a>, which executes the
-body forms as an implicit <a 
-href="clmse38.html#x50-102002r80">progn</a>. Within the dynamic context of this form,
-warnings deferred by the compiler until “the end of compilation” will be
-deferred until the end of the outermost call to <a 
-href="#x157-319010r807">with-compilation-unit</a>. The
-results are the same as those of the last of the forms (or <a 
-href="clmse31.html#x42-77002r19">nil</a> if there is no
-form).
-<!--l. 472--><p class="indent" >   Each option-name is an unevaluated keyword; each option-value is evaluated.
-The set of keywords permitted may be extended by the implementation, but the
-only standard option keyword is :override; the default value for this option
-is <a 
-href="clmse31.html#x42-77002r19">nil</a>. If <a 
-href="#x157-319010r807">with-compilation-unit</a> forms are nested dynamically, only the
-outermost such call has any eﬀect unless the :override value of an inner call is
-true.
-<!--l. 480--><p class="indent" >   The function <a 
-href="#x157-318011r799">compile-ﬁle</a> should provide the eﬀect of <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(with-compilation-unit (:override nil) ...)
-</td></tr></table>
-<!--l. 484--><p class="indent" >
-</div>
-</div>
-<!--l. 485--><p class="noindent" >around its code.
-<!--l. 487--><p class="indent" >   Any implementation-dependent extensions to this behavior may be
-provided only as the result of an explicit programmer request by use of an
-implementation-dependent keyword. It is forbidden for an implementation to
-attach additional meaning to a conforming use of this macro.
-                                                                          
-
-                                                                          
-<!--l. 493--><p class="indent" >   Note that not all compiler warnings are deferred. In some implementations, it
-may be that none are deferred. This macro only creates an interface to the
-capability where it exists, it does not require the creation of the capability. An
-implementation that does not defer any compiler warnings may correctly
-implement this macro as an expansion into a simple <a 
-href="clmse38.html#x50-102002r80">progn</a>.
-</div>
-</div>
-<div class=newer>
-   <h4 class="subsectionHead"><span class="titlemark">25.1.1   </span> <a 
- id="x157-32100025.1.1"></a>Compiler Diagnostics</h4>
-<!--l. 506--><p class="noindent" >X3J13 voted in June 1987 <a 
- id="dx157-321001"></a>to specify that <a 
-href="#x157-318003r797">compile</a> and <a 
-href="#x157-318011r799">compile-ﬁle</a> may output
-warning messages; any such messages should go to the stream that is the value of
-<a 
-href="clmse112.html#x138-264006r638">*error-output*</a>.
-<!--l. 511--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx157-321002"></a>to specify the use of conditions to signal
-various erroneous situations during compilation. First, note that <a 
-href="clmse156.html#x190-496012r1027">error</a> and
-<a 
-href="clmse156.html#x190-496008r1025">warning</a> conditions may be signaled either by the compiler itself or by code
-being processed by the compiler (for example, arbitrary errors may occur
-during compile-time macro expansion or processing of <a 
-href="clmse30.html#x40-74003r18">eval-when</a> forms).
-Considering only those conditions signaled by the compiler (as opposed to during
-compilation):
       <ul class="itemize1">
-      <li class="itemize">Conditions of type <a 
-href="clmse156.html#x190-496012r1027">error</a> may be signaled by the compiler in situations
-      where the compilation cannot proceed without intervention. Examples
-      of such situations may include errors when opening a ﬁle or syntax
-      errors.
+      <li class="itemize">Day-of-week: an integer between 0 and 6, inclusive; 0 means Monday,
+      1 means Tuesday, and so on; 6 means Sunday.
       </li>
-      <li class="itemize">Conditions  of  type  <a 
-href="clmse156.html#x190-496008r1025">warning</a>  may  be  signaled  by  the  compiler  in
-      situations where the standard explicitly states that a warning must,
-      should,  or  may  be  signaled.  They  may  also  be  signaled  when  the
-      compiler can determine that a situation would result at runtime that
-      would  have  undeﬁned  consequences  or  would  cause  an  error  to  be
-      signaled. Examples of such situations may include violations of type
-      declarations, altering or rebinding a constant deﬁned with <a 
-href="clmse30.html#x40-71006r16">defconstant</a>,
-      calls to built-in Lisp functions with too few or too many arguments or
-                                                                          
-
-                                                                          
-      with malformed keyword argument lists, referring to a variable declared
-      ignore, or unrecognized declaration speciﬁers.
+      <li class="itemize">Daylight-saving-time-p: a ﬂag that, if not <a 
+href="clmse31.html#x42-74002r18">nil</a>, indicates that daylight
+      saving time is in eﬀect.
       </li>
-      <li class="itemize">The  compiler  is  permitted  to  signal  diagnostics  about  matters  of
-      programming  style  as  conditions  of  type  style-warning,  a  subtype
-      of  <a 
-href="clmse156.html#x190-496008r1025">warning</a>.  Although  a  style-warning  condition  may be  signaled  in
-      these situations, no implementation is required to do so. However, if
-      an implementation does choose to signal a condition, that condition
-      will  be  of  type  style-warning  and  will  be  signaled  by  a  call  to  the
-      function <a 
-href="clmse155.html#x189-493002r1014">warn</a>. Examples of such situations may include redeﬁnition
-      of a function with an incompatible argument list, calls to functions
-      (other than built-in functions) with too few or too many arguments or
-      with malformed keyword argument lists, unreferenced local variables
-      not declared ignore, or standard declaration speciﬁers that are ignored
-      by the particular compiler in question.</li></ul>
-<!--l. 561--><p class="indent" >   Both <a 
-href="#x157-318003r797">compile</a> and <a 
-href="#x157-318011r799">compile-ﬁle</a> are permitted (but not required) to establish a
-handler for conditions of type <a 
-href="clmse156.html#x190-496012r1027">error</a>. Such a handler might, for example, issue a
-warning and restart compilation from some implementation-dependent point in
-order to let the compilation proceed without manual intervention.
-<!--l. 568--><p class="indent" >   The functions <a 
-href="#x157-318003r797">compile</a> and <a 
-href="#x157-318011r799">compile-ﬁle</a> each return three values. See the
-deﬁnitions of these functions for descriptions of the ﬁrst value. The second value is
-<a 
-href="clmse31.html#x42-77002r19">nil</a> if no compiler diagnostics were issued, and true otherwise. The third value is
-<a 
-href="clmse31.html#x42-77002r19">nil</a> if no compiler diagnostics other than style warnings were issued; a non-<a 
-href="clmse31.html#x42-77002r19">nil</a>
-value indicates that there were “serious” compiler diagnostics issued or that other
-conditions of type <a 
-href="clmse156.html#x190-496012r1027">error</a> or <a 
-href="clmse156.html#x190-496008r1025">warning</a> (but not style-warning) were signaled during
-compilation.
-</div>
+      <li class="itemize">Time-zone: an integer speciﬁed as the number of hours west of GMT
+      (Greenwich Mean Time). For example, in Massachusetts the time zone
+      is 5, and in California it is 8. Any adjustment for daylight saving time
+      is separate from this.</li></ul>
 <div class=newer>
-   <h4 class="subsectionHead"><span class="titlemark">25.1.2   </span> <a 
- id="x157-32200025.1.2"></a>Compiled Functions</h4>
-<!--l. 582--><p class="noindent" >X3J13 voted in June 1989 <a 
- id="dx157-322001"></a>to impose certain requirements on the functions
-produced by the compilation process.
-<!--l. 587--><p class="indent" >   If a function is of type compiled-function, then all macro calls appearing
-lexically within the function have already been expanded and will not be
+<!--l. 1691--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx157-310001"></a>to specify that the time zone part of Decoded
+Time need not be an integer, but may be any rational number (either an integer
                                                                           
 
                                                                           
-expanded again when the function is called. The process of compilation eﬀectively
-turns every <a 
-href="clmse39.html#x51-114010r95">macrolet</a> or <a 
-href="clmse39.html#x51-115002r96">symbol-macrolet</a> construct into a <a 
-href="clmse38.html#x50-102002r80">progn</a> (or a <a 
-href="clmse51.html#x65-169004r155">locally</a>) with
-all instances of the local macros in the body fully expanded.
-<!--l. 595--><p class="indent" >   If a function is of type compiled-function, then all <a 
-href="#x157-318033r804">load-time-value</a> forms
-appearing lexically within the function have already been pre-evaluated and will
-not be evaluated again when the function is called.
-<!--l. 600--><p class="indent" >   Implementations are free to classify every function as a compiled-function
-provided that all functions satisfy the preceding requirements. Conversely, it is
-permissible for a function that is not a compiled-function to satisfy the preceding
-requirements.
-<!--l. 606--><p class="indent" >   If one or more functions are deﬁned in a ﬁle that is compiled with <a 
-href="#x157-318011r799">compile-ﬁle</a>
-and the compiled ﬁle is subsequently loaded by the function <a 
-href="clmse122.html#x150-305002r778">load</a>, the resulting
-loaded function deﬁnitions must be of type compiled-function.
-<!--l. 612--><p class="indent" >   The function <a 
-href="#x157-318003r797">compile</a> must produce an object of type compiled-function as the
-value that is either returned or stored into the <a 
-href="clmse35.html#x47-89007r56">symbol-function</a> of a symbol
-argument.
-<!--l. 616--><p class="indent" >   Note that none of these restrictions addresses questions of the compilation
-technology or target instruction set. For example, a compiled function does not
-necessarily consist of native machine instructions. These requirements merely
-specify the behavior of the type system with respect to certain actions taken by
-<a 
-href="#x157-318003r797">compile</a>, <a 
-href="#x157-318011r799">compile-ﬁle</a>, and <a 
-href="clmse122.html#x150-305002r778">load</a>.
-</div>
-<div class=newer>
-   <h4 class="subsectionHead"><span class="titlemark">25.1.3   </span> <a 
- id="x157-32300025.1.3"></a>Compilation Environment</h4>
-<!--l. 626--><p class="noindent" >X3J13 voted in June 1989 <a 
- id="dx157-323001"></a>to specify what information must be available at
-compile time for correct compilation and what need not be available until run
-time.
-<!--l. 631--><p class="indent" >   The following information must be present in the compile-time environment
-for a program to be compiled correctly. This information need not also be present
-in the run-time environment.
-      <ul class="itemize1">
-      <li class="itemize">In conforming code, macros referenced in the code being compiled must
-      have been previously deﬁned in the compile-time environment. The
-      compiler must treat as a function call any form that is a list whose car
-                                                                          
-
-                                                                          
-      is a symbol that does not name a macro or special form. (This implies
-      that <a 
-href="clmse36.html#x48-93002r66">setf</a> methods must also be available at compile time.)
-      </li>
-      <li class="itemize">In conforming code, proclamations for special variables must be made
-      in the compile-time environment before any bindings of those variables
-      are processed by the compiler. The compiler must treat any binding of
-      an undeclared variable as a lexical binding.</li></ul>
-<!--l. 650--><p class="indent" >   The compiler may incorporate the following kinds of information into the code
-it produces, if the information is present in the compile-time environment and is
-referenced within the code being compiled; however, the compiler is not
-required to do so. When compile-time and run-time deﬁnitions diﬀer, it
-is unspeciﬁed which will prevail within the compiled code (unless some
-other behavior is explicitly speciﬁed below). It is also permissible for an
-implementation to signal an error at run time on detecting such a discrepancy.
-In all cases, the absence of the information at compile time is not an
-error, but its presence may enable the compiler to generate more eﬃcient
-code.
-      <ul class="itemize1">
-      <li class="itemize">The compiler may assume that functions that are deﬁned and declared
-      inline in the compile-time environment will retain the same deﬁnitions
-      at run time.
-      </li>
-      <li class="itemize">The compiler may assume that, within a named function, a recursive
-      call to a function of the same name refers to the same function, unless
-      that function has been declared notinline. (This permits tail-recursive
-      calls of a function to itself to be compiled as jumps, for example, thereby
-      turning certain recursive schemas into eﬃcient loops.)
-      </li>
-      <li class="itemize">In the absence of notinline declarations to the contrary, <a 
-href="#x157-318011r799">compile-ﬁle</a> may
-      assume that a call within the ﬁle being compiled to a named function
-      that is deﬁned in that ﬁle refers to that function. (This rule permits
-      block compilation of ﬁles.) The behavior of the program is unspeciﬁed
-      if functions are redeﬁned individually at run time.
-                                                                          
-
-                                                                          
-      </li>
-      <li class="itemize">The compiler may assume that the signature (or “interface contract”)
-      of all built-in Common Lisp functions will not change. In addition, the
-      compiler may treat all built-in Common Lisp functions as if they had
-      been proclaimed inline.
-      </li>
-      <li class="itemize">The compiler may assume that the signature (or “interface contract”)
-      of functions with ftype information available will not change.
-      </li>
-      <li class="itemize">The compiler may “wire in”  (that is, open-code or inline) the values
-      of symbolic constants that have been deﬁned with <a 
-href="clmse30.html#x40-71006r16">defconstant</a> in the
-      compile-time environment.
-      </li>
-      <li class="itemize">The compiler may assume that any type deﬁnition made with <a 
-href="clmse104.html#x128-250002r619">defstruct</a>
-      or  <a 
-href="clmse24.html#x33-53002r6">deftype</a>  in  the  compile-time  environment  will  retain  the  same
-      deﬁnition  in  the  run-time  environment.  It  may  also  assume  that  a
-      class  deﬁned  by  <a 
-href="clmse151.html#x184-437022r920">defclass</a>  in  the  compile-time  environment  will  be
-      deﬁned  in  the  run-time  environment  in  such  a  way  as  to  have  the
-      same superclasses and metaclass. This implies that subtype/supertype
-      relationships of type speciﬁers will not change between compile time
-      and run time. (Note that it is not an error for an unknown type to
-      appear in a declaration at compile time, although it is reasonable for
-      the compiler to emit a warning in such a case.)
-      </li>
-      <li class="itemize">The compiler may assume that if type declarations are present in the
-      compile-time environment, the corresponding variables and functions
-      present in the run-time environment will actually be of those types. If
-      this assumption is violated, the run-time behavior of the program is
-      undeﬁned.</li></ul>
-<!--l. 713--><p class="indent" >   The compiler must not make any additional assumptions about consistency
-between the compile-time and run-time environments. In particular, the compiler
-may not assume that functions that are deﬁned in the compile-time environment
-will retain either the same deﬁnition or the same signature at run time, except as
-described above. Similarly, the compiler may not signal an error if it sees a call to
-                                                                          
-
-                                                                          
-a function that is not deﬁned at compile time, since that function may be
-provided at run time.
-<!--l. 724--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx157-323002"></a>to specify the compile-time side eﬀects of
-processing various macro forms.
-<!--l. 727--><p class="indent" >   Calls to deﬁning macros such as <a 
-href="clmse46.html#x59-157007r137">defmacro</a> or <a 
-href="clmse30.html#x40-71002r14">defvar</a> appearing within a ﬁle
-being processed by <a 
-href="#x157-318011r799">compile-ﬁle</a> normally have compile-time side eﬀects that aﬀect
-how subsequent forms in the same ﬁle are compiled. A convenient model for
-explaining how these side eﬀects happen is that each deﬁning macro expands into
-one or more <a 
-href="clmse30.html#x40-74003r18">eval-when</a> forms and that compile-time side eﬀects are caused
-by calls occurring in the body of an (eval-when (:compile-toplevel) ...)
-form.
-<!--l. 736--><p class="indent" >   The aﬀected deﬁning macros and their speciﬁc side eﬀects are as follows. In
-each case, it is identiﬁed what a user must do to ensure that a program is
-conforming, and what a compiler must do in order to correctly process a
-conforming program.
-<div class=flushdesc>
-<!--l. 742--><p class="indent" >
-      <ul><li><b>
-<a 
-href="clmse24.html#x33-53002r6">deftype</a> </b></li>The user must ensure that the body of a <a 
-href="clmse24.html#x33-53002r6">deftype</a> form is evaluable at
-      compile time if the type is referenced in subsequent type declarations.
-      The compiler must ensure that a type speciﬁer deﬁned by <a 
-href="clmse24.html#x33-53002r6">deftype</a> is
-      recognized in subsequent type declarations. If the expansion of a type
-      speciﬁer is not deﬁned fully at compile time (perhaps because it expands
-      into an unknown type speciﬁer or a satisﬁes of a named function that
-      isn&#x2019;t deﬁned in the compile-time environment), an implementation may
-      ignore any references to this type in declarations and may signal a
-      warning.
-      <li><b>
-<a 
-href="clmse46.html#x59-157007r137">defmacro</a> and <a 
-href="clmse36.html#x48-97006r70">deﬁne-modify-macro</a> </b></li>The    compiler    must    store    macro
-      deﬁnitions at compile time, so that occurrences of the macro later on
-      in the ﬁle can be expanded correctly. The user must ensure that the
-      body of the macro is evaluable at compile time if it is referenced within
-      the ﬁle being compiled.
-      <li><b>
-<a 
-href="clmse30.html#x40-69002r13">defun</a> </b></li>No required compile-time side eﬀects are associated with <a 
-href="clmse30.html#x40-69002r13">defun</a> forms.
-      In particular, <a 
-href="clmse30.html#x40-69002r13">defun</a> does not make the function deﬁnition available
-                                                                          
-
-                                                                          
-      at compile time. An implementation may choose to store information
-      about the function for the purposes of compile-time error checking (such
-      as checking the number of arguments on calls) or to permit later inline
-      expansion of the function.
-      <li><b>
-<a 
-href="clmse30.html#x40-71002r14">defvar</a> and <a 
-href="clmse30.html#x40-71004r15">defparameter</a> </b></li>The  compiler  must  recognize  that  the  variables
-      named by these forms have been proclaimed special. However, it must
-      not evaluate the initial-value form or <a 
-href="clmse35.html#x47-92003r63">set</a> the variable at compile time.
-      <li><b>
-<a 
-href="clmse30.html#x40-71006r16">defconstant</a> </b></li>The compiler must recognize that the symbol names a constant.
-      An implementation may choose to evaluate the value-form at compile
-      time,  load  time,  or  both.  Therefore  the  user  must  ensure  that  the
-      value-form  is  evaluable  at  compile  time  (regardless  of  whether  or
-      not references to the constant appear in the ﬁle) and that it always
-      evaluates to the same value. (There has been considerable variance
-      among implementations on this point. The eﬀect of this speciﬁcation
-      is to legitimize all of the implementation variants by requiring care of
-      the user.)
-      <li><b>
-<a 
-href="clmse36.html#x48-98003r71">defsetf</a> and <a 
-href="clmse36.html#x48-99005r72">deﬁne-setf-method</a> </b></li>The   compiler   must   make   <a 
-href="clmse36.html#x48-93002r66">setf</a>   methods
-      available so that they may be used to expand calls to <a 
-href="clmse36.html#x48-93002r66">setf</a> later on in
-      the ﬁle. Users must ensure that the body of a call to <a 
-href="clmse36.html#x48-99005r72">deﬁne-setf-method</a>
-      or  the  complex  form  of  <a 
-href="clmse36.html#x48-98003r71">defsetf</a>  is  evaluable  at  compile  time  if  the
-      corresponding place is referred to in a subsequent <a 
-href="clmse36.html#x48-93002r66">setf</a> in the same ﬁle.
-      The compiler must make these <a 
-href="clmse36.html#x48-93002r66">setf</a> methods available to compile-time
-      calls  to  <a 
-href="clmse36.html#x48-100008r74">get-setf-method</a>  when  its  environment  argument  is  a  value
-      received as the &#x0026;environment parameter of a macro.
-      <li><b>
-<a 
-href="clmse104.html#x128-250002r619">defstruct</a> </b></li>The compiler must make the structure type name recognized as
-      a  valid  type  name  in  subsequent  declarations  (as  described  above
-      for <a 
-href="clmse24.html#x33-53002r6">deftype</a>) and make the structure slot accessors known to <a 
-href="clmse36.html#x48-93002r66">setf</a>. In
-      addition, the compiler must save enough information so that further
-      <a 
-href="clmse104.html#x128-250002r619">defstruct</a> deﬁnitions can include (with the :include option) a structure
-      type  deﬁned  earlier  in  the  ﬁle  being  compiled.  The  functions  that
-      <a 
-href="clmse104.html#x128-250002r619">defstruct</a> generates are not deﬁned in the compile-time environment,
-                                                                          
-
-                                                                          
-      although the compiler may save enough information about the functions
-      to allow inline expansion of subsequent calls to these functions. The
-      #S reader syntax may or may not be available for that structure type
-      at compile time.
-      <li><b>
-<a 
-href="clmse155.html#x189-484002r1003">deﬁne-condition</a> </b></li>The rules are essentially the same as those for <a 
-href="clmse104.html#x128-250002r619">defstruct</a>.
-      The compiler must make the condition type recognizable as a valid type
-      name, and it must be possible to reference the condition type as the
-      parent-type of another condition type in a subsequent <a 
-href="clmse155.html#x189-484002r1003">deﬁne-condition</a>
-      form in the ﬁle being compiled.
-      <li><b>
-<a 
-href="clmse63.html#x79-188064r196">defpackage</a> </b></li>All of the actions normally performed by the <a 
-href="clmse63.html#x79-188064r196">defpackage</a> macro
-      at load time must also be performed at compile time.</ul>
-</div>
-<!--l. 825--><p class="indent" >   Compile-time side eﬀects may cause information about a deﬁnition to be
-stored in a diﬀerent manner from information about deﬁnitions processed either
-interpretively or by loading a compiled ﬁle. In particular, the information stored
-by a deﬁning macro at compile time may or may not be available to the
-interpreter (either during or after compilation) or during subsequent calls to
-<a 
-href="#x157-318003r797">compile</a> or <a 
-href="#x157-318011r799">compile-ﬁle</a>. For example, the following code is not portable because it
-assumes that the compiler stores the macro deﬁnition of foo where it is available
-to the interpreter. <div class=lisp> <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(defmacro foo (x) ‘(car ,x))
-</td></tr></table>
-<!--l. 837--><p class="indent" >                                                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"></td></tr></table>
-<!--l. 838--><p class="indent" >                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(eval-when (:execute :compile-toplevel :load-toplevel)</td></tr></table>
-<!--l. 839--><p class="indent" >                                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (print (foo &#x2019;(a b c))))     ;Wrong</td></tr></table>
-<!--l. 841--><p class="indent" >
-</div>
-</div>
-<!--l. 842--><p class="noindent" >The goal may be accomplished portably by including the macro deﬁnition within the
-<a 
-href="clmse30.html#x40-74003r18">eval-when</a> form: <div class=lisp> <div class=tabbing>
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(eval-when (eval compile load)
-</td></tr></table>
-<!--l. 845--><p class="indent" >                                             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (defmacro foo (x) ‘(car ,x))</td></tr></table>
-<!--l. 846--><p class="indent" >                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (print (foo &#x2019;(a b c))))     ;Right</td></tr></table>
-<!--l. 848--><p class="indent" >
-</div>
-</div>
-<div class=flushdesc>
-<!--l. 851--><p class="indent" >
-      <ul><li><b>
-<a 
-href="clmse51.html#x65-170007r157">declaim</a> </b></li>
-      <!--l. 853--><p class="noindent" >X3J13 voted in June 1989 <a 
- id="dx157-323003"></a>to add a new macro <a 
-href="clmse51.html#x65-170007r157">declaim</a> for making
-      proclamations recognizable at compile time. The declaration speciﬁers
-      in the <a 
-href="clmse51.html#x65-170007r157">declaim</a> form are eﬀectively proclaimed at compile time so as to
-      aﬀect compilation of subsequent forms. (Note that compiler processing
-      of a call to <a 
-href="clmse51.html#x65-170002r156">proclaim</a> does not have any compile-time side eﬀects, for
-      <a 
-href="clmse51.html#x65-170002r156">proclaim</a> is a function.)</ul>
-</div>
-<div class=flushdesc>
-<!--l. 864--><p class="indent" >
-      <ul><li><b>
-<a 
-href="clmse63.html#x79-187016r176">in-package</a> </b></li>
-      <!--l. 866--><p class="noindent" >X3J13 voted in March 1989 <a 
- id="dx157-323004"></a>to specify that all of the actions normally
-      performed by the <a 
-href="clmse63.html#x79-187016r176">in-package</a> macro at load time must also be performed
-      at compile time.</ul>
-</div>
-<!--l. 871--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx157-323005"></a>to specify the compile-time side eﬀects of processing
-various CLOS-related macro forms. Top-level calls to the CLOS deﬁning macros
-have the following compile-time side eﬀects; any other compile-time behavior is
-explicitly left unspeciﬁed.
-<div class=flushdesc>
-<!--l. 878--><p class="indent" >
-                                                                          
-
-                                                                          
-      <ul><li><b>
-<a 
-href="clmse151.html#x184-437022r920">defclass</a> </b></li>The class name may appear in subsequent type declarations and
-      can  be  used  as  a  specializer  in  subsequent  <a 
-href="clmse151.html#x184-440002r924">defmethod</a>  forms.  Thus
-      the compile-time behavior of <a 
-href="clmse151.html#x184-437022r920">defclass</a> is similar to that of <a 
-href="clmse24.html#x33-53002r6">deftype</a> or
-      <a 
-href="clmse104.html#x128-250002r619">defstruct</a>.
-      <li><b>
-<a 
-href="clmse151.html#x184-438002r921">defgeneric</a> </b></li>The generic function can be referenced in subsequent <a 
-href="clmse151.html#x184-440002r924">defmethod</a>
-      forms, but the compiler does not arrange for the generic function to be
-      callable at compile time.
-      <li><b>
-<a 
-href="clmse151.html#x184-440002r924">defmethod</a> </b></li>The compiler does not arrange for the method to be callable at
-      compile time. If there is a generic function with the same name deﬁned
-      at compile time, compiling a <a 
-href="clmse151.html#x184-440002r924">defmethod</a> form does not add the method
-      to that generic function; the method is added to the generic function
-      only when the <a 
-href="clmse151.html#x184-440002r924">defmethod</a> form is actually executed.
-      <!--l. 896--><p class="noindent" >The error-signaling behavior described in the speciﬁcation of <a 
-href="clmse151.html#x184-440002r924">defmethod</a>
-      in  chapter <a 
-href="clmch28.html#x182-38500028">28<!--tex4ht:ref: CLOS --></a>  (if  the  function  isn&#x2019;t  a  generic  function  or  if  the
-      lambda-list is not congruent) occurs only when the deﬁning form is
-      executed, not at compile time.
-      <!--l. 901--><p class="noindent" >The  forms  in  <a 
-href="clmse33.html#x44-81005r47">eql</a>  parameter  specializers  are  evaluated  when  the
-      <a 
-href="clmse151.html#x184-440002r924">defmethod</a> form is executed. The compiler is permitted to build in
-      knowledge about what the form in an <a 
-href="clmse33.html#x44-81005r47">eql</a> specializer will evaluate to
-      in cases where the ultimate result can be syntactically inferred without
-      actually evaluating it.
-      <li><b>
-<a 
-href="clmse151.html#x184-439005r923">deﬁne-method-combination</a> </b></li>The   method   combination   can   be   used   in
-      subsequent <a 
-href="clmse151.html#x184-438002r921">defgeneric</a> forms.
-      <!--l. 910--><p class="noindent" >The body of a <a 
-href="clmse151.html#x184-439005r923">deﬁne-method-combination</a> form is evaluated no earlier
-      than when the deﬁning macro is executed and possibly as late as generic
-      function invocation time. The compiler may attempt to evaluate these
-      forms at compile time but must not depend on being able to do so.</ul>
-</div>
-</div>
-<div class=newer>
-                                                                          
-
-                                                                          
-<!--l. 921--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">25.1.4   </span> <a 
- id="x157-32400025.1.4"></a>Similarity of Constants</h4>
-<!--l. 924--><p class="noindent" >X3J13 voted in March 1989 <a 
- id="dx157-324001"></a>to specify what objects can be in compiled constants
-and what relationship there must be between a constant passed to the
-compiler and the one that is established by compiling it and then loading its
-ﬁle.
-<!--l. 930--><p class="indent" >   The key is a deﬁnition of an equivalence relationship called “similarity as
-constants” between Lisp objects. Code passed through the ﬁle compiler and then
-loaded must behave as though quoted constants in it are similar in this sense to
-quoted constants in the corresponding source code. An object may be used as a
-quoted constant processed by <a 
-href="#x157-318011r799">compile-ﬁle</a> if and only if the compiler can
-guarantee that the resulting constant established by loading the compiled ﬁle is
-“similar as a constant” to the original. Speciﬁc requirements are spelled out
-below.
-<!--l. 941--><p class="indent" >   Some types of objects, such as streams, are not supported in constants
-processed by the ﬁle compiler. Such objects may not portably appear as constants
-in code processed with <a 
-href="#x157-318011r799">compile-ﬁle</a>. Conforming implementations are required to
-handle such objects either by having the compiler or loader reconstruct an
-equivalent copy of the object in some implementation-speciﬁc manner or by
-having the compiler signal an error.
-<!--l. 949--><p class="indent" >   Of the types supported in constants, some are treated as aggregate objects.
-For these types, being similar as constants is deﬁned recursively. We say that an
-object of such a type has certain “basic attributes”; to be similar as a constant to
-another object, the values of the corresponding attributes of the two objects must
-also be similar as constants.
-<!--l. 956--><p class="indent" >   A deﬁnition of this recursive form has problems with any circular or inﬁnitely
-recursive object such as a list that is an element of itself. We use the
-idea of depth-limited comparison and say that two objects are similar as
-constants if they are similar at all ﬁnite levels. This idea is implicit in
-the deﬁnitions below, and it applies in all the places where attributes
-of two objects are required to be similar as constants. The question of
-handling circular constants is the subject of a separate vote by X3J13 (see
-below).
-<!--l. 965--><p class="indent" >   The following terms are used throughout this section. The term constant refers
-to a quoted or self-evaluating constant, not a named constant deﬁned by
-<a 
-href="clmse30.html#x40-71006r16">defconstant</a>. The term source code is used to refer to the objects constructed when
-<a 
-href="#x157-318011r799">compile-ﬁle</a> calls <a 
-href="clmse116.html#x143-281003r696">read</a> (or the equivalent) and to additional objects constructed by
-macro expansion during ﬁle compilation. The term compiled code is used to refer
-                                                                          
-
-                                                                          
-to objects constructed by <a 
-href="clmse122.html#x150-305002r778">load</a>.
-<!--l. 975--><p class="indent" >   Two objects are similar as a constant if and only if they are both of one of the
-types listed below and satisfy the additional requirements listed for that
-type.
-<div class=flushdesc>
-<!--l. 980--><p class="indent" >
-      <ul><li><b>
-number </b></li>
-      <!--l. 982--><p class="noindent" >Two numbers are similar as constants if they are of the same type and
-      represent the same mathematical value.
-      <li><b>
-<a 
-href="clmse79.html#x97-215002r384">character</a> </b></li>
-      <!--l. 987--><p class="noindent" >Two characters are similar as constants if they both represent the same
-      character. (The intent is that this be compatible with how <a 
-href="clmse33.html#x44-81005r47">eql</a> is deﬁned
-      on characters.)
-      <li><b>
-<a 
-href="clmch10.html#x68-17500010">symbol</a> </b></li>X3J13 voted in June 1989 <a 
- id="dx157-324002"></a>to deﬁne similarity as a constant for
-      interned symbols. A symbol S appearing in the source code is similar
-      as a constant to a symbol S′ in the compiled code if their print
-      names are similar as constants and either of the following conditions
-      holds:
-           <ul class="itemize1">
-           <li class="itemize">S is accessible in <a 
-href="clmse63.html#x79-187003r173">*package*</a> at compile time and S′ is accessible
-           in <a 
-href="clmse63.html#x79-187003r173">*package*</a> at load time.
-           </li>
-           <li class="itemize">S′ is accessible in the package that is similar as a constant to the
-           home package of symbol S.</li></ul>
-      <!--l. 1003--><p class="noindent" >The “similar as constants” relationship for interned symbols has nothing to
-      do with *readtable* or how the function <a 
-href="clmse116.html#x143-281003r696">read</a> would parse the characters in
-      the print name of the symbol.
-      <!--l. 1007--><p class="noindent" >An uninterned symbol in the source code is similar as a constant to an
-      uninterned symbol in the compiled code if their print names are similar as
-      constants.
-                                                                          
-
-                                                                          
-      <li><b>
-package </b></li>
-      <!--l. 1013--><p class="noindent" >A package in the source code is similar as a constant to a package in the
-      compiled code if their names are similar as constants. Note that the loader
-      ﬁnds the corresponding package object as if by calling <a 
-href="clmse63.html#x79-188002r177">ﬁnd-package</a> with the
-      package name as an argument. An error is signaled if no package of that
-      name exists at load time.
-      <li><b>
-random-state </b></li>
-      <!--l. 1021--><p class="noindent" >We say that two random-state objects are functionally equivalent if applying
-      <a 
-href="clmse74.html#x91-209002r317">random</a> to them repeatedly always produces the same pseudo-random
-      numbers in the same order.
-      <!--l. 1025--><p class="noindent" >Two random-states are similar as constants if and only if copies of them
-      made via <a 
-href="clmse74.html#x91-209006r319">make-random-state</a> are functionally equivalent. (Note that a
-      constant random-state object cannot be used as the state argument to the
-      function <a 
-href="clmse74.html#x91-209002r317">random</a> because <a 
-href="clmse74.html#x91-209002r317">random</a> performs a side eﬀect on that
-      argument.)
-      <li><b>
-<a 
-href="clmse86.html#x106-224062r474">cons</a> </b></li>
-      <!--l. 1033--><p class="noindent" >Two conses are similar as constants if the values of their respective car and
-      cdr attributes are similar as constants.
-      <li><b>
-array </b></li>
-      <!--l. 1038--><p class="noindent" >Two arrays are similar as constants if the corresponding values of each of the
-      following attributes are similar as constants: for vectors (one-dimensional
-      arrays), the <a 
-href="clmse81.html#x100-218008r402">length</a> and element-type and the result of <a 
-href="clmse81.html#x100-218002r399">elt</a> for all valid
-      indices; for all other arrays, the <a 
-href="clmse96.html#x118-240004r566">array-rank</a>, the result of <a 
-href="clmse96.html#x118-240006r567">array-dimension</a> for
-      all valid axis numbers, the <a 
-href="clmse96.html#x118-240002r565">array-element-type</a>, and the result of <a 
-href="clmse95.html#x117-239002r563">aref</a> for all
-      valid indices. (The point of distinguishing vectors is to take any ﬁll pointers
-      into account.)
-      <!--l. 1047--><p class="noindent" >If the array in the source code is a simple-array, then the corresponding
-      array in the compiled code must also be a simple-array, but if the array in
-      the source code is displaced, has a ﬁll pointer, or is adjustable, the
-      corresponding array in the compiled code is permitted to lack any or all of
-                                                                          
-
-                                                                          
-      these qualities.
-      <li><b>
-hash-table </b></li>
-      <!--l. 1055--><p class="noindent" >Two hash tables are similar as constants if they meet three requirements.
-      First, they must have the same test (for example, both are <a 
-href="clmse33.html#x44-81005r47">eql</a> hash tables or
-      both are <a 
-href="clmse33.html#x44-81007r48">equal</a> hash tables). Second, there must be a unique bijective
-      correspondence between the keys of the two tables, such that the
-      corresponding keys are similar as constants. Third, for all keys, the
-      values associated with two corresponding keys must be similar as
-      constants.
-      <!--l. 1065--><p class="noindent" >If there is more than one possible one-to-one correspondence between the
-      keys of the two tables, it is unspeciﬁed whether the two tables are similar
-      as constants. A conforming program cannot use such a table as a
-      constant.
-      <li><b>
-<a 
-href="clmse119.html#x147-301005r742">pathname</a> </b></li>
-      <!--l. 1072--><p class="noindent" >Two pathnames are similar as constants if all corresponding pathname
-      components are similar as constants.
-      <li><b>
-stream, readtable, and method </b></li>
-      <!--l. 1077--><p class="noindent" >Objects of these types are not supported in compiled constants.
-      <li><b>
-<a 
-href="clmse35.html#x47-88006r54">function</a> </b></li>
-      <!--l. 1082--><p class="noindent" >X3J13 voted in June 1989 <a 
- id="dx157-324003"></a>to specify that objects of type <a 
-href="clmse35.html#x47-88006r54">function</a> are not
-      supported in compiled constants.
-      <li><b>
-structure and standard-object </b></li>
-      <!--l. 1088--><p class="noindent" >X3J13 voted in March 1989 <a 
- id="dx157-324004"></a>to introduce a facility based on the Common
-      Lisp Object System whereby a user can specify how <a 
-href="#x157-318011r799">compile-ﬁle</a> and <a 
-href="clmse122.html#x150-305002r778">load</a>
-      must cooperate to reconstruct compile-time constant objects at load time
-      (see <a 
-href="clmse122.html#x150-305022r783">make-load-form</a>).</ul>
-                                                                          
-
-                                                                          
-</div>
-<!--l. 1095--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx157-324005"></a>to specify the circumstances under which
-constants may be coalesced in compiled code.
-<!--l. 1098--><p class="indent" >   Suppose A and B are two objects used as quoted constants in the source code,
-and that A′ and B′ are the corresponding objects in the compiled code. If A′ and
-B′ are <a 
-href="clmse33.html#x44-81005r47">eql</a> but A and B were not <a 
-href="clmse33.html#x44-81005r47">eql</a>, then we say that A and B have been
-coalesced by the compiler.
-<!--l. 1104--><p class="indent" >   An implementation is permitted to coalesce constants appearing in code to be
-compiled if and only if they are similar as constants, except that objects of type
-<a 
-href="clmch10.html#x68-17500010">symbol</a>, package, structure, or standard-object obey their own rules and may not
-be coalesced by a separate mechanism.
+or a ratio) in the range -24 to 24 (inclusive on both ends) that is an integral
+multiple of 1/3600.
 <div class=rationale>
-<!--l. 1111--><p class="noindent" ><b>Rationale:</b> Objects of type <a 
-href="clmch10.html#x68-17500010">symbol</a> and package cannot be coalesced because the fact
-that they are named, interned objects means they are already as coalesced as it is useful
-for them to be. Uninterned symbols could perhaps be coalesced, but that was
-thought to be more dangerous than useful. Structures and objects could be
-coalesced if a “similar as a constant” predicate were deﬁned for them; it would be a
-generic function. However, at present there is no such predicate. Currently
-<a 
-href="clmse122.html#x150-305022r783">make-load-form</a> provides a protocol by which <a 
-href="#x157-318011r799">compile-ﬁle</a> and <a 
-href="clmse122.html#x150-305002r778">load</a> work together
-to construct an object in the compiled code that is equivalent to the object
-in the source code; a diﬀerent mechanism would have to be added to permit
-coalescing.
+<!--l. 1698--><p class="noindent" ><b>Rationale:</b> For all possible time designations to be accommodated, it is necessary
+to allow the time zone to be non-integral, for some places in the world have
+time standards oﬀset from Greenwich Mean Time by a non-integral number of
+hours.
+<!--l. 1704--><p class="indent" >   There appears to be no user demand for ﬂoating-point time zones. Since such zones
+would introduce inexact arithmetic, X3J13 did not consider adding them at this
+time.
+<!--l. 1708--><p class="indent" >   This speciﬁcation does require time zones to be represented as integral multiples of 1
+second (rather than 1 hour). This prevents problems that could otherwise occur in
+converting Decoded Time to Universal Time.
 </div>
-<!--l. 1126--><p class="indent" >   Note that coalescing is possible only because it is forbidden to destructively
-modify constants <a 
- id="dx157-324006"></a>(see <a 
-href="clmse35.html#x47-87002r53">quote</a>).
-<!--l. 1129--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx157-324007"></a>to specify that objects containing circular or
-inﬁnitely recursive references may legitimately appear as constants to be
-compiled. The compiler is required to preserve <a 
-href="clmse33.html#x44-81005r47">eql</a>-ness of substructures within a
-ﬁle compiled by <a 
-href="#x157-318011r799">compile-ﬁle</a>.
 </div>
-<div class=obsolete>
+<!--l. 1715--><p class="indent" >   Universal Time represents time as a single non-negative integer. For relative
+time purposes, this is a number of seconds. For absolute time, this is the number
+of seconds since midnight, January 1, 1900 GMT. Thus the time 1 is
+00:00:01 (that is, 12:00:01 A.M.) on January 1, 1900 GMT. Similarly,
+the time 2398291201 corresponds to time 00:00:01 on January 1, 1976
+GMT. Recall that the year 1900 was not a leap year; for the purposes of
+Common Lisp, a year is a leap year if and only if its number is divisible
+by 4, except that years divisible by 100 are not leap years, except that
+years divisible by 400 are leap years. Therefore the year 2000 will be a
+leap year. (Note that the “leap seconds” that are sporadically inserted by
+the world&#x2019;s oﬃcial timekeepers as an additional correction are ignored;
+Common Lisp assumes that every day is exactly 86400 seconds long.)
+Universal Time format is used as a standard time representation within the
+ARPANET; see reference <span class="cite">[<a 
+href="clmli5.html#XKLH-TIME-SERVER">22</a>]</span>. Because the Common Lisp Universal Time
+representation uses only non-negative integers, times before the base time
+of midnight, January 1, 1900 GMT cannot be processed by Common
+Lisp.
+<!--l. 1737--><p class="indent" >   Internal Time also represents time as a single integer, but in terms of an
+implementation-dependent unit. Relative time is measured as a number of these
+units. Absolute time is relative to an arbitrary time base, typically the time at
+which the system began running.
+<div class=defun>
                                                                           
 
                                                                           
-   <!--l. 1137--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+<!--l. 1743--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-310002"></a><a 
+ id="x157-310003r785"></a><b> get-decoded-time</b>
+<!--l. 1745--><p class="noindent" >The current time is returned in Decoded Time format. Nine values are returned:
+second, minute, hour, date, month, year, day-of-week, daylight-saving-time-p, and
+time-zone.
+<div class=incompatibility>
+<!--l. 1751--><p class="noindent" ><b>Compatibility note:</b> In Lisp Machine Lisp time-zone is not currently returned.
+Consider, however, the use of Common Lisp in some mobile vehicle. It is entirely
+plausible that the time zone might change from time to time.
+</div>
+</div>
+<div class=defun>
+<!--l. 1759--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-310004"></a><a 
+ id="x157-310005r786"></a><b> get-universal-time</b>
+<!--l. 1761--><p class="noindent" >The current time of day is returned as a single integer in Universal Time
+format.
+</div>
+<div class=defun>
+<!--l. 1766--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-310006"></a><a 
+ id="x157-310007r787"></a><b> decode-universal-time</b>  <i>universal-time</i> &#x0026;optional  <i>time-zone</i>
+<!--l. 1768--><p class="noindent" >The time speciﬁed by universal-time in Universal Time format is converted to
+Decoded Time format. Nine values are returned: second, minute, hour, date,
+month, year, day-of-week, daylight-saving-time-p, and time-zone.
+<div class=incompatibility>
+<!--l. 1775--><p class="noindent" ><b>Compatibility note:</b> In Lisp Machine Lisp time-zone is not currently returned.
+Consider, however, the use of Common Lisp in some mobile vehicle. It is entirely
+plausible that the time zone might change from time to time.
+</div>
+<!--l. 1782--><p class="indent" >   The time-zone argument defaults to the current time zone. <div class=new> X3J13 voted in
+January 1989 <a 
+ id="dx157-310008"></a>to specify that <a 
+href="#x157-310007r787">decode-universal-time</a>, like <a 
+href="#x157-310010r788">encode-universal-time</a>,
+ignores daylight saving time information if a time-zone is explicitly speciﬁed; in
+this case the returned daylight-saving-time-p value will necessarily be <a 
+href="clmse31.html#x42-74002r18">nil</a> even if
+daylight saving time happens to be in eﬀect in that time zone at the speciﬁed
+time.
+</div>
+</div>
+<div class=defun>
+<!--l. 1795--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-310009"></a><a 
+ id="x157-310010r788"></a><b> encode-universal-time</b>  <i>second</i> <i>minute</i> <i>hour</i> <i>date</i> <i>month</i> <i>year</i>
+&#x0026;optional  <i>time-zone</i>
+<!--l. 1797--><p class="noindent" >The time speciﬁed by the given components of Decoded Time format is encoded
+into Universal Time format and returned. If you do not specify time-zone, it
+                                                                          
+
+                                                                          
+defaults to the current time zone adjusted for daylight saving time. If you
+provide time-zone explicitly, no adjustment for daylight saving time is
+performed.
+</div>
+<div class=defun>
+<!--l. 1805--><p class="noindent" ><i>[Constant]</i><a 
+ id="dx157-310011"></a><a 
+ id="x157-310012r789"></a><b> internal-time-units-per-second</b>
+<!--l. 1807--><p class="noindent" >This value is an integer, the implementation-dependent number of internal time
+units in a second. (The internal time unit must be chosen so that one second is an
+integral multiple of it.)
+<div class=rationale>
+<!--l. 1813--><p class="noindent" ><b>Rationale:</b> The reason for allowing the internal time units to be implementation-dependent
+is so that <a 
+href="#x157-310014r790">get-internal-run-time</a> and <a 
+href="#x157-310016r791">get-internal-real-time</a> can execute with minimum
+overhead. The idea is that it should be very likely that a ﬁxnum will suﬃce as
+the returned value from these functions. This probability can be tuned to the
+implementation by trading oﬀ the speed of the machine against the word size. Any
+particular unit will be inappropriate for some implementations: a microsecond is
+too long for a very fast machine, while a much smaller unit would force many
+implementations to return bignums for most calls to get-internal-time, rendering that
+function less useful for accurate timing measurements.
+</div>
+</div>
+<div class=defun>
+<!--l. 1831--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-310013"></a><a 
+ id="x157-310014r790"></a><b> get-internal-run-time</b>
+<!--l. 1833--><p class="noindent" >The current run time is returned as a single integer in Internal Time format. The
+precise meaning of this quantity is implementation-dependent; it may measure
+real time, run time, CPU cycles, or some other quantity. The intent is that the
+diﬀerence between the values of two calls to this function be the amount of time
+between the two calls during which computational eﬀort was expended on behalf
+of the executing program.
+</div>
+<div class=defun>
+<!--l. 1844--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-310015"></a><a 
+ id="x157-310016r791"></a><b> get-internal-real-time</b>
+<!--l. 1846--><p class="noindent" >The current time is returned as a single integer in Internal Time format. This
+time is relative to an arbitrary time base, but the diﬀerence between the values of
+two calls to this function will be the amount of elapsed real time between the two
+calls, measured in the units deﬁned by <a 
+href="#x157-310012r789">internal-time-units-per-second</a>.
+</div>
+<div class=defun>
+                                                                          
+
+                                                                          
+<!--l. 1854--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-310017"></a><a 
+ id="x157-310018r792"></a><b> sleep</b>  <i>seconds</i>
+<!--l. 1856--><p class="noindent" >(sleep n) causes execution to cease and become dormant for approximately n
+seconds of real time, whereupon execution is resumed. The argument may be any
+non-negative non-complex number. <a 
+href="#x157-310018r792">sleep</a> returns <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+</div>
+<!--l. 1863--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">25.4.2   </span> <a 
+ id="x157-31100025.4.2"></a>Other Environment Inquiries</h4>
+<!--l. 1865--><p class="noindent" >For any of the following functions, if no appropriate and relevant result can be
+produced, <a 
+href="clmse31.html#x42-74002r18">nil</a> is returned instead of a string.
+<div class=rationale>
+<!--l. 1870--><p class="noindent" ><b>Rationale:</b> These inquiry facilities are functions rather than variables against the
+possibility that a Common Lisp process might migrate from machine to machine.
+This need not happen in a distributed environment; consider, for example,
+dumping a core image ﬁle containing a compiler and then shipping it to another
+site.
+</div>
+<div class=defun>
+<!--l. 1879--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311001"></a><a 
+ id="x157-311002r793"></a><b> lisp-implementation-type</b>
+<!--l. 1881--><p class="noindent" >A string is returned that identiﬁes the generic name of the particular Common
+Lisp implementation. Examples: &#x0022;Spice LISP&#x0022;, &#x0022;Zetalisp&#x0022;.
+</div>
+<div class=defun>
+<!--l. 1887--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311003"></a><a 
+ id="x157-311004r794"></a><b> lisp-implementation-version</b>
+<!--l. 1889--><p class="noindent" >A string is returned that identiﬁes the version of the particular Common Lisp
+implementation; this information should be of use to maintainers of the
+implementation. Examples: &#x0022;1192&#x0022;, &#x0022;53.7 with complex numbers&#x0022;, &#x0022;1746.9A,
+NEWIO 53, ETHER 5.3&#x0022;.
+</div>
+<div class=defun>
+<!--l. 1897--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311005"></a><a 
+ id="x157-311006r795"></a><b> machine-type</b>
+<!--l. 1899--><p class="noindent" >A string is returned that identiﬁes the generic name of the computer hardware on
+which Common Lisp is running. Examples: &#x0022;IMLAC&#x0022;, &#x0022;DEC PDP-10&#x0022;, &#x0022;DEC
+VAX-11/780&#x0022;.
+</div>
+<div class=defun>
+                                                                          
+
+                                                                          
+<!--l. 1905--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311007"></a><a 
+ id="x157-311008r796"></a><b> machine-version</b>
+<!--l. 1907--><p class="noindent" >A string is returned that identiﬁes the version of the computer hardware on which
+Common Lisp is running. Example: &#x0022;KL10, microcode 9&#x0022;.
+</div>
+<div class=defun>
+<!--l. 1913--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311009"></a><a 
+ id="x157-311010r797"></a><b> machine-instance</b>
+<!--l. 1915--><p class="noindent" >A string is returned that identiﬁes the particular instance of the computer
+hardware on which Common Lisp is running; this might be a local nickname, for
+example, or a serial number. Examples: &#x0022;MIT-MC&#x0022;, &#x0022;CMU GP-VAX&#x0022;.
+</div>
+<div class=defun>
+<!--l. 1922--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311011"></a><a 
+ id="x157-311012r798"></a><b> software-type</b>
+<!--l. 1924--><p class="noindent" >A string is returned that identiﬁes the generic name of any relevant supporting
+software. Examples: &#x0022;Spice&#x0022;, &#x0022;TOPS-20&#x0022;, &#x0022;ITS&#x0022;.
+</div>
+<div class=defun>
+<!--l. 1930--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311013"></a><a 
+ id="x157-311014r799"></a><b> software-version</b>
+<!--l. 1932--><p class="noindent" >A string is returned that identiﬁes the version of any relevant supporting software;
+this information should be of use to maintainers of the implementation.
+</div>
+<div class=defun>
+<!--l. 1938--><p class="noindent" ><i>[Function]</i><a 
+ id="dx157-311015"></a><a 
+ id="x157-311016r800"></a><b> short-site-name</b> <br 
+class="newline" /><i>[Function]</i><a 
+ id="dx157-311017"></a><a 
+ id="x157-311018r801"></a><b> long-site-name</b>
+<!--l. 1941--><p class="noindent" >A string is returned that identiﬁes the physical location of the computer
+hardware. Examples of short names: &#x0022;MIT AI Lab&#x0022;, &#x0022;CMU-CSD&#x0022;. Examples of
+long names: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;MIT Artiﬁcial Intelligence Laboratory&#x0022;
+</td></tr></table>
+<!--l. 1947--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;Massachusetts Institute of Technology</td></tr></table>
+<!--l. 1948--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">Artiﬁcial Intelligence Laboratory&#x0022;</td></tr></table>
+<!--l. 1949--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x0022;Carnegie-Mellon University Computer Science Department&#x0022;</td></tr></table>
+<!--l. 1951--><p class="indent" >
+</div>
+</div>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 1954--><p class="noindent" >See also <a 
+href="clmse116.html#x144-280083r729">user-homedir-pathname</a>.
+<div class=defun>
+<!--l. 1958--><p class="noindent" ><i>[Variable]</i><a 
+ id="dx157-311019"></a><a 
+ id="x157-311020r802"></a><b> *features*</b>
+<!--l. 1960--><p class="noindent" >The value of the variable *features* should be a list of symbols that name
+“features” provided by the implementation. Most such names will be
+implementation-speciﬁc; typically a name for the implementation will be
+included.
+<div class=obsolete>
+<!--l. 1967--><p class="indent" >   One standard feature name is ieee-ﬂoating-point, which should be
+present if and only if full IEEE proposed ﬂoating-point arithmetic <span class="cite">[<a 
+href="clmli5.html#XIEEE-PROPOSED-FLOATING-POINT-STANDARD">23</a>]</span> is
+supported.
+</div>
+<!--l. 1972--><p class="indent" >   The value of this variable is used by the #+ and #- reader syntax.
+<div class=newer>
+<!--l. 1976--><p class="indent" >   X3J13 voted in March 1988 <a 
+ id="dx157-311021"></a>to specify that feature names used with #+ and
+#- are read in the keyword package unless an explicit preﬁx designating some
+other package appears. The standard feature name ieee-ﬂoating-point is
+therefore actually the keyword :ieee-ﬂoating-point, though one need not write
+the colon when using it with #+ or #-; thus #+ieee-ﬂoating-point and
+#+:ieee-ﬂoating-point mean the same thing.
+</div>
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 1988--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse128.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch25.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch25.html#tailclmch25.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse126.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse126.html#tailclmse126.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse127.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch25.html#clmse127.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 1137--><p class="indent" >   <a 
+<!--l. 1988--><p class="indent" >   <a 
  id="tailclmse127.html"></a>  
 </body></html> 

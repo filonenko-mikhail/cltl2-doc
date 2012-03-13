@@ -1,67 +1,238 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Introduction</title> 
+<head><title>Format Directive Interface</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-11 14:56:00"> 
+<meta name="date" content="2012-03-13 16:31:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 27--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 713--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse145.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch27.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch27.html#tailclmch27.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse143.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse143.html#tailclmse143.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse144.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch27.html#clmse144.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">27.1   </span> <a 
- id="x176-37500027.1"></a>Introduction</h3>
-<!--l. 29--><p class="noindent" >Pretty printing has traditionally been a black box process, displaying
-program code using a set of ﬁxed layout rules. Its utility can be greatly
-enhanced by opening it up to user control. The facilities described in this
-chapter provide general and powerful means for specifying pretty-printing
-behavior.
-<!--l. 35--><p class="indent" >   By providing direct access to the mechanisms within the pretty printer
-that make dynamic decisions about layout, the macros and functions
-pprint-logical-block, <a 
-href="clmse146.html#x178-377003r892">pprint-newline</a>, and <a 
-href="clmse146.html#x178-380002r896">pprint-indent</a> make it possible to specify
-pretty printing layout rules as a part of any function that produces output. They
-also make it very easy for the function to support detection of circularity and
-sharing and abbreviation based on length and nesting depth. Using the function
-set-pprint-dispatch, one can associate a user-deﬁned pretty printing function with
-any type of object. A small set of new <a 
-href="clmse117.html#x144-287003r730">format</a> directives allows concise
+   <h3 class="sectionHead"><span class="titlemark">27.4   </span> <a 
+ id="x176-36000027.4"></a>Format Directive Interface</h3>
+<!--l. 716--><p class="noindent" >The primary interface to operations for dynamically determining the arrangement
+of output is provided through the functions above. However, an additional
+interface is provided via a set of format directives because, as shown by the
+examples in this section and the next, <a 
+href="clmse114.html#x141-266003r692">format</a> strings are typically a much more
+compact way to specify pretty printing. In addition, without such an interface,
+one would have to abandon the use of <a 
+href="clmse114.html#x141-266003r692">format</a> when interacting with the pretty
+printer.
+<div class=flushdesc>
+<!--l. 725--><p class="indent" >
+      <ul><li><b>
+ ~W </b></li><i>Write.</i>  An  <i>arg</i>,  any  Lisp  object,  is  printed  obeying  <i>every</i>  printer
+      control variable (as by <a 
+href="clmse114.html#x141-263006r673">write</a>). In addition, ~W interacts correctly with
+      depth abbreviation by not resetting the depth counter to zero. ~W
+      does not accept parameters. If given the colon modiﬁer, ~W binds
+      *print-pretty* to <a 
+href="clmse31.html#x42-74004r19">t</a>. If given the atsign modiﬁer, ~W binds *print-level*
+      and *print-length* to <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+      <!--l. 734--><p class="noindent" >~W   provides   automatic   support   for   circularity   detection.   If
+      *print-circle* (and possibly also *print-shared*) is not <a 
+href="clmse31.html#x42-74002r18">nil</a> and ~W is
+      applied to an argument that is a circular (or shared) reference, an
+      appropriate “#<i>n</i>#” marker is inserted in the output instead of printing
+      the argument.
+      <li><b>
+ ~_ </b></li><i>Conditional
+      newline.</i> Without any modiﬁers, ~_ is equivalent to (pprint-newline
+      :linear). The directive ~@_ is equivalent to (pprint-newline :miser).
+      The directive ~:_ is equivalent to (pprint-newline :ﬁll). The directive
+      ~:@_ is equivalent to (pprint-newline :mandatory).
                                                                           
 
                                                                           
-implementation of user-deﬁned pretty-printing functions. Together, these
-facilities enable users to redeﬁne the way code is displayed and allow the full
-power of pretty printing to be applied to complex combinations of data
-structures.
+      <li><b>
+~&#x003C;<i>str</i>~:&#x003E; </b></li><i>Logical  block.</i>  If  ~:&#x003E;  is  used  to  terminate  a  ~&#x003C;...  directive,
+      the  directive  is  equivalent  to  a  call  on  <a 
+href="clmse143.html#x175-356005r855">pprint-logical-block</a>.  The
+      <a 
+href="clmse114.html#x141-266003r692">format</a> argument corresponding to the ~&#x003C;...~:&#x003E; directive is treated
+      in the same way as the <i>list</i> argument to <a 
+href="clmse143.html#x175-356005r855">pprint-logical-block</a>, thereby
+      providing automatic support for non-list arguments and the detection
+      of  circularity,  sharing,  and  depth  abbreviation.  The  portion  of  the
+      <a 
+href="clmse114.html#x141-266003r692">format</a> control string nested within the ~&#x003C;...~:&#x003E; speciﬁes the :preﬁx
+      (or :per-line-preﬁx), :suﬃx, and body of the <a 
+href="clmse143.html#x175-356005r855">pprint-logical-block</a>.
+      <!--l. 763--><p class="noindent" >The <a 
+href="clmse114.html#x141-266003r692">format</a> string portion enclosed by ~&#x003C;...~:&#x003E; can be divided into
+      segments ~&#x003C;<i>preﬁx</i>~;<i>body</i>~;suﬃx~:&#x003E; by ~; directives. If the ﬁrst section
+      is terminated by ~@;, it speciﬁes a per-line preﬁx rather than a simple
+      preﬁx. The preﬁx and suﬃx cannot contain <a 
+href="clmse114.html#x141-266003r692">format</a> directives. An error
+      is signaled if either the preﬁx or suﬃx fails to be a constant string or
+      if the enclosed portion is divided into more than three segments.
+      <!--l. 771--><p class="noindent" >If the enclosed portion is divided into only two segments, the suﬃx
+      defaults to the null string. If the enclosed portion consists of only a
+      single segment, both the preﬁx and the suﬃx default to the null string.
+      If the colon modiﬁer is used (that is, ~:&#x003C;...~:&#x003E;), the preﬁx and suﬃx
+      default to &#x0022;(&#x0022; and &#x0022;)&#x0022;, respectively, instead of the null string.
+      <!--l. 778--><p class="noindent" >The  body  segment  can  be  any  arbitrary  <a 
+href="clmse114.html#x141-266003r692">format</a>  control  string.
+      This  <a 
+href="clmse114.html#x141-266003r692">format</a>  control  string  is  applied  to  the  elements  of  the  list
+      corresponding  to  the  ~&#x003C;...~:&#x003E;  directive  as  a  whole.  Elements  are
+      extracted from this list using <a 
+href="clmse143.html#x175-358002r857">pprint-pop</a>, thereby providing automatic
+      support for malformed lists and the detection of circularity, sharing,
+      and  length  abbreviation.  Within  the  body  segment,  ~̂  acts  like
+      <a 
+href="clmse143.html#x175-357002r856">pprint-exit-if-list-exhausted</a>.
+      <!--l. 786--><p class="noindent" >~&#x003C;...~:&#x003E; supports a feature not supported by <a 
+href="clmse143.html#x175-356005r855">pprint-logical-block</a>. If
+      ~:@&#x003E; is used to terminate the directive (that is, ~&#x003C;...~:@&#x003E;), then a
+      ﬁll-style conditional newline is automatically inserted after each group
+      of blanks immediately contained in the body (except for blanks after a
+      ~&#x003C;newline&#x003E; directive). This makes it easy to achieve the equivalent of
+      paragraph ﬁlling.
+      <!--l. 794--><p class="noindent" >If  the  atsign  modiﬁer  is  used  with  ~&#x003C;...~:&#x003E;,  the  entire  remaining
+      argument list is passed to the directive as its argument. All of the
+      remaining arguments are always consumed by ~@&#x003C;...~:&#x003E;, even if they
                                                                           
 
                                                                           
-<div class=implementation>
-<!--l. 55--><p class="noindent" ><b>Implementation note:</b> This chapter describes the interface of the XP pretty printer.
-XP is described fully in <span class="cite">[<a 
-href="clmli5.html#XXP-PRETTY-PRINTER">54</a>]</span>, which also explains how to obtain a portable
-implementation. XP uses a highly eﬃcient linear-time algorithm. When properly
-integrated into a Common Lisp, this algorithm supports pretty printing that is only
-fractionally slower than ordinary printing.
+      are not all used by the <a 
+href="clmse114.html#x141-266003r692">format</a> string nested in the directive. Other
+      than the diﬀerence in its argument, ~@&#x003C;...~:&#x003E; is exactly the same as
+      ~&#x003C;...~:&#x003E;, except that circularity (and sharing) detection is not applied
+      if the ~@&#x003C;...~:&#x003E; is at top level in a <a 
+href="clmse114.html#x141-266003r692">format</a> string. This ensures that
+      circularity detection is applied only to data lists and not to <a 
+href="clmse114.html#x141-266003r692">format</a>
+      argument lists.
+      <!--l. 805--><p class="noindent" >To a considerable extent, the basic form of the directive ~&#x003C;...~&#x003E; is
+      incompatible with the dynamic control of the arrangement of output
+      by ~W, ~_, ~&#x003C;...~:&#x003E;, ~I, and ~:T. As a result, an error is signaled if
+      any of these directives is nested within ~&#x003C;...~&#x003E;. Beyond this, an error
+      is also signaled if the ~&#x003C;...~:;...~&#x003E; form of ~&#x003C;...~&#x003E; is used in the same
+      <a 
+href="clmse114.html#x141-266003r692">format</a> string with ~W, ~_, ~&#x003C;...~:&#x003E;, ~I, or ~:T.
+      <li><b>
+  ~I </b></li><i>Indent.</i> ~<i>n</i>I is equivalent to (pprint-indent :block <i>n</i>). ~:<i>n</i>I is equivalent
+      to (pprint-indent :current <i>n</i>). In both cases, <i>n</i> defaults to zero if it is
+      omitted.
+      <li><b>
+ ~:T </b></li><i>Tabulate.</i>  If  the  colon  modiﬁer  is  used  with  the  ~T  directive,  the
+      tabbing computation is done relative to the column where the section
+      immediately containing the directive begins, rather than with respect
+      to column zero. ~<i>n</i>,<i>m</i>:T is equivalent to (pprint-tab :section <i>n</i> <i>m</i>).
+      ~<i>n</i>,<i>m</i>:@T  is  equivalent  to  (pprint-tab :section-relative <i>n</i> <i>m</i>).  The
+      numerical parameters are both interpreted as being in units of ems and
+      both default to 1.
+      <li><b>
+~/<i>name</i>/ </b></li><i>Call function.</i> User-deﬁned functions can be called from within
+      a <a 
+href="clmse114.html#x141-266003r692">format</a> string by using the directive ~/<i>name</i>/. The colon modiﬁer,
+      the atsign modiﬁer, and arbitrarily many parameters can be speciﬁed
+      with the ~/<i>name</i>/ directive. The <i>name</i> can be any string that does not
+      contain “<a 
+href="clmse108.html#x133-242016r599">/</a>”. All of the characters in <i>name</i> are treated as if they were
+      upper case. If <i>name</i> contains a “:” or “::”, then everything up to but
+      not including the ﬁrst “:” or “::” is taken to be a string that names a
+      package. Everything after the ﬁrst “:” or “::” (if any) is taken to be a
+      string that names a symbol. The function corresponding to a ~/<i>name</i>/
+      directive is obtained by looking up the symbol that has the indicated
+                                                                          
+
+                                                                          
+      name in the indicated package. If <i>name</i> does not contain a “:” or “::”,
+      then the whole name string is looked up in the user package.
+      <!--l. 850--><p class="noindent" >When a ~/<i>name</i>/ directive is encountered, the indicated function is
+      called with four or more arguments. The ﬁrst four arguments are the
+      output stream, the <a 
+href="clmse114.html#x141-266003r692">format</a> argument corresponding to the directive, the
+      value <a 
+href="clmse31.html#x42-74004r19">t</a> if the colon modiﬁer was used (<a 
+href="clmse31.html#x42-74002r18">nil</a> otherwise), and the value <a 
+href="clmse31.html#x42-74004r19">t</a> if
+      the atsign modiﬁer was used (<a 
+href="clmse31.html#x42-74002r18">nil</a> otherwise). The remaining arguments
+      consist of any parameters speciﬁed with the directive. The function
+      should print the argument appropriately. Any values returned by the
+      function are ignored.
+      <!--l. 859--><p class="noindent" >The three functions <a 
+href="clmse143.html#x175-359008r861">pprint-linear</a>, <a 
+href="clmse143.html#x175-359006r860">pprint-ﬁll</a>, and <a 
+href="clmse143.html#x175-359010r862">pprint-tabular</a> are
+      designed so that they can be called by ~/.../ (that is, ~/pprint-linear/,
+      ~/pprint-ﬁll/, and ~/pprint-tabular/. In particular they take colon and
+      atsign arguments.</ul>
+</div>
+<!--l. 866--><p class="indent" >   As examples of the convenience of specifying pretty printing with
+<a 
+href="clmse114.html#x141-266003r692">format</a> strings, consider the functions pprint-defun and pprint-let used as
+examples in the last section. They can be more compactly deﬁned as follows.
+The function pprint-vector cannot be deﬁned using <a 
+href="clmse114.html#x141-266003r692">format</a>, because the
+data structure it traverses is not a list. The function <a 
+href="clmse143.html#x175-359010r862">pprint-tabular</a> is
+inconvenient to deﬁne using <a 
+href="clmse114.html#x141-266003r692">format</a>, because of the need to pass its tabsize
+argument through to a ~:T directive nested within an iteration over a list.
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun pprint-defun (list)
+</td></tr></table>
+<!--l. 876--><p class="indent" >           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format t &#x0022;~:&#x003C;~W ~@_~:I~W ~:_~W~1I ~_~W~:&#x003E;&#x0022; list))</td></tr></table>
+<!--l. 879--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 880--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun pprint-let (list)</td></tr></table>
+<!--l. 881--><p class="indent" >   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format t &#x0022;~:&#x003C;~W~̂ ~:&#x003C;~@{~:&#x003C;~@{~W~̂ ~_~}~:&#x003E;~̂ ~:_~}~:&#x003E;~1I~</td></tr></table>
+<!--l. 885--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                ~@{~̂ ~_~W~}~:&#x003E;&#x0022;</td></tr></table>
+<!--l. 886--><p class="indent" >                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          list))</td></tr></table>
+<!--l. 888--><p class="indent" >
+</div>
 </div>
                                                                           
 
                                                                           
-   <!--l. 66--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 890--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse145.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch27.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch27.html#tailclmch27.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse143.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse143.html#tailclmse143.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse144.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch27.html#clmse144.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 66--><p class="indent" >   <a 
+<!--l. 890--><p class="indent" >   <a 
  id="tailclmse144.html"></a>  
 </body></html> 

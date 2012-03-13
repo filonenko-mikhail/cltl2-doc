@@ -3,8 +3,9 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{The Evaluator Вычислитель}
+\ifx \rulang\Undef
 
+\chapter{Вычислитель}
 
 The mechanism that executes Lisp programs is called the evaluator.
 More precisely, the evaluator accepts a form and performs the
@@ -28,38 +29,13 @@ are expanded; macro definitions should not depend on the time
 at which they are expanded.  Implementors should
 document the evaluation strategy for each implementation.
 
-Механизм, который выполняет Lisp'овые программы, называется вычислитель.
-А точнее, вычислитель принимает форму и выполняет расчеты указанные формой.
-Этот механизм доступен пользователю через функцию \cdf{eval}.
-
-Вычислитель, как правило, реализован как интерпретатор, который рекурсивно
-проходит по заданной форме, выполняя каждый шаг вычисления. Однако такая
-реализация не обязательна. Возможно альтернативное поведение, когда вычислитель
-сначала полностью компилирует форму в машинновыполняемый код, и затем его
-вызывает.
-Этот метод практически исключает несовместимости между интерпретируемым и
-компилируемым кодом, но и делает механизм \cdf{evalhook} относительно
-безполезным.
-Допустимы также разные смешанные стратегии. Все эти методы должны возвращать
-одинаковые результаты для правильного кода, и могут возвращать разные ошибки для
-неправильного кода.
-Например, поведение может отличаться в том, когда раскрывается
-макровызов. Поэтому определение макроса не должно зависеть от времени, когда он
-раскрывается. Для каждой раелизации разработчики должны документировать
-стратегию вычисления. 
-
-\section{Run-Time Evaluation of Forms Вычисление форм}
+\section{Run-Time Evaluation of Forms}
 
 The function \cdf{eval} is the main user interface to the evaluator.
 Hooks are provided for user-supplied debugging routines
 to obtain control during the execution of an interpretive evaluator.
 The functions \cdf{evalhook} and \cdf{applyhook} provide alternative
 interfaces to the evaluator mechanism for use by these debugging routines.
-
-Функция \cdf{eval} является главным пользовательским интерфейсом к вычислителю.
-Для пользовательских отладочных функций в интерпретаторе предусмотрены ловушки. 
-Функции \cdf{evalhook} и \cdf{applyhook} предоставляют альтернативные интерфейсы
-к механизму вычислителся для использования этих отладочных возможностей.
 
 \begin{defun}[Function]
 eval form
@@ -92,26 +68,6 @@ X3J13 voted in January 1989
 \issue{MAPPING-DESTRUCTIVE-INTERACTION}
 to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
 \end{new}
-
-Форма \emph{form} вычисляется в текущем динамическом окружении и нулевом
-лексическом. Результатом функци является вычисленное значение для переданной
-формы.
-
-Следует отметить, что когда вы записываете вызов к \cdf{eval}, то для переданной
-формы происходят \emph{два} уровня вычислений.
-Сначала происходит вычисление формы аргумента, как и любого аргумента для любой
-функции. Данное вычисление в свою очередь неявно вызывает \cdf{eval}.
-Затем происходит вычисление значения аргумента переданного в функцию \cdf{eval}.
-Например:
-\begin{lisp}
-(eval (list 'cdr (car '((quote (a . b)) c)))) \EV\ b
-\end{lisp}
-Форма аргумента \cd{(list 'cdr (car '((quote (a . b)) c)))} вычисляется в
-\cd{(cdr (quote (a . b)))}.
-Затем \cdf{eval} вычисляет полученный аргумент и возвращает \cd{b}.
-
-Если необходимо получить динамическое значения для символа, то удобнее
-использовать функцию \cdf{symbol-value}.
 \end{defun}
 
 \begin{defun}[Variable]
@@ -134,21 +90,6 @@ The variable \cdf{*applyhook*} is similar to \cdf{*evalhook*} but is used
 when a function is about to be applied to arguments.
 If the value of \cdf{*applyhook*} is not {\false}, then \cdf{eval} behaves
 in a special way.
-
-Если значение \cdf{*evalhook*} не является {\false}, тогда \cdf{eval} ведет себя
-специальным образом. Не-{/false} значение \cdf{*evalhook*} должно быть функцией,
-которая принимает два аргумента, форму и окружение.
-Эта функция называется <<функцией-ловушкой для вычислителя>>.
-Когда форма должна быть вычислена (любая, даже просто число или символ) неявно или явно с
-помощью \cdf{eval}, то вместо вычисления вызывается данная функция с формой в
-первом аргументе.
-Тогда функция-ловушка несет ответственность за вычисление формы, и все что она
-вернет будет расценено как результат вычисления этой формы.
-
-Переменная \cdf{*applyhook*} похожа на \cdf{*evalhook*}, но используется, когда
-функция должна быть применена к аргументам.
-Если значение \cdf{*applyhook*} не {\false}, тогда \cdf{eval} ведет себя
-специальным образом.
 \begin{obsolete}
 The non-{\false} value of \cdf{*applyhook*} should be a function
 that takes three arguments: a function, a list of arguments,
@@ -179,15 +120,6 @@ within \cdf{eval}.  It is not used for applications via \cdf{apply} or
 \cdf{funcall}, for applications by such functions as \cdf{map} or
 \cdf{reduce}, or for invocation of macro-expansion functions
 by either \cdf{eval} or \cdf{macroexpand}.
-
-Когда функция должна примениться к списку аргументов, то вызывается
-функция-ловушка с данной функцией и списком аргументов в качестве параметров.
-Выполнение формы доверяется функции-ловушке. То, что она вернет, будет расценено
-как результат вычисления формы.
-Функция-ловушка используется для применения обычных функций внутри
-\cdf{eval}. Она не используется для вызовов \cdf{apply} или
-\cdf{funcall}, таких функций, как \cdf{map} или \cdf{reduce}, или
-вызовов функций раскрытия макросов, таких как \cdf{eval} или \cdf{macroexpand}.
 \begin{newer}
 X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to specify
 that the value of \cdf{*macroexpand-hook*} is first coerced to a
@@ -207,11 +139,6 @@ about the lexical environment in an implementation-dependent format.
 These arguments are suitable for the functions
 \cdf{evalhook}, \cdf{applyhook}, and \cdf{macroexpand}.
 
-Последний аргумент помещаемый в функции-ловушки содержит информацию о
-лексическом окружении в формате, который зависит от реализации.
-Эти аргументы одаковы для функций \cdf{evalhook}, \cdf{applyhook} и
-\cdf{macroexpand}.
-
 When either kind of hook function is invoked, both of the variables
 \cdf{*evalhook*}
 and \cdf{*applyhook*} are rebound to the value {\nil} around the invocation
@@ -222,26 +149,13 @@ The functions \cdf{evalhook}
 and \cdf{applyhook} are useful for performing recursive evaluations
 and applications within the hook function.
 
-Когда вызывается одна из функций-ловушек, то обе переменные \cdf{*evalhook*} и
-\cdf{*applyhook} связываются со значениями {\nil} на время выполнения данных
-функций. Это сделано для того, чтобы функция-ловушка не зациклилась.
-Функции \cdf{evalhook} и \cdf{applyhook} полезны для выполнения рекурсивных
-вычислений и применений (функции) с функцией ловушкой.
-
 The hook feature is provided as an aid to debugging.
 The \cdf{step} facility is implemented using this hook.
-
-Функциональность ловушки предоставляется для облегчения отладки.
-Функциоанальность \cdf{step} реализована с помощью такой ловушки.
 
 If a non-local exit causes a throw back to the top level
 of Lisp, perhaps because an error could not
 be corrected, then \cdf{*evalhook*} and \cdf{*applyhook*} are
 automatically reset to {\false} as a safety feature.
-
-Если случается нелокальный выход на верхний уровень Lisp'а, возможно потому, что
-ошибка не может быть исправлена, тогда \cdf{*evalhook*} и \cdf{*applyhook*}
-в целях безопасности автоматически сбрасываются в {\false}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -250,9 +164,6 @@ applyhook function args evalhookfn applyhookfn &optional env
 
 The functions \cdf{evalhook} and \cdf{applyhook} are provided to make it
 easier to exploit the hook feature.
-
-Функции \cdf{evalhook} и \cdf{applyhook} представлены для облегчения
-использования функциональности ловушек.
 
 In the case of \cdf{evalhook}, the \emph{form} is evaluated.
 In the case of \cdf{applyhook}, the \emph{function} is applied to the
@@ -269,21 +180,6 @@ of the \emph{function} to the \emph{args} itself (for \cdf{applyhook}),
 but not for subsidiary evaluations and applications
 such as evaluations of subforms.  It is this one-shot bypass that makes
 \cdf{evalhook} and \cdf{applyhook} so useful.
-
-В случае \cdf{evalhook} вычисляется форма \emph{form}.
-В случае \cdf{applyhook} функция \emph{function} применяется к списку аргументов
-\emph{args}.
-В обоих случаях, в процессе выполнения операции переменная \cdf{*evalhook*}
-связана с \emph{evalhookfn}, и \cdf{*applyhook*} с \emph{applyhookfn}.
-Кроме того, аргумент \emph{env} используется для установки лексического
-окружения.
-По-умолчанию \emph{env} установлен в нулевое окружение.
-The check for a hook function is \emph{bypassed} for the evaluation
-of the \emph{form} itself (for \cdf{evalhook}) or for the application
-of the \emph{function} to the \emph{args} itself (for \cdf{applyhook}),
-but not for subsidiary evaluations and applications
-such as evaluations of subforms.  It is this one-shot bypass that makes
-\cdf{evalhook} and \cdf{applyhook} so useful. FIXME
 
 \begin{new}
 X3J13 voted in January 1989
@@ -333,6 +229,279 @@ Using these routines, one might see the following interaction:
 ~~Value: (3 . B) \\
 (3 . B)
 \end{lisp}
+\end{defun}
+
+\begin{defun}[Function]
+constantp object
+
+If the predicate \cdf{constantp} is true of an object,
+then that object, when considered as a form to
+be evaluated, always evaluates to the same thing;
+it is a constant.
+This includes self-evaluating objects such as numbers, characters,
+strings, bit-vectors, and keywords, as well as all constant symbols
+declared by \cdf{defconstant},
+such as \cdf{nil}, \cdf{t}, and \cdf{pi}.
+In addition, a list whose \emph{car} is \cdf{quote},
+such as \cd{(quote foo)}, is considered to be a constant.
+
+If \cdf{constantp} is false of an object, then
+that object, considered as a form,
+might or might not always evaluate to the same thing.
+\end{defun}
+
+\section{The Top-Level Loop}
+
+Normally one interacts with Lisp through a ``top-level
+\cdf{read}-\cdf{eval}-\cdf{print} loop,'' so called because
+it is the highest level of control and consists of an endless
+loop that reads an expression, evaluates it, and prints the
+results.  One has an effect on the state of the Lisp system
+only by invoking actions that have side effects.
+
+The precise nature of the top-level loop for Common Lisp
+is purposely not rigorously specified here so that implementors can
+experiment to improve the user interface.
+For example, an implementor may choose to require line-at-a-time
+input, or may provide a fancy editor or complex graphics-display
+interface.  An implementor may choose to provide
+explicit prompts for input,
+or may choose (as MacLisp does) not to clutter up the transcript
+with prompts.
+
+The top-level loop is required to trap all throws and recover gracefully.
+It is also required to print all values resulting from evaluation of a form,
+perhaps on separate lines.  If a form returns zero values, as little
+as possible should be printed.
+
+The following variables are maintained by the top-level loop
+as a limited safety net, in case the user forgets to save an interesting input
+expression or output value.  (Note that the names of some of these variables
+violate the convention that names of global variables begin and end with
+an asterisk.)  These are intended primarily for user interaction, which is why
+they have short names.  Use of these variables should be avoided in programs.
+
+\begin{defun}[Variable]
++ \\
+++ \\
++++ 
+
+While a form is being evaluated by the top-level loop,
+the variable \cdf{+} is bound to the previous form read by the loop.
+The variable \cdf{++} holds the previous value of \cdf{+} (that is, the form
+evaluated two interactions ago), and \cdf{+++} holds the previous value
+of \cdf{++}.
+\end{defun}
+
+\begin{defun}[Variable]
+-
+
+While a form is being evaluated by the top-level loop,
+the variable \cdf{-} is bound to the form itself; that is,
+it is the value about to be given to \cdf{+} once this interaction
+is done.
+\begin{new}%CORR
+\emph{Notice of correction.}
+In the first edition, the name of the variable \cdf{-} was
+inadvertently omitted.
+\end{new}
+\end{defun}
+
+\begin{defun}[Variable]
+* \\
+** \\
+***
+
+While a form is being evaluated by the top-level loop,
+the variable \cdf{*} is bound to the result printed at the
+end of the last time through the loop; that is, it is the value
+produced by evaluating the form in \cdf{+}.  If several values were produced,
+\cdf{*} contains the first value only; \cdf{*} contains {\nil} if zero values
+were produced.
+The variable \cdf{**} holds the previous value of \cdf{*} (that is, the result
+printed two interactions ago), and \cdf{***} holds the previous value
+of \cdf{**}.
+
+If the evaluation of \cdf{+} is aborted for some reason,
+then the values associated with \cdf{*}, \cdf{**}, and \cdf{***} are not updated;
+they are updated only if the printing of values is at least begun (though not
+necessarily completed).
+\end{defun}
+
+\begin{defun}[Variable]
+/ \\
+// \\
+///
+
+While a form is being evaluated by the top-level loop,
+the variable \cdf{/} is bound to a list of the results printed at the
+end of the last time through the loop; that is, it is a list of all values
+produced by evaluating the form in \cdf{+}.  The value of \cdf{*} should
+always be the same as the \emph{car} of the value of \cdf{/}.
+The variable \cdf{//} holds the previous value of \cdf{/} (that is, the results
+printed two interactions ago), and \cdf{///} holds the previous value
+of \cdf{//}.  Therefore the value of \cdf{**} should always be the same
+as the \emph{car} of \cdf{//}, and similarly for \cdf{***} and \cdf{///}.
+
+If the evaluation of \cdf{+} is aborted for some reason,
+then the values associated with \cdf{/}, \cdf{//}, and \cdf{///} are not updated;
+they are updated only if the printing of values is at least begun (though not
+necessarily completed).
+\end{defun}
+
+As an example of the processing of these variables, consider the
+following possible transcript, where \cdf{>} is a prompt by
+the top-level loop for user input:
+\begin{lisp}
+\hskip 12pc\=\kill
+>(cons - -)\>;\textrm{Interaction 1} \\
+((CONS - -) CONS - -)\>;\textrm{Cute, huh?} \\
+ \\
+>(values)\>;\textrm{Interaction 2} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Nothing to print} \\
+>(cons 'a 'b)\>;\textrm{Interaction 3} \\
+(A . B)\>;\textrm{There is a single value} \\
+ \\
+>(hairy-loop){\Xcircumflex}G\>;\textrm{Interaction 4} \\
+\#\#\# QUIT to top level.\>;\textrm{(User aborts the computation.)} \\
+ \\
+>(floor 13 4)\>;\textrm{Interaction 5} \\
+3\>;\textrm{There are two values} \\
+1
+\end{lisp}
+At this point we have:
+\begin{lisp}
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
++++ \EV\ (cons 'a 'b)&*** \EV\ NIL    &/// \EV\ () \\
+++  \EV\ (hairy-loop)&**  \EV\ (A . B)&//  \EV\ ((A . B)) \\
++   \EV\ (floor 13 4)&*   \EV\ 3      &/   \EV\ (3 1)
+\end{tabular*}
+\end{lisp}
+
+%RUSSIAN
+\else
+
+\chapter{Вычислитель}
+
+Механизм, который выполняет Lisp'овые программы, называется вычислитель.
+А точнее, вычислитель принимает форму и выполняет расчеты указанные формой.
+Этот механизм доступен пользователю через функцию \cdf{eval}.
+
+Вычислитель, как правило, реализован как интерпретатор, который рекурсивно
+проходит по заданной форме, выполняя каждый шаг вычисления. Однако такая
+реализация не обязательна. Возможно альтернативное поведение, когда вычислитель
+сначала полностью компилирует форму в машинновыполняемый код, и затем его
+вызывает.
+Этот метод практически исключает несовместимости между интерпретируемым и
+компилируемым кодом, но и делает механизм \cdf{evalhook} относительно
+безполезным.
+Допустимы также разные смешанные стратегии. Все эти методы должны возвращать
+одинаковые результаты для правильного кода, и могут возвращать разные ошибки для
+неправильного кода.
+Например, поведение может отличаться в том, когда раскрывается
+макровызов. Поэтому определение макроса не должно зависеть от времени, когда он
+раскрывается. Для каждой раелизации разработчики должны документировать
+стратегию вычисления. 
+
+\section{Вычисление форм}
+
+Функция \cdf{eval} является главным пользовательским интерфейсом к вычислителю.
+Для пользовательских отладочных функций в интерпретаторе предусмотрены ловушки. 
+Функции \cdf{evalhook} и \cdf{applyhook} предоставляют альтернативные интерфейсы
+к механизму вычислителся для использования этих отладочных возможностей.
+
+\begin{defun}[Function]
+eval form
+
+Форма \emph{form} вычисляется в текущем динамическом окружении и нулевом
+лексическом. Результатом функци является вычисленное значение для переданной
+формы.
+
+Следует отметить, что когда вы записываете вызов к \cdf{eval}, то для переданной
+формы происходят \emph{два} уровня вычислений.
+Сначала происходит вычисление формы аргумента, как и любого аргумента для любой
+функции. Данное вычисление в свою очередь неявно вызывает \cdf{eval}.
+Затем происходит вычисление значения аргумента переданного в функцию \cdf{eval}.
+Например:
+\begin{lisp}
+(eval (list 'cdr (car '((quote (a . b)) c)))) \EV\ b
+\end{lisp}
+Форма аргумента \cd{(list 'cdr (car '((quote (a . b)) c)))} вычисляется в
+\cd{(cdr (quote (a . b)))}.
+Затем \cdf{eval} вычисляет полученный аргумент и возвращает \cd{b}.
+
+Если необходимо получить динамическое значения для символа, то удобнее
+использовать функцию \cdf{symbol-value}.
+\end{defun}
+
+\begin{defun}[Variable]
+*evalhook* \\
+*applyhook*
+
+Если значение \cdf{*evalhook*} не является {\false}, тогда \cdf{eval} ведет себя
+специальным образом. Не-{/false} значение \cdf{*evalhook*} должно быть функцией,
+которая принимает два аргумента, форму и окружение.
+Эта функция называется <<функцией-ловушкой для вычислителя>>.
+Когда форма должна быть вычислена (любая, даже просто число или символ) неявно или явно с
+помощью \cdf{eval}, то вместо вычисления вызывается данная функция с формой в
+первом аргументе.
+Тогда функция-ловушка несет ответственность за вычисление формы, и все что она
+вернет будет расценено как результат вычисления этой формы.
+
+Переменная \cdf{*applyhook*} похожа на \cdf{*evalhook*}, но используется, когда
+функция должна быть применена к аргументам.
+Если значение \cdf{*applyhook*} не {\false}, тогда \cdf{eval} ведет себя
+специальным образом.
+
+Когда функция должна примениться к списку аргументов, то вызывается
+функция-ловушка с данной функцией и списком аргументов в качестве параметров.
+Выполнение формы доверяется функции-ловушке. То, что она вернет, будет расценено
+как результат вычисления формы.
+Функция-ловушка используется для применения обычных функций внутри
+\cdf{eval}. Она не используется для вызовов \cdf{apply} или
+\cdf{funcall}, таких функций, как \cdf{map} или \cdf{reduce}, или
+вызовов функций раскрытия макросов, таких как \cdf{eval} или \cdf{macroexpand}.
+
+Последний аргумент помещаемый в функции-ловушки содержит информацию о
+лексическом окружении в формате, который зависит от реализации.
+Эти аргументы одаковы для функций \cdf{evalhook}, \cdf{applyhook} и
+\cdf{macroexpand}.
+
+Когда вызывается одна из функций-ловушек, то обе переменные \cdf{*evalhook*} и
+\cdf{*applyhook} связываются со значениями {\nil} на время выполнения данных
+функций. Это сделано для того, чтобы функция-ловушка не зациклилась.
+Функции \cdf{evalhook} и \cdf{applyhook} полезны для выполнения рекурсивных
+вычислений и применений (функции) с функцией ловушкой.
+
+Функциональность ловушки предоставляется для облегчения отладки.
+Функциоанальность \cdf{step} реализована с помощью такой ловушки.
+
+Если случается нелокальный выход на верхний уровень Lisp'а, возможно потому, что
+ошибка не может быть исправлена, тогда \cdf{*evalhook*} и \cdf{*applyhook*}
+в целях безопасности автоматически сбрасываются в {\false}.
+\end{defun}
+
+\begin{defun}[Function]
+evalhook form evalhookfn applyhookfn &optional env \\
+applyhook function args evalhookfn applyhookfn &optional env
+
+Функции \cdf{evalhook} и \cdf{applyhook} представлены для облегчения
+использования функциональности ловушек.
+
+В случае \cdf{evalhook} вычисляется форма \emph{form}.
+В случае \cdf{applyhook} функция \emph{function} применяется к списку аргументов
+\emph{args}.
+В обоих случаях, в процессе выполнения операции переменная \cdf{*evalhook*}
+связана с \emph{evalhookfn}, и \cdf{*applyhook*} с \emph{applyhookfn}.
+Кроме того, аргумент \emph{env} используется для установки лексического
+окружения.
+По-умолчанию \emph{env} установлен в нулевое окружение.
+The check for a hook function is \emph{bypassed} for the evaluation
+of the \emph{form} itself (for \cdf{evalhook}) or for the application
+of the \emph{function} to the \emph{args} itself (for \cdf{applyhook}),
+but not for subsidiary evaluations and applications
+such as evaluations of subforms.  It is this one-shot bypass that makes
+\cdf{evalhook} and \cdf{applyhook} so useful. FIXME
 
 Вот пример, очень простой функции трассировки, которая использует возможности
 \cdf{evalhook}.
@@ -376,21 +545,6 @@ Using these routines, one might see the following interaction:
 \begin{defun}[Function]
 constantp object
 
-If the predicate \cdf{constantp} is true of an object,
-then that object, when considered as a form to
-be evaluated, always evaluates to the same thing;
-it is a constant.
-This includes self-evaluating objects such as numbers, characters,
-strings, bit-vectors, and keywords, as well as all constant symbols
-declared by \cdf{defconstant},
-such as \cdf{nil}, \cdf{t}, and \cdf{pi}.
-In addition, a list whose \emph{car} is \cdf{quote},
-such as \cd{(quote foo)}, is considered to be a constant.
-
-If \cdf{constantp} is false of an object, then
-that object, considered as a form,
-might or might not always evaluate to the same thing.
-
 Если предикат \cdf{constantp} для объекта \emph{object} истинен, то данный
 объект, когда рассматривается как вычисляемая форма, всегда вычисляется в одно и
 то же значение.
@@ -405,29 +559,12 @@ might or might not always evaluate to the same thing.
 значение.
 \end{defun}
 
-\section{The Top-Level Loop Цикл взаимодействия с пользователем}
-
-Normally one interacts with Lisp through a ``top-level
-\cdf{read}-\cdf{eval}-\cdf{print} loop,'' so called because
-it is the highest level of control and consists of an endless
-loop that reads an expression, evaluates it, and prints the
-results.  One has an effect on the state of the Lisp system
-only by invoking actions that have side effects.
+\section{Цикл взаимодействия с пользователем}
 
 С Lisp'ом можно работать через специальный цикл вида
 <<\cdf{read}-\cdf{eval}-\cdf{print} и сначала>>.
 Изменять состояние Lisp системы можно вызовом в этом цикле действий, имеющих
 побочные эффекты.  
-
-The precise nature of the top-level loop for Common Lisp
-is purposely not rigorously specified here so that implementors can
-experiment to improve the user interface.
-For example, an implementor may choose to require line-at-a-time
-input, or may provide a fancy editor or complex graphics-display
-interface.  An implementor may choose to provide
-explicit prompts for input,
-or may choose (as MacLisp does) not to clutter up the transcript
-with prompts.
 
 Точное определение такого цикла для Common Lisp'а не указывается здесь
 специально, оставляя разработчикам поле для творчества.
@@ -435,22 +572,10 @@ with prompts.
 или сложный графический интерфейс. Разработчики могут предоставлять явный запрос
 ввода, или (как в MacLisp'е) не загромождать экран подсказками.
 
-The top-level loop is required to trap all throws and recover gracefully.
-It is also required to print all values resulting from evaluation of a form,
-perhaps on separate lines.  If a form returns zero values, as little
-as possible should be printed.
-
 Цикл взаимодействия с пользователем должен ловить все исключения и изящно их
 обрабатывать. Он должен также выводить все результаты вычисления форм, возможно
 в отдельных строках. Если форма вернула ноль значений, это также должно быть
 отображено.
-
-The following variables are maintained by the top-level loop
-as a limited safety net, in case the user forgets to save an interesting input
-expression or output value.  (Note that the names of some of these variables
-violate the convention that names of global variables begin and end with
-an asterisk.)  These are intended primarily for user interaction, which is why
-they have short names.  Use of these variables should be avoided in programs.
 
 Следующие переменные управляются циклом взаимодействия с пользователем, для
 удобства работы, например в случае, если пользователь забыл сохранить
@@ -465,12 +590,6 @@ they have short names.  Use of these variables should be avoided in programs.
 ++ \\
 +++ 
 
-While a form is being evaluated by the top-level loop,
-the variable \cdf{+} is bound to the previous form read by the loop.
-The variable \cdf{++} holds the previous value of \cdf{+} (that is, the form
-evaluated two interactions ago), and \cdf{+++} holds the previous value
-of \cdf{++}.
-
 Когда форма вычисляется в цикле взаимодействия, переменная \cdf{+} связывается с
 предыдущим прочитанным выражением.
 Переменная \cdf{++} хранит предыдущее относительно значения \cdf{+} (то есть,
@@ -481,41 +600,15 @@ of \cdf{++}.
 \begin{defun}[Variable]
 -
 
-While a form is being evaluated by the top-level loop,
-the variable \cdf{-} is bound to the form itself; that is,
-it is the value about to be given to \cdf{+} once this interaction
-is done.
-
 Когда формы выполняется в цикле взаимодействия, переменная \cdf{-} связана с
 этой формой. Это значение, которое получит переменная \cdf{+} на следующей
 итерации цикла.
-\begin{new}%CORR
-\emph{Notice of correction.}
-In the first edition, the name of the variable \cdf{-} was
-inadvertently omitted.
-\end{new}
-
 \end{defun}
 
 \begin{defun}[Variable]
 * \\
 ** \\
 ***
-
-While a form is being evaluated by the top-level loop,
-the variable \cdf{*} is bound to the result printed at the
-end of the last time through the loop; that is, it is the value
-produced by evaluating the form in \cdf{+}.  If several values were produced,
-\cdf{*} contains the first value only; \cdf{*} contains {\nil} if zero values
-were produced.
-The variable \cdf{**} holds the previous value of \cdf{*} (that is, the result
-printed two interactions ago), and \cdf{***} holds the previous value
-of \cdf{**}.
-
-If the evaluation of \cdf{+} is aborted for some reason,
-then the values associated with \cdf{*}, \cdf{**}, and \cdf{***} are not updated;
-they are updated only if the printing of values is at least begun (though not
-necessarily completed).
 
 Во время вычисления формы в цикле взаимодействия, переменная \cdf{*} связана с
 результатом выполнения предыдущей формы, то есть значения формы, которая
@@ -537,21 +630,6 @@ necessarily completed).
 // \\
 ///
 
-While a form is being evaluated by the top-level loop,
-the variable \cdf{/} is bound to a list of the results printed at the
-end of the last time through the loop; that is, it is a list of all values
-produced by evaluating the form in \cdf{+}.  The value of \cdf{*} should
-always be the same as the \emph{car} of the value of \cdf{/}.
-The variable \cdf{//} holds the previous value of \cdf{/} (that is, the results
-printed two interactions ago), and \cdf{///} holds the previous value
-of \cdf{//}.  Therefore the value of \cdf{**} should always be the same
-as the \emph{car} of \cdf{//}, and similarly for \cdf{***} and \cdf{///}.
-
-If the evaluation of \cdf{+} is aborted for some reason,
-then the values associated with \cdf{/}, \cdf{//}, and \cdf{///} are not updated;
-they are updated only if the printing of values is at least begun (though not
-necessarily completed).
-
 Во время вычисления формы в цикле взаимодействия,
 переменная \cdf{/} связана со списком результатов выведенных на предыдущей
 итерации. То есть это список всех значений выполнения формы \cdf{+}.
@@ -568,35 +646,6 @@ necessarily completed).
 Они изменяются, если вывод значений как минимум начался (необязательно, чтобы он
 закончился).
 \end{defun}
-
-As an example of the processing of these variables, consider the
-following possible transcript, where \cdf{>} is a prompt by
-the top-level loop for user input:
-\begin{lisp}
-\hskip 12pc\=\kill
->(cons - -)\>;\textrm{Interaction 1} \\
-((CONS - -) CONS - -)\>;\textrm{Cute, huh?} \\
- \\
->(values)\>;\textrm{Interaction 2} \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Nothing to print} \\
->(cons 'a 'b)\>;\textrm{Interaction 3} \\
-(A . B)\>;\textrm{There is a single value} \\
- \\
->(hairy-loop){\Xcircumflex}G\>;\textrm{Interaction 4} \\
-\#\#\# QUIT to top level.\>;\textrm{(User aborts the computation.)} \\
- \\
->(floor 13 4)\>;\textrm{Interaction 5} \\
-3\>;\textrm{There are two values} \\
-1
-\end{lisp}
-At this point we have:
-\begin{lisp}
-\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
-+++ \EV\ (cons 'a 'b)&*** \EV\ NIL    &/// \EV\ () \\
-++  \EV\ (hairy-loop)&**  \EV\ (A . B)&//  \EV\ ((A . B)) \\
-+   \EV\ (floor 13 4)&*   \EV\ 3      &/   \EV\ (3 1)
-\end{tabular*}
-\end{lisp}
 
 В качестве примера работы с этими переменным, рассмотрим следующую возможную
 работу с системой, где \cdf{>} приглашение ввода:
@@ -625,3 +674,5 @@ At this point we have:
 +   \EV\ (floor 13 4)&*   \EV\ 3      &/   \EV\ (3 1)
 \end{tabular*}
 \end{lisp}
+
+\fi
