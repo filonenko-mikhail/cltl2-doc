@@ -1,507 +1,271 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Logical Operations on Numbers</title> 
+<head><title>Random Numbers</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-14 15:35:00"> 
+<meta name="date" content="2012-03-17 21:46:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 3402--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 3890--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse70.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse68.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse68.html#tailclmse68.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse69.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch12.html#clmse69.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">12.7   </span> <a 
- id="x86-18800012.7"></a>Logical Operations on Numbers</h3>
-<!--l. 3404--><p class="noindent" >The logical operations in this section require integers as arguments; it is an error
-to supply a non-integer as an argument. The functions all treat integers as if they
-were represented in two&#x2019;s-complement notation.
+   <h3 class="sectionHead"><span class="titlemark">12.9   </span> <a 
+ id="x86-18700012.9"></a>Random Numbers</h3>
+<!--l. 3893--><p class="noindent" >The Common Lisp facility for generating pseudo-random numbers has been
+carefully deﬁned to make its use reasonably portable. While two implementations
+may produce diﬀerent series of pseudo-random numbers, the distribution of values
+should be relatively independent of such machine-dependent aspects as word
+size.
+<div class=defun>
+<!--l. 3900--><p class="noindent" ><i>[Function]</i><a 
+ id="dx86-187001"></a><a 
+ id="x86-187002r280"></a><b> random</b>  <i>number</i> &#x0026;optional  <i>state</i>
+<!--l. 3902--><p class="noindent" >(random <i>n</i>) accepts a positive number <i>n</i> and returns a number of the same kind
+between zero (inclusive) and <i>n</i> (exclusive). The number <i>n</i> may be an integer or a
+ﬂoating-point number. An approximately uniform choice distribution is used. If
+<i>n</i> is an integer, each of the possible results occurs with (approximate)
+probability 1/<i>n</i>. (The qualiﬁer “approximate” is used because of implementation
+considerations; in practice, the deviation from uniformity should be quite
+small.)
+<!--l. 3913--><p class="indent" >   The argument <i>state</i> must be an object of type random-state; it defaults to the
+value of the variable *random-state*. This object is used to maintain the state of
+the pseudo-random-number generator and is altered as a side eﬀect of the <a 
+href="#x86-187002r280">random</a>
+operation.
+<div class=incompatibility>
+<!--l. 3919--><p class="noindent" ><b>Compatibility note:</b> <a 
+href="#x86-187002r280">random</a> of zero arguments as deﬁned in MacLisp has been
+omitted because its value is too implementation-dependent (limited by ﬁxnum
+range).
+</div>
 <div class=implementation>
-<!--l. 3410--><p class="noindent" ><b>Implementation note:</b> Internally, of course, an implementation of Common Lisp may
-or may not use a two&#x2019;s-complement representation. All that is necessary is that the
-logical operations perform calculations so as to give this appearance to the
-user.
+<!--l. 3925--><p class="noindent" ><b>Implementation note:</b> In general, even if <a 
+href="#x86-187002r280">random</a> of zero arguments were deﬁned as in
+MacLisp, it is not adequate to deﬁne (random <i>n</i>) for integral <i>n</i> to be simply (mod
+(random) <i>n</i>); this fails to be uniformly distributed if <i>n</i> is larger than the largest number
+produced by <a 
+href="#x86-187002r280">random</a>, or even if <i>n</i> merely approaches this number. This is another reason
+for omitting <a 
+href="#x86-187002r280">random</a> of zero arguments in Common Lisp. Assuming that the underlying
+mechanism produces “random bits” (possibly in chunks such as ﬁxnums), the best
+                                                                          
+
+                                                                          
+approach is to produce enough random bits to construct an integer <i>k</i> some
+number <i>d</i> of bits larger than (integer-length <i>n</i>) (see <a 
+href="clmse67.html#x84-185067r271">integer-length</a>), and then
+compute (mod <i>k</i> <i>n</i>). The quantity <i>d</i> should be at least 7, and preferably 10 or
+more.
+<!--l. 3940--><p class="indent" >   To produce random ﬂoating-point numbers in the half-open range <span class="math">[<i>A</i>,<i>B</i>)</span>, accepted
+practice (as determined by a look through the <i>Collected Algorithms from the ACM</i>,
+particularly algorithms 133, 266, 294, and 370) is to compute <span class="math"><i>X</i> ⋅ (<i>B</i> −<i>A</i>) + <i>A</i></span>,
+where <i>X</i> is a ﬂoating-point number uniformly distributed over <span class="math">[0.0,1.0)</span> and
+computed by calculating a random integer <span class="math"><i>N</i></span> in the range <span class="math">[0,<i>M</i>)</span> (typically by a
+multiplicative-congruential or linear-congruential method mod <span class="math"><i>M</i></span>) and then setting
+<span class="math"><i>X</i> = <i>N</i>∕<i>M</i></span>. See also <span class="cite">[<a 
+href="clmli5.html#XKNUTH-VOLUME-2">27</a>]</span>. If one takes <span class="math"><i>M</i> = 2<sup>f</sup></span>, where <span class="math"><i>f</i></span> is the length of the signiﬁcand of a
+ﬂoating-point number (and it is in fact common to choose <span class="math"><i>M</i></span> to be a power of
+2), then this method is equivalent to the following assembly-language-level
+procedure. Assume the representation has no hidden bit. Take a ﬂoating-point 0.5,
+and clobber its entire signiﬁcand with random bits. Normalize the result if
+necessary.
+<!--l. 3959--><p class="indent" >   For example, on the DEC PDP-10, assume that accumulator T is completely random
+(all 36 bits are random). Then the code sequence <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">LSH T,-9                 ;Clear high 9 bits; low 27 are random
+</td></tr></table>
+<!--l. 3962--><p class="indent" >                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">FSC T,128.               ;Install exponent and normalize</td></tr></table>
+<!--l. 3964--><p class="indent" >
 </div>
-<!--l. 3418--><p class="indent" >   The logical operations provide a convenient way to represent an inﬁnite vector
-of bits. Let such a conceptual vector be indexed by the non-negative integers.
-Then bit <i>j</i> is assigned a “weight” 2<sup>j</sup>. Assume that only a ﬁnite number of
-bits are 1&#x2019;s or only a ﬁnite number of bits are 0&#x2019;s. A vector with only a
-ﬁnite number of one-bits is represented as the sum of the weights of the
-one-bits, a positive integer. A vector with only a ﬁnite number of zero-bits is
-represented as -1 minus the sum of the weights of the zero-bits, a negative
-integer.
-<!--l. 3429--><p class="indent" >   This method of using integers to represent bit-vectors can in turn be used to
-represent sets. Suppose that some (possibly countably inﬁnite) universe of
-discourse for sets is mapped into the non-negative integers. Then a set can be
-represented as a bit vector; an element is in the set if the bit whose index
-corresponds to that element is a one-bit. In this way all ﬁnite sets can be
-represented (by positive integers), as well as all sets whose complements are ﬁnite
-(by negative integers). The functions <a 
-href="#x86-188002r244">logior</a>, <a 
-href="#x86-188006r246">logand</a>, and <a 
-href="#x86-188004r245">logxor</a> deﬁned below then
-compute the union, intersection, and symmetric diﬀerence operations on sets
-represented in this way.
+</div>
+<!--l. 3965--><p class="noindent" >will produce in T a random ﬂoating-point number uniformly distributed over <span class="math">[0.0,1.0)</span>.
+(Instead of the LSH instruction, one could do <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">TLZ T,777000             ;That&#x2019;s 777000 octal
+</td></tr></table>
+<!--l. 3970--><p class="indent" >
+</div>
+</div>
+<!--l. 3971--><p class="noindent" >but if the 36 random bits came from a congruential random-number generator, the
+high-order bits tend to be “more random” than the low-order ones, and so the LSH
+would be better for uniform distribution. Ideally all the bits would be the result of
+high-quality randomness.)
+                                                                          
+
+                                                                          
+<!--l. 3976--><p class="indent" >   With a hidden-bit representation, normalization is not a problem, but dealing with
+the hidden bit is. The method can be adapted as follows. Take a ﬂoating-point 1.0 and
+clobber the explicit signiﬁcand bits with random bits; this produces a random
+ﬂoating-point number in the range <span class="math">[1.0,2.0)</span>. Then simply subtract 1.0. In eﬀect, we let
+the hidden bit creep in and then subtract it away again.
+<!--l. 3983--><p class="indent" >   For example, on the DEC VAX, assume that register T is completely random (but a
+little less random than on the PDP-10, as it has only 32 random bits). Then the code
+sequence <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">INSV #̂X81,#7,#9,T     ;Install correct sign bit and exponent
+</td></tr></table>
+<!--l. 3987--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">SUBF #̂F1.0,T          ;Subtract 1.0</td></tr></table>
+<!--l. 3989--><p class="indent" >
+</div>
+</div>
+<!--l. 3990--><p class="noindent" >will produce in T a random ﬂoating-point number uniformly distributed over <span class="math">[0.0,1.0)</span>.
+Again, if the low-order bits are not random enough, then the instruction <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">ROTL #7,T
+</td></tr></table>
+<!--l. 3995--><p class="indent" >
+</div>
+</div>
+<!--l. 3996--><p class="noindent" >should be performed ﬁrst.
+<!--l. 3998--><p class="indent" >   Implementors may wish to consult reference <span class="cite">[<a 
+href="clmli5.html#XADDITIVE-RANDOMS">41</a>]</span> for a discussion of some eﬃcient
+methods of generating pseudo-random numbers.
+</div>
+</div>
 <div class=defun>
-<!--l. 3442--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188001"></a><a 
- id="x86-188002r244"></a><b> logior</b>  &#x0026;rest  <i>integers</i>
-<!--l. 3444--><p class="noindent" >This returns the bit-wise logical <i>inclusive or</i> of its arguments. If no argument is
-given, then the result is zero, which is an identity for this operation.
+<!--l. 4004--><p class="noindent" ><i>[Variable]</i><a 
+ id="dx86-187003"></a><a 
+ id="x86-187004r281"></a><b> *random-state*</b>
+<!--l. 4006--><p class="noindent" >This variable holds a data structure, an object of type random-state, that encodes
+the internal state of the random-number generator that <a 
+href="#x86-187002r280">random</a> uses by default.
+The nature of this data structure is implementation-dependent. It may be printed
+out and successfully read back in, but may or may not function correctly as a
+random-number state object in another implementation. A call to <a 
+href="#x86-187002r280">random</a> will
+perform a side eﬀect on this data structure. Lambda-binding this variable to a
+diﬀerent random-number state object will correctly save and restore the old state
+object.
                                                                           
 
                                                                           
 </div>
 <div class=defun>
-<!--l. 3450--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188003"></a><a 
- id="x86-188004r245"></a><b> logxor</b>  &#x0026;rest  <i>integers</i>
-<!--l. 3452--><p class="noindent" >This returns the bit-wise logical <i>exclusive or</i> of its arguments. If no argument is
-given, then the result is zero, which is an identity for this operation.
-</div>
-<div class=defun>
-<!--l. 3458--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188005"></a><a 
- id="x86-188006r246"></a><b> logand</b>  &#x0026;rest  <i>integers</i>
-<!--l. 3460--><p class="noindent" >This returns the bit-wise logical <i>and</i> of its arguments. If no argument is given,
-then the result is -1, which is an identity for this operation.
-</div>
-<div class=defun>
-<!--l. 3466--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188007"></a><a 
- id="x86-188008r247"></a><b> logeqv</b>  &#x0026;rest  <i>integers</i>
-<!--l. 3468--><p class="noindent" >This returns the bit-wise logical <i>equivalence</i> (also known as <i>exclusive nor</i>) of its
-arguments. If no argument is given, then the result is -1, which is an identity for
-this operation.
-</div>
-<div class=defun>
-<!--l. 3475--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188009"></a><a 
- id="x86-188010r248"></a><b> lognand</b>  <i>integer1</i> <i>integer2</i><br 
-class="newline" /><i>[Function]</i><a 
- id="dx86-188011"></a><a 
- id="x86-188012r249"></a><b> lognor</b>  <i>integer1</i> <i>integer2</i><br 
-class="newline" /><i>[Function]</i><a 
- id="dx86-188013"></a><a 
- id="x86-188014r250"></a><b> logandc1</b>  <i>integer1</i> <i>integer2</i><br 
-class="newline" /><i>[Function]</i><a 
- id="dx86-188015"></a><a 
- id="x86-188016r251"></a><b> logandc2</b>  <i>integer1</i> <i>integer2</i><br 
-class="newline" /><i>[Function]</i><a 
- id="dx86-188017"></a><a 
- id="x86-188018r252"></a><b> logorc1</b>  <i>integer1</i> <i>integer2</i><br 
-class="newline" /><i>[Function]</i><a 
- id="dx86-188019"></a><a 
- id="x86-188020r253"></a><b> logorc2</b>  <i>integer1</i> <i>integer2</i>
-<!--l. 3482--><p class="noindent" >These are the other six non-trivial bit-wise logical operations on two arguments.
-Because they are not associative, they take exactly two arguments rather than
-any non-negative number of arguments. <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(lognand <i>n1</i> <i>n2</i>) ≡ (lognot (logand <i>n1</i> <i>n2</i>))
-</td></tr></table>
-<!--l. 3488--><p class="indent" >
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(lognor <i>n1</i> <i>n2</i>) ≡ (lognot (logior <i>n1</i> <i>n2</i>))
-</td></tr></table>
-<!--l. 3489--><p class="indent" >
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logandc1 <i>n1</i> <i>n2</i>) ≡ (logand (lognot <i>n1</i>) <i>n2</i>)
-</td></tr></table>
-<!--l. 3490--><p class="indent" >
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logandc2 <i>n1</i> <i>n2</i>) ≡ (logand <i>n1</i> (lognot <i>n2</i>))
-</td></tr></table>
-<!--l. 3491--><p class="indent" >
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logorc1 <i>n1</i> <i>n2</i>) ≡ (logior (lognot <i>n1</i>) <i>n2</i>)
-</td></tr></table>
-<!--l. 3492--><p class="indent" >
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logorc2 <i>n1</i> <i>n2</i>) ≡ (logior <i>n1</i> (lognot <i>n2</i>))
-</td></tr></table>
-<!--l. 3494--><p class="indent" >
-</div>
-</div>
-</div>
-<!--l. 3497--><p class="indent" >   The ten bit-wise logical operations on two integers are summarized in the
-following table:
-<div class="flushleft" 
->
-<!--l. 3499--><p class="noindent" >
- <!--tex4ht:inline--><div class="tabular"><table width="100%"><tr><td align="left" > <i>integer1</i></td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td>
-</tr><tr><td align="left" > <i>integer2</i></td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >Operation Name                                  </td>
-</tr><tr><td align="left" >logand  </td><td align="left" >0</td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >and                                                   </td>
-</tr><tr><td align="left" > logior  </td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td><td align="left" >1</td><td align="left" >inclusive or                                         </td>
-</tr><tr><td align="left" > logxor  </td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td><td align="left" >0</td><td align="left" >exclusive or                                        </td>
-</tr><tr><td align="left" >logeqv  </td><td align="left" >1</td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >equivalence (exclusive nor)                    </td>
-</tr><tr><td align="left" >lognand </td><td align="left" >1</td><td align="left" >1</td><td align="left" >1</td><td align="left" >0</td><td align="left" >not-and                                             </td>
-</tr><tr><td align="left" > lognor  </td><td align="left" >1</td><td align="left" >0</td><td align="left" >0</td><td align="left" >0</td><td align="left" >not-or                                               </td>
-</tr><tr><td align="left" >logandc1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >0</td><td align="left" >and complement of <i>integer1</i> with <i>integer2</i></td>
-</tr><tr><td align="left" >logandc2</td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >and <i>integer1</i> with complement of <i>integer2</i></td>
-</tr><tr><td align="left" > logorc1 </td><td align="left" >1</td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >or complement of <i>integer1</i> with <i>integer2</i>  </td>
-</tr><tr><td align="left" > logorc2 </td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td><td align="left" >or <i>integer1</i> with complement of <i>integer2</i>  </td></tr><tr 
-class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr><td align="left" > </td></tr></table></div></div>
-<div class=defun>
-<!--l. 3520--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188021"></a><a 
- id="x86-188022r254"></a><b> boole</b>  <i>op</i> <i>integer1</i> <i>integer2</i><br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188023"></a><a 
- id="x86-188024r255"></a><b> boole-clr</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188025"></a><a 
- id="x86-188026r256"></a><b> boole-set</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188027"></a><a 
- id="x86-188028r257"></a><b> boole-1</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188029"></a><a 
- id="x86-188030r258"></a><b> boole-2</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188031"></a><a 
- id="x86-188032r259"></a><b> boole-c1</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188033"></a><a 
- id="x86-188034r260"></a><b> boole-c2</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188035"></a><a 
- id="x86-188036r261"></a><b> boole-and</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188037"></a><a 
- id="x86-188038r262"></a><b> boole-ior</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188039"></a><a 
- id="x86-188040r263"></a><b> boole-xor</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188041"></a><a 
- id="x86-188042r264"></a><b> boole-eqv</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188043"></a><a 
- id="x86-188044r265"></a><b> boole-nand</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188045"></a><a 
- id="x86-188046r266"></a><b> boole-nor</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188047"></a><a 
- id="x86-188048r267"></a><b> boole-andc1</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188049"></a><a 
- id="x86-188050r268"></a><b> boole-andc2</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188051"></a><a 
- id="x86-188052r269"></a><b> boole-orc1</b> <br 
-class="newline" /><i>[Constant]</i><a 
- id="dx86-188053"></a><a 
- id="x86-188054r270"></a><b> boole-orc2</b>
-<!--l. 3538--><p class="noindent" >The function <a 
-href="#x86-188022r254">boole</a> takes an operation <i>op</i> and two integers, and returns an integer
-produced by performing the logical operation speciﬁed by <i>op</i> on the two integers.
-The precise values of the sixteen constants are implementation-dependent, but
-they are suitable for use as the ﬁrst argument to <a 
-href="#x86-188022r254">boole</a>:
-<div class="flushleft" 
->
-<!--l. 3547--><p class="noindent" >
- <!--tex4ht:inline--><div class="tabular"><table width="100%"><tr><td align="left" >     <i>integer1</i></td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td>
-</tr><tr><td align="left" >     <i>integer2</i></td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >Operation Performed                            </td>
-</tr><tr><td align="left" >  boole-clr  </td><td align="left" >0</td><td align="left" >0</td><td align="left" >0</td><td align="left" >0</td><td align="left" >always 0                                            </td>
-</tr><tr><td align="left" > boole-set  </td><td align="left" >1</td><td align="left" >1</td><td align="left" >1</td><td align="left" >1</td><td align="left" >always 1                                            </td>
-</tr><tr><td align="left" >boole-1    </td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td><td align="left" ><i>integer1</i>                                          </td>
-</tr><tr><td align="left" >boole-2    </td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" ><i>integer2</i>                                          </td>
-</tr><tr><td align="left" > boole-c1   </td><td align="left" >1</td><td align="left" >1</td><td align="left" >0</td><td align="left" >0</td><td align="left" >complement of <i>integer1</i>                       </td>
-</tr><tr><td align="left" > boole-c2   </td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >complement of <i>integer2</i>                       </td>
-</tr><tr><td align="left" >boole-and  </td><td align="left" >0</td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >and                                                   </td></tr><tr><td align="left" > boole-ior   </td> <td align="left" >0</td> <td align="left" >1</td> <td align="left" >1</td> <td align="left" >1</td> <td align="left" >inclusive or</td>
-</tr><tr><td align="left" > boole-xor  </td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td><td align="left" >0</td><td align="left" >exclusive or                                        </td>
-</tr><tr><td align="left" >boole-eqv  </td><td align="left" >1</td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >equivalence (exclusive nor)                    </td>
-</tr><tr><td align="left" >boole-nand </td><td align="left" >1</td><td align="left" >1</td><td align="left" >1</td><td align="left" >0</td><td align="left" >not-and                                             </td></tr><tr><td align="left" > boole-nor   </td> <td align="left" >1</td> <td align="left" >0</td> <td align="left" >0</td> <td align="left" >0</td> <td align="left" >not-or</td>
-</tr><tr><td align="left" >boole-andc1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >0</td><td align="left" >and complement of <i>integer1</i> with <i>integer2</i></td>
-</tr><tr><td align="left" >boole-andc2</td><td align="left" >0</td><td align="left" >0</td><td align="left" >1</td><td align="left" >0</td><td align="left" >and <i>integer1</i> with complement of <i>integer2</i></td>
-</tr><tr><td align="left" > boole-orc1 </td><td align="left" >1</td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >or complement of <i>integer1</i> with <i>integer2</i>  </td>
-</tr><tr><td align="left" > boole-orc2 </td><td align="left" >1</td><td align="left" >0</td><td align="left" >1</td><td align="left" >1</td><td align="left" >or <i>integer1</i> with complement of <i>integer2</i>  </td></tr><tr 
-class="hline"><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr><tr><td align="left" > </td></tr></table></div></div>
-<!--l. 3573--><p class="indent" >   <a 
-href="#x86-188022r254">boole</a> can therefore compute all sixteen logical functions on two arguments. In
-general, <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(boole boole-and x y) ≡ (logand x y)
-</td></tr></table>
-<!--l. 3577--><p class="indent" >
-</div>
-</div>
-<!--l. 3578--><p class="noindent" >and the latter is more perspicuous. However, <a 
-href="#x86-188022r254">boole</a> is useful when it is necessary to
-parameterize a procedure so that it can use one of several logical operations.
-</div>
-<div class=defun>
-<!--l. 3583--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188055"></a><a 
- id="x86-188056r271"></a><b> lognot</b>  <i>integer</i>
-<!--l. 3585--><p class="noindent" >This returns the bit-wise logical <i>not</i> of its argument. Every bit of the result is the
-complement of the corresponding bit in the argument. <div class=lisp><div class=tabbing>
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logbitp <i>j</i> (lognot <i>x</i>)) ≡ (not (logbitp <i>j</i> <i>x</i>))
-</td></tr></table>
-<!--l. 3591--><p class="indent" >
-</div>
-</div>
-</div>
-<div class=defun>
-<!--l. 3594--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188057"></a><a 
- id="x86-188058r272"></a><b> logtest</b>  <i>integer1</i> <i>integer2</i>
-<!--l. 3596--><p class="noindent" ><a 
-href="#x86-188058r272">logtest</a> is a predicate that is true if any of the bits designated by the 1&#x2019;s in
-<i>integer1</i> are 1&#x2019;s in <i>integer2</i>. <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logtest <i>x</i> <i>y</i>) ≡ (not (zerop (logand <i>x</i> <i>y</i>)))
-</td></tr></table>
-<!--l. 3601--><p class="indent" >
-</div>
-</div>
-</div>
-<div class=defun>
-<!--l. 3604--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188059"></a><a 
- id="x86-188060r273"></a><b> logbitp</b>  <i>index</i> <i>integer</i>
-<!--l. 3606--><p class="noindent" ><a 
-href="#x86-188060r273">logbitp</a> is true if the bit in <i>integer</i> whose index is <i>index</i> (that is, its weight is
-2<sup>index</sup>) is a one-bit; otherwise it is false. For example: <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logbitp 2 6) is true
-</td></tr></table>
-<!--l. 3612--><p class="indent" >                                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logbitp 0 6) is false</td></tr></table>
-<!--l. 3613--><p class="indent" >                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logbitp <i>k</i> <i>n</i>) ≡ (ldb-test (byte 1 <i>k</i>) <i>n</i>)</td></tr></table>
-<!--l. 3615--><p class="indent" >
-</div>
-</div>
-<div class=new>
-<!--l. 3617--><p class="noindent" >X3J13 voted in January 1989 <a 
- id="dx86-188061"></a>to clarify that the <i>index</i> must be a non-negative
-integer.
-</div>
+<!--l. 4019--><p class="noindent" ><i>[Function]</i><a 
+ id="dx86-187005"></a><a 
+ id="x86-187006r282"></a><b> make-random-state</b>  &#x0026;optional  <i>state</i>
+<!--l. 4021--><p class="noindent" >This function returns a new object of type random-state, suitable for use as the
+value of the variable *random-state*. If <i>state</i> is <a 
+href="clmse31.html#x42-74002r18">nil</a> or omitted, <a 
+href="#x86-187006r282">make-random-state</a>
+returns a <i>copy</i> of the current random-number state object (the value of the
+variable *random-state*). If <i>state</i> is a state object, a copy of that state object
+is returned. If <i>state</i> is <a 
+href="clmse31.html#x42-74004r19">t</a>, then a new state object is returned that has
+been “randomly” initialized by some means (such as by a time-of-day
+clock).
+<div class=rationale>
+<!--l. 4032--><p class="noindent" ><b>Rationale:</b> Common Lisp purposely provides no way to initialize a random-state object
+from a user-speciﬁed “seed.” The reason for this is that the number of bits of state
+information in a random-state object may vary widely from one implementation
+to another, and there is no simple way to guarantee that any user-speciﬁed
+seed value will be “random enough.” Instead, the initialization of random-state
+objects is left to the implementor in the case where the argument <a 
+href="clmse31.html#x42-74004r19">t</a> is given to
+<a 
+href="#x86-187006r282">make-random-state</a>.
+<!--l. 4042--><p class="indent" >   To handle the common situation of executing the same program many times in a
+reproducible manner, where that program uses <a 
+href="#x86-187002r280">random</a>, the following procedure may be
+used:
+      <ol  class="enumerate1" >
+      <li 
+  class="enumerate" id="x86-187008x1">Evaluate (make-random-state t) to create a random-state object.
+      </li>
+      <li 
+  class="enumerate" id="x86-187010x2">Write that object to a ﬁle, using <a 
+href="clmse112.html#x139-260010r670">print</a>, for later use.
+      </li>
+      <li 
+  class="enumerate" id="x86-187012x3">Whenever the program is to be run, ﬁrst use <a 
+href="clmse111.html#x138-257003r653">read</a> to create a copy of the
+      random-state object from the printed representation in the ﬁle. Then use
+      the random-state object newly created by the <a 
+href="clmse111.html#x138-257003r653">read</a> operation to initialize the
+      random-number generator for the program.</li></ol>
+<!--l. 4059--><p class="noindent" >It is for the sake of this procedure for reproducible execution that implementations are
+required to provide a read/print syntax for objects of type random-state.
+<!--l. 4063--><p class="indent" >   It is also possible to make copies of a random-state object directly without going
+through the print/read process, simply by using the <a 
+href="#x86-187006r282">make-random-state</a> function to copy
+the object; this allows the same sequence of random numbers to be generated many
+times within a single program.
 </div>
                                                                           
 
                                                                           
-<div class=defun>
-<!--l. 3623--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188062"></a><a 
- id="x86-188063r274"></a><b> ash</b>  <i>integer</i> <i>count</i>
-<!--l. 3625--><p class="noindent" >This function shifts <i>integer</i> arithmetically left by <i>count</i> bit positions if <i>count</i> is
-positive, or right by −<i>count</i> bit positions if <i>count</i> is negative. The sign of the
-result is always the same as the sign of <i>integer</i>.
-<!--l. 3631--><p class="indent" >   Mathematically speaking, this operation performs the computation
-<i>ﬂoor</i>(<i>integer</i> ⋅ 2<sup>count</sup>).
-<!--l. 3634--><p class="indent" >   Logically, this moves all of the bits in <i>integer</i> to the left, adding zero-bits at
-the bottom, or moves them to the right, discarding bits. (In this context the
-question of what gets shifted in on the left is irrelevant; integers, viewed as strings
-of bits, are “half-inﬁnite,” that is, conceptually extend inﬁnitely far to the left.)
-For example: <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logbitp <i>j</i> (ash <i>n</i> <i>k</i>)) ≡ (and (&#x003E;= <i>j</i> <i>k</i>) (logbitp (- <i>j</i> <i>k</i>) <i>n</i>))
-</td></tr></table>
-<!--l. 3642--><p class="indent" >
-</div>
-</div>
-</div>
-<div class=defun>
-<!--l. 3645--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188064"></a><a 
- id="x86-188065r275"></a><b> logcount</b>  <i>integer</i>
-<!--l. 3647--><p class="noindent" >The number of bits in <i>integer</i> is determined and returned. If <i>integer</i> is positive,
-the 1-bits in its binary representation are counted. If <i>integer</i> is negative, the 0-bits
-in its two&#x2019;s-complement binary representation are counted. The result is always a
-non-negative integer. For example: <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logcount 13) ⇒ 3      ;Binary representation is ...0001101
-</td></tr></table>
-<!--l. 3655--><p class="indent" >               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logcount -13) ⇒ 2     ;Binary representation is ...1110011</td></tr></table>
-<!--l. 3656--><p class="indent" >              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logcount 30) ⇒ 4      ;Binary representation is ...0011110</td></tr></table>
-<!--l. 3657--><p class="indent" >               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logcount -30) ⇒ 4     ;Binary representation is ...1100010</td></tr></table>
-<!--l. 3659--><p class="indent" >
-</div>
-</div>
-<!--l. 3660--><p class="noindent" >The following identity always holds: <div class=lisp><div class=tabbing>
-                                                                          
-
-                                                                          
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(logcount x) ≡ (logcount (- (+ x 1)))
-</td></tr></table>
-<!--l. 3662--><p class="indent" >                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">             ≡ (logcount (lognot x))</td></tr></table>
-<!--l. 3664--><p class="indent" >
-</div>
-</div>
-</div>
-<div class=defun>
-<!--l. 3667--><p class="noindent" ><i>[Function]</i><a 
- id="dx86-188066"></a><a 
- id="x86-188067r276"></a><b> integer-length</b>  <i>integer</i>
-<!--l. 3669--><p class="noindent" >This function performs the computation <div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"><i>ceiling</i>(log <sub>2</sub>(if <i>integer</i> &#x003C; 0 then −<i>integer</i> else <i>integer</i> + 1))
-</td></tr></table>
-<!--l. 3674--><p class="indent" >
-</div>
-<!--l. 3675--><p class="noindent" >This is useful in two diﬀerent ways. First, if <i>integer</i> is non-negative, then its value can
-be represented in unsigned binary form in a ﬁeld whose width in bits is no smaller
-than (integer-length <i>integer</i>). Second, regardless of the sign of <i>integer</i>, its value
-can be represented in signed binary two&#x2019;s-complement form in a ﬁeld whose width
-in bits is no smaller than (+ (integer-length <i>integer</i>) 1). For example:
+<div class=implementation>
+<!--l. 4070--><p class="noindent" ><b>Implementation note:</b> A recommended way to implement the type random-state is
+eﬀectively to use the machinery for <a 
+href="clmse99.html#x123-227002r580">defstruct</a>. The usual structure syntax may
+then be used for printing random-state objects; one might look something like
 <div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length 0) ⇒ 0
+class="tabbing">#S(RANDOM-STATE DATA #(14 49 98436589 786345 8734658324 ...))
 </td></tr></table>
-<!--l. 3684--><p class="indent" >                                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length 1) ⇒ 1</td></tr></table>
-<!--l. 3685--><p class="indent" >                                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length 3) ⇒ 2</td></tr></table>
-<!--l. 3686--><p class="indent" >                                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length 4) ⇒ 3</td></tr></table>
-<!--l. 3687--><p class="indent" >                                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length 7) ⇒ 3</td></tr></table>
-<!--l. 3688--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length -1) ⇒ 0</td></tr></table>
-<!--l. 3689--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length -4) ⇒ 2</td></tr></table>
-<!--l. 3690--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length -7) ⇒ 3</td></tr></table>
-<!--l. 3691--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(integer-length -8) ⇒ 3</td></tr></table>
-<!--l. 3693--><p class="indent" >
-                                                                          
-
-                                                                          
+<!--l. 4077--><p class="indent" >
 </div>
 </div>
-<div class=incompatibility>
-<!--l. 3696--><p class="noindent" ><b>Compatibility note:</b> This function is similar to the MacLisp function haulong. One
-may deﬁne haulong as <div class=lisp><div class=tabbing>
+<!--l. 4078--><p class="noindent" >where the components are of course completely implementation-dependent.
+</div>
+</div>
+<div class=defun>
+<!--l. 4083--><p class="noindent" ><i>[Function]</i><a 
+ id="dx86-187013"></a><a 
+ id="x86-187014r283"></a><b> random-state-p</b>  <i>object</i>
+<!--l. 4085--><p class="noindent" ><a 
+href="#x86-187014r283">random-state-p</a> is true if its argument is a random-state object, and otherwise is
+false. <div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(haulong x) ≡ (integer-length (abs x))
+class="tabbing">(random-state-p <i>x</i>) <span class="math"> ≡</span> (typep <i>x</i> &#x2019;random-state)
 </td></tr></table>
-<!--l. 3701--><p class="indent" >
-</div>
+<!--l. 4090--><p class="indent" >
 </div>
 </div>
 </div>
                                                                           
 
                                                                           
-   <!--l. 3707--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 4093--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse70.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse68.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse68.html#tailclmse68.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse69.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch12.html#clmse69.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 3707--><p class="indent" >   <a 
+<!--l. 4093--><p class="indent" >   <a 
  id="tailclmse69.html"></a>  
 </body></html> 

@@ -1,504 +1,148 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Array Information</title> 
+<head><title>Fill Pointers</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-14 15:35:00"> 
+<meta name="date" content="2012-03-17 21:46:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 381--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 714--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse94.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse92.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse92.html#tailclmse92.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse93.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch17.html#clmse93.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">17.3   </span> <a 
- id="x115-22000017.3"></a>Array Information</h3>
-<!--l. 383--><p class="noindent" >The following functions extract from an array interesting information other than
-the elements.
+   <h3 class="sectionHead"><span class="titlemark">17.5   </span> <a 
+ id="x115-21900017.5"></a>Fill Pointers</h3>
+<!--l. 717--><p class="noindent" >Several functions for manipulating a ﬁll pointer are provided in Common Lisp to
+make it easy to incrementally ﬁll in the contents of a vector and, more
+generally, to allow eﬃcient varying of the length of a vector. For example, a
+string with a ﬁll pointer has most of the characteristics of a PL/I varying
+string.
+<!--l. 724--><p class="indent" >   The ﬁll pointer is a non-negative integer no larger than the total number of
+elements in the vector (as returned by <a 
+href="clmse91.html#x113-217006r529">array-dimension</a>); it is the number of
+“active” or “ﬁlled-in” elements in the vector. The ﬁll pointer constitutes the “active
+length” of the vector; all vector elements whose index is less than the ﬁll pointer
+are active, and the others are inactive. Nearly all functions that operate on the
+contents of a vector will operate only on the active elements. An important
+exception is <a 
+href="clmse90.html#x112-216002r525">aref</a>, which can be used to access any vector element whether
+in the active region of the vector or not. It is important to note that
+vector elements not in the active region are still considered part of the
+vector.
+<div class=implementation>
+<!--l. 738--><p class="noindent" ><b>Implementation note:</b> An implication of this rule is that vector elements outside the
+active region may not be garbage-collected.
+</div>
+<!--l. 744--><p class="indent" >   Only vectors (one-dimensional arrays) may have ﬁll pointers; multidimensional
+arrays may not. (Note, however, that one can create a multidimensional array
+that is displaced to a vector that has a ﬁll pointer.)
 <div class=defun>
-<!--l. 386--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220001"></a><a 
- id="x115-220002r532"></a><b> array-element-type</b>  <i>array</i>
-<!--l. 388--><p class="noindent" ><a 
-href="#x115-220002r532">array-element-type</a> returns a type speciﬁer for the set of objects that can be
-stored in the array. This set may be larger than the set requested when the array
-was created; for example, the result of <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(array-element-type (make-array 5 :element-type &#x2019;(mod 5)))
-</td></tr></table>
-<!--l. 395--><p class="indent" >
-</div>
-</div>
-<!--l. 396--><p class="noindent" >could be (mod 5), (mod 8), ﬁxnum, <a 
-href="clmse31.html#x42-74004r19">t</a>, or any other type of which (mod 5) is a
-subtype. See <a 
-href="clmse32.html#x43-76004r21">subtypep</a>.
+<!--l. 749--><p class="noindent" ><i>[Function]</i><a 
+ id="dx115-219001"></a><a 
+ id="x115-219002r549"></a><b> array-has-ﬁll-pointer-p</b>  <i>array</i>
+<!--l. 751--><p class="noindent" >The argument must be an array. <a 
+href="#x115-219002r549">array-has-ﬁll-pointer-p</a> returns <a 
+href="clmse31.html#x42-74004r19">t</a> if the array has
+a ﬁll pointer, and otherwise returns <a 
+href="clmse31.html#x42-74002r18">nil</a>. Note that array-has-ﬁll-pointer-p always
+returns <a 
+href="clmse31.html#x42-74002r18">nil</a> if the array is not one-dimensional.
 </div>
 <div class=defun>
-<!--l. 400--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220003"></a><a 
- id="x115-220004r533"></a><b> array-rank</b>  <i>array</i>
-<!--l. 402--><p class="noindent" >This returns the number of dimensions (axes) of array. This will be a
-non-negative integer. See <a 
-href="clmse91.html#x113-218007r526">array-rank-limit</a>.
-<div class=incompatibility>
-<!--l. 408--><p class="noindent" ><b>Compatibility note:</b> In Lisp Machine Lisp, this is called array-#-dims. This name
-causes problems in other Lisp dialects because of the # character.
-</div>
-</div>
-<div class=defun>
-<!--l. 416--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220005"></a><a 
- id="x115-220006r534"></a><b> array-dimension</b>  <i>array</i> <i>axis-number</i>
-<!--l. 418--><p class="noindent" >The length of dimension number axis-number of the array is returned. array may
-be any kind of array, and axis-number should be a non-negative integer less than
                                                                           
 
                                                                           
-the rank of array. If the array is a vector with a ﬁll pointer, <a 
-href="#x115-220006r534">array-dimension</a>
-returns the total size of the vector, including inactive elements, not the size
-indicated by the ﬁll pointer. (The function <a 
-href="clmse78.html#x97-199008r370">length</a> will return the size indicated by
-the ﬁll pointer.)
-<div class=incompatibility>
-<!--l. 430--><p class="noindent" ><b>Compatibility note:</b> This is similar to the Lisp Machine Lisp function array-dimension-n,
-but takes its arguments in the other order, and is zero-origin for consistency instead of
-one-origin. In Lisp Machine Lisp (array-dimension-n 0) returns the length of the array
-leader.
+<!--l. 760--><p class="noindent" ><i>[Function]</i><a 
+ id="dx115-219003"></a><a 
+ id="x115-219004r550"></a><b> ﬁll-pointer</b>  <i>vector</i>
+<!--l. 762--><p class="noindent" >The ﬁll pointer of vector is returned. It is an error if the vector does not have a ﬁll
+pointer.
+<!--l. 766--><p class="indent" >   <a 
+href="clmse36.html#x48-90002r64">setf</a> may be used with <a 
+href="#x115-219004r550">ﬁll-pointer</a> to change the ﬁll pointer of a vector. The ﬁll
+pointer of a vector must always be an integer between zero and the size of the
+vector (inclusive).
+</div>
+<div class=defun>
+<!--l. 771--><p class="noindent" ><i>[Function]</i><a 
+ id="dx115-219005"></a><a 
+ id="x115-219006r551"></a><b> vector-push</b>  <i>new-element</i> <i>vector</i>
+<!--l. 773--><p class="noindent" >vector must be a one-dimensional array that has a ﬁll pointer, and new-element
+may be any object. <a 
+href="#x115-219006r551">vector-push</a> attempts to store new-element in the
+element of the vector designated by the ﬁll pointer, and to increase the ﬁll
+pointer by 1. If the ﬁll pointer does not designate an element of the vector
+(speciﬁcally, when it gets too big), it is unaﬀected and <a 
+href="#x115-219006r551">vector-push</a> returns <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+Otherwise, the store and increment take place and <a 
+href="#x115-219006r551">vector-push</a> returns the
+former value of the ﬁll pointer (1 less than the one it leaves in the vector);
+thus the value of <a 
+href="#x115-219006r551">vector-push</a> is the index of the new element pushed. <div class=new> It
+is instructive to compare <a 
+href="#x115-219006r551">vector-push</a>, which is a function, with <a 
+href="clmse82.html#x102-203060r466">push</a>,
+which is a macro that requires a place suitable for <a 
+href="clmse36.html#x48-90002r64">setf</a>. A vector with a ﬁll
+pointer eﬀectively contains the place to be modiﬁed in its <a 
+href="#x115-219004r550">ﬁll-pointer</a>
+slot.
 </div>
 </div>
 <div class=defun>
-<!--l. 440--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220007"></a><a 
- id="x115-220008r535"></a><b> array-dimensions</b>  <i>array</i>
-<!--l. 442--><p class="noindent" ><a 
-href="#x115-220008r535">array-dimensions</a> returns a list whose elements are the dimensions of array.
-</div>
-<div class=defun>
-<!--l. 447--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220009"></a><a 
- id="x115-220010r536"></a><b> array-total-size</b>  <i>array</i>
-<!--l. 449--><p class="noindent" ><a 
-href="#x115-220010r536">array-total-size</a> returns the total number of elements in the array, calculated as
-the product of all the dimensions. <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(array-total-size x)
-</td></tr></table>
-<!--l. 453--><p class="indent" >                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">   ≡ (apply #&#x2019;* (array-dimensions x))</td></tr></table>
-<!--l. 454--><p class="indent" >                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">   ≡ (reduce #&#x2019;* (array-dimensions x))</td></tr></table>
-<!--l. 456--><p class="indent" >
-</div>
-</div>
-<!--l. 457--><p class="noindent" >Note that the total size of a zero-dimensional array is 1. The total size of a
-one-dimensional array is calculated without regard for any ﬁll pointer.
-</div>
-<div class=defun>
-<!--l. 462--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220011"></a><a 
- id="x115-220012r537"></a><b> array-in-bounds-p</b>  <i>array</i> &#x0026;rest  <i>subscripts</i>
-<!--l. 464--><p class="noindent" >This predicate checks whether the subscripts are all legal subscripts for array. The
-predicate is true if they are all legal; otherwise it is false. The subscripts must be
-integers. The number of subscripts supplied must equal the rank of the array. Like
-<a 
-href="clmse92.html#x114-219002r530">aref</a>, <a 
-href="#x115-220012r537">array-in-bounds-p</a> ignores ﬁll pointers.
-</div>
-                                                                          
-
-                                                                          
-<div class=defun>
-<!--l. 472--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220013"></a><a 
- id="x115-220014r538"></a><b> array-row-major-index</b>  <i>array</i> &#x0026;rest  <i>subscripts</i>
-<!--l. 474--><p class="noindent" >This function takes an array and valid subscripts for the array and returns a
-single non-negative integer less than the total size of the array that identiﬁes the
-accessed element in the row-major ordering of the elements. The number of
-subscripts supplied must equal the rank of the array. Each subscript must be a
-non-negative integer less than the corresponding array dimension. Like <a 
-href="clmse92.html#x114-219002r530">aref</a>,
-<a 
-href="#x115-220014r538">array-row-major-index</a> ignores ﬁll pointers.
-<!--l. 484--><p class="indent" >   A possible deﬁnition of <a 
-href="#x115-220014r538">array-row-major-index</a>, with no error checking, would
-be <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(defun array-row-major-index (a &#x0026;rest subscripts)
-</td></tr></table>
-<!--l. 487--><p class="indent" >                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (apply #&#x2019;+ (maplist #&#x2019;(lambda (x y)</td></tr></table>
-<!--l. 488--><p class="indent" >             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                          (* (car x) (apply #&#x2019;* (cdr y))))</td></tr></table>
-<!--l. 489--><p class="indent" >                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                      subscripts</td></tr></table>
-<!--l. 490--><p class="indent" >                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                      (array-dimensions a))))</td></tr></table>
-<!--l. 492--><p class="indent" >
-</div>
-</div>
-<!--l. 493--><p class="noindent" >For a one-dimensional array, the result of <a 
-href="#x115-220014r538">array-row-major-index</a> always equals the
-supplied subscript.
-</div>
-<div class=new>
-<div class=defun>
-<!--l. 498--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220015"></a><a 
- id="x115-220016r539"></a><b> row-major-aref</b>  <i>array</i> <i>index</i>
-<!--l. 500--><p class="noindent" >X3J13 voted in March 1988 <a 
- id="dx115-220017"></a>to add the function <a 
-href="#x115-220016r539">row-major-aref</a>. This allows any
-array element to be accessed as if the containing array were one-dimensional. The
-index must be a non-negative integer less than the total size of the array. It
-indexes into the array as if its elements were arranged one-dimensionally
-in row-major order. It may be understood in terms of <a 
-href="clmse92.html#x114-219002r530">aref</a> as follows:
-<div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(row-major-aref array index) ≡
-</td></tr></table>
-<!--l. 510--><p class="indent" >                               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (aref (make-array (array-total-size array))</td></tr></table>
-                                                                          
-
-                                                                          
-<!--l. 511--><p class="indent" >                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                    :displaced-to array</td></tr></table>
-<!--l. 512--><p class="indent" >          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                    :element-type (array-element-type array))</td></tr></table>
-<!--l. 513--><p class="indent" >                                                           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">        index)</td></tr></table>
-<!--l. 515--><p class="indent" >
-</div>
-</div>
-<!--l. 516--><p class="noindent" >In other words, one may treat an array as one-dimensional by creating a new
-one-dimensional array that is displaced to the old one and then accessing the new
-array. Alternatively, <a 
-href="clmse92.html#x114-219002r530">aref</a> may be understood in terms of <a 
-href="#x115-220016r539">row-major-aref</a>:
-<div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(aref array i<sub>0</sub> i<sub>1</sub> ... i<sub>n−1</sub>) ≡
-</td></tr></table>
-<!--l. 521--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (row-major-aref array</td></tr></table>
-<!--l. 522--><p class="indent" >           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                  (array-row-major-index array i<sub>0</sub> i<sub>1</sub> ... i<sub>n−1</sub>)</td></tr></table>
-<!--l. 524--><p class="indent" >
-</div>
-</div>
-<!--l. 525--><p class="noindent" >That is, a multidimensional array access is equivalent to a row-major access using an
-equivalent row-major index.
-<!--l. 528--><p class="indent" >   Like <a 
-href="clmse92.html#x114-219002r530">aref</a>, <a 
-href="#x115-220016r539">row-major-aref</a> completely ignores ﬁll pointers. A call to
-row-major-setf is suitable for use as a place for <a 
-href="clmse36.html#x48-90002r64">setf</a>.
-<!--l. 531--><p class="indent" >   This operation makes it easier to write code that eﬃciently processes arrays of
-any rank. Suppose, for example, that one wishes to set every element of an array
-tennis-scores to zero. One might write <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(ﬁll (make-array (array-total-size tennis-scores)
-</td></tr></table>
-<!--l. 535--><p class="indent" >      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                  :element-type (array-element-type tennis-scores)</td></tr></table>
-<!--l. 536--><p class="indent" >                           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                  :displaced-to tennis-scores)</td></tr></table>
-<!--l. 537--><p class="indent" >                                                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">      0)</td></tr></table>
-<!--l. 539--><p class="indent" >
-</div>
-</div>
-                                                                          
-
-                                                                          
-<!--l. 540--><p class="noindent" >Unfortunately, this incurs the overhead of creating a displaced array, and <a 
-href="clmse80.html#x99-201002r382">ﬁll</a> cannot
-be applied to multidimensional arrays. Another approach would be to handle each
-possible rank separately: <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(ecase (array-rank tennis-scores)
-</td></tr></table>
-<!--l. 544--><p class="indent" >                                          <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (0 (setf (aref tennis-scores) 0))</td></tr></table>
-<!--l. 545--><p class="indent" >                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (1 (dotimes (i0 (array-dimension tennis-scores 0))</td></tr></table>
-<!--l. 546--><p class="indent" >                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (setf (aref tennis-scores i0) 0)))</td></tr></table>
-<!--l. 547--><p class="indent" >                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (2 (dotimes (i0 (array-dimension tennis-scores 0))</td></tr></table>
-<!--l. 548--><p class="indent" >                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (dotimes (i1 (array-dimension tennis-scores 1))</td></tr></table>
-<!--l. 549--><p class="indent" >                              <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">         (setf (aref tennis-scores i0 i1) 0))))</td></tr></table>
-<!--l. 550--><p class="indent" >                                                                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  ...</td></tr></table>
-<!--l. 551--><p class="indent" >                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (7 (dotimes (i0 (array-dimension tennis-scores 0))</td></tr></table>
-<!--l. 552--><p class="indent" >                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (dotimes (i1 (array-dimension tennis-scores 1))</td></tr></table>
-<!--l. 553--><p class="indent" >                  <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">         (dotimes (i2 (array-dimension tennis-scores 1))</td></tr></table>
-<!--l. 554--><p class="indent" >               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">           (dotimes (i3 (array-dimension tennis-scores 1))</td></tr></table>
-<!--l. 555--><p class="indent" >             <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">             (dotimes (i4 (array-dimension tennis-scores 1))</td></tr></table>
-<!--l. 556--><p class="indent" >           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">               (dotimes (i5 (array-dimension tennis-scores 1))</td></tr></table>
-<!--l. 557--><p class="indent" >        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                 (dotimes (i6 (array-dimension tennis-scores 1))</td></tr></table>
-<!--l. 558--><p class="indent" >           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                   (setf (aref tennis-scores i0 i1 i2 i3 i4 i5 i6)</td></tr></table>
-<!--l. 559--><p class="indent" >                                    <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">                         0)))))))))</td></tr></table>
-<!--l. 560--><p class="indent" >                                                                       <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  )</td></tr></table>
-<!--l. 562--><p class="indent" >
-</div>
-</div>
-<!--l. 563--><p class="noindent" >It is easy to get tired of writing such code. Furthermore, this approach is undesirable
-because some implementations of Common Lisp will in fact correctly support
-arrays of rank greater than 7 (though no implementation is required to do
-so). A recursively nested loop does the job, but it is still pretty hairy:
-<div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(labels
-</td></tr></table>
-<!--l. 569--><p class="indent" >                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  ((grok-any-rank (&#x0026;rest indices)</td></tr></table>
-<!--l. 570--><p class="indent" >               <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">     (let ((d (- (array-rank tennis-scores) (length indices)))</td></tr></table>
-                                                                          
-
-                                                                          
-<!--l. 571--><p class="indent" >                                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (if (= d 0)</td></tr></table>
-<!--l. 572--><p class="indent" >                     <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">           (setf (apply #&#x2019;row-major-aref indices) 0)</td></tr></table>
-<!--l. 573--><p class="indent" >           <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">           (dotimes (i (array-dimension tennis-scores (- d 1)))</td></tr></table>
-<!--l. 574--><p class="indent" >                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">             (apply #&#x2019;grok-any-rank i indices))))))</td></tr></table>
-<!--l. 575--><p class="indent" >                                                        <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (grok-any-rank))</td></tr></table>
-<!--l. 577--><p class="indent" >
-</div>
-</div>
-<!--l. 578--><p class="noindent" >Whether this code is particularly eﬃcient depends on many implementation
-parameters, such as how &#x0026;rest arguments are handled and how cleverly
-calls to <a 
-href="clmse37.html#x49-95002r68">apply</a> are compiled. How much easier it is to use <a 
-href="#x115-220016r539">row-major-aref</a>!
-<div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(dotimes (i (array-total-size tennis-scores))
-</td></tr></table>
-<!--l. 583--><p class="indent" >                                 <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (setf (row-major-aref tennis-scores i) 0))</td></tr></table>
-<!--l. 585--><p class="indent" >
-</div>
-</div>
-<!--l. 586--><p class="noindent" >Surely this code is sweeter than the honeycomb.
-</div>
-</div>
-<div class=defun>
-<!--l. 590--><p class="noindent" ><i>[Function]</i><a 
- id="dx115-220018"></a><a 
- id="x115-220019r540"></a><b> adjustable-array-p</b>  <i>array</i>
-<!--l. 592--><p class="noindent" >This predicate is true if the argument (which must be an array) is adjustable, and
-otherwise is false.
+<!--l. 792--><p class="noindent" ><i>[Function]</i><a 
+ id="dx115-219007"></a><a 
+ id="x115-219008r552"></a><b> vector-push-extend</b>  <i>new-element</i> <i>vector</i> &#x0026;optional  <i>extension</i>
+<!--l. 794--><p class="noindent" ><a 
+href="#x115-219008r552">vector-push-extend</a> is just like <a 
+href="#x115-219006r551">vector-push</a> except that if the ﬁll pointer gets too
+large, the vector is extended (using <a 
+href="clmse94.html#x116-220002r554">adjust-array</a>) so that it can contain more
+elements. If, however, the vector is not adjustable, then <a 
+href="#x115-219008r552">vector-push-extend</a> signals
+an error.
 <div class=newer>
-<!--l. 597--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx115-220020"></a>to clarify that <a 
-href="#x115-220019r540">adjustable-array-p</a> is true
-of an array if and only if <a 
-href="clmse96.html#x118-223002r559">adjust-array</a>, when applied to that array, will
-return the same array, that is, an array <a 
-href="clmse33.html#x44-78002r44">eq</a> to the original array. If the
-:adjustable argument to <a 
-href="clmse91.html#x113-218002r525">make-array</a> is non-<a 
-href="clmse31.html#x42-74002r18">nil</a> when an array is created,
-then <a 
-href="#x115-220019r540">adjustable-array-p</a> must be true of that array. If an array is created
-with the :adjustable argument <a 
-href="clmse31.html#x42-74002r18">nil</a> (or omitted), then <a 
-href="#x115-220019r540">adjustable-array-p</a>
-may be true or false of that array, depending on the implementation.
-X3J13 further voted to deﬁne the terminology “adjustable array” to mean
-precisely “an array of which <a 
-href="#x115-220019r540">adjustable-array-p</a> is true.” See <a 
-href="clmse91.html#x113-218002r525">make-array</a> and
-                                                                          
-
-                                                                          
-<a 
-href="clmse96.html#x118-223002r559">adjust-array</a>.
+<!--l. 802--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx115-219009"></a>to clarify that <a 
+href="#x115-219008r552">vector-push-extend</a> regards an
+array as not adjustable if and only if <a 
+href="clmse91.html#x113-217019r535">adjustable-array-p</a> is false of that
+array.
 </div>
+<!--l. 809--><p class="indent" >   The optional argument extension, which must be a positive integer, is the
+minimum number of elements to be added to the vector if it must be extended; it
+defaults to a “reasonable” implementation-dependent value.
 </div>
                                                                           
 
                                                                           
-   <!--l. 615--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+<div class=defun>
+<!--l. 815--><p class="noindent" ><i>[Function]</i><a 
+ id="dx115-219010"></a><a 
+ id="x115-219011r553"></a><b> vector-pop</b>  <i>vector</i>
+<!--l. 817--><p class="noindent" >vector must be a one-dimensional array that has a ﬁll pointer. If the ﬁll pointer is
+zero, <a 
+href="#x115-219011r553">vector-pop</a> signals an error. Otherwise the ﬁll pointer is decreased by 1,
+and the vector element designated by the new value of the ﬁll pointer is
+returned.
+</div>
+                                                                          
+
+                                                                          
+   <!--l. 824--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse94.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse92.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse92.html#tailclmse92.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse93.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch17.html#clmse93.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 615--><p class="indent" >   <a 
+<!--l. 824--><p class="indent" >   <a 
  id="tailclmse93.html"></a>  
 </body></html> 

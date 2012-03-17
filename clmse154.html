@@ -1,142 +1,612 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Introduction</title> 
+<head><title>Optimization</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,charset=utf-8,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-14 15:35:00"> 
+<meta name="date" content="2012-03-17 21:46:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 40--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 1155--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse155.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmap1.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmap1.html#tailclmap1.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse153.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse153.html#tailclmse153.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse154.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmap1.html#clmse154.html" >Up</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">A.1   </span> <a 
- id="x189-477000A.1"></a>Introduction</h3>
-<!--l. 42--><p class="noindent" >Series combine aspects of sequences, streams, and loops. Like sequences, series
-represent totally ordered multi-sets. In addition, the series functions have the
-same ﬂavor as the sequence functions—namely, they operate on whole series,
-rather than extracting elements to be processed by other functions. For instance,
-the series expression below computes the sum of the positive elements in a list.
+   <h3 class="sectionHead"><span class="titlemark">A.3   </span> <a 
+ id="x189-484000A.3"></a>Optimization</h3>
+<!--l. 1157--><p class="noindent" >Series expressions are transformed into loops by pipelining them—the
+computation is converted from a form where entire series are computed one
+after the other to a form where the series are incrementally computed in
+parallel. In the resulting loop, each individual element is computed just once,
+used, and then discarded before the next element is computed. For this
+pipelining to be possible, a number of restrictions have to be satisﬁed. Before
+these restrictions are explained, it will be useful to consider a related
+issue.
+<!--l. 1166--><p class="indent" >   The composition of two series functions cannot be pipelined unless the
+destination function consumes series elements in the same order that
+the source function produces them. Taken together, the series functions
+guarantee that this will always be true, because they all follow the same
+ﬁxed processing order. In particular, they are all <i>preorder</i> functions—they
+process the elements of their series inputs and outputs in ascending order
+starting with the ﬁrst element. Further, while it is easy for users to deﬁne
+new series functions, it is impossible to deﬁne one that is not a preorder
+function.
+<!--l. 1176--><p class="indent" >   It turns out that most series operations can easily be implemented in a
+preorder fashion, the most notable exceptions being reversal and sorting. As a
+result, little is lost by outlawing non-preorder series functions. If some
+non-preorder operation has to be applied to a series, the series can be collected
+into a list or vector and the operation applied to this new data structure. (This is
+ineﬃcient, but no less eﬃcient than what would be required if non-preorder series
+functions were supported.)
+<!--l. 1184--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">A.3.1   </span> <a 
+ id="x189-485000A.3.1"></a>Basic Restrictions</h4>
+<!--l. 1186--><p class="noindent" >The transformation of series expressions into loops is required to occur at some
+                                                                          
+
+                                                                          
+time before compiled code is actually run. Optimization may or may not be
+applied to interpreted code. If any of the restrictions described below are violated,
+optimization is not possible. In this situation, a warning message is issued at the
+time optimization is attempted and the code is left unoptimized. This
+is not a fatal error and does not prevent the correct results from being
+computed. However, given the large improvements in eﬃciency to be gained,
+it is well worth ﬁxing any violations that occur. This is usually easy to
+do.
+<div class=defun>
+<!--l. 1196--><p class="noindent" ><i>[Variable]</i><a 
+ id="dx189-485001"></a><a 
+ id="x189-485002r1071"></a><b> *suppress-series-warnings*</b>
+<!--l. 1198--><p class="noindent" >If this variable is set (or bound) to anything other than its default value of <a 
+href="clmse31.html#x42-74002r18">nil</a>,
+warnings about conditions that block the optimization of series expressions are
+suppressed.
+</div>
+<!--l. 1204--><p class="indent" >   Before the restrictions on series expressions are discussed, it will be useful to
+deﬁne precisely what is meant by the term <i>series expression</i>. This term is
+semantic rather than syntactic in nature. Imagine a program converted from
+Lisp code into a data ﬂow graph. In a data ﬂow graph, functions are
+represented as boxes, and both control ﬂow and data ﬂow are represented as
+arrows between the boxes. Constructs such as <a 
+href="clmse39.html#x51-100002r74">let</a> and <a 
+href="clmse35.html#x47-87002r59">setq</a> are converted
+into patterns of data ﬂow arcs. Control constructs such as <a 
+href="clmse136.html#x167-340002r835">if</a> and <a 
+href="clmse42.html#x54-118002r90">loop</a>
+are converted into patterns of control ﬂow arcs. Suppose further that
+all loops have been converted into tail recursions so that the graph is
+acyclic.
+<!--l. 1215--><p class="indent" >   A series expression is a subgraph of the data ﬂow graph for a program that
+contains a group of interacting series functions. More speciﬁcally, given a call <i>f </i> on
+a series function, the series expression <i>E</i> containing it is deﬁned as follows. <i>E</i>
+contains <i>f </i>. Every function using a series created by a function in <i>E</i> is in <i>E</i>.
+Every function computing a series used by a function in <i>E</i> is in <i>E</i>. Finally,
+suppose that two functions <i>g</i> and <i>h</i> are in <i>E</i> and that there is a data ﬂow
+path consisting of series and/or non-series data ﬂow arcs from <i>g</i> to <i>h</i>.
+Every function touched by this path (be it a series function or not) is
+in <i>E</i>.
+<!--l. 1225--><p class="indent" >   For optimization to be possible, series expressions have to be
+statically analyzable. As with most other optimization processes, a series
+expression cannot be transformed into a loop at compile time, unless it can be
+determined at compile time exactly what computation is being performed. This
+places a number of relatively minor limits on what can be written. For example,
+                                                                          
+
+                                                                          
+for optimization to be possible the type arguments to higher-order functions such
+as <a 
+href="clmse153.html#x188-477002r1030">map-fn</a> and <a 
+href="clmse153.html#x188-480012r1038">collecting-fn</a> have to be quoted constants. Similarly, the
+numeric arguments to <a 
+href="clmse153.html#x188-481022r1049">chunk</a> have to be constants. In addition, if <a 
+href="clmse37.html#x49-95004r69">funcall</a> is
+used to call a series function, the function called has to be of the form
+(function ...).
+<!--l. 1237--><p class="indent" >   For optimization to be possible, every series created within a series
+expression must be used solely inside the expression. If a series is
+transmitted outside of the expression that creates it, it has to be physically
+represented as a whole. This is incompatible with the transformations
+required to pipeline the creating expression. To avoid this problem, a
+series must not be returned as a result of a series expression as a whole,
+assigned to a free variable, assigned to a special variable, or stored in a
+data structure. A corollary of the last point is that when deﬁning new
+optimizable series functions, series cannot be passed into &#x0026;rest arguments.
+Further, optimization is blocked if a series is passed as an argument to an
+ordinary Lisp function. Series can be passed only to the series functions in
+section <a 
+href="clmse153.html#x188-475000A.2">A.2<!--tex4ht:ref: SERIES-F-SECTION --></a> and to new series functions deﬁned using the declaration
+<a 
+href="#x189-487002r1072">optimizable-series-function</a>.
+<!--l. 1251--><p class="indent" >   For optimization to be possible, series expressions must correspond
+to straight-line computations. That is to say, the data ﬂow graph
+corresponding to a series expression cannot contain any conditional branches.
+(Complex control ﬂow is incompatible with pipelining.) Optimization is possible
+in the presence of standard straight-line forms such as <a 
+href="clmse38.html#x50-96002r71">progn</a>, <a 
+href="clmse37.html#x49-95004r69">funcall</a>, <a 
+href="clmse35.html#x47-87002r59">setq</a>,
+lambda, <a 
+href="clmse39.html#x51-100002r74">let</a>, <a 
+href="clmse39.html#x51-101002r75">let*</a>, and multiple-value-bind as long as none of the variables bound
+are special. There is also no problem with macros as long as they expand into
+series functions and straight-line forms. However, optimization is blocked by forms
+that specify complex control ﬂow (i.e., conditionals <a 
+href="clmse136.html#x167-340002r835">if</a>, <a 
+href="clmse40.html#x52-109002r84">cond</a>, etc., looping
+constructs <a 
+href="clmse42.html#x54-118002r90">loop</a>, <a 
+href="clmse137.html#x168-342002r838">do</a>, etc., or branching constructs <a 
+href="clmse42.html#x54-126002r101">tagbody</a>, <a 
+href="clmse42.html#x54-128002r104">go</a>, <a 
+href="clmse44.html#x56-139006r114">catch</a>,
+etc.).
+<!--l. 1265--><p class="indent" >   In the ﬁrst example below, optimization is blocked, because the <a 
+href="clmse136.html#x167-340002r835">if</a> form is
+inside the series expression. In the second example, however, optimization is
+possible, because although the <a 
+href="clmse136.html#x167-340002r835">if</a> feeds data to the series expression, it is not inside
+the corresponding subgraph. Both of the expressions below produce the same
+value, but the second one is much more eﬃcient. <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(collect (if ﬂag (scan x) (scan y)))  ;Warning message issued
+</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 1272--><p class="indent" >                                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(collect (scan (if ﬂag x y)))</td></tr></table>
+<!--l. 1274--><p class="indent" >
+</div>
+</div>
+<!--l. 1276--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">A.3.2   </span> <a 
+ id="x189-486000A.3.2"></a>Constraint Cycles</h4>
+<!--l. 1278--><p class="noindent" >Even if a series expression satisﬁes all of the restrictions above, it still may not
+be possible to transform the expression into a loop. The sole remaining
+problem is that if a series is used in two places, the two uses may place
+incompatible constraints on the times at which series elements should be
+produced.
+<!--l. 1284--><p class="indent" >   The series expression below shows a situation where this problem arises. The
+expression creates a series x of the elements in a list. It then creates a normalized
+series by dividing each element of x by the sum of the elements in x.
+Finally, the expression returns the maximum of the normalized elements.
 <div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(collect-sum (choose-if #&#x2019;plusp (scan &#x2019;(1 -2 3 -4)))) ⇒ 4
+class="tabbing">(let ((x (scan &#x2019;(1 2 5 2))))           ;Warning message issued
 </td></tr></table>
-<!--l. 50--><p class="indent" >
+<!--l. 1290--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (collect-max (#M/ x (series (collect-sum x))))) <span class="math"> ⇒</span> 1/2</td></tr></table>
+<!--l. 1292--><p class="indent" >
 </div>
 </div>
-<!--l. 52--><p class="indent" >   Like streams, series can represent unbounded sets of elements and are
-supported by lazy evaluation: each element of a series is not computed until it is
-needed. For instance, the series expression below returns a list of the ﬁrst ﬁve even
-natural numbers and their sum. The call on <a 
-href="clmse155.html#x190-479002r1021">scan-range</a> returns a series of all
-the even natural numbers. However, since no elements beyond the ﬁrst
-ﬁve are ever used, no elements beyond the ﬁrst ﬁve are ever computed.
+<!--l. 1294--><p class="indent" >   The two uses of x in the expression place contradictory constraints on the way
+pipelined evaluation must proceed; <a 
+href="clmse153.html#x188-482010r1054">collect-sum</a> requires that all of the elements of
+x be produced before the sum can be returned, and <a 
+href="clmse153.html#x188-475004r1015">series</a> requires that its input
+be available before it can start to produce its output. However, #M/
+requires that the ﬁrst element of x be available at the same time as the ﬁrst
+element of the output of <a 
+href="clmse153.html#x188-475004r1015">series</a>. For pipelining to work, the ﬁrst element of
+the output of <a 
+href="clmse153.html#x188-475004r1015">series</a> (and therefore the output of <a 
+href="clmse153.html#x188-482010r1054">collect-sum</a>) must be
+available before the second element of x is produced. Unfortunately, this is
+impossible.
+                                                                          
+
+                                                                          
+<!--l. 1305--><p class="indent" >   The essence of the inconsistency above is the cycle of constraints used in
+the argument. This in turn stems from a cycle in the data ﬂow graph
+underlying the expression. In ﬁgure <a 
+href="#x189-4860011">A.1<!--tex4ht:ref: SERIES-F1-FIGURE --></a> function calls are represented by boxes
+and data ﬂow is represented by arrows. Simple arrows indicate the ﬂow
+of series values and cross-hatched arrows indicate the ﬂow of non-series
+values.
+<!--l. 1312--><p class="indent" >   <hr class="figure"><div class="figure" 
+>
+                                                                          
+
+                                                                          
+<a 
+ id="x189-4860011"></a>
+                                                                          
+
+                                                                          
+<br /> <div class="caption" 
+><span class="id">Figure A.1: </span><span  
+class="content">A Constraint Cycle in a Series Expression</span></div><!--tex4ht:label?: x189-4860011 -->
+    scan
+                  sum       series       #M/         max
+                                                                          
+
+                                                                          
+<!--l. 1324--><p class="indent" >   </div><hr class="endfigure">
+<!--l. 1326--><p class="indent" >   Given a data ﬂow graph corresponding to a series expression, a constraint
+cycle is a closed oriented loop of data ﬂow arcs such that each arc is traversed
+exactly once and no non-series arc is traversed backward. (Series data ﬂow arcs
+can be traversed in either direction.) A constraint cycle is said to <i>pass through</i> an
+input or output port when exactly one of the arcs in the cycle touches the port.
+In ﬁgure <a 
+href="#x189-4860011">A.1<!--tex4ht:ref: SERIES-F1-FIGURE --></a> the data ﬂow arcs touching <a 
+href="clmse153.html#x188-476006r1018">scan</a>, <a 
+href="clmse134.html#x165-335002r828">sum</a>, <a 
+href="clmse153.html#x188-475004r1015">series</a>, and #M/
+form a constraint cycle. Note that if the output of <a 
+href="clmse153.html#x188-476006r1018">scan</a> were not a series,
+this loop would not be a constraint cycle, because there would be no
+valid way to traverse it. Also note that while the constraint cycle passes
+through all the other ports it touches, it does not pass through the output of
+<a 
+href="clmse153.html#x188-476006r1018">scan</a>.
+<!--l. 1339--><p class="indent" >   Whenever a constraint cycle passes through a non-series output, an argument
+analogous to the one above can be constructed and therefore pipelining will be
+impossible. When this situation arises, a warning message is issued identifying the
+problematical port and the cycle passing through it. For instance, the warning
+triggered by the example above states that the constraint cycle associated with
+<a 
+href="clmse153.html#x188-476006r1018">scan</a>, <a 
+href="clmse153.html#x188-482010r1054">collect-sum</a>, <a 
+href="clmse153.html#x188-475004r1015">series</a>, and #M/ passes through the non-series output of
+<a 
+href="clmse153.html#x188-482010r1054">collect-sum</a>.
+<!--l. 1348--><p class="indent" >   Given this kind of detailed information, it is easy to alleviate the problem.
+To start with, every cycle must contain at least one function that has
+two series data ﬂows leaving it. At worst, the cycle can be broken by
+duplicating this function (and any functions computing series used by
+it). For instance, the example above can be rewritten as shown below.
 <div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(let ((x (subseries (scan-range :from 0 :by 2) 0 5)))
+class="tabbing">(let ((x (scan &#x2019;(1 2 5 2)))
 </td></tr></table>
-<!--l. 60--><p class="indent" >                                     <table  
+<!--l. 1355--><p class="indent" >                               <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (values (collect x) (collect-sum x)))</td></tr></table>
-<!--l. 61--><p class="indent" >                                                   <table  
+class="tabbing">      (sum (collect-sum (scan &#x2019;(1 2 5 2)))))</td></tr></table>
+<!--l. 1356--><p class="indent" >                                    <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  ⇒ (0 2 4 6 8) and 20</td></tr></table>
-<!--l. 63--><p class="indent" >
+class="tabbing">  (collect-max (#M/ x (series sum))))</td></tr></table>
+<!--l. 1357--><p class="indent" >                                                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  <span class="math"> ⇒</span> 1/2</td></tr></table>
+<!--l. 1359--><p class="indent" >
 </div>
 </div>
+<!--l. 1361--><p class="indent" >   It would be easy enough to automatically apply code copying to break
+problematical constraint cycles. However, this is not done for two reasons.
+First, there is considerable virtue in maintaining the property that each
                                                                           
 
                                                                           
-<!--l. 65--><p class="indent" >   Like sequences and unlike streams, a series is not altered when its
-elements are accessed. For instance, both users of x above receive the same
-elements.
-<!--l. 69--><p class="indent" >   A totally ordered multi-set of elements can be represented in a loop by the
-successive values of a variable. This is extremely eﬃcient, because it avoids the
-need to store the elements as a group in any kind of data structure. In most
-situations, series expressions achieve this same high level of eﬃciency, because
-they are automatically transformed into loops before being evaluated or compiled.
-For instance, the ﬁrst expression above is transformed into a loop like the
-following. <div class=lisp><div class=tabbing>
+function in a series expression turns into one piece of computation in
+the loop produced. Users can be conﬁdent that series expressions that
+look simple and eﬃcient actually are simple and eﬃcient. Second, with a
+little creativity, constraint problems can often be resolved in ways that
+are much more eﬃcient than copying code. In the example above, the
+conﬂict can be eliminated eﬃciently by interchanging the operation of
+computing the maximum with the operation of normalizing an element.
+<div class=lisp><div class=tabbing>
 <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(let ((sum 0))
+class="tabbing">(let ((x (scan &#x2019;(1 2 5 2))))
 </td></tr></table>
-<!--l. 77--><p class="indent" >                                               <table  
+<!--l. 1373--><p class="indent" >                              <table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  (dolist (i &#x2019;(1 -2 3 -4) sum)</td></tr></table>
-<!--l. 78--><p class="indent" >                          <table  
+class="tabbing">  (/ (collect-max x) (collect-sum x))) <span class="math"> ⇒</span> 1/2</td></tr></table>
+<!--l. 1375--><p class="indent" >
+</div>
+</div>
+<!--l. 1377--><p class="indent" >   The restriction that optimizable series expressions cannot contain constraint
+cycles that pass through non-series outputs places limitations on the qualitative
+character of optimizable series expressions. In particular, they all must have the
+general form of creating some number of series using scanners, computing various
+intermediate series using transducers, and then computing one or more
+summary results using collectors. The output of a collector cannot be used
+in the intermediate computation unless it is the output of a separate
+subexpression.
+<!--l. 1386--><p class="indent" >   It is worthy of note that the last expression above ﬁxes the constraint conﬂict
+by moving the non-series output out of the cycle, rather than by breaking the
+cycle. This illustrates the fact that constraint cycles that do not pass through
+non-series outputs do not necessarily cause problems. They cause problems only if
+they pass through <i>oﬀ-line</i> ports.
+<!--l. 1392--><p class="indent" >   A series input port or series output port of a series function is <i>on-line</i> if
+and only if it is processed in lockstep with all the other on-line ports as
+follows: the initial element of each on-line input is read, then the initial
+element of each on-line output is written, then the second element of each
+on-line input is read, then the second element of each on-line output is
+written, and so on. Ports that are not on-line are oﬀ-line. If all of the
+series ports of a function are on-line, the function is said to be on-line;
+otherwise, it is oﬀ-line. (The above extends the standard deﬁnition of
+the term <i>on-line</i> so that it applies to individual ports as well as whole
+                                                                          
+
+                                                                          
+functions.)
+<!--l. 1403--><p class="indent" >   If all of the ports a cycle passes through are on-line, the lockstep processing of
+these ports guarantees that there cannot be any conﬂicts between the
+constraints associated with the cycle. However, passing through an oﬀ-line
+port leads to the same kinds of problems as passing through a non-series
+output.
+<!--l. 1409--><p class="indent" >   Most of the series functions are on-line. In particular, scanners and collectors
+are all on-line as are many transducers. However, the transducers in section <a 
+href="clmse153.html#x188-481000A.2.4">A.2.4<!--tex4ht:ref: SERIES-OL-SECTION --></a>
+are oﬀ-line. In particular, the series inputs of <a 
+href="clmse153.html#x188-481012r1044">catenate</a>, <a 
+href="clmse153.html#x188-481004r1040">choose-if</a>, <a 
+href="clmse153.html#x188-481022r1049">chunk</a>, <a 
+href="clmse153.html#x188-481006r1041">expand</a>,
+<a 
+href="clmse153.html#x188-481018r1047">mask</a>, <a 
+href="clmse153.html#x188-481020r1048">mingle</a>, <a 
+href="clmse153.html#x188-481016r1046">positions</a>, and <a 
+href="clmse153.html#x188-481014r1045">subseries</a> along with the series outputs of <a 
+href="clmse153.html#x188-481002r1039">choose</a>,
+<a 
+href="clmse153.html#x188-481008r1042">split</a>, and <a 
+href="clmse153.html#x188-481010r1043">split-if</a> are oﬀ-line.
+<!--l. 1416--><p class="indent" >   In summary, the fourth and ﬁnal restriction is that for optimization to be
+possible, a series expression cannot contain a constraint cycle that
+passes through a non-series output or an oﬀ-line port. Whenever this
+restriction is violated a warning message is issued. Violations can be ﬁxed either
+by breaking the cycle or restructuring the computation so that the oﬀending port
+is removed from the cycle.
+   <h4 class="subsectionHead"><span class="titlemark">A.3.3   </span> <a 
+ id="x189-487000A.3.3"></a>Deﬁning New Series Functions</h4>
+<!--l. 1425--><p class="noindent" >New functions operating on series can be deﬁned just as easily as new
+functions operating on any other data type. However, expressions containing
+these new functions cannot be transformed into loops unless a complete
+analysis of the functions is available. Among other things, this implies
+that the deﬁnition of a new series function must appear before its ﬁrst
+use.
+<div class=defun>
+<!--l. 1433--><p class="noindent" ><i>[Declaration speciﬁer]</i><a 
+ id="dx189-487001"></a><a 
+ id="x189-487002r1072"></a><b> optimizable-series-function</b>
+<!--l. 1435--><p class="noindent" >The declaration speciﬁer (optimizable-series-function <i>integer</i>) indicates that the
+function being deﬁned is a series function that needs to be analyzed so that it can
+be optimized when it appears in series expressions. (A warning is issued if the
+function being deﬁned neither takes a series as input nor produces a series as
+output.) <i>Integer</i> (default 1) speciﬁes the number of values returned by
+the function being deﬁned. (This cannot necessarily be determined by
+local analysis.) The only place <a 
+href="#x189-487002r1072">optimizable-series-function</a> is allowed to
+appear is in a declaration immediately inside a <a 
+href="clmse30.html#x40-67002r13">defun</a>. As an example, the
+following shows how a simpliﬁed version of <a 
+href="clmse153.html#x188-482010r1054">collect-sum</a> could be deﬁned.
+                                                                          
+
+                                                                          
+<div class=lisp><div class=tabbing>
+<table  
 cellpadding="0" border="0" cellspacing="0" 
 class="tabbing"><tr  
 style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">    (when (plusp i) (setq sum (+ sum i))))) ⇒ 4</td></tr></table>
-<!--l. 80--><p class="indent" >
+class="tabbing">(defun simple-collect-sum (numbers)
+</td></tr></table>
+<!--l. 1447--><p class="indent" >                                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (declare (optimizable-series-function 1))</td></tr></table>
+<!--l. 1448--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (collect-fn &#x2019;number #&#x2019;(lambda () 0) #&#x2019;+ numbers))</td></tr></table>
+<!--l. 1450--><p class="indent" >
 </div>
 </div>
-<!--l. 82--><p class="indent" >   A wide variety of algorithms can be expressed clearly and succinctly with
-series expressions. In particular, at least 90 percent of the loops programmers
-typically write can be replaced by series expressions that are much easier to
-understand and modify, and just as eﬃcient. From this perspective, the key
-feature of series is that they are supported by a rich set of functions. These
-functions more or less correspond to the union of the operations provided by
-the sequence functions, the <a 
-href="clmse42.html#x54-118002r90">loop</a> clauses, and the vector operations of
-APL.
-<!--l. 91--><p class="indent" >   Some series expressions cannot be transformed into loops. This is unfortunate,
-because while transformable series expressions are much more eﬃcient than
-equivalent expressions involving sequences or streams, non-transformable series
-expressions are much less eﬃcient. Whenever a problem comes up that blocks the
-transformation of a series expression, a warning message is issued. On the basis of
-information in the message, it is usually easy to provide an eﬃcient ﬁx for the
-problem (see section <a 
-href="clmse156.html#x191-487000A.3">A.3<!--tex4ht:ref: SERIES-E-SECTION --></a>).
-<!--l. 100--><p class="indent" >   Fortunately, most series expressions can be transformed into loops. In
-particular, pure expressions (ones that do not store series in variables) can always
-be transformed. As a result, the best approach for programmers to take is
-simply to write series expressions without worrying about transformability.
+</div>
+<div class=defun>
+<!--l. 1453--><p class="noindent" ><i>[Declaration speciﬁer]</i><a 
+ id="dx189-487003"></a><a 
+ id="x189-487004r1073"></a><b> oﬀ-line-port</b>
+<!--l. 1455--><p class="noindent" >The declaration speciﬁer (oﬀ-line-port <i>port-spec1</i> <i>port-spec2</i> ...) speciﬁes that the
+indicated inputs and outputs are oﬀ-line. This declaration speciﬁer is only
+allowed in a <a 
+href="clmse30.html#x40-67002r13">defun</a> that contains the declaration <a 
+href="#x189-487002r1072">optimizable-series-function</a>.
+Each <i>port-spec</i> must either be a symbol that is one of the inputs of the
+function or an integer <i>j</i> indicating the <i>j</i>th output (counting from zero). For
+example, (oﬀ-line-port x 1) indicates that the input x and the second
+output are oﬀ-line. Every port that is not mentioned in an <a 
+href="#x189-487004r1073">oﬀ-line-port</a>
+declaration is assumed to be on-line. A warning is issued whenever a port&#x2019;s
+actual on-line/oﬀ-line status does not agree with its declared status. This
+makes it easier to keep track of which ports are oﬀ-line and which are not.
+Note that oﬀ-line ports virtually never arise when deﬁning scanners or
+reducers.
+</div>
+<!--l. 1472--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">A.3.4   </span> <a 
+ id="x189-488000A.3.4"></a>Declarations</h4>
+<!--l. 1474--><p class="noindent" >A key feature of Lisp is that variable declarations are strictly optional.
+Nevertheless, it is often the case that they are necessary in situations where
+eﬃciency matters. Therefore, it is important that it be possible for programmers
+to provide declarations for every variable in a program. The transformation of
+series expressions into loops presents certain problems in this regard,
+because the loops created contain variables not evident in the original
+code. However, if the information described below is supplied by the user,
                                                                           
 
                                                                           
-When problems come up, they can be ignored (since they cannot lead
-to the computation of incorrect results) or dealt with on an individual
-basis.
-<div class=implementation>
-<!--l. 109--><p class="noindent" ><b>Implementation note:</b> The series functions and the theory underlying them are
-described in greater detail in <span class="cite">[<a 
-href="clmli5.html#XWATERS-SERIES-DESIGN">52</a>, <a 
-href="clmli5.html#XWATERS-SERIES-IMPLEMENTATION">53</a>]</span>. These reports also discuss the algorithms required
-to transform series expressions into loops and explain how to obtain a portable
-implementation.
+appropriate declarations can be generated for all of the loop variables
+created.
+<!--l. 1484--><p class="indent" >   All the explicit variables that are bound in a series expression (for
+example, by a <a 
+href="clmse39.html#x51-100002r74">let</a> that is part of the expression) should be given informative
+declarations making use of the type speciﬁer (series <i>element-type</i>) where
+appropriate.
+<!--l. 1489--><p class="indent" >   Informative types should be supplied to series functions (such as <a 
+href="clmse153.html#x188-476006r1018">scan</a> and
+<a 
+href="clmse153.html#x188-477002r1030">map-fn</a>) that have type arguments. When using <a 
+href="clmse153.html#x188-476006r1018">scan</a> it is important to specify
+the type of element in the sequence as well as the sequence itself (for
+example, by using (vector * integer) as opposed to merely <a 
+href="clmse89.html#x111-215014r524">vector</a>). The
+form (list <i>element-type</i>) can be used to specify the type of elements in a
+list.
+<!--l. 1496--><p class="indent" >   If it is appropriate to have a type more speciﬁc than (series t) associated with
+the output of #M, #Z, <a 
+href="clmse153.html#x188-476016r1023">scan-alist</a>, <a 
+href="clmse153.html#x188-476024r1027">scan-ﬁle</a>, <a 
+href="clmse153.html#x188-476020r1025">scan-hash</a>, <a 
+href="clmse153.html#x188-476014r1022">scan-lists-of-lists-fringe</a>,
+<a 
+href="clmse153.html#x188-476012r1021">scan-lists-of-lists</a>, <a 
+href="clmse153.html#x188-476018r1024">scan-plist</a>, <a 
+href="clmse153.html#x188-475004r1015">series</a>, <a 
+href="clmse153.html#x188-480010r1037">latch</a>, or <a 
+href="clmse153.html#x188-481012r1044">catenate</a>, then the form <a 
+href="clmse50.html#x64-154002r126">the</a> must be
+used to specify this type.
+<!--l. 1503--><p class="indent" >   Finally, if the expression computing a non-series argument to a series variable
+is neither a variable nor a constant, <a 
+href="clmse50.html#x64-154002r126">the</a> must be used to specify the type of its
+result.
+<!--l. 1507--><p class="indent" >   For example, the declarations in the series expressions below are suﬃcient to
+ensure that every loop variable will have an accurate declaration. <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(collect-last (choose-if #&#x2019;plusp (scan &#x2019;(list integer) data)))
+</td></tr></table>
+<!--l. 1511--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 1512--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(collect &#x2019;(vector * ﬂoat)</td></tr></table>
+<!--l. 1513--><p class="indent" >                                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">         (map-fn &#x2019;ﬂoat #&#x2019;/</td></tr></table>
+<!--l. 1514--><p class="indent" >                        <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                 (series (the integer (car data)))</td></tr></table>
+<!--l. 1515--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                 (the (series integer) (scan-ﬁle f))))</td></tr></table>
+<!--l. 1517--><p class="indent" >
+</div>
+</div>
+<!--l. 1519--><p class="indent" >   The amount of information the user has to provide is reduced by the fact that
+this information can be propagated from place to place. For instance, the
+variable holding the output of <a 
+href="clmse153.html#x188-481004r1040">choose-if</a> holds a subset of the elements
+held by the input variable. As a result, it is appropriate for it to have
+                                                                          
+
+                                                                          
+the same type. When deﬁning a new series function, the type speciﬁer
+<a 
+href="#x189-488002r1074">series-element-type</a> can be used to indicate where type propagation should
+occur.
+<div class=defun>
+<!--l. 1527--><p class="noindent" ><i>[Type speciﬁer]</i><a 
+ id="dx189-488001"></a><a 
+ id="x189-488002r1074"></a><b> series-element-type</b>
+<!--l. 1529--><p class="noindent" >The type speciﬁer (series-element-type <i>variable</i>) denotes the type of elements in
+the series held in <i>variable</i>. <i>Variable</i> must be a variable carrying a series value (for
+example, a series argument of a series function). <a 
+href="#x189-488002r1074">series-element-type</a> can be used
+only in three places: in a declaration in a <a 
+href="clmse39.html#x51-100002r74">let</a>, <a 
+href="clmse153.html#x188-477004r1031">mapping</a>, <a 
+href="clmse155.html#x190-489002r1075">producing</a>, or other
+binding form in a series expression; in a declaration in a <a 
+href="clmse30.html#x40-67002r13">defun</a> being used to
+deﬁne a series function; or in a type argument to a series function. As an example,
+consider that <a 
+href="clmse153.html#x188-482004r1051">collect-last</a> could have been deﬁned as follows. The use of
+<a 
+href="#x189-488002r1074">series-element-type</a> ensures that the internal variable keeping track of the most
+recent item has the correct type. <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun collect-last (items &#x0026;optional (default nil))
+</td></tr></table>
+<!--l. 1542--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (declare (optimizable-series-function))</td></tr></table>
+<!--l. 1543--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (collect-fn &#x2019;(series-element-type items)</td></tr></table>
+<!--l. 1544--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              #&#x2019;(lambda () default)</td></tr></table>
+<!--l. 1545--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              #&#x2019;(lambda (old new) new)</td></tr></table>
+<!--l. 1546--><p class="indent" >                                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">              items))</td></tr></table>
+<!--l. 1548--><p class="indent" >
+</div>
+</div>
 </div>
                                                                           
 
                                                                           
-   <!--l. 118--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 1551--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse155.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmap1.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmap1.html#tailclmap1.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse153.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse153.html#tailclmse153.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse154.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmap1.html#clmse154.html" >Up</a><tt>&#x003E;</tt></p></div>
-<!--l. 118--><p class="indent" >   <a 
+<!--l. 1551--><p class="indent" >   <a 
  id="tailclmse154.html"></a>  
 </body></html> 

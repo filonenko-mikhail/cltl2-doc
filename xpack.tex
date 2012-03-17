@@ -3,7 +3,9 @@
 
 \clearpage\def\pagestatus{ULTIMATE}
 
-\chapter{Packages Пакеты}
+\ifx \rulang\Undef
+
+\chapter{Packages}
 \label{XPACK}
 
 One problem with earlier Lisp systems is the use of a single name space
@@ -15,15 +17,6 @@ Lisp Machine Lisp \cite{BLUE-LISPM}.
 In addition to preventing name-space conflicts, the
 package system makes the modular structure of large Lisp systems more
 explicit.
-
-Одна проблемка была с ранними реализациями Lisp систем --- это использование
-одного пространства имен для всех символов. В больших Lisp'овых системах, с
-модулями написанными разными программистами, случайные совпадения имен стали
-серьезной проблемой. Common Lisp решает эту проблему с помощью \emph{системы
-  пакетов}, производной от ранней системы пакетов, разработанной для Lisp
-Machine \cite{BLUE-LISPM}.
-В дополнения к избежанию конфликтов име, система пакетов делает модульную
-структуру больших Lisp систем более явной.
 
 A \emph{package} is a data structure that establishes a mapping from print
 names (strings) to symbols.  The package thus replaces the ``oblist'' or
@@ -42,20 +35,6 @@ that is, a symbol that is supposed to be visible outside of \cdf{foo}.
 A reference to an internal symbol requires the intentionally
 clumsier syntax \cd{foo::bar}.)
 
-\emph{Пакет} --- это структура данных, которая устанавливает связь между
-выводимыми именами (строкой) и символами. Таким образом пакет заменяет
-<<oblist>> или <<obarray>> из ранних версий Lisp'овых систем. В любое время
-только один пакет является текущим, и этот пакет используется Lisp'овым
-читателем при преобразовании строк в символы. Текущий пакет является, по
-определению, значение глобальной переменной \cdf{*package*}. С помощью
-\emph{имени пакета} в выводимом имени символа существует возможность
-ссылаться на символы других, а не текущего, пакетов.
-Например, когда \cd{foo:bar} будет прочтен Common Lisp'ом, то будет ссылаться на
-символ \cd{bar} из пакета \cd{foo}.
-(А точнее, это верно только, если \cd{bar} является экспортированным символом из
-\cd{foo}, то есть символом, который является видимым извне \cd{foo}. Ссылка на
-внутренний символ требует удваивания двоеточего: \cd{foo::bar}.)
-
 The string-to-symbol mappings available in a given package are divided
 into two classes, \emph{external} and \emph{internal}.  We refer to the
 symbols accessible via these mappings as being \emph{external} and
@@ -65,14 +44,6 @@ given package, a name refers to one symbol or to none; if it does refer
 to a symbol, then it is either external or internal in that
 package, but not both.
 
-Отображение строк в символы доступное в данном пакете делиться на два вида:
-\emph{внешнее} и \emph{внутреннее}. Речь идет о символах доступных с помощью
-этих отображений, как о \emph{внешних} и \emph{внутренних} символах пакета, хотя
-на самом деле различаются отображения, а не символы.
-Внутри заданного пакета, имя ссылается на один или ноль символов. Если оно
-ссылается на символ, тогда этот символ в данном пакете внешний или внутренний в,
-но не одновременно. 
-
 External symbols are part of the package's public interface to other
 packages.  External symbols are supposed to be chosen with some care and are
 advertised to users of the package.  Internal symbols are for internal
@@ -80,23 +51,11 @@ use only, and these symbols are normally hidden from other packages.
 Most symbols are created as internal symbols; they become external only
 if they appear explicitly in an \cdf{export} command for the package.
 
-Внешние символы являются частью интерфейса пакета доступного в других
-пакетах. Внешние символы должны быть выбраны с особой тщательностью и
-публиковаться для пользователей этого пакета. Внутренние символы
-предусмотрены только для внутреннего использования, и эти символы обычно скрыты
-от других пакетов. Большинство символов создаются как внутренние. Они становятся
-внешними только, если явно передаются в команду \cdf{export}.
-
 A symbol may appear in many packages.  It will always have the same
 name wherever it appears, but it may be external in some packages
 and internal in others.  On the other hand,
 the same name (string) may refer to different symbols in
 different packages.
-
-Символ может встречаться во многих пакетах. Он будет всегда иметь одно и то же
-имя, но в некоторых пакетах может быть внешним, а в других внутренним. С другой
-стороны, одно и то же имя (строка) может ссылаться на различные символы в
-различных пакетах.
 
 Normally, a symbol that appears in one or more packages
 will be \emph{owned} by one particular package, called the \emph{home package}
@@ -106,15 +65,6 @@ that contains a pointer to its home package.
 A symbol that is owned by some package is said to be \emph{interned}.
 Some symbols are not owned by any package; such a symbol
 is said to be \emph{uninterned}, and its package cell contains {\false}.
-
-Обычно, символ, который встречается в одном и более пакетах, будет иметь только
-один родительский пакет, называемый \emph{домашний пакет} символа. Говорится,
-что такой пакет владеет символом.
-Все символы содержат компонент, называется \emph{ячейка пакета}, которая хранит
-указатель на домашний пакет.
-Символ, который имеет домашний пакет, называется \emph{интернированным}.
-Некоторые символы не имеют домашнего пакета. Они называются
-неинтернированными. Их ячейка пакета содержит значение {\false}.
 
 Packages may be built up in layers.  From the point of view of a
 package's user, the package is a single collection of mappings from
@@ -131,18 +81,6 @@ that package or via inheritance.   We will refer to a symbol as being
 not inherited from somewhere else.  Thus a symbol present in a package is accessible,
 but an accessible symbol is not necessarily present.
 
-Пакеты могут быть представлены как слои. С этой точки зрения, для пользователя,
-пакет выглядит как коллекция отображений из строк во внутренние и внешние
-символы. Однако, некоторые из этих отображений могут устанавливаться внутри
-самого пакета, тогда как другие отображения наследуются из других пакетов с
-помощью конструкции \cdf{use-package}. (Механизм такого наследования описан
-ниже.) В дальнейшем, мы будем называть символ, \emph{доступным} в пакете, если
-на него можно сослаться без указания квалификатора пакета, вне зависимости от
-того унаследовано ли отображение символов, или установлено текущим пакетом. И мы
-будем называть символ \emph{родным} в пакете, если отображение установлено
-самим пакетом, а не унаследовано. Таким образом настоящий символ в пакете
-является доступным, но доступный символ не обязательно является настоящим.
-
 A symbol is said to be \emph{interned in a package} if it is
 accessible in that package and also is owned (by either that package
 or some other package).  Normally all the symbols accessible in
@@ -150,12 +88,6 @@ a package will in fact be owned by some package,
 but the terminology is useful when
 discussing the pathological case of an accessible but unowned (uninterned)
 symbol.
-
-Символ называется \emph{интернированным в пакет}, если он доступен в этом
-пакете и имеет некоторый родительский пакет. Обычно все символы
-доступные в пакете будут фактически в собственности некоторого пакета, но такая
-терминология полезна, когда описываются патологические случаи доступности
-никому не принадлежащего (неинтернированного) символа.
 
 As a verb, to \emph{intern} a symbol in a package means to cause the
 symbol to be interned in the package if it was not already;
@@ -165,24 +97,13 @@ interned in becomes its owner (home package); but
 if the symbol was previously owned by another package, that other package
 continues to own the symbol.
 
-Как глагол, \emph{интернировать} символ в пакет, означает сделать так, чтобы
-пакет стал владельцем символа, если этого было не так.
-Этот процесс выполняется функцией \cdf{intern}.
-Если символ прежде был бесхозным (никому не принадлежал), тогда пакет становится
-его владельцем (домашним пакетом). Но если символ уже принадлежал кому-то, то
-принадлежность не меняется.
-
 To \emph{unintern} a symbol from the package means to cause it to be not
 present in the package
 and, additionally, to cause the symbol to be uninterned if the
 package was the home package (owner) of the symbol.
 This process is performed by the function \cdf{unintern}.
 
-\emph{Дезинтернировать} символ из пакета означает убрать владение символом
-данным пакетом, при условии, что он был домашним. Данный процесс выполняется
-функцией \cdf{unintern}.
-
-\section{Consistency Rules Правила согласования}
+\section{Consistency Rules}
 
 Package-related bugs can be very subtle and confusing: things are not
 what they appear to be.  The Common Lisp package system is designed with
@@ -191,44 +112,24 @@ would otherwise occur in normal use.  This may seem over-protective, but
 experience with earlier package systems has shown that such safety
 features are needed.
 
-Ошибки связанные с пакетами могут быть очень тонкими и запутанными. Система
-пакетов Common Lisp'а спроектирована с рядом безопасных функций для
-предотвращения большинства распространенных ошибок, которые могли бы быть при
-обычном использовании. Может показаться, что защита используется излишне,
-однако опыт предыдущих систем пакетов показал, что такие меры необходимы.
-
 In dealing with the package system, it is useful to keep in mind the
 following consistency rules, which remain in force as long as the value
 of \cdf{*package*} is not changed by the user:
-
-При работе с системой пакетов, полезно держать в памяти следующие правила,
-которые остаются в силе пока пользователи не изменил значение \cdf{*package*}:
 
 \begin{itemize}
 \item
 \emph{Read-read consistency:} Reading the same print name always results in
 the same (\cdf{eq}) symbol.
 
-\emph{Согласованность чтения-чтения:} Чтение одного и того же имени приводит к
-одному и тому же символу (\cdf{eq} вернет истину).
-
 \item
 \emph{Print-read consistency:} An interned symbol always prints as a
 sequence of characters that, when read back in, yields the same (\cdf{eq})
 symbol.
 
-\emph{Согласованность вывода-чтения:} Интернированный символ всегда выводится,
-как последовательность строковых символов, которые при повторном чтении дают
-исходный символ (\cdf{eq} вернет истину).
-
 \item
 \emph{Print-print consistency:} If two interned symbols are not \cdf{eq}, then
 their printed representations will be different sequences of
 characters.
-
-\emph{Print-print consistency:} Если два интернированных символа не равны
-\cdf{eq}, тогда их печатаемые отображения будут различными последовательностями
-строковых символов.
 \end{itemize}
 
 These consistency rules remain true in spite of any amount of implicit
@@ -242,16 +143,7 @@ from an error, or calling one of the ``dangerous'' functions
 \cdf{unintern}, \cdf{unexport}, \cdf{shadow},
 \cdf{shadowing-import}, or \cdf{unuse-package}.
 
-Эти правила согласованности остаются в силе несмотря на любое количество неявных
-случаев интернирования в Lisp'овых формах, загрузках файлов и так далее. Важное
-значение заключается в том, что пока текущий пакет не меняется, результаты
-воспроизводимы вне зависимости от порядка загрузки файлов или истории вводимых
-символов. Правила могут быть нарушены только явным действием: изменением
-значения \cdf{*package*}, продолжением выполнения после ошибки, или вызовом
-одной из <<опасных>> функций \cdf{unintern}, \cdf{unexport}, \cdf{shadow},
-\cdf{shadowing-import} или \cdf{unuse-package}. 
-
-\section{Package Names Имена пакетов}
+\section{Package Names}
 \label{PACKAGE-NAMES-SECTION}
 
 Each package has a name (a string) and perhaps some nicknames.  These
@@ -259,12 +151,6 @@ are assigned when the package is created, though they can be changed
 later.  A package's name should be something long and self-explanatory,
 like \cdf{editor}; there might be a nickname that is shorter and easier to
 type, such as \cdf{ed}.
-
-Каждый пакет имеет имя (строку) и, возможно, несколько псевдонимов. Они
-присваиваются во время, когда пакет создается, однако, могут быть изменены
-позднее. Имя пакета должно быть длинным и информативным, например
-\cdf{editor}. Псевдоним должен быть коротким и простым в написании, например
-\cdf{ed}.
 
 There is a single name space for packages.  The function
 \cdf{find-package} translates a package name or nickname into the
@@ -276,16 +162,6 @@ specified by the user.  Package renaming is occasionally useful when, for
 development purposes, it is desirable to load two versions of a package
 into the same Lisp.  One can load the first version, rename it,
 and then load the other version, without getting a lot of name conflicts.
-
-Для имен пакетов существует только одно пространство имен. Функция
-\cdf{find-package} транслирует имя или псевдоним пакета в связанный объект
-пакета. Функция \cdf{package-name} возвращает имя пакета. Функция
-\cdf{package-nicknames} возвращает список всех псевдонимов для пакета. Функция
-\cdf{rename-package} удаляет текущее имя пакета и псевдонимы и заменяет их на
-указанные пользователем. Переименование пакета изредка бывает полезным,
-например, для разработки, когда необходимо загрузить две версии одного пакета в
-Lisp систему. Можно загрузить первую версию, переименовать ее, и затем загрузить
-другую верси, без разрешения конфликтов имен.
 
 When the Lisp reader sees a qualified symbol, it handles the package-name
 part in the same way as the symbol part with respect to capitalization.
@@ -303,29 +179,12 @@ in this book for symbols, we show ordinary package names using
 lowercase letters, even though the name string is internally represented
 with uppercase letters.
 
-Когда Lisp считыватель встречают полное имя символа, он обрабатывает часть для
-имени пакета, также как и часть для имени символа, возводя все неэкранированные
-строковые имволы в верхний регистр. Экранирование строковых символов
-производится с помощью символов \cd{{\Xbackslash}} или \cd{|}. Поиск,
-осуществляемый функцией \cdf{find-package}, является регистрозависимым, также
-как и для символов. Следует отметить, что \cd{|Foo|:|Bar|} ссылается на символ,
-имя которого \cd{Bar}, в пакете \cd{Foo}. Для сравнения \cd{|Foo:Bar|} ссылается
-на семизначный символ, имя которого содержит доветочие (а также две заглавные и
-четыре прописные буквы) и интернирован в текущий пакет. В данной книге символы и
-пакеты указываются без экранирования строковыми символами только в нижнем
-регистре, при этом внутри Lisp машины они будут переведены в верхний регистр.
-
 Most of the functions that require a package-name argument from the
 user accept either a symbol or a string.  If a symbol is supplied,
 its print name will be used; the print name will already have undergone
 case-conversion by the usual rules.  If a string is supplied, it
 must be so capitalized as to match exactly the
 string that names the package.
-
-Большинство функции, которые принимают имя пакета, могут принимать или символ,
-или строку. Если указан символ, то используется его выводимое имя, которое
-подвергается обычным преобразованиям в верхний регистр. Если указана строка, она
-должна быть преобразована для полного совпадения с именем пакета.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -339,7 +198,6 @@ situations:
 \cdf{package-name}, \cdf{package-nicknames},
 \cdf{in-package}, \cdf{find-package},
 \cdf{rename-package}, or \cdf{delete-package},
-
 
 \item the second argument to \cdf{intern}, \cdf{find-symbol},
 \cdf{unintern}, \cdf{export}, \cdf{unexport}, \cdf{import}, \cdf{shadowing-import},
@@ -357,16 +215,12 @@ as package names and not as package objects.  If \cdf{find-package} is
 given a package object instead of a name, it simply returns that package.
 \end{new}
 
-\section{Translating Strings to Symbols Преобразование строк в символы}
+\section{Translating Strings to Symbols}
 \label{STRING-TO-SYMBOL-SECTION}
 
 The value of the special variable \cdf{*package*} must always be a package
 object (not a name).  Whatever package object is currently the
 value of \cdf{*package*} is referred to as the \emph{current package}.
-
-Значение специальной переменной \cdf{*package*} должно всегда быть объектом
-пакета (не именем). Вне зависимости от объекта пакета в \cdf{*package*}, он
-называется \emph{текущим пакетом}.
 
 When the Lisp reader has, by parsing, obtained a string of characters
 thought to name a symbol, that name is looked up in the current package.
@@ -381,17 +235,6 @@ in the current package.
 If the name is later read again while this same package is
 current, the same symbol will then be found and returned.
 
-Когда Lisp'овый считыватель получает строку для символа, он ищет его имя в
-текущем пакете.
-Данный поиск может привести к поиску в других пакетах, экспортированные символы
-которых унаследованы текущим пакетом. Если имя найдено, то возвращается
-соответствующий символ. Если имя не найдено (то есть, в текущем пакете не
-существует соответствующего доступного символа), то создается новый символ и
-помещается в текущий пакет. Если точнее, то текущий пакет становится владельцем
-(домашним пакетом) символа.
-Если это имя будет прочитано еще раз позже и в этом же пакете, то этот уже
-созданный символ будет возвращен.
-
 Often it is desirable to refer to an external symbol in some package
 other than the current one.  This is done through the use of a
 \emph{qualified name}, consisting of a package name, then a colon, then the
@@ -405,16 +248,6 @@ is accessible in \cdf{editor}, or if \cdf{buffer} is an internal
 symbol in \cdf{editor}, the Lisp reader will signal
 a correctable error to ask the user for instructions.
 
-Часто необходимо сослаться на внешний символ в некотором другом, нетекущем
-пакете. Это может быть сделано с помощью \emph{полного имени}, включающем имя
-пакета, затем двоеточение, и наконец имя символа. Это приводит к поиску символа
-в указанном, а не текущем пакете. Например, \cd{editor:buffer} ссылается на
-внешний символ с именем \cdf{buffer} доступный из пакета с именем \cdf{editor},
-вне зависимости от того, если в текущем пакете символ с таким же именем.
-Если пакета с именем \cdf{editor} или символа с именем \cdf{buffer} в указанном
-пакете, Lisp'овые считыватель сгенерирует сигнал с ошибкой и возможностью
-исправить ошибку.
-
 On rare occasions, a user may need to refer to an \emph{internal} symbol of
 some package other than the current one.  It is illegal to do this with
 the colon qualifier, since accessing an internal symbol of some other
@@ -425,15 +258,6 @@ a doubled colon
 reading \cdf{buffer} with \cdf{*package*} temporarily rebound to the
 package whose name is \cdf{editor}.  This special-purpose qualifier
 should be used with caution.
-
-В редких случаях, пользователь может нуждаться в ссылке на \emph{внутренний}
-символ некоторого нетекущего пакета. Это нельзя сделать с помощью двоеточего,
-так как данная запись позволяет ссылаться только на внешние символы. Однако, это
-можно сделать с помощью двойного двоеточего \cd{::}, указанного вместо
-одинарного. Если используется \cd{editor::buffer}, то эффект такой же, как если
-бы произошла попытка найти символ с именем \cdf{buffer} и \cdf{*package*} была
-связана с объетом с именем \cd{editor}. Двойное двоеточие должно использоваться
-с осторожностью.
 
 The package named \cdf{keyword} contains all keyword symbols used by the
 Lisp system itself and by user-written code.  Such symbols must be
@@ -454,22 +278,6 @@ the leading-colon convention; the user should never import or inherit
 keywords into any other package.  It is an error to try to apply
 \cdf{use-package} to the \cdf{keyword} package.
 
-Пакет с именем \cdf{keyword} содержит все ключевые символы используемые
-Lisp'овой системой и пользовательским кодом. Такие символы должны быть легко
-доступны из любого пакета, и конфликт имен не является проблемой, так как эти
-символы используются только в качестве меток и не содержат значений. Так как
-ключевые символы используются часто, то Common Lisp для них предоставляет
-специальный синтаксис. Любой символ с двоеточием в начале и без имени пакета
-(например \cd{:foo}) добавляется (или ищется) в пакете \cdf{keyword} как
-\emph{внешний} символ. Пакет \cdf{keyword} также отличается тем, что при
-добавлении в него символа, последний автоматически становится внешним. Символ
-также автоматически декларируется как константа (смотрите \cdf{defconstant}) и
-его значением становится он сам.
-В целях стиля, ключевые символы должны всегда быть доступны с помощью двоеточего
-в начале имени. Пользователь никогда не должен импортировать или наследовать
-ключевые символы в другие пакета. Попытка использовать \cdf{use-package} для
-\cdf{keyword} пакета является ошибкой.
-
 Each symbol contains a package cell that is used to record the home
 package of the symbol, or {\false} if the symbol is uninterned.  This cell
 may be accessed by using the function \cdf{symbol-package}.
@@ -481,15 +289,6 @@ without any qualification; otherwise, it is printed with the name of the
 home package as the qualifier, using \cd{:} as the separator if the
 symbol is external and \cd{::} if not.
 
-Каждый символ содержит ячейку пакета, которая используется для записи домашнего
-пакета символа, или {\false}, если пакет неинтернированный. Эта ячейка доступна
-с помощью функции \cdf{symbol-package}.
-Когда интернированный символ печатается, если это символ в пакете ключевых
-символов, тогда он выводится с двоеточием в начале, иначе, если он доступен
-(напрямую или отнаследованно) в текущем пакете, он печатается без имени пакета,
-иначе он печатается полностью, с именем пакета, именем символа и \cd{:} в
-качестестве разделителя для внешнего символа, и \cd{::} для внутреннего.
-
 A symbol whose package slot contains {\false} (that is, has no home
 package)
 is printed preceded by \cd{\#:}.  It is possible, by the
@@ -498,16 +297,7 @@ recorded home package but that in fact is accessible in some package.
 The system does not check for this pathological case, and such symbols
 will always be printed preceded by \cd{\#:}.
 
-Символ, у которого слот (ячейка) пакета содержит {\false} (то есть, домашний
-пакет отсутствует) печатается с \cd{\#:} вначале. С использованием \cdf{import}
-и \cdf{uninter} возможно создать символ, который не имеет домашнего пакета, но
-фактически доступен в некоторых пакетах.
-Lisp система не проверяет такие патологические случаи, и такие символы будут
-всегда печататься с предшевствующими \cd{\#:}.
-
 In summary, the following four uses of symbol qualifier syntax are defined.
-
-В целом, синтаксис имен символов может быть выражен в следующих четырех примерах.
 
 \begin{flushdesc}
 \item[\cd{foo:bar}]
@@ -515,36 +305,21 @@ When read, looks up \cd{BAR} among the external symbols of
 the package named \cd{FOO}.  Printed when symbol \cd{bar} is external in its
 home package \cd{foo} and is not accessible in the current package.
 
-При прочтении, выполняется поиск символа \cd{BAR} среди внешних символов пакета
-\cd{FOO}. При выводе, когда символ \cd{bar} является внешним в домашнем пакете
-\cd{foo} и недоступен в текущем пакете.
-
 \item[\cd{foo::bar}]
 When read, interns \cd{BAR} as if \cd{FOO} were the
 current package.  Printed when symbol \cd{bar} is internal in its home package
 \cd{foo} and is not accessible in the current package.
 
-При прочтении, интернирует символ \cd{BAR}, как если бы пакет \cd{FOO} являлся
-текущим. При выводе, когда символ \cd{bar} является внутренним в его домашнем
-пакете \cd{foo} и недоступен в текущем пакете.
-
 \item[\cd{:bar}]
 When read, interns \cd{BAR} as an external symbol in the
 \cd{keyword} package and makes it evaluate to itself.  Printed when
 the home package of symbol \cd{bar} is \cd{keyword}.
-
-При прочтении, интернирует \cd{BAR} как внешний символ в пакете \cd{keyword} и
-выполняет его самого в себя. При выводе, когда \cd{keyword} является домашним
-пакетом для символа.
     
 \item[\cd{\#:bar}]
 When read, creates a new uninterned symbol named \cd{BAR}.
 Printed when the symbol \cd{bar} is uninterned (has no home package),
 even in the pathological case that \cd{bar} is uninterned but
 nevertheless somehow accessible in the current package.
-
-При прочтении, создает новый неинтернированный символ с именем \cd{BAR}.
-При выводе, когда символ \cd{bar} не имеет домашнего пакета.
 \end{flushdesc}
 
 All other uses of colons within names of symbols are not defined by
@@ -552,19 +327,11 @@ Common Lisp but are reserved for implementation-dependent use; this
 includes names that end in a colon, contain two or more colons, or
 consist of just a colon.
 
-Все другие использования двоеточего внутри имен символов не определены Common
-Lisp'ом, но зарезервированы для реализаций. Сюда включены имена с двоеточием в
-конце, или содержащими два и более двоеточих или просто состоящими из
-двоеточего.
-
-\section{Exporting and Importing Symbols Экспортирование и импортирование
-  символов} 
+\section{Exporting and Importing Symbols} 
 \label{EXPORT-IMPORT-SECTION}
 
 Symbols from one package may be made accessible in another package in
 two ways.
-
-Символы из одного пакета могут стать доступными в другом пакете двумя способами.
 
 First, any individual symbol may be added to a package by use
 of the function \cdf{import}.  The form \cd{(import 'editor:buffer)} takes
@@ -581,32 +348,12 @@ without any qualifier.  The status of \cdf{buffer} in the package named
 this symbol.  Once imported, a symbol is \emph{present} in the
 importing package and can be removed only by calling \cdf{unintern}.
 
-Первый способ, каждый отдельный символ может быть добавлен в пакет использованием
-функции \cdf{import}. Форма \cd{(import 'editor:buffer)} принимает внешний
-символ с именем \cd{buffer} в пакете \cd{editor} (этот символ распознается Lisp
-считывателем) и добавляет его в текущий пакет в качестве внутреннего
-символа. Символ становится доступным в текущем пакете. Импортированный символ
-автоматически не экспортируется из текущего пакета, но если он уже существовал в
-пакете и был внешним, то это свойство не меняется. После вызова \cdf{import}
-в импортирующем пакете появляется возможность ссылаться на \cdf{buffer} без
-указания полного имени. Свойства \cdf{buffer} в пакете \cdf{editor} не меняются,
-\cdf{editor} продолжает оставаться домашним пакетом для этого символа. Будучи
-импортированным, символ будет присутствовать в пакете и может быть удален только
-с помощью вызова \cdf{unintern}.
-
 If the symbol is already present in the importing package, \cdf{import}
 has no effect.  If a distinct symbol with the name \cdf{buffer} is
 accessible in the importing package (directly or by inheritance), then a
 correctable error is signaled, as described in
 section~\ref{NAME-CONFLICTS-SECTION}, because \cdf{import} avoids letting
 one symbol shadow another.
-
-Если символ уже присутствует в импортирующем пакете, \cdf{import} ничего не
-делает. Если другой символ с таким же именем \cdf{buffer} уже доступен в
-импортирующем пакете (напрямую или унаследован), тогда сигнализируется ошибка с
-возможностью исправления ситуации, как написано в
-разделе~\ref{NAME-CONFLICT-SECTION}, потому \cdf{import} не допускает сокрытия
-одного символа другим.
 
 A symbol is said to be \emph{shadowed} by another symbol in
 some package if the first symbol would be accessible by inheritance
@@ -625,19 +372,6 @@ added to the package's shadowing-symbols list.  \cdf{shadowing-import}
 should be used with caution.  It changes the state of the package system
 in such a way that the consistency rules do not hold across the change.
 
-Символ называется скрытым другим символом в некотором пакете. Это когда первый
-символ был бы доступен через наследование, если бы не присутствие второго
-символа.
-Для импортирования символа без ошибки скрытия, используйте функцию
-\cdf{shadowing-import}. Она вставляет символ в указанный пакет, как внутренний
-символ, вне зависимости от того, происходит ли скрытие другого символа с тем же
-именем.
-Если другой символ с тем же именем присутствовал в пакете, тогда этот символ
-сначала удаляется из пакета \cdf{unintern}. Новый символ добавляется в список
-скрывающих символов FIXME. \cdf{shadowing-import} должна использоваться
-аккуратно. Она изменяем состояние системы пакетов так, что правила согласования
-могут перестать работать.
-
 The second mechanism is provided by the function \cdf{use-package}.  This
 causes a package to inherit all of the external symbols of some other
 package.  These symbols become accessible as \emph{internal} symbols of the
@@ -651,18 +385,6 @@ name conflicts between the newly imported symbols and those already
 accessible in the importing package.  This is described in detail in
 section~\ref{NAME-CONFLICTS-SECTION}.
 
-Второй способ предоставляется функцией \cdf{use-package}. Эта функция делает
-так, что пакет наследует все внешние символы некоторого другого пакета. Эти
-символы становятся доступными, как \emph{внутренние} символы, используемого
-пакета. То есть, на них можно ссылаться без указаная пакета внутри текущего
-пакета, но они не становятся доступными в других пакетах, использующих
-данный. Следует отметить, что \cdf{use-package}, в отличие от \cdf{import}, не
-делает новые символы \emph{родственными} в текущем пакете, а делает их только
-\emph{доступными} с помощью наследования отображения символов.
-\cdf{use-package} проверяет конфликты имен между импортируемыми и уже доступными
-символами в импортирующем пакете. Это подробнее описано в
-разделе~\ref{NAME-CONFLICT-SECTION}.
-
 Typically a user, working by default in the \cdf{user} package, will
 load a number of packages into Lisp to provide an augmented working
 environment, and then call \cdf{use-package} on each of these packages
@@ -672,32 +394,15 @@ external symbols of the used package are no longer inherited.  However,
 any symbols that have been imported into the using package continue to
 be present in that package.
 
-Обычно пользователь, по-умолчанию работая в пакете \cdf{user}, будет загружать
-ряд пакетов в Lisp систему для предоставления расширенного рабочего окружения, и
-затем вызывать \cdf{use-package} для каждого из этих пакетов для простого
-доступа к их внешним символами.
-\cdf{unuse-package} производит обратные действия относительно
-\cdf{use-package}. Внешние символы используемые пакетом престают
-наследоваться. Однако, любые импортированные символы, остаются доступными.
-
 There is no way to inherit the \emph{internal} symbols of another package;
 to refer to an internal symbol, the user must either make that symbol's home
 package current, use a qualifier, or import that symbol into the current
 package.
 
-Несуществует способа наследовать \emph{внутренние} символы другого пакета. Для
-ссылки на внутренний символ, пользователь должен поменять домашний пакет для
-данного символа на текущий, использовать полное имя (вместе с пакетом) или
-импортировать этот символ в текущий пакет.
-
 \begin{newer}
 The distinction between
 external and internal symbols is a primary means of hiding names
 so that one program does not tread on the namespace of another.
-
-Различие между внешними и внутренними символами прежде всего означает скрытие
-имен, так чтобы одна программа не могла использовать пространство имен другой
-программы.
 \end{newer}
 
 When \cdf{intern} or some other function wants to look up a symbol in a
@@ -711,16 +416,6 @@ in \emph{X} itself as a shadowing symbol.  Of course, implementations are free
 to choose other, more efficient ways of implementing this search, as
 long as the user-visible behavior is equivalent to what is described
 here.
-
-Когда \cdf{intern} или некоторые другие функций хотят найти символ в заданном
-пакете, они сначала ищут символ среди внешних и внутренних символов текущего
-пакета, затем они в неопределенном порядке ищут среди внешних символов
-используемых пакетов. Порядок не имеет значение. В соответствии с правилами
-разрешения конфликтов имен (смотрите ниже), если конфликтующие символы существуют
-в двух и более пакетах, унаследованных пакетом \emph{X}, символ с этим именем
-должен также быть в \emph{X}, как скрытый символ. Конечно, реализации могут
-выбрать другой, более эффективный способ для реализации такого поиска, не
-изменяя поведение ранее описанного интерфейса.
 
 The function \cdf{export} takes a symbol that is accessible in some
 specified package (directly or by inheritance) and makes it an external
@@ -737,31 +432,12 @@ accessible at all in the specified package, a correctable error is
 signaled that, upon continuing, asks the user whether the symbol
 should be imported.
 
-Функция \cdf{export} принимает символ, который доступен в некотором указанном
-пакете (напрямую или унаслеован из другого пакета) и делает его внешним символом
-этого пакета. Если символ уже доступен как внешний, \cdf{export} ничего не
-делает. Если символ представлен, как внутренний \emph{родственный} символ, его
-статус просто меняется на внешний. Если он доступен, как внутренний символ,
-полученный с помощью \cdf{use-package}, символ сначала импортируется в пакет, а
-затем делается внешним. (После этого символ становиться импортированным в пакет
-и остается в нем, вне зависимости от того будет ли использована
-\cdf{unuse-package} или нет). Если символ вообще недоступен в указанном пакете,
-то сигнализируется ошибка с возможностью решить проблему, а, именно, какой
-символ должен быть импортирован.
-
 The function \cdf{unexport} is provided mainly as a way to undo erroneous
 calls to \cdf{export}.  It works only on symbols directly present
 in the current package, switching them back to internal status.  If
 \cdf{unexport} is given a symbol already accessible as an internal
 symbol in the current package, it does nothing; if it is given a symbol
 not accessible in the package at all, it signals an error.
-
-Функция \cdf{unexport} предоставляет как способ откатить ошибочное
-экспортирование символа. Она работает только для символов напрямую
-представленных в текущем пакете, меняя их свойство на <<внутреннее>>.
-Если \cdf{unexport} получает символ, который в текущем пакете уже является
-внутренним, она ничего не делает. Если получает вообще недоступный символ, то
-сигнализирует ошибку.
 
 \section{Name Conflicts}
 \label{NAME-CONFLICTS-SECTION}
@@ -938,35 +614,6 @@ that caused the error, and start over from scratch.
 
 \section{Built-in Packages}
 
-\begin{obsolete}
-\noindent
-The following packages, at least, are built into every Common Lisp system.
-
-\begin{flushdesc}
-\item[\cdf{lisp}]
-The package named \cdf{lisp} contains the primitives of the
-Common Lisp system.  Its external symbols include all of the
-user-visible functions and global variables that are present in the
-Common Lisp system, such as \cdf{car}, \cdf{cdr}, and \cdf{*package*}.
-Almost all other packages will want to use \cdf{lisp} so that these
-symbols will be accessible without qualification.
-
-\item[\cdf{user}]
-The \cdf{user} package is, by default, the current package at the time
-a Common Lisp system starts up.  This package uses the \cdf{lisp} package.
-\end{flushdesc}
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
-the forthcoming ANSI Common Lisp will use the package name \cdf{common-lisp}
-instead of \cdf{lisp} and the package name \cdf{common-lisp-user}
-instead of \cdf{user}.  The purpose is to allow a single Lisp system
-to support both ``old'' Common Lisp and ``new'' ANSI Common Lisp
-simultaneously despite the fact that in some cases
-the two languages use the same
-names for incompatible purposes.  (That's what packages are for!)
-
 \begin{flushdesc}
 \item[\cdf{common-lisp}]
 The package named \cdf{common-lisp} contains the primitives of the
@@ -989,40 +636,17 @@ This package uses the \cdf{common-lisp} package
 and has the nickname \cdf{cl-user}.
 It may contain other implementation-dependent symbols
 and may use other implementation-specific packages.
-
-Пакет \cdf{common-lisp-ise} является, по-умолчанию, текущим пакетом во время
-запуска ANSI Common Lisp системы.
-Этот пакет использует пакет \cdf{common-lisp} и имеет псевдоним \cdf{cl-user}.
-В зависимости от реализации он также может содержать другие символы и
-использовать платформоспецифичные пакеты.
 \end{flushdesc}
-\end{newer}
 
 \begin{flushdesc}
-\item[\cdf{keyword}]
+\item[\cd{keyword}]
 This package contains all of the keywords used by built-in
 or user-defined Lisp functions.  Printed symbol representations
 that start with a colon are interpreted as referring to symbols
 in this package, which are always external symbols.  All symbols in this
 package are treated as constants that evaluate to themselves, so that the
 user can type \cd{:foo} instead of \cd{':foo}.
-
-Этот пакет содержит все ключевые символы, используемые встроенными или
-пользовательскими Lisp'овыми функциями. Имя символа, начинающегося с двоеточего,
-интерпретируется, как ссылка на символ из этого пакета, который всегда является
-внешним. Все символы в этом пакете является константами, которые вычисляются
-сами в себя, поэтому пользователь может записывать \cd{:foo} вместо \cd{':foo}.
 \end{flushdesc}
-
-\begin{obsolete}
-\begin{flushdesc}
-\item[\cdf{system}]
-This package name is reserved to the implementation.
-Normally this is used to contain names of implementation-dependent
-system-interface functions.  This package uses \cdf{lisp} and has the
-nickname \cdf{sys}. 
-\end{flushdesc}
-\end{obsolete}
 
 \begin{new}
 X3J13 voted in January 1989
@@ -1088,7 +712,7 @@ package.
 \item defining it as a type specifier (\cdf{defstruct}, \cdf{defclass}, \cdf{deftype})
 \item defining it as a structure (\cdf{defstruct})
 \item defining it as a declaration
-\item dsing it as a symbol macro
+\item design it as a symbol macro FIXME
 \item altering its print name
 \item altering its package
 \item tracing it
@@ -1103,7 +727,8 @@ to add to this list the item
 \end{itemize}
 
 If such a symbol is not globally defined as a variable or a constant,
-a user program is allowed to lexically bind it and declare the \cdf{type} of that binding.
+a user program is allowed to lexically bind it and declare the \cdf{type} of
+that binding.
 
 If such a symbol is not defined as a function, macro, or special form,
 a user program is allowed to (lexically) bind it as a function and to declare the
@@ -1133,49 +758,8 @@ add properties to or remove properties from
 symbols in the \cdf{common-lisp} package.
 \end{newer}
 
-\section{Package System Functions and Variables Функции и переменные для системы
-пакетов}
+\section{Package System Functions and Variables}
 \label{PACKAGE-FUNCTIONS-SECTION}
-
-Some of the functions and variables in this section
-are described in previous sections but are included here
-for completeness.
-
-Некоторые из функций и переменных в этом разделе были описаны в предыдущих
-разделах, но включены сюда для завершенности.
-
-\begin{obsolete}
-It is up to each implementation's compiler to ensure that when a
-compiled file is loaded, all of the symbols in the file end up in the
-same packages that they would occupy if the Lisp source file were
-loaded.  In most compilers, this will be accomplished by treating
-certain package operations as though they are surrounded by
-\cd{(eval-when (compile load eval) ...)}; see \cdf{eval-when}.
-These operations are
-\cdf{make-package}, \cdf{in-package}, \cdf{shadow}, \cdf{shadowing-import},
-\cdf{export}, \cdf{unexport}, \cdf{use-package}, \cdf{unuse-package}, and \cdf{import}.
-To guarantee proper compilation in all Common Lisp
-implementations, these functions should appear only at top level within
-a file.  As a matter of style, it is suggested that each file contain
-only one package, and that all of the package setup forms appear near
-the start of the file.  This is discussed in more detail, with examples,
-in section~\ref{PACKAGE-EXAMPLE-SECTION}.
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{IN-PACKAGE-FUNCTIONALITY}
-to cancel the specifications of the preceding paragraph
-in order to support a model of file compilation in which the
-compiler need never take special note of ordinary function calls;
-only special forms and macros are recognized as affecting the state
-of the compilation process.
-As part of this change \cdf{in-package} was changed to be a macro
-rather than a function and its functionality was restricted.
-The actions of
-\cdf{shadow}, \cdf{shadowing-import}, \cdf{use-package},
-\cdf{import}, \cdf{intern}, and \cdf{export} for compilation
-purposes may be accomplished with the new macro \cdf{defpackage}.
-\end{newer}
 
 \beforenoterule
 \begin{implementation}
@@ -1198,15 +782,6 @@ If a symbol is supplied, its print name will be used as the package
 name; if a string is supplied, the user must take care to specify the
 same capitalization used in the package name, normally all uppercase.
 
-Для описанных здесь функций, все необязательные аргументы с именем
-\emph{package} имеют зачение по-умолчанию \cdf{*package*}. Там, где функция
-принимает аргумент, который может быть символом или списком символов, значение
-{\false} расценивается, как пустой список символов. Любой аргумент, описанный
-как имя пакета, может быть символом или строкой.
-Если указан символ, то используется его выводимое имя. Если строка, то
-пользователь должен позаботиться о преобразовании регистра символов в верхний
-там, где это необходимо.
-
 \begin{defun}[Variable]
 *package*
 
@@ -1214,26 +789,9 @@ The value of this variable must be a package; this package is said to be
 the current package.  The initial value of \cdf{*package*} is the \cdf{user}
 package.
 
-Значение этой переменной должно быть объектом пакета. Этот пакет называется
-текущим. Первоначальное значение \cdf{*package*} является пакетом \cdf{common-lisp-user}.
-\begin{newer}
-X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
-the forthcoming ANSI Common Lisp will use the package name \cdf{common-lisp-user}
-instead of \cdf{user}.
-\end{newer}
-
-The function \cdf{load} rebinds \cdf{*package*} to its current value.  If
-some form in the file changes the value of \cdf{*package*} during loading,
-the old value will be restored when the loading is completed.
-
-Функция \cdf{load} пересвязывает \cdf{*package*} в текущее значение. Если
-некоторая форма в файле во время загрузки изменяет значение \cdf{*package*},
-старое значение будет восстановлено после завершения загрузки.
-
-\begin{newer}
-X3J13 voted in October 1988 \issue{COMPILE-FILE-PACKAGE}
-to require \cdf{compile-file} to rebind \cdf{*package*} to its current value.
-\end{newer}
+The functions \cdf{load} and \cdf{compile-file} rebind \cdf{*package*} to its current value.  If
+some form in the file changes the value of \cdf{*package*} during loading or
+compilation, the old value will be restored when the loading is completed. 
 \end{defun}
 
 \begin{defun}[Function]
@@ -1252,92 +810,7 @@ The \cd{:use} argument is a list of packages or the names (strings or
 symbols) of packages whose external symbols are to be inherited by the
 new package.  These packages must already exist.  If not supplied,
 \cd{:use} defaults to a list of one package, the \cdf{lisp} package.
-
-Это функция создает и возвращает новый пакет с указанным именем. Как было
-описано выше, аргументом может быть или символ, или строка. Аргумент
-\cd{:nicknames} должен быть списком строк, которые будут псевдонимами. И здесь
-пользователь вместо строк может указывать символы, в случае которых будут
-использоваться выводимые имена. Это имя и псевдонимы не могут конфликтовать с
-уже имеющимися именами пакетов. Если конфликт произошел, сигнализируется ошибка
-с возможностью исправления.
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
-the forthcoming ANSI Common Lisp will use the package name \cdf{common-lisp}
-instead of \cdf{lisp}.
-\end{newer}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{MAKE-PACKAGE-USE-DEFAULT}
-to change the specification of \cdf{make-package} so that the default value
-for the \cd{:use} argument is unspecified.  Portable code should
-specify \cd{:use~'("COMMON-LISP")} explicitly.
-
-\beforenoterule
-\begin{rationale}
-Many existing implementations of Common Lisp happen to have violated
-the first edition specification, providing as the default not only
-the \cdf{lisp} package but also (or instead) a package containing
-implementation-dependent language extensions.
-This is for good reason: usually it is much
-more convenient to the user for the default \cd{:use} list to be
-the entire, implementation-dependent, extended language rather
-than only the facilities specified in this book.  The X3J13 vote
-simply legitimizes existing practice.
-\end{rationale}
-\afternoterule
-\end{new}
 \end{defun}
-
-
-\begin{obsolete}
-\begin{defun}[Function]
-in-package package-name &key :nicknames :use
-
-The \cdf{in-package} function is intended to be placed at the start of a
-file containing a subsystem that is to be loaded into some package other
-than \cdf{user}.
-
-If there is not already a package named \emph{package-name}, this
-function is similar to \cdf{make-package}, except that after the
-new package is created, \cdf{*package*} is set to it.  This binding will
-remain in force until changed by the user (perhaps with another
-\cdf{in-package} call) or until the \cdf{*package*} variable reverts to its
-old value at the completion of a \cdf{load} operation.
-
-If there is an existing package whose name is \emph{package-name}, the
-assumption is that the user is re-loading a file after making some
-changes.  The existing package is augmented to reflect any new nicknames
-or new packages in the \cd{:use} list (with the usual error checking), and
-\cdf{*package*} is then set to this package.
-\end{defun}
-\end{obsolete}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{RETURN-VALUES-UNSPECIFIED}
-to specify that \cdf{in-package} returns the new package, that is, the
-value of \cdf{*package*} after the operation has been executed.
-\end{new}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
-the forthcoming ANSI Common Lisp will use the package name \cdf{common-lisp-user}
-instead of \cdf{user}.
-\end{newer}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{IN-PACKAGE-FUNCTIONALITY}
-to restrict the functionality of \cdf{in-package} and to make it a macro.
-This is an incompatible change.
-
-    Making \cdf{in-package} a macro rather than a function means that there
-    is no need to require \cdf{compile-file} to handle it specially.  Since
-    \cdf{defpackage} is also defined to have side
-    effects on the compilation environment,
-    there is no need to require any of the package functions to be treated
-    specially by the compiler.
 
 \begin{defmac}
 in-package name
@@ -1348,15 +821,9 @@ This macro causes \cdf{*package*} to be set to the package named \emph{name},
     package does not already exist.  Everything this macro does is also
     performed at compile time if the call appears at top level.
 
-Этот макрос пересвязывает переменную \cdf{*package*} с пакетом, имя которого
-указано в параметре \emph{name}. Параметр \emph{name} может быть строкой или
-символом. Форма \emph{name} не вычисляется.
-В случае отсутствия пакета, сигнализируется ошибка.
-Кроме того, в случае вызова в качестве формы верхнего уровня, этот макрос
-работает и во время компиляции.
+\cdf{in-package} returns the new package, that is, the
+value of \cdf{*package*} after the operation has been executed.
 \end{defmac}
-\end{newer}
-
 
 \begin{defun}[Function]
 find-package name
@@ -1367,19 +834,8 @@ print name is used.  The package with that name or nickname
 is returned; if no such package exists, \cdf{find-package} returns {\false}.
 The matching of names observes case (as in \cdf{string=}).
 
-Параметр \emph{name} должен быть строкой, которая является именем или
-псевдонимом искомого пакета. Этот параметр может также быть символов, в случае
-которого используется выводимое имя. В результате возвращается объект пакета с
-указанным именем или псевдонимом. Если пакет найден не был, то
-\cdf{find-package} возвращает {\false}.
-Сравнение имен регистрозависимо (как в \cdf{string=}).
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to allow \cdf{find-package} to accept a package object, in which case
-the package is simply returned (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
+\emph{package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
 \end{defun}
 
 \begin{defun}[Function]
@@ -1388,25 +844,11 @@ package-name package
 The argument must be a package.  This function returns the string that
 names that package.
 
-Аргумент должен быть объектом пакета. Данная функция возвращает строку имени
-указанного пакета.
+\emph{package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to allow \cdf{package-name} to accept a package name or nickname, in which case
-the primary name of the package so specified is returned
-(see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-DELETION}
-to add a function to delete packages.
-One consequence of this vote is that \cdf{package-name}
-will return \cdf{nil} instead of a package name if applied
-to a deleted package object.  See \cdf{delete-package}.
-\end{new}
+\cdf{package-name} returns \cdf{nil} instead of the package if the package has been
+removed. See \cdf{delete-package}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1415,15 +857,8 @@ package-nicknames package
 The argument must be a package.  This function returns the list of
 nickname strings for that package, not including the primary name.
 
-Аргумент должен быть объектом пакета. Эта функция возвращает список псевдонимов
-для заданного пакета, не включая главное имя.
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to allow \cdf{package-nicknames} to accept a package name or nickname,
-in which case the nicknames of the package so specified are returned
-(see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
+\emph{package} argument may be either a package object
+or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
 \end{defun}
 
 \begin{defun}[Function]
@@ -1434,22 +869,8 @@ and are replaced by \emph{new-name} and \emph{new-nicknames}.  The
 \emph{new-name} argument is a string or symbol; the \emph{new-nicknames}
 argument, which defaults to {\false}, is a list of strings or symbols.
 
-Старое имя и все старые псевдонимы пакета \emph{package} удаляются и заменяются
-на \emph{new-name} и \emph{new-nicknames}. Аргумент \emph{new-name} может быть
-строкой или символом. Аргумент \emph{new-nicknames}, который по-умолчанию
-{\false}, является списком строк или символов.
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{RETURN-VALUES-UNSPECIFIED}
-to specify that \cdf{rename-package} returns \emph{package}.
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1457,13 +878,8 @@ package-use-list package
 
 A list of other packages used by the argument package is returned.
 
-Данная функция возвращает список пакетов, используемых указанным в параметре пакетом.
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1471,13 +887,8 @@ package-used-by-list package
 
 A list of other packages that use the argument package is returned.
 
-Данная функция возвращает список пакетов, использующих указанный в параметре пакет.
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1487,16 +898,8 @@ A list is returned of symbols that have been declared as shadowing
 symbols in this package by \cdf{shadow} or \cdf{shadowing-import}.  All
 symbols on this list are present in the specified package.
 
-Данная функция возвращает список символов, которые были задекларированы, как
-скрывающие символы, с помощью \cdf{shadow} или \cdf{shadowing-import}. Все
-символы в этом списке является \emph{родственными} указанному пакету.
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1504,19 +907,12 @@ list-all-packages
 
 This function returns a list of all packages that currently exist in the
 Lisp system.
-
-Эта функция возвращает список всех пакетов, которые существуют в Lisp'овой
-системе. 
 \end{defun}
 
-
-\begin{new}
 \begin{defun}[Function]
 delete-package package
 
-X3J13 voted in January 1989
-\issue{PACKAGE-DELETION}
-to add the \cdf{delete-package} function, which
+The \cdf{delete-package} function 
 deletes the specified \emph{package} from all package system data structures.
 The \emph{package} argument may be either a package or the name of a package.
 
@@ -1554,7 +950,6 @@ will have unspecified results.
 \cdf{delete-package} returns \cdf{t} if the deletion succeeds,
 and \cdf{nil} otherwise.
 \end{defun}
-\end{new}
 
 \begin{defun}[Function]
 intern string &optional package
@@ -1568,7 +963,6 @@ If no such symbol is found, one is created and is installed in the
 specified package as an internal symbol (as an external symbol
 if the package is the \cdf{keyword} package); the specified package becomes the
 home package of the created symbol.
-
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
@@ -1594,24 +988,8 @@ The symbol was inherited via \cdf{use-package} (which
 implies that the symbol is internal).
 \end{indentdesc}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
-
-\beforenoterule
-\begin{incompatibility}
-Conceptually, \cdf{intern} translates a
-string to a symbol.  In MacLisp and several other dialects of Lisp,
-\cdf{intern} can take either a string or a symbol as its argument; in the 
-latter case, the symbol's print name is extracted and used as the string.  
-However, this leads to some confusing issues about what to do if
-\cdf{intern} finds a symbol that is not \cdf{eq} to the argument symbol.  To
-avoid such confusion, Common Lisp requires the argument to be a string.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -1624,12 +1002,8 @@ value and the second value is as specified for \cdf{intern}.  If the
 symbol is not accessible in the specified package, both values are
 {\false}.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1648,18 +1022,8 @@ and {\false} otherwise.
 package system in such a way that the consistency rules do not hold
 across the change.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
-
-\beforenoterule
-\begin{incompatibility}
-The equivalent of this in MacLisp is \cdf{remob}.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -1674,29 +1038,21 @@ By convention, a call to \cdf{export} listing all exported symbols is
 placed near the start of a file to advertise which of the symbols
 mentioned in the file are intended to be used by other programs.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+\emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
 unexport symbols &optional package
 
-The argument should be a list of symbols, or possibly a single symbol.
+The \emph{symbols} argument should be a list of symbols, or possibly a single symbol.
 These symbols become internal symbols in \emph{package}.
 It is an error to unexport a symbol from the \cdf{keyword} package
 (see section~\ref{EXPORT-IMPORT-SECTION}).
 \cdf{unexport} returns {\true}.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1711,19 +1067,12 @@ some distinct symbol already accessible in the package
 (see section~\ref{EXPORT-IMPORT-SECTION}).
 \cdf{import} returns {\true}.
 
-\begin{newer}
-X3J13 voted in June 1987 \issue{IMPORT-SETF-SYMBOL-PACKAGE}
-to clarify that if any symbol to be imported has no home package
+If any symbol to be imported has no home package
 then \cdf{import} sets the home package of the symbol to the
 \emph{package} to which the symbol is being imported.
-\end{newer}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1740,12 +1089,8 @@ shadowing-symbols list of \emph{package}
 caution.  It changes the state of the package system in such a way that
 the consistency rules do not hold across the change.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1761,26 +1106,12 @@ shadowing-symbols list of the \emph{package}
 (see section~\ref{NAME-CONFLICTS-SECTION}).
 \cdf{shadow} returns {\true}.
 
-\begin{newer}
-X3J13 voted in March 1988 \issue{SHADOW-ALREADY-PRESENT}
-to change \cdf{shadow} to accept strings as well as well as symbols
-(a string in the \emph{symbols} list being treated as a print name),
-and to clarify that if a symbol of specified name is already in
-the \emph{package} but is not yet on the shadowing-symbols list
-for that \emph{package}, then \cdf{shadow} does add it to the shadowing-symbols
-list rather than simply doing nothing.
-\end{newer}
-
 \cdf{shadow} should be used with
 caution.  It changes the state of the package system in such a way that
 the consistency rules do not hold across the change.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1795,12 +1126,8 @@ as internal symbols
 It is an error to try to use the \cdf{keyword} package.
 \cdf{use-package} returns {\true}.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1811,21 +1138,9 @@ package names, or possibly a single package or package name.  These
 packages are removed from the use-list of \emph{package}.
 \cdf{unuse-package} returns {\true}.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 \end{defun}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{DEFPACKAGE}
-to add a macro \cdf{defpackage} to the
-language to make it easier to create new packages, alleviating the burden
-on the programmer to perform the various setup operations in exactly the
-correct sequence.
 
 \begin{defmac}
 defpackage defined-package-name {option}*
@@ -1882,14 +1197,7 @@ is no symbol of that name accessible in the package named \emph{package-name}.
 The package being defined is made to ``use'' (inherit from)
 the packages specified by this option, just as with
 the function \cdf{use-package}.
-If no \cd{:use} option is supplied, then a default list is assumed
-as for \cdf{make-package}.
-
-X3J13 voted in January 1989
-\issue{MAKE-PACKAGE-USE-DEFAULT}
-to change the specification of \cdf{make-package} so that the default value
-for the \cd{:use} argument is unspecified.  This change affects \cdf{defpackage}
-as well.  Portable code should specify \cd{(:use~'("COMMON-LISP"))} explicitly.
+If no \cd{:use} option is supplied, then option is unspecified.
 
 \item[\cd{(:import-from \emph{package-name} \Mstar\emph{symbol-name})}]
 Symbols with the specified names are located in the specified package.
@@ -1944,6 +1252,7 @@ undefined if the new definition is not consistent with the current
 state of the package.
 
 An error is signaled if more than one \cd{:size} option appears.
+Если опция \cd{:size} указана более одного раза сигнализируется ошибка.
 
 An error is signaled if the same \cdf{symbol-name} argument (in the sense
 of comparing names with \cdf{string=}) appears more than once among
@@ -2049,7 +1358,6 @@ Implementations and programming environments may also be better able
 to support the programming process (if only by providing better
 error checking) through global knowledge of the intended package setup.
 \end{defmac}
-\end{new}
 
 \begin{defun}[Function]
 find-all-symbols string-or-symbol
@@ -2080,12 +1388,8 @@ which symbols are contained in the \emph{package}, other than possibly to
 remove the symbol currently the value of \emph{var} by using \cdf{unintern},
 the effects are unpredictable.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 
 \begin{new}
 X3J13 voted in March 1988
@@ -2122,6 +1426,7 @@ do-external-symbols (var [package [result]])
 
 \cdf{do-external-symbols} is just like \cdf{do-symbols}, except that only
 the external symbols of the specified package are scanned.
+
 \begin{new}
 The clarification voted by X3J13
 in March 1988 for \cdf{do-symbols}
@@ -2130,12 +1435,8 @@ regarding redundant executions of the body for the same symbol,
 applies also to \cdf{do-external-symbols}.
 \end{new}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 
 \begin{new}
 X3J13 voted in January 1989
@@ -2164,12 +1465,8 @@ regarding redundant executions of the body for the same symbol,
 applies also to \cdf{do-all-symbols}.
 \end{new}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{PACKAGE-FUNCTION-CONSISTENCY}
-to clarify that the \emph{package} argument may be either a package object
+The \emph{package} argument may be either a package object
 or a package name (see section~\ref{PACKAGE-NAMES-SECTION}).
-\end{new}
 
 \begin{new}
 X3J13 voted in January 1989
@@ -2268,103 +1565,8 @@ and efficient (see chapter~\ref{LOOP}).
 \end{defmac}
 \end{new}
 
-\section{Modules}
-
-A \emph{module} is a Common Lisp subsystem that is loaded from one or more
-files.  A module is normally loaded as a single unit, regardless of how
-many files are involved.  A module may consist of one package or several
-packages.  The file-loading process is necessarily
-implementation-dependent, but Common Lisp provides some very simple
-portable machinery for naming modules, for keeping track of which modules
-have been loaded, and for loading modules as a unit.
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{REQUIRE-PATHNAME-DEFAULTS}
-to eliminate the entire module facility from
-the language; that is, the variable \cd{*modules*} and the functions
-\cdf{provide} and \cdf{require} are deleted.
-X3J13 commented that the file-loading feature of \cdf{require} is not
-portable, and that the remaining functionality is easily implemented
-by user code.  (I will add that in any case the specification of
-\cdf{require} is so vague that different implementations are likely to
-have differing behavior.)
-\end{new}
-
-\begin{defun}[Variable]
-*modules*
-
-The variable \cd{*modules*} is a list of names of the modules
-that have been loaded into the Lisp system so far.
-This list is used by the functions \cdf{provide} and \cdf{require}.
-\end{defun}
-
-\begin{defun}[Function]
-provide module-name \\
-require module-name &optional pathname
-
-Each module has a unique name (a string).  The \cdf{provide} and \cdf{require}
-functions accept either a string or a symbol as the \emph{module-name}
-argument.  If a symbol is provided, its print name is used as the module
-name.  If the module consists of a single package, it is customary for
-the package and module names to be the same.
-
-The \cdf{provide}
-function adds a new module name to the list of modules
-maintained in the variable \cd{*modules*}, thereby indicating that
-the module in question has been loaded.
-
-The \cdf{require} function tests whether a module is already present
-(using a case-sensitive comparison); if the module is not present,
-\cdf{require} proceeds to load the appropriate
-file or set of files.  The \emph{pathname} argument, if present, is a single
-pathname or a list of pathnames whose files are to be loaded in order,
-left to right.  If the \emph{pathname} argument is {\false} or is not provided,
-the system will attempt to determine, in some
-system-dependent manner, which files to load.
-This will typically involve some central
-registry of module names and the associated file lists.
-
-\begin{new}
-X3J13 voted in March 1988
-not to permit symbols as pathnames
-\issue{PATHNAME-SYMBOL} and
-to specify exactly which streams may be used as pathnames
-\issue{PATHNAME-STREAM} (see section~\ref{PATHNAME-FUNCTIONS}).
-Of course, this is moot if \cdf{require} is not in the language.
-\end{new}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{RETURN-VALUES-UNSPECIFIED}
-to specify that the values returned by \cdf{provide} and \cdf{require}
-are implementation-dependent.  Of course, this is moot
-if \cdf{provide} and \cdf{require} are not in the language.
-\end{new}
-
-
-\beforenoterule
-\begin{implementation}
-One way to implement such a registry on
-many operating systems is simply to use a distinguished ``library''
-directory within the file system, where the name of each file
-is the same as the module it contains.
-\end{implementation}
-\afternoterule
-\end{defun}
-
 \section{An Example}
 \label{PACKAGE-EXAMPLE-SECTION}
-
-\begin{obsolete}\noindent
-Most users will want to load and use packages but will never need to
-build one.  Often a user will load a number of packages into the
-\cdf{user} package whenever using Common Lisp.  Typically an implementation
-might provide some sort of initialization file  mechanism to make such setup
-automatic when the Lisp starts up.  Table~\ref{INIT-FILE-TABLE}
-shows such an initialization file, one that simply
-causes other facilities to be loaded.
-\end{obsolete}
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
@@ -2451,7 +1653,7 @@ Finally, the definitions making up the contents of this package/module.
 The following mnemonic sentence may be helpful in remembering
 the proper order of these calls:
 \begin{center}
-{\bf Put in seven extremely random user interface commands.}
+\textbf{Put in seven extremely random user interface commands.}
 \end{center}
 Each word of the sentence corresponds to one item in the above ordering:
 \begin{tabbing}
@@ -2825,3 +2027,1183 @@ solve all the possible problems of package and file management.
 Neither did \cdf{require} and \cdf{provide}.  Perhaps further experimentation
 will yield facilities appropriate for future standardization.
 \end{new}
+
+%RUSSIAN
+\else
+
+\chapter{Пакеты}
+\label{XPACK}
+
+Одна проблема была с ранними реализациями Lisp систем --- это использование
+одного пространства имен для всех символов. В больших Lisp'овых системах, с
+модулями написанными разными программистами, случайные совпадения имен стали
+серьёзной проблемой. Common Lisp решает эту проблему с помощью \emph{системы
+  пакетов}, производной от ранней системы пакетов, разработанной для Lisp
+Machine \cite{BLUE-LISPM}.
+В дополнения к избежанию конфликтов имён, система пакетов делает модульную
+структуру больших Lisp систем более явной.
+
+\emph{Пакет} --- это структура данных, которая устанавливает связь между
+выводимыми именами (строкой) и символами. Таким образом пакет заменяет
+<<oblist>> или <<obarray>> из ранних версий Lisp'овых систем. В любое время
+только один пакет является текущим, и этот пакет используется Lisp'овым
+читателем при преобразовании строк в символы. Текущий пакет является, по
+определению, значение глобальной переменной \cdf{*package*}. С помощью
+\emph{имени пакета} в выводимом имени символа существует возможность
+ссылаться на символы других, а не текущего, пакетов.
+Например, когда \cd{foo:bar} будет прочтён Common Lisp'ом, то будет ссылаться на
+символ \cd{bar} из пакета \cd{foo}.
+(А точнее, это верно только, если \cd{bar} является экспортированным символом из
+\cd{foo}, то есть символом, который является видимым извне \cd{foo}. Ссылка на
+внутренний символ требует удваивания двоеточия: \cd{foo::bar}.)
+
+Отображение строк в символы доступное в данном пакете делиться на два вида:
+\emph{внешнее} и \emph{внутреннее}. Речь идёт о символах доступных с помощью
+этих отображений, как о \emph{внешних} и \emph{внутренних} символах пакета, хотя
+на самом деле различаются отображения, а не символы.
+Внутри заданного пакета, имя ссылается на один или ноль символов. Если оно
+ссылается на символ, тогда этот символ в данном пакете внешний или внутренний в,
+но не одновременно. 
+
+Внешние символы являются частью интерфейса пакета доступного в других
+пакетах. Внешние символы должны быть выбраны с особой тщательностью и
+публиковаться для пользователей этого пакета. Внутренние символы
+предусмотрены только для внутреннего использования, и эти символы обычно скрыты
+от других пакетов. Большинство символов создаются как внутренние. Они становятся
+внешними только, если явно передаются в команду \cdf{export}.
+
+Символ может встречаться во многих пакетах. Он будет всегда иметь одно и то же
+имя, но в некоторых пакетах может быть внешним, а в других внутренним. С другой
+стороны, одно и то же имя (строка) может ссылаться на различные символы в
+различных пакетах.
+
+Обычно, символ, который встречается в одном и более пакетах, будет иметь только
+один родительский пакет, называемый \emph{домашний пакет} символа. Говорится,
+что такой пакет владеет символом.
+Все символы содержат компонент, называется \emph{ячейка пакета}, которая хранит
+указатель на домашний пакет.
+Символ, который имеет домашний пакет, называется \emph{интернированным}.
+Некоторые символы не имеют домашнего пакета. Они называются
+дезинтернированными. Их ячейка пакета содержит значение {\false}.
+
+Пакеты могут быть представлены как слои. С этой точки зрения, для пользователя,
+пакет выглядит как коллекция отображений из строк во внутренние и внешние
+символы. Однако, некоторые из этих отображений могут устанавливаться внутри
+самого пакета, тогда как другие отображения наследуются из других пакетов с
+помощью конструкции \cdf{use-package}. (Механизм такого наследования описан
+ниже.) В дальнейшем, мы будем называть символ, \emph{доступным} в пакете, если
+на него можно сослаться без указания имени пакета, вне зависимости от
+того унаследовано ли отображение символов, или установлено текущим пакетом. И мы
+будем называть символ \emph{родным} в пакете, если отображение установлено
+самим пакетом, а не унаследовано. Таким образом настоящий символ в пакете
+является доступным, но доступный символ не обязательно является настоящим.
+
+Символ называется \emph{интернированным в пакет}, если он доступен в этом
+пакете и имеет некоторый родительский пакет. Обычно все символы
+доступные в пакете будут фактически в собственности некоторого пакета, но такая
+терминология полезна, когда описываются патологические случаи доступности
+никому не принадлежащего (дезинтернированного) символа.
+
+Как глагол, \emph{интернировать} символ в пакет, означает сделать так, чтобы
+пакет стал владельцем символа, если этого было не так.
+Этот процесс выполняется функцией \cdf{intern}.
+Если символ прежде был бесхозным (никому не принадлежал), тогда пакет становится
+его владельцем (домашним пакетом). Но если символ уже принадлежал кому-то, то
+принадлежность не меняется.
+
+\emph{Дезинтернировать} символ из пакета означает убрать его из пакета. Данный
+процесс выполняется функцией \cdf{unintern}. FIXME
+
+\section{Правила согласованности}
+
+Ошибки связанные с пакетами могут быть очень тонкими и запутанными. Система
+пакетов Common Lisp'а спроектирована с рядом безопасных функций для
+предотвращения большинства распространённых ошибок, которые могли бы быть при
+обычном использовании. Может показаться, что защита используется излишне,
+однако опыт предыдущих систем пакетов показал, что такие меры необходимы.
+
+При работе с системой пакетов, полезно держать в памяти следующие правила,
+которые остаются в силе пока пользователи не изменил значение \cdf{*package*}:
+
+\begin{itemize}
+\item
+\emph{Согласованность чтения-чтения:} Чтение одного и того же имени приводит к
+одному и тому же символу (\cdf{eq} вернёт истину).
+
+\item
+\emph{Согласованность вывода-чтения:} Интернированный символ всегда выводится,
+как последовательность строковых символов, которые при повторном чтении дают
+исходный символ (\cdf{eq} вернёт истину).
+
+\item 
+\emph{Print-print consistency:} Если два интернированных символа не равны
+\cdf{eq}, тогда их печатаемые отображения будут различными последовательностями
+строковых символов.
+\end{itemize}
+
+Эти правила согласованности остаются в силе несмотря на любое количество неявных
+случаев интернирования в Lisp'овых формах, загрузках файлов и так далее. Важное
+значение заключается в том, что пока текущий пакет не меняется, результаты
+воспроизводимы вне зависимости от порядка загрузки файлов или истории вводимых
+символов. Правила могут быть нарушены только явным действием: изменением
+значения \cdf{*package*}, продолжением выполнения после ошибки, или вызовом
+одной из <<опасных>> функций \cdf{unintern}, \cdf{unexport}, \cdf{shadow},
+\cdf{shadowing-import} или \cdf{unuse-package}. 
+
+\section{Имена пакетов}
+\label{PACKAGE-NAMES-SECTION}
+
+Каждый пакет имеет имя (строку) и, возможно, несколько псевдонимов. Они
+присваиваются, когда пакет создаётся, однако, могут быть изменены
+позднее. Имя пакета должно быть длинным и информативным, например
+\cdf{editor}. Псевдоним должен быть коротким и простым в написании, например
+\cdf{ed}.
+
+Для имен пакетов существует только одно пространство имен. Функция
+\cdf{find-package} транслирует имя или псевдоним пакета в связанный объект
+пакета. Функция \cdf{package-name} возвращает имя пакета. Функция
+\cdf{package-nicknames} возвращает список всех псевдонимов для пакета. Функция
+\cdf{rename-package} удаляет текущее имя пакета и псевдонимы и заменяет их на
+указанные пользователем. Переименование пакета изредка бывает полезным,
+например, для разработки, когда необходимо загрузить две версии одного пакета в
+Lisp систему. Можно загрузить первую версию, переименовать её, и затем загрузить
+другую версию, без разрешения конфликтов имен.
+
+Когда Lisp считыватель встречают полное имя символа, он обрабатывает часть для
+имени пакета, также как и часть для имени символа, возводя все неэкранированные
+строковые символы в верхний регистр. Экранирование строковых символов
+производится с помощью символов \cd{{\Xbackslash}} или \cd{|}. Поиск,
+осуществляемый функцией \cdf{find-package}, является регистрозависимым, также
+как и для символов. Следует отметить, что \cd{|Foo|:|Bar|} ссылается на символ,
+имя которого \cd{Bar}, в пакете \cd{Foo}. Для сравнения \cd{|Foo:Bar|} ссылается
+на семизначный символ, имя которого содержит двоеточие (а также две заглавные и
+четыре прописные буквы) и интернирован в текущий пакет. В данной книге символы и
+пакеты указываются без экранирования строковыми символами только в нижнем
+регистре, при этом внутри Lisp машины они будут переведены в верхний регистр.
+
+Большинство функции, которые принимают имя пакета, могут принимать или символ,
+или строку. Если указан символ, то используется его выводимое имя, которое
+подвергается обычным преобразованиям в верхний регистр. Если указана строка, она
+должна быть преобразована для полного совпадения с именем пакета.
+
+\section{Преобразование строк в символы}
+\label{STRING-TO-SYMBOL-SECTION}
+
+Значение специальной переменной \cdf{*package*} должно всегда быть объектом
+пакета (не именем). Вне зависимости от объекта пакета в \cdf{*package*}, он
+называется \emph{текущим пакетом}.
+
+Когда Lisp'овый считыватель получает строку для символа, он ищет его имя в
+текущем пакете.
+Данный поиск может привести к поиску в других пакетах, экспортированные символы
+которых унаследованы текущим пакетом. Если имя найдено, то возвращается
+соответствующий символ. Если имя не найдено (то есть, в текущем пакете не
+существует соответствующего доступного символа), то создаётся новый символ и
+помещается в текущий пакет. Если точнее, то текущий пакет становится владельцем
+(домашним пакетом) символа.
+Если это имя будет прочитано ещё раз позже и в этом же пакете, то этот уже
+созданный символ будет возвращён.
+
+Часто необходимо сослаться на внешний символ в некотором другом, не текущем
+пакете. Это может быть сделано с помощью \emph{полного имени}, включающем имя
+пакета, затем двоеточие, и наконец имя символа. Это приводит к поиску символа
+в указанном, а не текущем пакете. Например, \cd{editor:buffer} ссылается на
+внешний символ с именем \cdf{buffer} доступный из пакета с именем \cdf{editor},
+вне зависимости от того, если в текущем пакете символ с таким же именем.
+Если пакета с именем \cdf{editor} или символа с именем \cdf{buffer} в указанном
+пакете, Lisp'овые считыватель сигнализирует исправимую ошибку.
+
+В редких случаях, пользователь может нуждаться в ссылке на \emph{внутренний}
+символ некоторого не текущего пакета. Это нельзя сделать с помощью двоеточия,
+так как данная запись позволяет ссылаться только на внешние символы. Однако, это
+можно сделать с помощью двойного двоеточия \cd{::}, указанного вместо
+одинарного. Если используется \cd{editor::buffer}, то эффект такой же, как если
+бы произошла попытка найти символ с именем \cdf{buffer} и \cdf{*package*} была
+связана с объектом с именем \cd{editor}. Двойное двоеточие должно использоваться
+с осторожностью.
+
+Пакет с именем \cdf{keyword} содержит все ключевые символы используемые
+Lisp'овой системой и пользовательским кодом. Такие символы должны быть легко
+доступны из любого пакета, и конфликт имен не является проблемой, так как эти
+символы используются только в качестве меток и не содержат значений. Так как
+ключевые символы используются часто, то Common Lisp для них предоставляет
+специальный синтаксис. Любой символ с двоеточием в начале и без имени пакета
+(например \cd{:foo}) добавляется (или ищется) в пакете \cdf{keyword} как
+\emph{внешний} символ. Пакет \cdf{keyword} также отличается тем, что при
+добавлении в него символа, последний автоматически становится внешним. Символ
+также автоматически декларируется как константа (смотрите \cdf{defconstant}) и
+его значением становится он сам.
+В целях стиля, ключевые символы должны всегда быть доступны с помощью двоеточия
+в начале имени. Пользователь никогда не должен импортировать или наследовать
+ключевые символы в другие пакета. Попытка использовать \cdf{use-package} для
+\cdf{keyword} пакета является ошибкой.
+
+Каждый символ содержит ячейку пакета, которая используется для записи домашнего
+пакета символа, или {\false}, если пакет неинтернированный. Эта ячейка доступна
+с помощью функции \cdf{symbol-package}.
+Когда интернированный символ печатается, если это символ в пакете ключевых
+символов, тогда он выводится с двоеточием в начале, иначе, если он доступен
+(напрямую или унаследовано) в текущем пакете, он печатается без имени пакета,
+иначе он печатается полностью, с именем пакета, именем символа и \cd{:} в
+качестве разделителя для внешнего символа, и \cd{::} для внутреннего.
+
+Символ, у которого слот (ячейка) пакета содержит {\false} (то есть, домашний
+пакет отсутствует) печатается с \cd{\#:} вначале. С использованием \cdf{import}
+и \cdf{unintern} возможно создать символ, который не имеет домашнего пакета, но
+фактически доступен в некоторых пакетах.
+Lisp система не проверяет такие патологические случаи, и такие символы будут
+всегда печататься с предшествующими \cd{\#:}.
+
+В целом, синтаксис имен символов может быть выражен в следующих четырёх примерах.
+
+\begin{flushdesc}
+\item[\cd{foo:bar}]
+При прочтении, выполняется поиск символа \cd{BAR} среди внешних символов пакета
+\cd{FOO}. При выводе, когда символ \cd{bar} является внешним в домашнем пакете
+\cd{foo} и недоступен в текущем пакете.
+
+\item[\cd{foo::bar}]
+При прочтении, интернирует символ \cd{BAR}, как если бы пакет \cd{FOO} являлся
+текущим. При выводе, когда символ \cd{bar} является внутренним в его домашнем
+пакете \cd{foo} и недоступен в текущем пакете.
+
+\item[\cd{:bar}]
+При прочтении, интернирует \cd{BAR} как внешний символ в пакете \cd{keyword} и
+выполняет его самого в себя. При выводе, когда \cd{keyword} является домашним
+пакетом для символа.
+
+\item[\cd{\#:bar}]
+При прочтении, создаёт новый дезинтернированный символ с именем \cd{BAR}.
+При выводе, когда символ \cd{bar} не имеет домашнего пакета.
+\end{flushdesc}
+
+Все другие использования двоеточия внутри имен символов не определены Common
+Lisp'ом, но зарезервированы для реализаций. Сюда включены имена с двоеточием в
+конце, или содержащими два и более двоеточиях или просто состоящими из
+двоеточия.
+
+\section{Экспортирование и импортирование символов} 
+\label{EXPORT-IMPORT-SECTION}
+
+Символы из одного пакета могут стать доступными в другом пакете двумя способами.
+
+Первый способ, каждый отдельный символ может быть добавлен в пакет использованием
+функции \cdf{import}. Форма \cd{(import 'editor:buffer)} принимает внешний
+символ с именем \cd{buffer} в пакете \cd{editor} (этот символ распознаётся Lisp
+считывателем) и добавляет его в текущий пакет в качестве внутреннего
+символа. Символ становится доступным в текущем пакете. Импортированный символ
+автоматически не экспортируется из текущего пакета, но если он уже существовал в
+пакете и был внешним, то это свойство не меняется. После вызова \cdf{import}
+в импортирующем пакете появляется возможность ссылаться на \cdf{buffer} без
+указания полного имени. Свойства \cdf{buffer} в пакете \cdf{editor} не меняются,
+\cdf{editor} продолжает оставаться домашним пакетом для этого символа. Будучи
+импортированным, символ будет присутствовать в пакете и может быть удалён только
+с помощью вызова \cdf{unintern}.
+
+Если символ уже присутствует в импортирующем пакете, \cdf{import} ничего не
+делает. Если другой символ с таким же именем \cdf{buffer} уже доступен в
+импортирующем пакете (напрямую или унаследован), тогда сигнализируется ошибка с
+возможностью исправления ситуации, как написано в
+разделе~\ref{NAME-CONFLICTS-SECTION}, потому \cdf{import} не допускает сокрытия
+одного символа другим.
+
+Символ называется скрытым другим символом в некотором пакете. Это когда первый
+символ был бы доступен через наследование, если бы не присутствие второго
+символа.
+Для импортирования символа без ошибки скрытия, используйте функцию
+\cdf{shadowing-import}. Она вставляет символ в указанный пакет, как внутренний
+символ, вне зависимости от того, происходит ли скрытие другого символа с тем же
+именем.
+Если другой символ с тем же именем присутствовал в пакете, тогда этот символ
+сначала удаляется из пакета \cdf{unintern}. Новый символ добавляется в список
+затеняющих символов FIXME. \cdf{shadowing-import} должна использоваться
+аккуратно. Она изменяем состояние системы пакетов так, что правила согласованности
+могут перестать работать.
+
+Второй способ предоставляется функцией \cdf{use-package}. Эта функция делает
+так, что пакет наследует все внешние символы некоторого другого пакета. Эти
+символы становятся доступными, как \emph{внутренние} символы, используемого
+пакета. То есть, на них можно ссылаться без указания пакета внутри текущего
+пакета, но они не становятся доступными в других пакетах, использующих
+данный. Следует отметить, что \cdf{use-package}, в отличие от \cdf{import}, не
+делает новые символы \emph{родственными} в текущем пакете, а делает их только
+\emph{доступными} с помощью наследования отображения символов.
+\cdf{use-package} проверяет конфликты имен между импортируемыми и уже доступными
+символами в импортирующем пакете. Это подробнее описано в
+разделе~\ref{NAME-CONFLICTS-SECTION}.
+
+Обычно пользователь, по-умолчанию работая в пакете \cdf{user}, будет загружать
+ряд пакетов в Lisp систему для предоставления расширенного рабочего окружения, и
+затем вызывать \cdf{use-package} для каждого из этих пакетов для простого
+доступа к их внешним символами.
+\cdf{unuse-package} производит обратные действия относительно
+\cdf{use-package}. Внешние символы используемые пакетом перестают
+наследоваться. Однако, любые импортированные символы, остаются доступными.
+
+Не существует способа наследовать \emph{внутренние} символы другого пакета. Для
+ссылки на внутренний символ, пользователь должен поменять домашний пакет для
+данного символа на текущий, использовать полное имя (вместе с пакетом) или
+импортировать этот символ в текущий пакет.
+
+\begin{newer}
+Различие между внешними и внутренними символами прежде всего означает скрытие
+имен, так чтобы одна программа не могла использовать пространство имен другой
+программы.
+\end{newer}
+
+Когда \cdf{intern} или некоторые другие функций хотят найти символ в заданном
+пакете, они сначала ищут символ среди внешних и внутренних символов текущего
+пакета, затем они в неопределённом порядке ищут среди внешних символов
+используемых пакетов. Порядок не имеет значение. В соответствии с правилами
+разрешения конфликтов имен (смотрите ниже), если конфликтующие символы существуют
+в двух и более пакетах, унаследованных пакетом \emph{X}, символ с этим именем
+должен также быть в \emph{X}, как затеняющий символ. Конечно, реализации могут
+выбрать другой, более эффективный способ для реализации такого поиска, не
+изменяя поведение ранее описанного интерфейса.
+
+Функция \cdf{export} принимает символ, который доступен в некотором указанном
+пакете (напрямую или унаследован из другого пакета) и делает его внешним символом
+этого пакета. Если символ уже доступен как внешний, \cdf{export} ничего не
+делает. Если символ представлен, как внутренний \emph{родственный} символ, его
+статус просто меняется на внешний. Если он доступен, как внутренний символ,
+полученный с помощью \cdf{use-package}, символ сначала импортируется в пакет, а
+затем делается внешним. (После этого символ становиться импортированным в пакет
+и остаётся в нем, вне зависимости от того будет ли использована
+\cdf{unuse-package} или нет). Если символ вообще недоступен в указанном пакете,
+то сигнализируется ошибка с возможностью решить проблему, а, именно, какой
+символ должен быть импортирован.
+
+Функция \cdf{unexport} предоставляет как способ откатить ошибочное
+экспортирование символа. Она работает только для символов напрямую
+представленных в текущем пакете, меняя их свойство на <<внутреннее>>.
+Если \cdf{unexport} получает символ, который в текущем пакете уже является
+внутренним, она ничего не делает. Если получает вообще недоступный символ, то
+сигнализирует ошибку.
+
+\section{Конфликты имён}
+\label{NAME-CONFLICTS-SECTION}
+
+Основное неизменяемое правило системы пакетов состоит в том, что внутри одного
+пакета каждое имя может ссылаться не более, чем на один символ.
+\emph{Конфликтом имён} называется ситуация, когда существует более одного
+подходящего символа и не ясно какой из них должен быть выбран. Если система не
+будет следовать одному методу выбора, то правило чтения-чтения будет
+нарушено. Например, некоторая программа или данные должны быть прочитаны в
+указанной отображении имени в символ. Если отображение изменяется в другой
+символ, и затем прочитывается дополнительная программа или символ, то две
+программы будут получать доступ не к одному и тому же символу, даже если
+используют одинаковое имя. Даже если система всегда выбирает один метод выбора
+символа, конфликт имени приводит к отображению имени в символ отличному от того,
+что ожидает пользователь, приводя к некорректному выполнению программы. Таким
+образом, в любом случае возникновения конфликта имён сигнализируется
+ошибка. Пользователь может указать системе пакетов, как разрешить конфликт, и
+продолжить выполнение.
+
+Может быть ситуация, когда один символ может быть доступен для пакета более, чем
+одним способом. Например, символ может быть внешним символов более чем одного
+используемого пакета, или символ может быть напрямую представлен в пакете и
+также унаследован из другого пакета.
+В таких случаях конфликта имён не возникает.
+Один и тот же символ не может конфликтовать сам с собой.
+Конфликты имён возникают только между разными символами с одинаковыми именами.
+
+Создатель пакета может заранее указать системе, как разрешать конфликт имени,
+используя \emph{затенения}. Каждый пакет имеет список затеняющих
+символов. Затеняющий символ имеет преимущество перед любым другим символом с тем
+же именем, которое иначе было бы доступно. Разрешение конфликта с участием
+затеняющего символа всегда происходит в пользу последнего без сигнализирования об
+ошибке (за исключение одного использования \cdf{import} описанного
+ниже). Функции \cdf{shadow} и \cdf{shadowing-import} могут использоваться для
+декларации затеняющий символов.
+
+Конфликты имён обнаруживаются, когда они становятся возможными, то есть, когда
+изменяется структура пакета. Нет смысла проверять конфликты в каждом процессе
+поиска имени для символа.
+
+Функции \cdf{use-package}, \cdf{import} и \cdf{export} проверяют возникновение
+конфликтов имён. \cdf{use-package} делает внешние символы пакета доступными для
+использования в другом пакете. Каждый из этих символов проверяется на конфликт
+имён с уже доступным в пакете символом.
+\cdf{import} добавляет один символ как внутренний символ пакета, проверяя на
+конфликты имён с \emph{родственными} или \emph{доступными
+  символами}. \cdf{import} сигнализирует об ошибке конфликта имён, даже если
+конфликт произошёл с затеняющим символом. Это объясняется том, что пользователь
+дал два явных и взаимоисключающих указания.
+\cdf{export} делает один символ доступным для всех пакетов, которые используют
+пакет, из которого символ был экспортирован. Все эти пакеты проверяются на
+конфликты имён: \cd{(export \emph{s} \emph{p})} делает \cd{(find-symbol
+  (symbol-name \emph{s} \emph{q})} для каждого пакета \emph{q} в
+\cd{(package-used-by-list \emph{p})}. Следует отметить, что в обычно при
+выполнении \cdf{export} в течение первоначального определения пакета, результат
+\cdf{package-used-by-list} будет {\false} и проверка конфликта имён не будет
+занимать много времени.
+
+Функция \cdf{intern}, которая является одной из часто используемых Lisp'овыми считывателем
+для поиска имен символов, не нуждается в проверке конфликта имён, потому что они
+никогда не создаёт новые символы, если символ с указанным именем уже \emph{доступен}.
+
+\cdf{shadow} и \cdf{shadowing-import} никогда не сигнализируют ошибку конфликта
+имён, потому что пользователь, вызывая их, указывает как возможный конфликт
+будет разрешён. \cdf{shadow} проверяет конфликт имён при условии, что другой
+существующий символ с указанным именем доступен и, если так, является ли
+\emph{родственным} или унаследованным. В последнем случае, новый символ
+создаётся, чтобы затенить старый. \cdf{shadowing-import}  проверяет конфликт
+имён при условии, что другой существующий символ с указанным именем доступен и,
+если так, он затеняется новым символом, что означает, что он должен быть
+дезинтернирован, если он был представлен в пакете напрямую.
+
+\cdf{unuse-package}, \cdf{unexport} и \cdf{unintern} (когда символ будучи
+дезинтернированым не является затеняющим символом) не требуют проверки
+конфликтов имён, потому что они просто удаляют символы из пакета. Они не делают
+какие-либо новые символы доступными.
+
+Указание затеняющего символа в функцию \cdf{unintern} может раскрывать конфликт
+имён, который был ранее разрешён с помощью затенения. Если пакет A использует
+пакеты B и C, A содержит затеняющий символ \cdf{x}, и B, и C, каждый содержит
+внешний символ с именем \cdf{x}, тогда при удалении затеняющего символа \cdf{x}
+из A будет обнаружен конфликт между \cd{b:x} и \cd{c:x}, если эти два символа
+различны.
+В этом случае \cdf{unintern} будет сигнализировать ошибку.
+
+Прерывание ошибки конфликта имён оставляет оригинальный символ доступным.
+Функции для пакетов всегда сигнализируют ошибки конфликтов имён перед любыми
+изменениями в структуре пакетов. Однако когда изменяются много символов за раз,
+например, когда \cdf{export} получила список символов, реализация может
+обрабатывать каждое изменение по отдельности, таким образом прерывание ошибки,
+возникшей для второго символа, не приведёт к отмене результатов, выполненных для
+первого символа. Однако, прерывание из ошибки конфликта имён при использовании
+\cdf{export} для одного символа не оставит этот символ доступным для одних
+пакетов и недоступным для других. В отношении к каждому обрабатываемому символу
+\cdf{export} ведёт себя как атомарная операция.
+
+Продолжение из ошибки конфликта имён должно предлагать пользователю возможность
+разрешить конфликт имён в пользу какого-либо из кандидатов. Структура пакета
+должна измениться в соответствие с разрешением конфликта имён, с помощью
+\cdf{shadowing-import}, \cdf{unintern} или \cdf{unexport}.
+
+Конфликт имён в \cdf{use-package} между \emph{родственными} символом в
+использующем пакете и внешними символом в используемом пакете может быть
+разрешён в пользу первого символа с помощью создания затеняющего символа, или в
+пользу второго символа с помощью дезинтернирования первого символа из
+использующего пакета. Последний способ опасен, если символ для дезинтернирования
+является внешним символом использующего пакета, так как перестанет быть внешним
+символом.
+
+Конфликт имён в \cdf{use-package} между двумя внешними символами,
+унаследованными в использующем пакете из других пакетов, может быть разрешён в пользу одного из
+символов, с помощью импортирования его в использующий пакет и превращения его в
+затеняющий символ.
+
+Конфликт имён в \cdf{export} между символом для экспорта и символом уже
+присутствующем в пакете, который будет наследовать свеже экспортирующийся
+символ, может быть разрешён в пользу экспортируемого символа с помощью
+дезинтернирования другого символа, или в пользу уже присутствующего символа,
+превращением его в затеняющий.
+
+Конфликт имён в \cdf{export} или \cdf{unintern} из-за пакета, наследующего два
+различных символа с одинаковым именем из двух разных пакетов, может быть
+разрешён в пользу одного из символов с помощью импортирования его в использующий
+пакет и превращении его в затеняющий, также как и при использовании
+\cdf{use-package}.
+
+Конфликт имён в \cdf{import} между символом для импортирования и символом
+унаследованным из некоторого другого пакета может быть разрешён в пользу
+импортируемого символа превращением его в затеняющий символ или в пользу уже
+доступного символа с помощью отмены \cdf{import}. Конфликт имён в \cdf{import} с
+символом уже присутствующем в пакете может быть разрешён с помощью
+дезинтернирования этого символа, или отмены \cdf{import}.
+
+Хороший стиль пользовательского интерфейса диктует то, что \cdf{use-package} и
+\cdf{export}, которые могут вызывать за раз много конфликтов имён, сначала
+проверяют все конфликты имён перед тем, как предоставить любой из них
+пользователю.
+Пользователь может выбрать разрешать ли конфликт для всех сразу или по
+отдельности. Последний способ трудоёмок, но позволяет разрешить каждый конфликт
+отдельным способом.
+
+Реализации могут предлагать другие пути решения конфликтов имён.
+Например, если конфликтующие символы, не используемые для объектов, а только для
+имен функций, они могут быть <<слиты>> с помощью размещения определения функции
+в обоих символах. Ссылка на любой символ в целях вызова функции будет
+эквивалентна. Похожая операция <<слияния>> может быть сделана для значений
+переменных или для вещей, сохранённых в списке свойств. В Lisp Machine Lisp'е,
+например, можно было также \emph{выдвинуть (forward)} значение, функцию и ячейки
+свойств так, что изменения в одном символе приводили к изменению в
+другом. Некоторые другие реализации позволяют сделать это для ячейки значения,
+но на для ячейки списка свойств. Тогда пользователь может знать является ли этот
+метод разрешения конфликтов имён адекватным, потому что метод будет работать
+только, если использования двух не-\cdf{eq} символов с одинаковым именем не
+будет препятствовать корректной работе программы. Значение стоимости слияния
+символов, как разрешении конфликта имён, в том, что оно может избегать
+необходимости выбрасывать весь Lisp'овый мир, исправлять формы определения
+пакета, который вызвал ошибку и начинать с нуля.
+
+\section{Системные пакеты}
+
+\begin{flushdesc}
+\item[\cdf{common-lisp}]
+Пакет с именем \cdf{common-lisp} содержит базовые элементы системы ANSI Common
+Lisp. Его внешние символы включают все видимые пользователю функции и глобальные
+переменные, которые представлены в ANSI Common Lisp системе, такие как
+\cdf{car}, \cdf{cdr} и \cdf{*package*}.
+Следует однако отметить, что домашним пакетом этих символов не обязательно
+должен является пакет \cdf{common-lisp} (для символов, например \cdf{t} и
+\cdf{lambda} будет проще быть доступными и в \cdf{common-lisp}, и в другом
+пакете, возможно с именем \cdf{lisp} FIXME).
+Почти все другие пакеты должны использовать \cdf{common-lisp}, таким образом эти
+символы будут доступны без использования полного имени (с двоеточием).
+Данный пакет имеет псевдоним \cdf{cl}.
+
+\item[\cdf{common-lisp-user}]
+Пакет \cdf{common-lisp-user} является, по-умолчанию, текущим пакетом во время
+запуска ANSI Common Lisp системы.
+Этот пакет использует пакет \cdf{common-lisp} и имеет псевдоним \cdf{cl-user}.
+В зависимости от реализации он также может содержать другие символы и
+использовать платформоспецифичные пакеты.
+\end{flushdesc}
+
+\begin{flushdesc}
+\item[\cdf{keyword}]
+Этот пакет содержит все ключевые символы, используемые встроенными или
+пользовательскими Lisp'овыми функциями. Имя символа, начинающегося с двоеточия,
+интерпретируется, как ссылка на символ из этого пакета, который всегда является
+внешним. Все символы в этом пакете является константами, которые вычисляются
+сами в себя, поэтому пользователь может записывать \cd{:foo} вместо \cd{':foo}.
+\end{flushdesc}
+
+\begin{newer}
+X3J13 проголосовал в марте 1989 \issue{LISP-SYMBOL-REDEFINITION}
+запретить пользовательским программам выполнение следующих действий, которые
+могут противоречить базовому функционалу или негативно с ним взаимодействовать.
+Если над символом в пакете \cdf{common-lisp} совершается одно из действий ниже,
+за исключением явных указаний в книге, последствия не определены.
+\begin{itemize}
+\item связывание или изменение значения символа (лексически или динамически)
+\item определение или связывания символа с функцией
+\item определение или связывания символа с макросом
+\item определение его как спецификатора типа (\cdf{defstruct}, \cdf{defclass}, \cdf{deftype})
+\item определение его как структуры (\cdf{defstruct})
+\item определение его как декларации
+\item определение его макроса символа
+\item изменение выводимого имени символа
+\item изменение пакета символа
+\item трассировка символа
+\item декларация или прокламация символа как специального или лексического
+\item декларация или прокламация типа символа (\cdf{type}, \cdf{ftype})
+\item удаление символа из пакета \cdf{common-lisp}
+\item определение как макроса компилятора
+\end{itemize}
+
+Если такой символ не определён глобально как переменная или константа,
+пользовательская программа может связывать его лексически и декларировать тип
+\cdf{type} данного связывания.
+
+Если такой символ не определён как функция, макрос или специальная форма,
+пользовательская программа может лексически связать символ с функцией,
+декларировать тип \cdf{ftype} данного связывания и трассировать это связывание. 
+
+Если такой символ не определён как функция, макрос или специальная форма,
+пользовательская программа может лексически связать символ с макросом.
+
+В качестве примера, поведение данного фрагмента кода
+\begin{lisp}
+(flet ((open (filename \&key direction) \\*
+~~~~~~~~~(format t "{\Xtilde}\%OPEN was called.")  \\*
+~~~~~~~~~(open filename :direction direction))) \\*
+~~(with-open-file (x "frob" :direction ':output)  \\*
+~~~~(format t "{\Xtilde}\%Was OPEN called?")))
+\end{lisp}
+не определено. Даже в <<разумной>> реализации, например, раскрытие макрос
+\cdf{with-open-file} должно ссылаться на функцию \cdf{open}. Тем не менее,
+предшествующие правила определяют является ли реализация <<разумной>>.
+Данный фрагмент кода нарушает правила. Официально его поведение, таким образом,
+полностью не определено, и точка.
+
+Следует отметить, что <<изменение списка свойств>> не входит в список упомянутых
+действий, таким образом пользовательская программа может добавлять или удалять
+свойства для символов в \cdf{common-lisp} пакете.
+\end{newer}
+
+\section{Функции и переменные для системы пакетов}
+\label{PACKAGE-FUNCTIONS-SECTION}
+
+Для описанных здесь функций, все необязательные аргументы с именем
+\emph{package} имеют значение по-умолчанию \cdf{*package*}. Там, где функция
+принимает аргумент, который может быть символом или списком символов, значение
+{\false} расценивается, как пустой список символов. Любой аргумент, описанный
+как имя пакета, может быть символом или строкой.
+Если указан символ, то используется его выводимое имя. Если строка, то
+пользователь должен позаботиться о преобразовании регистра символов в верхний
+там, где это необходимо.
+
+\begin{defun}[Переменная]
+*package*
+
+Значение этой переменной должно быть объектом пакета. Этот пакет называется
+текущим. Первоначальное значение \cdf{*package*} является пакетом \cdf{common-lisp-user}.
+
+Функции \cdf{load} и \cdf{compile-file} пересвязывают \cdf{*package*} в текущее значение. Если
+некоторая форма в файле во время загрузки изменяет значение \cdf{*package*},
+старое значение будет восстановлено после завершения загрузки.
+
+Функция \cdf{compile-file} пересвязывает \cdf{*package*} в текущее
+значение. Если некоторая форма в файле во время загрузки или компиляции изменяет
+значение \cdf{*package*}, старое значение будет восстановлено после завершения функции.
+
+
+\begin{defun}[Функция]
+make-package package-name &key :nicknames :use
+
+Эта функция создаёт и возвращает новый пакет с указанным именем. Как было
+описано выше, аргументом может быть или символ, или строка. Аргумент
+\cd{:nicknames} должен быть списком строк, которые будут псевдонимами. И здесь
+пользователь вместо строк может указывать символы, в случае которых будут
+использоваться выводимые имена. Это имя и псевдонимы не могут конфликтовать с
+уже имеющимися именами пакетов. Если конфликт произошёл, сигнализируется ошибка
+с возможностью исправления.
+
+Аргумент \cd{:use} является списком пакетов или имён (строк или символов)
+пакетов, чьи внешние символы будут унаследованы новым пакетом. Эти пакеты должны
+существовать перед вызовом функции. 
+\end{defun}
+
+\begin{defmac}
+in-package name
+
+Этот макрос пересвязывает переменную \cdf{*package*} с пакетом, имя которого
+указано в параметре \emph{name}. Параметр \emph{name} может быть строкой или
+символом. Форма \emph{name} не вычисляется.
+В случае отсутствия пакета, сигнализируется ошибка.
+Кроме того, в случае вызова в качестве формы верхнего уровня, этот макрос
+работает и во время компиляции.
+
+\cdf{in-package} возвращает новый пакет, то есть значение \cdf{*package*} после
+выполнения операции.
+\end{defmac}
+
+\begin{defun}[Функция]
+find-package name
+
+Параметр \emph{name} должен быть строкой, которая является именем или
+псевдонимом искомого пакета. Этот параметр может также быть символов, в случае
+которого используется выводимое имя. В результате возвращается объект пакета с
+указанным именем или псевдонимом. Если пакет найден не был, то
+\cdf{find-package} возвращает {\false}.
+Сравнение имен регистрозависимо (как в \cdf{string=}).
+
+Аргумент \emph{package} может быть объектом пакета, в таком случае значение
+аргумента сразу возвращается. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+package-name package
+
+Аргумент должен быть объектом пакета. Данная функция возвращает строку имени
+указанного пакета.
+
+Кроме того функция принимает имя пакета или псевдоним, и в этом случае
+возвращает главное имя пакета. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+
+\cdf{package-name} возвращает \cdf{nil} вместо имени пакета, если пакет был
+удалён. Смотрите \cdf{delete-package}.
+\end{defun}
+
+\begin{defun}[Функция]
+package-nicknames package
+
+Аргумент должен быть объектом пакета. Эта функция возвращает список псевдонимов
+для заданного пакета, не включая главное имя.
+
+Кроме того функция принимает имя пакета или псевдоним, и в этом случае
+возвращается список псевдонимов пакета. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+rename-package package new-name &optional new-nicknames
+
+Старое имя и все старые псевдонимы пакета \emph{package} удаляются и заменяются
+на \emph{new-name} и \emph{new-nicknames}. Аргумент \emph{new-name} может быть
+строкой или символом. Аргумент \emph{new-nicknames}, который по-умолчанию
+{\false}, является списком строк или символов.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+
+\cdf{rename-package} возвращает \emph{package}.
+\end{defun}
+
+\begin{defun}[Функция]
+package-use-list package
+
+Данная функция возвращает список пакетов, используемых указанным в параметре
+пакетом.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+package-used-by-list package
+
+Данная функция возвращает список пакетов, использующих указанный в параметре
+пакет.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+package-shadowing-symbols package
+
+Данная функция возвращает список символов, которые были задекларированы, как
+скрывающие символы, с помощью \cdf{shadow} или \cdf{shadowing-import}. Все
+символы в этом списке является \emph{родственными} указанному пакету.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+list-all-packages 
+
+Эта функция возвращает список всех пакетов, которые существуют в Lisp'овой
+системе. 
+\end{defun}
+
+\begin{defun}[Функция]
+delete-package package
+
+Функция \cdf{delete-package} удаляет указанный в аргументе \emph{package} пакет,
+из всех структур данных системы пакетов.
+Аргумент \emph{package} может быть как пакетом, так и его именем.
+
+Если \emph{package} является именем, но пакета с данным именем не существует,
+сигнализируется исправимая ошибка. Продолжение из этой ошибки не делает попытку
+удаления, но возвращает \cdf{nil} из вызова \cdf{delete-package}.
+
+Если \emph{package} является пакетов, но пакет уже был удалён,
+ошибка не сигнализируется и попыток удаления не происходит. Вместо этого
+\cdf{delete-package} немедленно возвращает \cdf{nil}.
+
+Если пакет, указанный для удаления, в этот момент используется другими пакетами,
+сигнализируется исправимая ошибка. Продолжение из этой ошибки выглядит как, если
+бы функция \cdf{unuse-package} была выполнена на всех использующих пакетах для
+удаления зависимостей, после чего была вызвана \cdf{delete-package} для удаления
+пакета.
+
+Если указанный пакет является домашним для некоторого символа, тогда после
+выполнения \cdf{delete-package}, ячейка домашнего пакета символа становится
+неопределённой. Никак по-другому символы в удаляемом пакете не модифицируются.
+
+Имя и псевдонимы пакета \emph{package} перестают быть сами собой. Объект пакета
+остаётся, но анонимно: \cdf{packagep} будет истинным, но \cdf{package-name}
+применительно к нему будет возвращать \cdf{nil}.
+
+Влияние любой другой операции на удалённым объектом пакета не определена. В
+частности, попытка найти символ в удалённый пакет (например, используя \cdf{intern}
+или \cdf{find-symbol}) будет иметь неопределённый результат.
+
+Если удаление было успешно, \cdf{delete-package} возвращает \cdf{t}, иначе \cdf{nil}.
+\end{defun}
+
+\begin{defun}[Функция]
+intern string &optional package
+
+В пакете \emph{package}, который по-умолчанию равен текущему пакету,
+осуществляется поиск символа с именем, указанным в аргументе \emph{string}. Этот
+поиск будет включить унаследованные символы, как описано в
+разделе~\ref{EXPORT-IMPORT-SECTION}.
+Если ни одного символа не найдено, то символ создаётся и устанавливается в
+указанный пакет в качестве внутреннего символа (или внешнего символа, если пакет
+\cdf{keyword}). Указанный пакет становиться домашним пакетом для созданного символа.
+Возвращается два значения. Первое является символом, который был найден или
+создан. Второе значение {\false}, если символ не существовал ранее, или одно из
+следующих значений:
+\begin{indentdesc}{6pc}
+\item[\cd{:internal}]
+Символ напрямую представлен в пакете как внутренний символ.
+
+\item[\cd{:external}]
+Символ напрямую представлен в пакете как внешний символ.
+
+\item[\cd{:inherited}]
+Символ унаследован с помощью \cdf{use-package} (и следовательно символ является
+внутренним).
+\end{indentdesc}
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+find-symbol string &optional package
+
+Эта функция идентична \cdf{intern}, но она никогда не создаёт новый символ. Если
+символ с указанным именем был найден в указанном пакете, напрямую или через
+наследование, найденный возвращается символ как первое значение и второе
+значение так же как в \cdf{intern}. Если символ не доступен в заданном пакете,
+оба значения равны {\false}.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+unintern symbol &optional package
+
+Если указанный символ представлен в указанном пакете \emph{package}, он
+удаляется из этого пакета и также из списка затеняющих символов, если он там
+был. Кроме того, если \emph{package} для символа является домашним пакетом, то
+символ отсоединяется и становится бездомным.
+Следует отметить, что в некоторых обстоятельствах может продолжить быть
+доступным с помощью наследования в указанном пакете.
+Если удаление действительно произошло, \cdf{unintern} возвращает {\true}, иначе
+{\false}.
+
+\cdf{unintern} должна использоваться с осторожностью. Она изменяет состояние
+системы пакетов так, что правила согласованности перестают действовать.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+export symbols &optional package
+
+Аргумент \emph{symbols} должен быть списком символов или одиночным
+символом. Эти символы становятся доступными как внешние символы в пакете
+\emph{package} (смотрите раздел~\ref{EXPORT-IMPORT-SECTION}).
+\cdf{export} возвращает {\true}.
+
+По соглашению, вызов \cdf{export} содержит все экспортируемые символы и
+помещается рядом с началом файла, для указания того, какие символы
+экспортируются данным файлом для использования другими программами. 
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+unexport symbols &optional package
+
+Аргумент \emph{symbols} должен быть списком символов или одиночным символом. Эти
+символы становятся внутренними символами в пакете \emph{package}. 
+Использование этой операции для символов пакета \cdf{keyword} является ошибкой.
+(смотрите раздел~\ref{EXPORT-IMPORT-SECTION}).
+\cdf{unexport} возвращает {\true}.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+import symbols &optional package
+
+Аргумент \emph{symbols} должен быть списком символов или одиночным символом.
+Эти символы становятся внутренними символами в пакете \emph{package} и, таким
+образом, могут быть указаны без использования полного имени (с двоеточием).
+\cdf{import} сигнализирует исправимую ошибку, если любой из импортируемых
+символов имеет такое же имя, как один из уже присутствующих в пакете символов
+(смотрите раздел~\ref{EXPORT-IMPORT-SECTION}).
+\cdf{import} возвращает {\true}.
+
+Если любой импортируемый символ не имеет домашнего пакета, тогда \cdf{import}
+устанавливает домашний пакет тот, в который символ импортируется. 
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+shadowing-import symbols &optional package
+
+Данная функция похожа на \cdf{import}, но не сигнализирует ошибку, даже если
+импортирование символа будет затенять некоторый другой символ, уже
+присутствующий в пакете. В дополнение к импортированию символ помещается в
+список затеняющих символов пакета \emph{package} (смотрите
+раздел~\ref{NAME-CONFLICTS-SECTION}).
+\cdf{shadowing-import} возвращает {\true}.
+
+\cdf{shadowing-import} должен использоваться с осторожностью. Она изменяет
+состояние системы пакетов так, что правила согласованности перестают действовать.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+shadow symbols &optional package
+
+Аргумент должен быть списком символов или строк или одиночным символом или строкой.
+Рассматривается выводимое имя каждого символа (или просто строка) и в указанном
+пакете \emph{package} ищется символ с таким же именем. Если данный символ
+присутствует в этом пакете (напрямую, не с помощью наследования), тогда он
+добавляется в список затеняющих символов. Иначе, создаётся новый символ с
+указанным выводимым именем, и вставляется в пакет \emph{package} как внутренний
+символ. Символ также помещается в список затеняющих символов пакета
+\emph{package} (смотрите раздел~\ref{NAME-CONFLICTS-SECTION}).
+\cdf{shadow} возвращает {\true}.
+
+\cdf{shadowing} должен использоваться с осторожностью. Она изменяет
+состояние системы пакетов так, что правила согласованности перестают действовать.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+use-package packages-to-use &optional package
+
+Аргумент \emph{packages-to-use} должен быть списком пакетов или их имён или
+одиночным пакетом или его именем. Эти пакеты добавляются в список использования
+\emph{package}, если их там ещё нет. Все внешние символы в пакетах становятся
+доступными в пакете \emph{package} как внутренние символы (смотрите
+раздел~\ref{EXPORT-IMPORT-SECTION}).
+Использование пакета \cdf{keyword} является ошибкой.
+\cdf{use-package} возвращает {\true}.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defun}[Функция]
+unuse-package packages-to-unuse &optional package
+
+Аргумент \emph{packages-to-use} должен быть списком пакетов или их имён или
+одиночным пакетом или его именем. Эти пакеты удаляются из списка использования
+\emph{package}, если они там были.
+\cdf{unuse-package} возвращает {\true}.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defun}
+
+\begin{defmac}
+defpackage defined-package-name {option}*
+
+Эта функция создаёт новый пакет, или модифицирует уже существующий, имя которого
+является \emph{defined-package-name}. Аргумент \emph{define-package-name} может
+быть строкой или символом.
+Если он является символом, то используется его выводимое имя, а не пакет, если
+вдруг в котором находится данный символ.
+Созданный или модифицированный пакет возвращается как значение формы
+\cdf{defpackage}.
+
+\begin{flushdesc}
+
+\item[\cd{(:size \emph{integer})}]
+Запись указывает примерное количество символов ожидаемых быть в пакете. 
+Это просто подсказка для менеджера памяти так, что реализация используя
+хеш-таблицы для хранения структуры пакета может указать данный параметр, и
+память будет более эффективно выделяться (удобно, например при чтении файла и
+всех его символов в пакет).
+
+\item[\cd{(:nicknames \Mstar\emph{package-name})}]
+Запись указывает псевдонимы для пакета.
+Если один из псевдонимов уже указывает на имеющийся пакет, то сигнализируется
+исправимая ошибка, как для функции \cdf{make-package}.
+
+\item[\cd{(:shadow \Mstar\emph{symbol-name})}]
+Указывает имена символов, которые будут затеняющими в определяемом
+пакете. Работает как \cdf{shadow}.
+
+\item[\cd{(:shadowing-import-from \emph{package-name} \Mstar\emph{symbol-name})}]
+Указывает имена символов, которые будут размещены в определяемом пакете.
+Эти символы импортируются в пакет, будучи при необходимости затеняющими, как при
+использовании функции \cdf{shadowing-import}.
+Ни в коем случае символы не создаются.
+Если для любого имени \emph{symbol-name} не существует символа доступного в
+пакете с именем \emph{package-name}, то сигнализируется исправимая ошибка.
+
+\item[\cd{(:use \Mstar\emph{package-name})}]
+Указывает определяемому пакету <<использовать>> (наследовать от) пакеты
+указанные в этой опции. Работает также, как и \cdf{use-package}.
+Если \cdf{:use} не указана, тогда опция имеет неопределённое значение.
+
+\item[\cd{(:import-from \emph{package-name} \Mstar\emph{symbol-name})}]
+Указывает символы, которые будут размещены в определяемом пакете.
+Эти символы импортируются в пакет, как при использовании функции \cdf{shadowing-import}.
+Ни в коем случае символы не создаются.
+Если для любого имени \emph{symbol-name} не существует символа доступного в
+пакете с именем \emph{package-name}, то сигнализируется исправимая ошибка.
+
+\item[\cd{(:intern \Mstar\emph{symbol-name})}]
+Указанные символы размещаются или создаются в определяемом пакете, как
+при использовании функции \cdf{intern}. Следует отметить, что действие этой
+опции может зависеть от опции \cd{:use}, так как преимущество отдаётся
+унаследованному символу, чем созданию нового.
+
+\item[\cd{(:export \Mstar\emph{symbol-name})}]
+Указанные символы размещаются или создаются в определяемом пакете и затем
+экспортируются, как при использовании функции \cdf{export}. Следует отметить,
+что действие этой опции может зависеть от опции \cd{:use}, \cd{import-from} или
+\cd{shadowing-import-from} так как преимущество отдаётся  
+унаследованному или импортированному символу, чем созданию нового.
+\end{flushdesc}
+
+Порядок, в котором опции используются в форме \cdf{defpackage}, не имеет
+значения. Часть соглашения в том, что \cdf{defpackage} сортирует опции перед
+обработкой.
+Опции обрабатываются в следующем порядке:
+\begin{tabbing}
+1.~~\cd{:shadow} and \cd{:shadowing-import-from} \\
+2.~~\cd{:use} \\
+3.~~\cd{:import-from} and \cd{:intern} \\
+4.~~\cd{:export}
+\end{tabbing}
+Сначала устанавливаются затенения, чтобы избежать ложных конфликтов при
+установке связей для use. Связи use должны устанавливаться перед импортированием
+и интернированием, таким образом эти операции могут ссылаться на нормально
+унаследованные символы, а не создавать новые. Экспортирование выполняется
+последним, таким образом символы созданные любой другой операцией, в частности,
+затеняющие и импортированные символы, могут быть экспортированы. Следует
+отметить, что экспортирование унаследованного символа сначала неявно импортирует
+его (смотрите раздел~\ref{EXPORT-IMPORT-SECTION}).
+
+Если пакета с именем \emph{defined-package-name} не существовало, то
+\cdf{defpackage} создаст его. Если такой пакет уже существовал, то новый пакет
+создан не будет. Существующий пакет модифицируется, если возможно, для отражения
+нового определения. Результат не определён, если новое определение не совместимо
+с текущим состоянием пакета.
+
+Если одинаковый аргумент \cdf{symbol-name} (в смысле сравнения имён с помощью
+\cdf{string=}) встречается более одного раза в опциях \cd{:shadow},
+\cd{:shadowing-import-from}, \cd{:import-from} и \cd{:intern}, сигнализируется
+ошибка.
+
+Если одинаковый аргумент \cdf{symbol-name} (в смысле сравнения имён с помощью
+\cdf{string=}) встречается более одного раза в опциях \cd{:intern} и
+\cd{:export}, сигнализируется ошибка.
+
+Другие виды конфликтов обрабатывается в том же стиле, как в соответствующих
+операциях \cdf{use-package}, \cdf{import} и \cdf{export}.
+
+Реализация может поддерживать другие опции для \cdf{defpackage}.
+Каждая реализация должно сигнализировать ошибку при встрече с неподдерживаемой
+опцией для \cdf{defpackage}.
+
+Функция \cdf{compile-file} должна обрабатывается формы верхнего уровня
+\cdf{defpackage} таким же методом, как и обрабатывает формы верхнего уровня для
+работы с пакетам (как описано в начале раздела~\ref{PACKAGE-FUNCTIONS-SECTION}).
+
+Вот пример вызова \cdf{defpackage}, которая <<не рискует (plays it safe)>>, используя только
+строки в качестве имён.
+\begin{lisp}
+(cl:defpackage "MY-VERY-OWN-PACKAGE" \\*
+~~(:size 496) \\*
+~~(:nicknames "MY-PKG" "MYPKG" "MVOP") \\*
+~~(:use "COMMON-LISP") \\
+~~(:shadow "CAR" "CDR") \\*
+~~(:shadowing-import-from "BRAND-X-LISP" "CONS") \\*
+~~(:import-from "BRAND-X-LISP" "GC" "BLINK-FRONT-PANEL-LIGHTS") \\*
+~~(:export "EQ" "CONS" "MY-VERY-OWN-FUNCTION"))
+\end{lisp}
+\cdf{defpackage} пример выше спроектирован работать корректно, даже если текущий
+пакет не использует пакет \cdf{common-lisp}. (Следует отметить, что
+в этом примере используется псевдоним \cdf{cl} для пакета \cdf{common-lisp}.)
+Более того, выполнение этой формы \cdf{defpackage} не создаст символа в текущем
+пакете. А также для последующего удобства для строк использованы буквы в верхнем
+регистре.
+
+А вот для контраста пример \cdf{defpackage}, который <<играет по крупному (plays
+the whale)>> с использованием всех типов допустимого синтаксиса.
+\begin{lisp}
+(defpackage my-very-own-package \\*
+~~(:export :EQ common-lisp:cons my-very-own-function) \\*
+~~(:nicknames "MY-PKG" \#:MyPkg) \\*
+~~(:use "COMMON-LISP") \\
+~~(:shadow "CAR") \\*
+~~(:size 496) \\*
+~~(:nicknames mvop) \\
+~~(:import-from "BRAND-X-LISP" "GC" Blink-Front-Panel-Lights) \\
+~~(:shadow common-lisp::cdr) \\*
+~~(:shadowing-import-from "BRAND-X-LISP" CONS))
+\end{lisp}
+Этот пример производит то же влияние на вновь созданный пакет,  но может
+создавать бесполезные символы в других пакетах.
+Использования явных тегов пакетов особенно запутаны.
+Например, эта форма \cdf{defpackage} делает так, что символ \cdf{cdr} будет
+затенён в \emph{новом пакете}. Данный символ не будет затенён в пакете
+\cdf{common-lisp}. Факт, что имя <<\cdf{CDR}>> было указано полным именем (с
+двоеточием) является отвлекающим маневром.
+Мораль в том, что синтаксическая гибкость \cdf{defpackage}, как в других частях
+Common Lisp'а, даёт большие удобства в использовании в рамках здравого смысла, 
+но создаёт невообразимую путаницу при использовании мальтузианского изобилия.
+
+Следует отметить, что \cdf{defpackage} не способна сама по себе определять
+взаимно рекурсивные пакеты, например, два пакета использующих друг друга. Однако,
+ничто не мешает использовать \cdf{defpackage} для выполнения первоначальных
+установок, а затем использовать такие функции, как \cdf{use-package},
+\cdf{import} и \cdf{export} для создания связи.
+
+Цель \cdf{defpackage} поощрять пользователя размещать определение пакета и его
+зависимостей в одном месте. Это может также позволить проектировщику большой
+системы размещать определения всех необходимых пакетов (скажем) в один файл,
+который может быть загружен перед загрузкой или компиляцией кода, который
+зависит от этих пакетов. Такой файл, если аккуратно сконструирован, может быть
+просто загружен в пакет \cdf{common-lisp-user}.
+
+Реализации и программные окружения могут также лучше поддерживать процесс
+разработки (если только предлагая лучшую проверку ошибок) с помощью глобальной
+базы значений о предполагаемых установках пакетов.
+\end{defmac}
+
+\begin{defun}[Функция]
+find-all-symbols string-or-symbol
+
+\cdf{find-all-symbols} просматривает каждый пакет в Lisp'овой системе для поиска
+символа, имя которого совпадает с указанной строкой. Список всех найденных
+символов возвращается в качестве результата.
+Этот поиск регистрозависимый.
+Если аргумент является символом, для поиска по строке используется его выводимое
+имя.
+\end{defun}
+
+\begin{defmac}
+do-symbols (var [package [result-form]])
+           {declaration}* {tag | statement}*
+
+\cdf{do-symbols} предоставляет прямой цикл по символам пакета. Тело выполняется
+единожды для каждого символа доступного в пакете \emph{package}. Символ
+связывается с переменной \emph{var}.
+Затем вычисляется форма \emph{result-form} (одиночная форма, \emph{не} неявный
+\cdf{progn}), и результат является результатом формы \cdf{do-symbols}. (Когда
+вычисляется форма \emph{result-form}, переменная \emph{var} продолжает быть
+связанной и имеет значение {\false}.) Если \emph{result-form} опущена, результат
+{\false}. Для немедленного завершения цикла может использоваться
+\cdf{return}. Если выполнение тела влияет на то, какие символы содержаться в
+пакете \emph{package}, то возможно только удаление символа связанного с
+переменной \emph{var} с использованием \cdf{unintern}, иначе результат
+не определён.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defmac}
+
+\begin{defmac}
+do-external-symbols (var [package [result]])
+                    {declaration}* {tag | statement}*
+
+\cdf{do-external-symbols} похожа на \cdf{do-symbols} за исключением того, что
+сканируются только внешние символы пакета.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defmac}
+
+\begin{defmac}
+do-all-symbols (var [result-form])
+               {declaration}* {tag | statement}*
+
+Эта функция похожа на \cdf{do-symbols}, но выполняет тело единожды для каждого
+символа каждого пакета. (Функция не обрабатывает все возможные символы, так как
+символ может быть доступен ни в одном пакете. Обычно, дезинтернированые символы
+не доступны ни в одном пакете.)
+В общем случае тело может выполняться для одно символа несколько раз, так как
+этот символ может встречаться в нескольких пакетах.
+
+Аргумент \emph{package} может быть как объектом пакета, так и его
+именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+\end{defmac}
+
+\fi
