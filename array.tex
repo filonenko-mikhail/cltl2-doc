@@ -3,7 +3,9 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Arrays Массивы}
+\ifx \rulang\Undef
+
+\chapter{Arrays}
 
 An array is an object with components arranged according
 to a rectilinear coordinate system.
@@ -17,23 +19,9 @@ seven dimensions.
 Each dimension is a non-negative integer; if any dimension of an array is zero,
 the array has no elements.
 
-Массив является объектом с элементами расположенными в соотвествие с прямолинейной
-координатной системой.
-В теории, массив в Common Lisp'е может иметь любое количество измерений, включая
-ноль.
-(Массив с нулём измерений имеет только один элемент.)
-На практике, реализация может ограничивать количество измерений,
-но как минимум семь измерений поддерживаться должно.
-Каждое измерение является неотрицательным целым. Если любое из измерений равно
-нулю, то массив не имеет элементов.
-
 An array may be a \emph{general array}, meaning each element may be any Lisp
 object, or it may be a \emph{specialized array}, meaning that each element
 must be of a given restricted type.
-
-Массив может быть \emph{общим}, означая что каждый элемент может быть
-любым Lisp объектом. Массив также может быть \emph{специализированным}, означая,
-что каждый элемент ограничен некоторым типом.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
@@ -42,16 +30,12 @@ to eliminate the type \cdf{string-char} and to redefine the type
 types, the types of whose elements are subtypes of the type \cdf{character}.
 \end{newer}
 
-\section{Array Creation Создание массива}
+\section{Array Creation}
 
 Do not be daunted by the many options of the function \cdf{make-array}.
 All that is required to construct an array is a list of
 the dimensions; most of the options are for relatively esoteric
 applications.
-
-Не волнуйтесь о большом количестве опций для функции \cdf{make-array}.
-Все что действительно необходимо, что список размерностей. Остальные же опции
-служат для относительно эзотерических программ.
 
 \begin{defun}[Function]
 make-array dimensions &key :element-type :initial-element :initial-contents :adjustable :fill-pointer :displaced-to :displaced-index-offset
@@ -67,29 +51,13 @@ Note that if \emph{dimensions} is {\nil}, then a zero-dimensional array is creat
 For convenience when making a one-dimensional array, the single dimension
 may be provided as an integer rather than as a list of one integer.
 
-Это базовая функция для создания массивов. Аргумент \emph{dimensions} должен
-быть списком неотрицательных целых, которые являются измерениями массива. Длина
-списка является размерностью массива. Каждое измерение должно быть меньше чем
-\cdf{array-dimension-limit}, и произведение всех измерений должно быть меньше
-\cdf{array-total-size-limit}.
-Следует отметить, что если \emph{dimensions} {\nil}, тогда создаётся массив с
-нулевым количеством измерений.
-По соглашению, при создании одномерного массива, размер измерений может
-быть указан как целое число, а не список целых чисел.
-
 An implementation of Common Lisp may impose a limit on the rank of an array,
 but this limit may not be smaller than 7.  Therefore, any Common Lisp
 program may assume the use of arrays of rank 7 or less.
 The implementation-dependent limit on array rank is reflected in
 \cdf{array-rank-limit}.
 
-Реализация Common Lisp'а может иметь ограничения на ранг массива, но это
-ограничение должно быть меньше 7. Таким образом, любая Common
-Lisp программи может использовать массивы с рангом меньшим или равным 7.
-
 The keyword arguments for \cdf{make-array} are as follows:
-
-Для \cdf{make-array} существуют следующие именованные параметры:
 
 \begin{flushdesc}
 \item[\cd{:element-type}]
@@ -121,13 +89,6 @@ is always true.
 See \cdf{upgraded-array-element-type}.
 \end{new}
 
-\item[\cd{:element-type}]
-Этот аргумент должен быть именем типа элементов массива.
-Массив создаётся с наиболее близким типом к указанному, и не может содержать
-объекты отличные от этого типа.
-Тип {\true} указывает на создание общего массива, элементы которого могут быть
-любыми объектами. {\true} является значением по-умолчанию.
-
 \item[\cd{:initial-element}]
 This argument
 may be used to initialize each element of the array.  The value
@@ -137,15 +98,6 @@ elements are undefined (unless the \cd{:initial-contents} or
 \cd{:displaced-to} option is used).
 The \cd{:initial-element} option may not be used with the
 \cd{:initial-contents} or \cd{:displaced-to} option.
-
-\item[\cd{:initial-element}]
-Этот аргумент может использоваться для инициализации каждого элемента
-массива. Значение должно принадлежать типу указанному в аргументе
-\cd{:element-type}. Если \cd{:initial-element} опущен, тогда значение
-по-умолчанию для элементов массива не определено (если только не используется
-\cd{:initial-contents} или \cd{:displaced-to}).
-Опция \cd{:initial-element} может не использоваться, когда указана опция
-\cd{:initial-contents} или \cd{:displaced-to}.
 
 \item[\cd{:initial-contents}]
 This argument may be used to initialize the
@@ -171,9 +123,6 @@ elements are undefined (unless the \cd{:initial-element} or
 \cd{:displaced-to} option is used).
 The \cd{:initial-contents} option may not be used with the
 \cd{:initial-element} or \cd{:displaced-to} option.
-
-\item[\cd{:initial-contents}]
-
 
 \item[\cd{:adjustable}]
 This argument, if specified and not {\false}, indicates that it
@@ -214,13 +163,13 @@ option may be useful.
 It is an error if the array given as the \cd{:displaced-to} argument
 does not have the same \cd{:element-type} as the array being created.
 The \cd{:displaced-to} option may not be used with the
-\cd{:initial-\discretionary{}{}{}element}
+\cd{:initial-element}
 or \cd{:initial-contents} option.
 This argument defaults to {\nil}.
 
 \item[\cd{:displaced-index-offset}]
 This argument may be used only in conjunction
-with the \cdf{displaced-to} option.
+with the \cd{:displaced-to} option.
 It must be a non-negative integer (it defaults to zero); it is made to be the
 index-offset of the created shared array.
 
@@ -235,7 +184,7 @@ of the total size of B plus the offset \emph{n} specified by
 the \cd{:displaced-index-offset}
 argument.  The effect of displacing is that array B does not have any
 elements of its own but instead maps accesses to itself into
-accesses to array A.  The mapping treats both arrays as if they
+accesses to array A. The mapping treats both arrays as if they
 were one-dimensional by taking the elements in row-major order,
 and then maps an access to element \emph{k} of array B to an access to element
 \emph{k}+\emph{n} of array A.
@@ -320,10 +269,9 @@ without sacrificing performance.)
 X3J13 voted in January 1989
 \issue{FIXNUM-NON-PORTABLE}
 to specify that the value
-of \cd{array-\discretionary{}{}{}dimension-limit} must be of type \cdf{fixnum}.
+of \cd{array-dimension-limit} must be of type \cdf{fixnum}.
 This in turn implies that all valid array indices will be fixnums.
 \end{new}
-
 \end{defun}
 
 \begin{defun}[Constant]
@@ -349,9 +297,9 @@ The function \cdf{vector} is a convenient means for creating
 a simple general vector with specified initial contents.
 It is analogous to the function \cdf{list}.
 \begin{lisp}
-(vector $\emph{a}_1$ $\emph{a}_2$ ... $\emph{a}_{\hbox{\scriptsize\it n}}$) \\
+(vector $\emph{a}_1$ $\emph{a}_2$ ... $\emph{a}_{n}$) \\
 ~~~\EQ\ (make-array (list $\emph{n}$) :element-type t \\
-~~~~~~~~~~~~~:initial-contents (list $\emph{a}_1$ $\emph{a}_2$ ... $\emph{a}_{\hbox{\scriptsize\it n}}$))
+~~~~~~~~~~~~~:initial-contents (list $\emph{a}_1$ $\emph{a}_2$ ... $\emph{a}_{n}$))
 \end{lisp}
 \end{defun}
 
@@ -537,13 +485,9 @@ For a one-dimensional array, the result of \cdf{array-row-major-index}
 always equals the supplied subscript.
 \end{defun}
 
-\begin{new}
 \begin{defun}[Function]
 row-major-aref array index
 
-X3J13 voted in March 1988
-\issue{AREF-1D}
-to add the function \cdf{row-major-aref}.
 This allows any array element to be accessed as if the containing array
 were one-dimensional.  The \emph{index} must be a non-negative integer
 less than the total size of the \emph{array}.  It indexes into the array as
@@ -561,15 +505,16 @@ a new one-dimensional array that is displaced to the old one and then
 accessing the new array.
 Alternatively, \cdf{aref} may be understood in terms of \cdf{row-major-aref}:
 \begin{lisp}
-(aref \emph{array} $\emph{i}_0$ $\emph{i}_1$ ... $\emph{i}_{\hbox{\scriptsize\it n}-1}$) \EQ \\*
+(aref \emph{array} $\emph{i}_0$ $\emph{i}_1$ ... $\emph{i}_{n-1}$) \EQ \\*
 ~~(row-major-aref array \\*
-~~~~~~~~~~~~~~~~~~(array-row-major-index array $\emph{i}_0$ $\emph{i}_1$ ... $\emph{i}_{\hbox{\scriptsize\it n}-1}$)
+~~~~~~~~~~~~~~~~~~(array-row-major-index array $\emph{i}_0$ $\emph{i}_1$ ... $\emph{i}_{n-1}$)
 \end{lisp}
 That is, a multidimensional array access is equivalent to a row-major access
 using an equivalent row-major index.
 
 Like \cdf{aref}, \cdf{row-major-aref} completely ignores fill pointers.
-A call to \cdf{row-major-setf} is suitable for use as a \emph{place} for \cdf{setf}.
+A call to \cdf{row-major-setf} is suitable for use as a \emph{place} for
+\cdf{setf}.
 
 This operation makes it easier to write code that efficiently processes
 arrays of any rank.  Suppose, for example, that one wishes to set every
@@ -628,7 +573,6 @@ How much easier it is to use \cdf{row-major-aref}!
 \end{lisp}
 Surely this code is sweeter than the honeycomb.
 \end{defun}
-\end{new}
 
 \begin{defun}[Function]
 adjustable-array-p array
@@ -716,16 +660,16 @@ as a function of the two corresponding argument bits.
 ~~~\emph{argument1}~~&0&0&1&1 \\
 ~~~\emph{argument2}~~&0&1&0&1&\emph{Operation name} \\
 \hlinesp
-bit-and&0&0&0&1&{\rm and} \\
-bit-ior&0&1&1&1&{\rm inclusive or} \\
-bit-xor&0&1&1&0&{\rm exclusive or} \\
-bit-eqv&1&0&0&1&{\rm equivalence (exclusive nor)} \\
-bit-nand&1&1&1&0&{\rm not-and} \\
-bit-nor&1&0&0&0&{\rm not-or} \\
-bit-andc1&0&1&0&0&{\rm and complement of \emph{argument1} with \emph{argument2}} \\
-bit-andc2&0&0&1&0&{\rm and \emph{argument1} with complement of \emph{argument2}} \\
-bit-orc1&1&1&0&1&{\rm or complement of \emph{argument1} with \emph{argument2}} \\
-bit-orc2&1&0&1&1&{\rm or \emph{argument1} with complement of \emph{argument2}} \\
+bit-and&0&0&0&1&\textrm{and} \\
+bit-ior&0&1&1&1&\textrm{inclusive or} \\
+bit-xor&0&1&1&0&\textrm{exclusive or} \\
+bit-eqv&1&0&0&1&\textrm{equivalence (exclusive nor)} \\
+bit-nand&1&1&1&0&\textrm{not-and} \\
+bit-nor&1&0&0&0&\textrm{not-or} \\
+bit-andc1&0&1&0&0&\textrm{and complement of \emph{argument1} with \emph{argument2}} \\
+bit-andc2&0&0&1&0&\textrm{and \emph{argument1} with complement of \emph{argument2}} \\
+bit-orc1&1&1&0&1&\textrm{or complement of \emph{argument1} with \emph{argument2}} \\
+bit-orc2&1&0&1&1&\textrm{or \emph{argument1} with complement of \emph{argument2}} \\
 \hline
 \end{tabular*}
 \end{flushleft}
@@ -795,7 +739,7 @@ array-has-fill-pointer-p array
 The argument must be an array.  \cdf{array-has-fill-pointer-p} returns
 {\true} if the array has a fill pointer, and otherwise returns {\false}.
 Note that
-\cd{array-\discretionary{}{}{}has-\discretionary{}{}{}fill-\discretionary{}{}{}pointer-p}
+\cdf{array-has-fill-pointer-p}
 always returns {\false} if
 the \emph{array} is not one-dimensional.
 \end{defun}
@@ -815,7 +759,7 @@ between zero and the size of the vector (inclusive).
 vector-push new-element vector
 
 \emph{vector} must be a one-dimensional array that has a fill pointer,
-and \emph{new-element} may be any object.  \cdf{vector-push} attempts to store
+and \emph{new-element} may be any object. \cdf{vector-push} attempts to store
 \emph{new-element} in the element of the vector designated by the fill
 pointer, and to increase the fill pointer by 1.  If the fill pointer does
 not designate an element of the vector (specifically, when it gets too
@@ -942,13 +886,6 @@ simply alter the given array or create and return a new one.
 In the latter case the given array will be altered so as to be displaced
 to the new array and have the given new dimensions.
 
-\begin{obsolete}
-It is not permitted to call \cdf{adjust-array} on an array that was not
-created with the \cd{:adjustable} option.  The predicate
-\cdf{adjustable-array-p} may be used to determine whether or not
-an array is adjustable.
-\end{obsolete}
-
 \begin{newer}
 X3J13 voted in January 1989
 \issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
@@ -1020,7 +957,7 @@ now contains (some of) the contents of \emph{C}, without any rearrangement of
 \emph{C}.
 
 \item
-Suppose \emph{A} is displaced to {array \it B} before the call,
+Suppose \emph{A} is displaced to {array \emph{B}} before the call,
 and is displaced to array \emph{C} after the call.
 (Note that \emph{B} and \emph{C} may be the same array.)
 The contents of \emph{B} do not appear in
@@ -1059,3 +996,731 @@ not displaced after the call regardless of whether it was displaced before
 the call.
 \end{newer}
 \end{defun}
+
+%RUSSIAN
+\else
+
+\chapter{Массивы}
+
+Массив является объектом с элементами, расположенными в соотвествие с
+прямолинейной координатной системой. В целом, это можно назвать построчным
+хранением объектов многомерных таблиц.
+В теории, массив в Common Lisp'е может иметь любое количество измерений, включая
+ноль.
+(Нулемерный массив измерений имеет только один элемент. FIXME)
+На практике, реализация может ограничивать количество измерений,
+но как минимум семь измерений поддерживаться должно.
+Каждое измерение является неотрицательным целым. Если любое из измерений равно
+нулю, то массив не имеет элементов.
+
+Массив может быть \emph{общим}. Это означает, что элемент может быть
+любым Lisp объектом. Массив также может быть \emph{специализированным}. Это
+означает, что элемент ограничен некоторым типом.
+
+\section{Создание массива}
+
+Не волнуйтесь о большом количестве опций для функции \cdf{make-array}.
+Все что действительно необходимо, это список размерностей. Остальные же опции
+служат для относительно эзотерических программ.
+
+\begin{defun}[Функция]
+make-array dimensions &key :element-type :initial-element :initial-contents :adjustable :fill-pointer :displaced-to :displaced-index-offset
+
+Это базовая функция для создания массивов. Аргумент \emph{dimensions} должен
+быть списком неотрицательных целых чисел, которые являются измерениями массива. Длина
+списка является размерностью массива. Каждое измерение должно быть меньше чем
+\cdf{array-dimension-limit}, и произведение всех измерений должно быть меньше
+\cdf{array-total-size-limit}.
+Следует отметить, что если \emph{dimensions} {\nil}, тогда создаётся массив с
+нулевым количеством измерений.
+По соглашению, при создании одномерного массива, размер измерений может
+быть указан как одиночное целое число, а не список целых чисел.
+
+Реализация Common Lisp'а может иметь ограничение на ранг массива, но это
+ограничение должно быть меньше 7. Таким образом, любая Common
+Lisp программа может использовать массивы с рангом меньшим или равным 7.
+
+Для \cdf{make-array} существуют следующие именованные параметры:
+
+\begin{flushdesc}
+
+\item[\cd{:element-type}]
+Этот аргумент должен быть именем типа элементов массива.
+Массив создаётся с наиболее близким типом к указанному, и не может содержать
+объекты отличные от этого типа.
+Тип {\true} указывает на создание общего массива, элементы которого могут быть
+любыми объектами. {\true} является значением по-умолчанию.
+
+\item[\cd{:initial-element}]
+Этот аргумент может использоваться для инициализации каждого элемента
+массива. Значение должно принадлежать типу указанному в аргументе
+\cd{:element-type}. Если \cd{:initial-element} опущен, тогда значение
+по-умолчанию для элементов массива не определено (если только не используется
+\cd{:initial-contents} или \cd{:displaced-to}).
+Опция \cd{:initial-element} может не использоваться, когда указана опция
+\cd{:initial-contents} или \cd{:displaced-to}.
+
+\item[\cd{:initial-contents}]
+Этот аргумент может использоваться для инициализации содержимого
+массива. Значением параметра является структура вложенных
+последовательностей. Если массив с нулевым количеством измерений, тогда значение
+указывает задаёт одиночный элемент. В противном случае, значение должно быть
+последовательностью с длинной, равной размеру первого измерения. Каждый
+вложенный элемент также должен быть последовательностью, размером равным
+следующему измерению массива.
+Например:
+\begin{lisp}
+(make-array '(4 2 3) \\*
+~~~~~~~~~~~~:initial-contents \\
+~~~~~~~~~~~~'(((a b c) (1 2 3)) \\
+~~~~~~~~~~~~~~((d e f) (3 1 2)) \\
+~~~~~~~~~~~~~~((g h i) (2 3 1)) \\
+~~~~~~~~~~~~~~((j k l) (0 0 0))))
+\end{lisp}
+Количество уровней в структуре должно равняться рангу массива.
+Каждый лист вложенной структуры должен иметь тип, указанный в опции
+\cd{:type}. Если опция \cd{:initial-contents} опущена, первоначальное значение
+элементов массива не определено (если только не используется опция
+\cd{:initial-element} или \cd{:displaced-to}).
+Опция \cd{:initial-contents} может не использоваться, когда указана опция
+\cd{:initial-element} или \cd{:displaced-to}.
+
+\item[\cd{:adjustable}]
+Если данный аргумент указан и не является {\false}, тогда размер массива после
+создания может быть изменён. По-умолчанию параметр равен {\false}.
+
+\item[\cd{:fill-pointer}]
+Данный аргумент указывает, что массив должен иметь указатель заполнения.
+Если эта опция указана и не является {\false}, тогда массив должен быть
+одномерным.
+Значение используется для инициализации указателя заполнения массива.
+Если указано значение {\true}, тогда используется длина массива.
+Иначе, значение должно быть целым числом между нулём (включительно) и длинной
+массива (включительно)ю
+Аргумент по-умолчанию равен {\nil}.
+
+\item[\cd{:displaced-to}]
+Если данный аргумент указан и не является {\false}, то он указывает на то, что
+массив будет \emph{соединён} с другим массивом.
+Значение аргумента должно быть уже созданным массивом.
+\cdf{make-array} создаст \emph{косвенный} или \emph{разделяемый} массив, который
+имеет общее содержимое с указанным массивом. В таком случае опция
+\cd{:displaced-index-offset} позволяет указать смещение общей части массивов.
+Если массив, переданный в аргумент \cd{:displaced-to}, не имеет такого же типа
+элементов (\cd{:element-type}), как и создаваемый массив, то генерируется
+ошибка.
+Опция \cd{:displaced-to} не может использоваться вместе с опцией \cd{:initial-element}
+или \cd{:initial-contents}.
+По-умолчанию аргумент равен {\nil}.
+
+\item[\cd{:displaced-index-offset}]
+Данный аргумент может использоваться только в сочетании с опцией
+\cd{:displaced-to}.
+Она должна быть неотрицательным целым (по-умолчанию равна нулю). Она означает
+смещение создаваемого \emph{разделяемого} массива относительно исходного.
+
+Если при создании массива B массив A передан в качестве аргумента
+\cd{:displaced-to} в функцию \cdf{make-array}, тогда массив B называется
+\emph{соединённым} с массивом A. Полное количество элементов массива, называемое
+\emph{полный размер} массива, вычисляется как произведение размеров всех
+измерений (смотрите \cdf{array-total-size}).
+Необходимо, чтобы полный размер массива A был не меньше чем сумма \emph{полного
+  размера} массива B и смещения \emph{n}, указанного в аргументе
+\cd{:displaced-index-offset}.
+Смысл соединения массивов в том, что массив B не имеет своих элементов и
+операции над ним приводят в действительности к операциям над массивом A.
+При отображении элементов массивов, последние рассматриваются как одномерные, с
+построчным порядком размещения элементов.
+Так, элемент с индексом \emph{k} массива \emph{B} отображается в элемент с
+индексом \emph{k}+\emph{n} массива \emph{A}.
+\end{flushdesc}
+
+Если \cdf{make-array} вызывается без указания аргументов \cd{:adjustable},
+\cd{:fill-pointer} и \cdf{:displaced-to}, или указания их в {\nil}, тогда
+получаемый массив гарантированного будет \emph{простым} (смотрите
+раздел~\ref{ARRAY-TYPE-SECTION}). 
+
+Вот несколько примеров использования \cdf{make-array}:
+\begin{lisp}
+;;; Создание одномерного массива с пятью элементами. \\*
+(make-array 5) \\
+ \\
+;;; Создание двумерного массива, 3 на 4, с четырёхбитными элементами. \\*
+(make-array '(3 4) \cd{:element-type} '(mod 16)) \\
+ \\
+;;; Создание массива чисел с плавающей точкой.\\*
+(make-array 5 \cd{:element-type} 'single-float)) \\
+\\
+;;; Создание соединённого массива. \\*
+(setq a (make-array '(4 3))) \\
+(setq b (make-array 8 :displaced-to a \\*
+~~~~~~~~~~~~~~~~~~~~~~:displaced-index-offset 2)) \\
+;;; В таком случае: \\*
+~~~~~~~~(aref b 0) \EQ\ (aref a 0 2) \\*
+~~~~~~~~(aref b 1) \EQ\ (aref a 1 0) \\*
+~~~~~~~~(aref b 2) \EQ\ (aref a 1 1) \\*
+~~~~~~~~(aref b 3) \EQ\ (aref a 1 2) \\*
+~~~~~~~~(aref b 4) \EQ\ (aref a 2 0) \\*
+~~~~~~~~(aref b 5) \EQ\ (aref a 2 1) \\*
+~~~~~~~~(aref b 6) \EQ\ (aref a 2 2) \\*
+~~~~~~~~(aref b 7) \EQ\ (aref a 3 0)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Константа]
+array-rank-limit
+
+Значение \cdf{array-rank-limit} является положительным целым, которое обозначает
+(невключительно) наивысший возможный ранг массива.
+Это значение зависит от реализации, но не может быть меньше 8. Таком образом
+каждая реализация Common Lisp'а поддерживает массивы, ранг которых лежит между 0
+и 7 (включительно).
+(Разработчикам предлагается сделать это значение большим настолько, на сколько
+это возможно без ущерба в производительности.)
+\end{defun}
+
+\begin{defun}[Константа]
+array-dimension-limit
+
+Значение \cdf{array-dimension-limit} является положительным целым, которое
+обозначает (невключительно) наивысший возможный размер измерения для массива.
+Это значение зависит от реализации, но не может быть меньше 1024.
+(Разработчикам предлагается сделать это значение большим настолько, на сколько
+это возможно без ущерба в производительности.)
+\end{defun}
+
+\begin{defun}[Константа]
+array-total-size-limit
+
+Значение \cdf{array-total-size-limit} является положительным целым, которое
+обозначает (невключительно) наивысшее возможное количество элементов в массиве.
+Это значение зависит от реализации, но не может быть меньше 1024.
+(Разработчикам предлагается сделать это значение большим настолько, на сколько
+это возможно без ущерба в производительности.)
+
+На практике предельный размер массива может зависеть от типа элемента массива, в
+таком случае \cdf{array-total-size-limit} будет наименьшим из ряда этих размеров.
+\end{defun}
+
+\begin{defun}[Функция]
+vector &rest objects
+
+Функция \cdf{vector} служит для создания простых базовых векторов с заданным
+содержимым.
+Она является аналогом для функции \cdf{list}.
+\begin{lisp}
+(vector $\emph{a}_1$ $\emph{a}_2$ ... $\emph{a}_{n}$) \\
+~~~\EQ\ (make-array (list $\emph{n}$) :element-type t \\
+~~~~~~~~~~~~~:initial-contents (list $\emph{a}_1$ $\emph{a}_2$ ... $\emph{a}_{n}$))
+\end{lisp}
+\end{defun}
+
+\section{Доступ к массиву}
+
+Для доступа к элементам массива обычно используется функция \cdf{aref}.
+Другие функции доступа, такие как \cdf{svref}, \cdf{char} и \cdf{bit},
+используются в частных случаях.
+
+\begin{defun}[Функция]
+aref array &rest subscripts
+
+Данная функция возвращает элемент, массива \emph{array}, который задан индексами
+\emph{subscripts}. Количество индексов должно совпадать с рангом массива, и
+каждый индекс должен быть неотрицательным целым числом меньшим чем
+соответствующий размер измерения.
+
+\cdf{aref} отличается от остальных функций тем, что полностью игнорирует
+указатели заполнения.
+\cdf{aref} может получать доступ к любому элементу массива, вне зависимости
+является он активным или нет. Однако общая функция для последовательностей
+\cdf{elt} учитывает указатель заполнения. Доступ к элементам за указателем
+заполнение с помощью \cdf{elt} является ошибкой.
+
+Для изменения элемента массива может использоваться \cdf{setf} в связке с
+\cdf{aref}.
+
+В некоторых случаях, удобно писать код, который получает элемент из массива,
+например \cdf{a}, используя список индексов, например \cdf{z}.
+Это легко сделать используя \cdf{apply}:
+\begin{lisp}
+(apply \#'aref a z)
+\end{lisp}
+(Длина списка, конечно же, должна быть равна рангу массива.) Эта конструкция
+может использоваться с \cdf{setf} для изменения элемента массива на, например,
+\cdf{w}:
+\begin{lisp}
+(setf (apply \#'aref a z) w)
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+svref simple-vector index
+
+Первый аргумент должен быть простым базовым вектором, то есть объектом типа
+\cdf{simple-vector}.
+В результате возвращается элемент вектора \emph{simple-vector} с индексом
+\emph{index}.
+
+\emph{index} должен быть неотрицательным целым меньшим чем длина вектора.
+
+Для изменения элемента вектора может использоваться \cdf{setf} в связке с
+\cdf{svref}.
+
+\cdf{svref} идентична \cdf{aref} за исключением того, что требует, чтобы первый
+аргумент был простым вектором. В некоторых реализациях Common Lisp'а,
+\cdf{svref} может быть быстрее чем \cdf{aref}.
+Смотрите также \cdf{schar} и \cdf{sbit}
+\end{defun}
+
+\section{Информация о массиве}
+
+Следующие функции извлекают интересную информацию, и это не элементы
+массива.
+
+\begin{defun}[Функция]
+array-element-type array
+
+\cdf{array-element-type} возвращает спецификатор типа для множества объектов,
+которые могут быть сохранены в массиве \emph{array}. Это множество может быть
+больше чем то, которое запрашивалось в функции \cdf{make-array}. Например,
+результат
+\begin{lisp}
+(array-element-type (make-array 5 :element-type '(mod 5)))
+\end{lisp}
+может быть \cd{(mod 5)}, \cd{(mod 8)}, \cdf{fixnum}, \cdf{t} или любой другой
+тип, для которого \cd{(mod 5)} является подтипом. Смотрите \cdf{subtypep}.
+\end{defun}
+
+\begin{defun}[Функция]
+array-rank array
+
+Эта функция возвращает количество измерений (осей) массива \emph{array}.
+Результат будет неотрицательным целым.
+Смотрите \cdf{array-rank-limit}.
+\end{defun}
+
+\begin{defun}[Функция]
+array-dimension array axis-number
+
+Данная функция возвращает размер измерения \emph{axis-number} массива
+\emph{array}.
+\emph{array} может быть любым видом массива, и \emph{axis-number} должен быть
+неотрицательным целым меньшим чем ранг массива \emph{array}.
+Если \emph{array} является вектором с указателем заполнения,
+\cdf{array-dimension} возвращает общий размер вектора, включая неактивные
+элементы, а не размер ограниченный указателем заполнения.
+(Функция \cdf{length} будет возвращать размер ограниченный указателем
+заполнения.) 
+\end{defun}
+
+\begin{defun}[Функция]
+array-dimensions array
+
+\cdf{array-dimensions} возвращает список, элементы которого являются размерами
+измерений массива \emph{array}.
+\end{defun}
+
+\begin{defun}[Функция]
+array-total-size array
+
+\cdf{array-total-size} возвращает общее количество элементов массива
+\emph{array}, которое вычислено как произведение размеров всех измерений.
+\begin{lisp}
+(array-total-size \emph{x}) \\
+~~~\EQ\ (apply \#'* (array-dimensions \emph{x})) \\
+~~~\EQ\ (reduce \#'* (array-dimensions \emph{x}))
+\end{lisp}
+Следует отметить, что общий размер нульмерного (FIXME) массива равен \cd{1}.
+Общий размер одномерного массива вычисляется без учёта указателя заполнения.
+\end{defun}
+
+\begin{defun}[Функция]
+array-in-bounds-p array &rest subscripts
+
+Данный предикат проверяет, являются ли индексы \emph{subscripts} для массива
+\emph{array} корректными.
+Если они корректны, предикат истинен, иначе ложен. \emph{subscripts} должен
+быть целыми числами. Количество индексов \emph{subscripts} должно равняться
+рангу массива.
+Как и \cdf{aref}, \cdf{array-in-bounds-p} игнорирует указатели заполнения.
+\end{defun}
+
+\begin{defun}[Функция]
+array-row-major-index array &rest subscripts
+
+Данная функция принимает массив и корректные для него индексы и возвращает
+одиночное неотрицательное целое значение меньшее чем общий размер массива,
+которое идентифицирует элемент, полагаясь на построчный порядок хранения
+элементов.
+Количество указанных индексов \emph{subscripts} должно равняться рангу массива.
+Каждый индекс должен быть неотрицательным целым числом меньшим чем соответствующий
+размер измерения.
+Как и \cdf{aref}, \cdf{array-row-major-index} игнорирует указатели заполнения.
+
+Возможно определение \cdf{array-row-major-index}, без проверки на ошибки, может
+выглядеть так:
+\begin{lisp}
+(defun array-row-major-index (a \cd{\&rest} subscripts) \\
+~~(apply \#'+ (maplist \#'(lambda (x y) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~(* (car x) (apply \#'* (cdr y)))) \\
+~~~~~~~~~~~~~~~~~~~~~~subscripts \\
+~~~~~~~~~~~~~~~~~~~~~~(array-dimensions a))))
+\end{lisp}
+Для одномерного массива, результат \cdf{array-row-major-index} всегда равен
+переданному индексу.
+\end{defun}
+
+\begin{defun}[Функция]
+row-major-aref array index
+
+Данная функция позволяет получить доступ к элементу, как если бы массив был
+одномерный.
+Аргумент \emph{index} должен быть неотрицательным целым меньшим чем общий размер
+массива \emph{array}. Данная функция индексирует массив, как если бы он был
+одномерный с построчным порядком.
+Эту функцию можно понять в терминах \cdf{aref}:
+\begin{lisp}
+(row-major-aref \emph{array} \emph{index}) \EQ \\*
+~~(aref (make-array (array-total-size array)) \\*
+~~~~~~~~~~~~~~~~~~~~:displaced-to array \\*
+~~~~~~~~~~~~~~~~~~~~:element-type (array-element-type array)) \\*
+~~~~~~~~index)
+\end{lisp}
+Другими словами, можно обработать массив как одномерный с помощью создания
+нового одномерного массива, который \emph{соединён} с исходным, и получить
+доступ к новому массиву.
+И наоборот, \cdf{aref} может быть описана в терминах \cdf{row-major-aref}:
+\begin{lisp}
+(aref \emph{array} $\emph{i}_0$ $\emph{i}_1$ ... $\emph{i}_{n-1}$) \EQ \\*
+~~(row-major-aref array \\*
+~~~~~~~~~~~~~~~~~~(array-row-major-index array $\emph{i}_0$ $\emph{i}_1$ ... $\emph{i}_{n-1}$)
+\end{lisp}
+
+Как и \cdf{aref}, \cdf{row-major-aref} полностью игнорирует указатели
+заполнения.
+Для изменения элемента массива, можно комбинировать вызов \cdf{row-major-aref} с
+формой \cdf{setf}.
+
+Эта операция облегчает написание кода, который обрабатывает массивы различных
+рангов. Предположим, что необходимо обнулить содержимое массива
+\cdf{tennis-scores}. Можно решить это так:
+\begin{lisp}
+(fill (make-array (array-total-size tennis-scores) \\*
+~~~~~~~~~~~~~~~~~~:element-type (array-element-type tennis-scores) \\*
+~~~~~~~~~~~~~~~~~~:displaced-to tennis-scores) \\*
+~~~~~~0)
+\end{lisp}
+К сожалению, так как \cdf{fill} не может принимать многомерные массивы, в данном
+примере создаётся \emph{соединённый} массив, что является лишней операцией.
+Другим способом является отдельная обработка каждого измерения многомерного
+массива:
+\begin{lisp}
+(ecase (array-rank tennis-scores) \\*
+~~(0 (setf (aref tennis-scores) 0)) \\
+~~(1 (dotimes (i0 (array-dimension tennis-scores 0)) \\*
+~~~~~~~(setf (aref tennis-scores i0) 0))) \\
+~~(2 (dotimes (i0 (array-dimension tennis-scores 0)) \\*
+~~~~~~~(dotimes (i1 (array-dimension tennis-scores 1)) \\*
+~~~~~~~~~(setf (aref tennis-scores i0 i1) 0)))) \\*
+~~... \\
+~~(7 (dotimes (i0 (array-dimension tennis-scores 0)) \\*
+~~~~~~~(dotimes (i1 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~(dotimes (i2 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~(dotimes (i3 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~~~(dotimes (i4 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~~~~~(dotimes (i5 (array-dimension tennis-scores 1)) \\
+~~~~~~~~~~~~~~~~~(dotimes (i6 (array-dimension tennis-scores 1)) \\*
+~~~~~~~~~~~~~~~~~~~(setf (aref tennis-scores i0 i1 i2 i3 i4 i5 i6) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~0))))))))) \\*
+~~)
+\end{lisp}
+От такого кода быстро приходит усталость. Кроме того, данный подход не
+желателен, так как некоторые реализации Common Lisp'а будут фактически
+поддерживать не более 7 измерений. Рекурсивно вложенные циклы справляются с
+задачей лучше, но код всё ещё выглядит как лапша:
+\begin{lisp}
+(labels \\*
+~~((grok-any-rank (\&rest indices) \\*
+~~~~~(let ((d (- (array-rank tennis-scores) (length indices))) \\*
+~~~~~~~(if (= d 0) \\*
+~~~~~~~~~~~(setf (apply \#'row-major-aref indices) 0) \\*
+~~~~~~~~~~~(dotimes (i (array-dimension tennis-scores (- d 1))) \\*
+~~~~~~~~~~~~~(apply \#'grok-any-rank i indices)))))) \\*
+~~(grok-any-rank))
+\end{lisp}
+Является ли этот код эффективным зависит от многих параметров реализации, таких
+как способ обработки \cdf{\&rest} аргументов и компиляции \cdf{apply} вызовов.
+Только посмотрите как просто использовать для задачи \cdf{row-major-aref}!
+\begin{lisp}
+(dotimes (i (array-total-size tennis-scores)) \\*
+~~(setf (row-major-aref tennis-scores i) 0))
+\end{lisp}
+Нет сомнения, что этот код, слаще любых медовых сот.
+\end{defun}
+
+\begin{defun}[Функция]
+adjustable-array-p array
+
+Если аргумент, который должен быть массивом, может быть расширен, данный
+предикат истинен, иначе ложен.
+\end{defun}
+
+\section{Функции для битовых массивов}
+
+Функции описанные в данном разделе работают только с массивами битов, то есть,
+со специализированными массивами, элементы которых могут принимать значения
+только либо \cd{0}, либо \cd{1}.
+
+\begin{defun}[Функция]
+bit bit-array &rest subscripts \\
+sbit simple-bit-array &rest subscripts
+
+Функция \cdf{bit} похожа на \cdf{aref}, но принимает только массив битов, то
+есть массив типа \cd{(array bit)}.
+Результатом всегда является \cd{0} или \cd{1}.
+\cdf{sbit} похожа на \cdf{bit}, но дополнительно требует, чтобы первый аргумент
+был \emph{простым} массивом (смотрите раздел~\ref{ARRAY-TYPE-SECTION}).
+Следует отметить, что \cdf{bit} и \cdf{sbit}, в отличие от \cdf{char} и
+\cdf{schar}, могут принимать массив любого ранга.
+
+Для замены элемента массива может использоваться \cdf{setf} в связке с \cdf{bit}
+или \cdf{sbit}.
+
+\cdf{bit} и \cdf{sbit} идентичны \cdf{aref} за исключением того, что принимают
+только специализированные массивы.
+В некоторых реализациях Common Lisp'а \cdf{bit} и \cdf{sbit} могут быть быстрее
+чем \cdf{aref}.
+\end{defun}
+
+\begin{defun}[Функция]
+bit-and bit-array1 bit-array2 &optional result-bit-array \\
+bit-ior bit-array1 bit-array2 &optional result-bit-array \\
+bit-xor bit-array1 bit-array2 &optional result-bit-array \\
+bit-eqv bit-array1 bit-array2 &optional result-bit-array \\
+bit-nand bit-array1 bit-array2 &optional result-bit-array \\
+bit-nor bit-array1 bit-array2 &optional result-bit-array \\
+bit-andc1 bit-array1 bit-array2 &optional result-bit-array \\
+bit-andc2 bit-array1 bit-array2 &optional result-bit-array \\
+bit-orc1 bit-array1 bit-array2 &optional result-bit-array \\
+bit-orc2 bit-array1 bit-array2 &optional result-bit-array
+
+Эти функции выполняют побитовые логические операции над битовыми массивами.
+Все аргументы для этих функций должны быть битовыми массивами одинакового ранга
+и измерений.
+Результат является битовым массивом с такими же рангом и измерениями, что и
+аргументами. Каждый бит получается применением соответствующей операции к битам
+исходных массивов.
+
+Если третий аргумент опущен или является {\false}, создаётся новый массив,
+который будет содержать результат. Если третий аргумент это битовый массив, то
+результат помещается в этот массив. Если третий аргумент является {\true}, тогда
+для третьего аргумента используется первый массив. Таким образом результат
+помещается в массив переданный первым аргументом.
+
+Следующая таблица отображает результаты применения битовых операций.
+\begin{flushleft}
+\cf
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}lllll@{}}
+~~~\emph{argument1}~~&0&0&1&1 \\
+~~~\emph{argument2}~~&0&1&0&1&\emph{Имя операции} \\
+\hlinesp
+bit-and&0&0&0&1&\textrm{и} \\
+bit-ior&0&1&1&1&\textrm{или} \\
+bit-xor&0&1&1&0&\textrm{исключающее или} \\
+bit-eqv&1&0&0&1&\textrm{равенство (исключающее не-или)} \\
+bit-nand&1&1&1&0&\textrm{не-и} \\
+bit-nor&1&0&0&0&\textrm{не-или} \\
+bit-andc1&0&1&0&0&\textrm{не-\emph{argument1} и \emph{argument2}} \\
+bit-andc2&0&0&1&0&\textrm{\emph{argument1} и не-\emph{argument2}} \\
+bit-orc1&1&1&0&1&\textrm{не-\emph{argument1} или \emph{argument2}} \\
+bit-orc2&1&0&1&1&\textrm{\emph{argument1} или не-\emph{argument2}} \\
+\hline
+\end{tabular*}
+\end{flushleft}
+Например:
+\begin{lisp}
+(bit-and \#*1100 \#*1010) \EV\ \#*1000 \\
+(bit-xor \#*1100 \#*1010) \EV\ \#*0110 \\
+(bit-andc1 \#*1100 \#*1010) \EV\ \#*0100
+\end{lisp}
+Смотрите также \cdf{logand} и связанные с ней функции.
+\end{defun}
+
+\begin{defun}[Функция]
+bit-not bit-array &optional result-bit-array
+
+Первый аргумент должен быть массивом битов. Результатом является битовый массив
+с таким же рангом и измерениями и инвертированными битами.
+Смотрите также \cdf{lognot}.
+
+Если второй аргумент опущен или равен {\false}, для результата создаётся новый
+массив. Если второй аргумент является битовым массивом, результат помещается в
+него. Если второй аргумент является {\true}, то для результата используется
+массив из первого аргумента. То есть результат помещается в исходный массив.
+\end{defun}
+
+\section{Указатели заполнения}
+\label{FILL-POINTER}
+
+Common Lisp предоставляет несколько функций для управления \emph{указателями
+  заполнения}. Они позволяют последовательно заполнять содержимое вектора. А
+если точнее, они позволяют эффективно менять длину вектора.
+Например, строка с указателем заполнения имеет большинство характеристик строки
+с переменной длиной из PL/I.
+
+Указатель заполнения является неотрицательным целым числом не большим чем общее
+количество элементов в векторе (полученное от \cdf{array-dimension}).
+Указатель заполнения указывает на <<активные>> или <<заполненные>> элементы
+вектора.
+Указатель заполнение отображает <<активную длину>> вектора.
+Все элементы вектора, индекс которых меньше чем указатель заполнения, являются
+активными. Остальные элементы являются неактивными.
+Почти все функции, которые оперируют содержимым вектора, будут оперировать
+только активными элементами. Исключением является \cdf{aref}, которая может
+получать доступ ко всем элементам массива, активным и неактивным. Следует
+отметить, что элементы вектора из неактивной части тем не менее являются частью
+вектора.
+
+Указатели заполнения могут иметь только вектора (одномерные массивы).
+Многомерные массивы не могут иметь указатели заполнения. (Следует отметить,
+однако, что можно создать 
+многомерный массив \emph{соединённый} с вектором, у которого есть указатель
+заполнения.)
+
+\begin{defun}[Функция]
+array-has-fill-pointer-p array
+
+Аргумент должен быть массивом. \cdf{array-has-fill-pointer-p} возвращает
+{\true}, если массив умеет указатель заполнения, иначе возвращает {\false}.
+Следует отметить, что \cdf{array-has-fill-pointer-p} всегда возвращает {\false},
+если массив \emph{array} не одномерный.
+\end{defun}
+
+\begin{defun}[Функция]
+fill-pointer vector
+
+Данная функция возвращает указатель заполнения вектора \emph{vector}. Если
+вектор \emph{vector} не имеет указателя заполнения, генерируется ошибка.
+
+Для изменения указателя заполнения вектора может использоваться функция
+\cdf{setf} в связке с \cdf{fill-pointer}. Указатель заполнения вектора должен
+быть всегда целым числом между нулём и размером вектора (включительно).
+\end{defun}
+
+\begin{defun}[Функция]
+vector-push new-element vector
+
+Аргумент \emph{vector} должен быть одномерным массивом, имеющим указатель
+заполнения, и \emph{new-element} может быть любым объектом.
+\cdf{vector-push} пытается сохранить \emph{new-element} в элемент вектора, на
+который ссылается указатель заполнения, и увеличить этот указатель на 1. Если
+указатель заполнения не определяет элемент вектора (например, когда он
+становится слишком большим), то \cdf{vector-push} возвращает {\false}. В
+противном случае, если вставка нового элемента произошла, \cdf{vector-push}
+возвращает \cdf{предыдущее} значение указателя. Таким образом, \cdf{vector-push}
+является индексом вставленного элемента.
+
+Можно сравнить \cdf{vector-push}, которая является функцией, с \cdf{push},
+который являет макросом, который принимает \emph{место} подходящее для
+\cdf{setf}.
+Вектор с указателем заполнения содержит такое \emph{место} в слоте
+\cdf{fill-pointer}. FIXME
+\end{defun}
+
+\begin{defun}[Функция]
+vector-push-extend new-element vector &optional extension
+
+\cdf{vector-push-extend} похожа на \cdf{vector-push} за исключением того, что
+если указатель заполнения стал слишком большим, длина вектора увеличивается (с
+помощью \cdf{adjust-array}), и новый элемент помещается в вектор.
+Однако, если вектор не расширяемый, тогда \cdf{vector-push-extend} сигнализирует
+ошибку.
+
+Необязательный аргумент \emph{extension}, который должен быть положительным
+целым, является минимальным количеством элементов, добавляемых в вектор, если
+последний должен быть расширен. По-умолчанию содержит значение зависимое от
+реализации.
+\end{defun}
+
+\begin{defun}[Функция]
+vector-pop vector
+
+Аргумент \emph{vector} должен быть одномерным массивом, который имеет указатель
+заполнения.
+Если указатель заполнения является нулём, \cdf{vector-pop} сигнализирует ошибку.
+В противном случае, указатель заполнения уменьшается на 1, и в качестве значения
+функции возвращается обозначенный указателем элемент вектора.
+\end{defun}
+
+\section{Изменение измерений массива}
+
+Следующие функции могут использоваться для изменения размера или формы массива.
+Их опции почти совпадают с опциями функции \cdf{make-array}.
+
+\begin{defun}[Функция]
+adjust-array array new-dimensions &key :element-type :initial-element :initial-contents :fill-pointer :displaced-to :displaced-index-offset
+
+\cdf{adjust-array} принимает массив и те же аргументы, что и для
+\cdf{make-array}. Количество измерений, указанных в \emph{new-dimensions} должно
+равняться рангу массива \emph{array}.
+
+\cdf{adjust-array} возвращает массив такого же типа и ранга, что и массив
+\emph{array}, но с другим измерениями \emph{new-dimensions}. Фактически, аргумент
+\emph{array} модифицируется в соответствие с новыми указаниями. Но это может быть
+достигнуто двумя путями: модификацией массива \emph{array} или созданием нового
+массива и модификацией аргумента \emph{array} для \emph{соединения} его с новым
+массивом.
+
+В простейшем случае, можно указать только измерения \emph{new-dimensions} и,
+возможно, аргумент \cd{:initial-element}.
+Не пустые элементы массива \emph{array} вставляются в новый массив. Элементы
+нового массива, которые не были заполнены значениями из старого массива,
+получают значение из \cd{:initial-element}. Если аргумент не был указан, то
+первоначальное значение элементов не определено.
+
+Если указан \cd{:element-type}, тогда массив \emph{array} должен был быть создан
+с указанием такого же типа. В противном случае сигнализируется ошибка.
+Указание \cd{:element-type} в \cdf{adjust-array} служит только для проверки на
+существование ошибки несовпадения типов.
+
+Если указаны \cd{:initial-contents} или \cd{:displaced-to}, тогда они
+обрабатываются как для \cdf{make-array}. В таком случае, 
+
+Если указан \cd{:fill-pointer}, тогда указатель заполнения массива \emph{array}
+принимает указанное значение. Если массив \emph{array} не содержал указателя
+заполнения сигнализируется ошибка.
+
+\cdf{adjust-array} может, в зависимости от реализации и аргументов, просто
+изменить исходный массив или создать и вернуть новый.
+В последнем случае исходный массив изменяется, а именно \emph{соединяется} с
+новым массивом, и имеет новые измерения.
+
+Если \cd{adjust-array} применяется к массиву \emph{array}, который соединён с
+другим массивом \emph{x}, тогда ни массив \emph{array}, ни возвращённый
+результат не будет \emph{соединены} с \emph{x}, если только такое соединения не
+задано явно в вызове \cdf{adjust-array}.
+
+Например, предположим что массив 4-на-4 \cdf{m} выглядит так:
+\begin{lisp}
+\#2A(~(~alpha~~~~~beta~~~~~~gamma~~~~~delta~) \\
+~~~~~(~epsilon~~~zeta~~~~~~eta~~~~~~~theta~) \\
+~~~~~(~iota~~~~~~kappa~~~~~lambda~~~~mu~~~~) \\
+~~~~~(~nu~~~~~~~~xi~~~~~~~~omicron~~~pi~~~~)~)
+\end{lisp}
+Тогда результат выражения
+\begin{lisp}
+(adjust-array m '(3 5) :initial-element 'baz)
+\end{lisp}
+является массивом 3-на-5 с содержимым
+\begin{lisp}
+\#2A(~(~alpha~~~~~beta~~~~~~gamma~~~~~delta~~~~~baz~) \\
+~~~~~(~epsilon~~~zeta~~~~~~eta~~~~~~~theta~~~~~baz~) \\
+~~~~~(~iota~~~~~~kappa~~~~~lambda~~~~mu~~~~~~~~baz~)~)
+\end{lisp}
+Следует отметить, что если массив \cd{a} создаётся \emph{соединённым} с массивом
+\cd{b} и затем массив \cd{b} передаётся в \cdf{adjust-array}, то массив \cd{a}
+все ещё будет \emph{соединён} с массивом \cd{b}. При этом должны быть приняты во
+внимание правила \emph{соединения} массивов и построчный порядок следования
+элементов.
+
+\fi
