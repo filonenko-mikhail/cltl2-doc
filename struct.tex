@@ -3,7 +3,9 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Structures Структуры}
+\ifx \rulang\Undef
+
+\chapter{Structures}
 
 Common Lisp provides a facility for creating named record structures
 with named components.  In effect, the user can define a new data type;
@@ -21,25 +23,13 @@ have advanced applications.  These features are completely optional,
 and you needn't even know they exist in order to take
 advantage of the basics.
 
-Common Lisp предоставляет функциональность для создания структур (почти таких
-же, как в других языках, с именем структуры, полями, и т.д.). Фактически,
-пользователь может определить новый тип данных.Каждая структура данных
-этого типа имеет компоненты с заданными именами.
-При создании структуры автоматически создаются конструктор и конструкции доступа
-и присваивания значений для полей.
-
-\section{Introduction to Structures Введения в структуры}
+\section{Introduction to Structures}
 \label{DEFSTRUCT-INTRO-SECTION}
 
 The structure facility is embodied in the \cdf{defstruct} macro,
 which allows the user to create and use
 aggregate data types with named elements.  These are like
 ``structures'' in {PL/I}, or ``records'' in Pascal.
-
-Функциональность структур вополщена в макросе \cdf{defstruct}, который позволяет
-пользовател создавать и использовать сгруппированные типы данных с именованными
-элементами. Она похожа на функциональность <<структур (structures)>> в {PL/I}
-или <<записей (records)>> в Pascal'е.
 
 As an example, assume you are writing a Lisp
 program that deals with space ships in a two-dimensional plane.
@@ -49,13 +39,6 @@ things about a space ship, as far as your program is concerned, are
 its position (represented as \emph{x} and \emph{y} coordinates),
 velocity (represented as components along the \emph{x} and \emph{y} axes), and
 mass.
-
-В качестве примера, предположим, что вы пишете программу на Lisp'е, которая
-управляет космическими кораблями в двухмерном пространстве.
-В вашей программе, вам необходимо представить космический корабль как некоторого
-вида Lisp'овый объект. Интересующие вашу программу свойства корабля являются: его
-позиция (представленая как \emph{x} и \emph{y} координаты), скорость
-(представленная как отрезки по осям \emph{x} и \emph{y}) и масса.
 
 A ship might therefore be represented as a record structure with five
 components: \emph{x}-position, \emph{y}-position, \emph{x}-velocity, \emph{y}-velocity, and mass.
@@ -73,23 +56,6 @@ have to be changed, it would be very difficult to find all the places
 in the code to be changed to match (not all occurrences of \cdf{cadddr}
 are intended to extract the \emph{y}-velocity from a ship).
 
-Таким образом, корабль может быть представлен как запись структуры с пятью
-компонентами: позиция-\emph{x}, позиция-\emph{y}, скорость-\emph{x},
-скорость-\emph{y} и масса.
-Эта структура может быть реализована как Lisp'овый объект несколькими способами.
-Она может быть списком из пяти элементов; позиция-\emph{x} будет \emph{car}
-элементом, позиция-\emph{y} будет \emph{cadr}, и так далее. Подобным образом
-структура может быть вектором из пяти элементов: позиция-\emph{x} будет 0-ым
-элементом, позиция-\emph{y} будет 1-ым, и так далее. Проблема данных
-представлений состоит в том, что компоненты занимают совершенно случайные
-позиции и их сложно запомнить. Кто-нибудь увидев где-то в коде
-строки \cd{(cadddr~ship1)} или \cd{(aref~ship1~3)}, обнаружит сложность в
-определении того, что это производится доступ к компоненту скорости-\emph{y}
-структуры \cd{ship1}. Более того, если представление корабля должно быть
-изменено, то будет очень сложно найти все места в коде для изменения в
-соответствие с новым представлением (не все появления \cdf{cadddr} означают
-доступ к скорости-\emph{y} корабля). 
-
 Ideally components of record structures should have names.  One would
 like to write something like
 \cd{(ship-y-velocity ship1)} instead of \cd{(cadddr ship1)}.
@@ -100,17 +66,6 @@ One would also like a more mnemonic way to create a ship than this:
 Indeed, one would like \cdf{ship} to be a new data type, just like other
 Lisp data types, that one could test with \cdf{typep}, for example.
 The \cdf{defstruct} facility provides all of this.
-
-Лучше было бы если бы записи структур имели имена. Можно было бы написать что-то
-вроде \cd{(ship-y-velocity ship1)} вместо \cd{(cadddr ship1)}. Кроме того было
-бы неплохо иметь более информативную запись для создания структур, чем эта:
-\begin{lisp}
-(list 0 0 0 0 0)
-\end{lisp}
-Несомненно, хочется, чтобы \cdf{ship} был новым типом данных, как и любой другой
-тип Lisp'овых данных, чтобы, например, осуществить проверку с помощью
-\cdf{typep}.
-Функциональность \cdf{defstruct} предоставляет все, что выше было необходимо.
 
 \cdf{defstruct} itself is a macro that defines a structure.  For the
 space ship example, one might define the structure by saying:
@@ -125,19 +80,6 @@ space ship example, one might define the structure by saying:
 This declares that every \cdf{ship} is an object with five named components.
 The evaluation of this form does several things:
 
-\cdf{defstruct} является макросом, который определяет структуру. Например, для
-космического корабля, можно определить структуру так:
-\begin{lisp}
-(defstruct ship \\
-~~x-position \\
-~~y-position \\
-~~x-velocity \\
-~~y-velocity \\
-~~mass)
-\end{lisp}
-Запись декларирует, что каждый объект \cdf{ship} является объектом с пятью
-именованными компонентами. Вычисление этой формы делает несколько вещей.
-
 \begin{itemize}
 \item
 It defines \cdf{ship-x-position} to be a function
@@ -147,34 +89,15 @@ and the other components are given similar function definitions.
 These functions are called the \emph{access functions}, as they
 are used to access elements of the structure.
 
-\item 
-Она определяет \cdf{ship-x-position} как функцию одного аргумента, а именно,
-корабля, которая возвращает позицию-\emph{x} корабля.
-\cdf{ship-y-position} и другие компоненты получают такие же определения функций.
-Эти функции называются \emph{функциями доступа}, так как используются для
-доступа к компонентам структуры.
-
 \item
 The symbol \cdf{ship} becomes the name of a data type of which instances
 of ships are elements.  This name becomes acceptable to \cdf{typep},
 for example; \cd{(typep x 'ship)} is true if \cdf{x} is a ship
 and false if \cdf{x} is any object other than a ship.
 
-\item 
-Символ \cdf{ship} становится именем типа данных, к которому принадлежат
-экземпляры объектом кораблей. Например, это имя может использоваться в
-\cdf{typep}.
-\cd{(typep x 'ship)} истинен, если \cd{x} является кораблём, и ложен, если
-\cdf{x} является любым другим объектом.
-
 \item
 A function named \cdf{ship-p} of one argument is defined; it is a predicate
 that is true if its argument is a ship and is false otherwise.
-
-\item 
-Определяется функция одного аргумента с именем \cdf{ship-p}. Она является
-предикатом, который истинен, если аргумент является кораблём, и ложен в
-противных случаях. 
 
 \item
 A function called \cdf{make-ship} is defined that, when invoked,
@@ -195,26 +118,6 @@ This constructs a new ship and initializes three of its components.
 This function is called the \emph{constructor function}
 because it constructs a new structure.
 
-\item 
-Определяется функция с именем \cdf{make-ship}, при вызове которой создаётся
-структура данных из пяти компонентов, готовая к использованию в \emph{функциях
-  доступа}.
-Так, выполнение
-\begin{lisp}
-(setq ship2 (make-ship))
-\end{lisp}
-устанавливает в ship2 свеже созданный объект \cdf{ship}.
-Можно указать первоначальные значения для компонентов структуры используя
-именованные параметры:
-\begin{lisp}
-(setq ship2 (make-ship \cd{:mass} *default-ship-mass* \\
-~~~~~~~~~~~~~~~~~~~~~~~\cd{:x-position} 0 \\
-~~~~~~~~~~~~~~~~~~~~~~~\cd{:y-position} 0))
-\end{lisp}
-Форма создает новый корабль и инициализирует три его компонента.
-Эта функция называется \emph{функцией-конструктором}, потому что создаёт новую
-структуру.
-
 \item
 The \cd{\#S} syntax can be used to read instances of \cdf{ship}
 structures, and a printer function is provided for printing
@@ -226,26 +129,10 @@ variable \cd{ship2} shown above might be printed as
 \end{lisp}
 
 \item
-Синтаксис \cd{\#S} может использоваться для чтения экземпляров структур
-\cdf{ship}, и также предоставляется функция вывода для печати структур кораблей.
-Например, значение ранее упомянутой переменной \cd{ship2} может быть выведено
-как
-\begin{lisp}
-\#S(ship  x-position 0  y-position 0  x-velocity nil \\
-~~~~~~~~~y-velocity nil  mass 170000.0)
-\end{lisp}
-
-\item
 A function called \cdf{copy-ship} of one argument
 is defined that, when given a \cdf{ship} object,
 will create a new \cdf{ship} object that is a copy of the given one.
 This function is called the \emph{copier function}.
-
-\item 
-Определяется функция одного аргумента с именем \cdf{copy-ship}, которая получая
-объект \cdf{ship}, будет создавать новый объект \cdf{ship}, который является
-копией исходного.
-Эта функция называется \emph{функцией копирования}.
 
 \item
 One may use \cdf{setf} to alter the components of a \cdf{ship}:
@@ -256,26 +143,13 @@ This alters the \emph{x}-position of \emph{ship2} to be \cd{100}.
 This works because \cdf{defstruct} behaves as if
 it generates an appropriate \cdf{defsetf}
 form for each access function.
-
-\item 
-Можно использовать \cdf{setf} для изменения компонентов объекта \cdf{ship}:
-\begin{lisp}
-(setf (ship-x-position ship2) 100)
-\end{lisp}
-Данная запись именяет позицию-\emph{x} переменной \emph{ship2} в \cd{100}.
-Она работает, потому что \cdf{defstruct} ведет себя так, будто создаёт
-соотвествующие \cdf{defsetf} формы для \emph{функций доступа}.
 \end{itemize}
 
 This simple example illustrates the power of \cdf{defstruct} to provide
 abstract record structures in a convenient manner.
 \cdf{defstruct} has many other features as well for specialized purposes.
 
-Этот простой пример отображает мощь и удобство \cdf{defstruct} для представления
-записей структур.
-\cdf{defstruct} имеет много других возможностей для специализированных целей.
-
-\section{How to Use Defstruct Как использовать defstruct}
+\section{How to Use Defstruct}
 
 All structures are defined through the \cdf{defstruct} construct.
 A call to \cdf{defstruct} defines a new data type whose instances
@@ -334,40 +208,23 @@ Each \emph{slot-description-j} is of the form
 ~~~~~\emph{slot-option-name-1} \emph{slot-option-value-1} \\
 ~~~~~\emph{slot-option-name-2} \emph{slot-option-value-2} \\
 ~~~~~... \\
-~~~~~\emph{slot-option-name-k${}_{\hbox{\scriptsize\it j}}$} \emph{slot-option-value-k${}_{\hbox{\scriptsize\it j}}$})
+~~~~~\emph{slot-option-name-k${}_{j}$} \emph{slot-option-value-k${}_{j}$})
 \end{lisp}
 Each \emph{slot-name} must be a symbol; an access function is defined
 for each slot. If no options and no \emph{default-init} are specified,
 then one may write simply \emph{slot-name} instead of \cd{(\emph{slot-name})}
 as the slot description.
 
-\begin{obsolete}
-The \emph{default-init} is a form that is
-evaluated \emph{each time} a structure is to be constructed; the value
-is used as the initial value of the slot.
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in October 1988 \issue{DEFSTRUCT-DEFAULT-VALUE-EVALUATION}
-to clarify that a \emph{default-init} form is evaluated only if the corresponding
-argument is not supplied to the constructor function.  The preceding
-sentence should therefore read as follows:
-
+\emph{default-init} form is evaluated only if the corresponding
+argument is not supplied to the constructor function. 
 The \emph{default-init} is a form that is
 evaluated \emph{each time} its value
 is to be used as the initial value of the slot.
-\end{newer}
+
 If no \emph{default-init}
 is specified, then the initial contents of the slot are undefined
 and implementation-dependent.  The available slot-options are
 described in section~\ref{Defstruct-Slot-Options}.
-
-\beforenoterule
-\begin{incompatibility}
-Slot-options are not currently provided
-in Lisp Machine Lisp, but this is an upward-compatible extension.
-\end{incompatibility}
-\afternoterule
 
 \begin{new}
 X3J13 voted in January 1989
@@ -400,7 +257,6 @@ of accessor functions from the print names and interns the resulting
 new names in the current package.
 \end{rationale}
 \afternoterule
-
 
 X3J13 recommended that expanding
 a \cdf{defstruct} form violating this
@@ -703,7 +559,6 @@ attributes of name, age, and sex, and you would like Lisp functions
 that operate on \cdf{person} structures to operate just as well on
 \cdf{astronaut} structures.  You can do this by defining \cdf{astronaut}
 with the \cd{:include} option, as follows:
-
 \begin{lisp}
 (defstruct (astronaut (:include person) \\
 ~~~~~~~~~~~~~~~~~~~~~~(:conc-name astro-)) \\
@@ -726,7 +581,6 @@ Moreover, \cdf{astronaut} will have its own access functions for
 components defined by the \cdf{person} structure.
 The following examples illustrate how you can
 use \cdf{astronaut} structures:
-
 \begin{lisp}
 (setq x (make-astronaut :name 'buzz \\
 ~~~~~~~~~~~~~~~~~~~~~~~~:age 45 \\
@@ -823,10 +677,10 @@ When a structure of this type is to be printed, the function
 is called on three arguments:
 the structure to be printed, a stream to print to,
 and an integer indicating the current depth (to be compared against
-\cd{*print-level*}).
+\cdf{*print-level*}).
 The printing function should observe the values of
-such printer-control variables as \cd{*print-escape*}
-and \cd{*print-pretty*}.
+such printer-control variables as \cdf{*print-escape*}
+and \cdf{*print-pretty*}.
 
 If the \cd{:print-function} option is not specified and the \cd{:type}
 option also not specified, then a default printing function is
@@ -903,6 +757,7 @@ type specifier recognizable by \cdf{typep}
 
 Normally this option is not specified, in which case the structure
 is represented in an implementation-dependent manner.
+
 \begin{quotation}    % Merely to advance the left margin
 \begin{flushdesc}
 \item[\cdf{vector}]
@@ -933,7 +788,8 @@ The \cd{:named} option specifies that the structure is ``named''; this
 option takes no argument.  If no \cd{:type} option is specified,
 then the structure is always named; so this option is useful only in
 conjunction with the \cd{:type} option.
-See section~\ref{EXPLICIT-TYPE-STRUCTURES} for a further description of this option.
+See section~\ref{EXPLICIT-TYPE-STRUCTURES} for a further description of this
+option.
 
 \item[\cd{:initial-offset}]
 This allows you to tell \cdf{defstruct} to skip over a certain
@@ -1150,7 +1006,7 @@ symbols, and binary operations such as \cdf{+} and \cdf{*}.  An operation
 might be represented as it is in Lisp, as a list of the operator
 and the two operands.  This fact can be expressed succinctly with \cdf{defstruct}
 in this manner:
-\begin{lisp}
+е\begin{lisp}
 (defstruct (binop (:type list)) \\
 ~~(operator '? :type symbol) \\
 ~~operand-1 \\
@@ -1325,3 +1181,801 @@ structure name and three slots for \cdf{binop}.  The next three {\nil} elements
 stem from the \cd{:initial-offset} of \cd{3} in the definition of
 \cdf{annotated-binop}.  The last three list elements contain the additional
 slots for an \cdf{annotated-binop}.
+
+%RUSSIAN
+\else
+
+\chapter{Структуры}
+
+Common Lisp предоставляет функциональность для создания структур (почти таких
+же, как в других языках, с именем структуры, полями, и т.д.). Фактически,
+пользователь может определить новый тип данных.Каждая структура данных
+этого типа имеет компоненты с заданными именами.
+При создании структуры автоматически создаются конструктор и конструкции доступа
+и присваивания значений для полей.
+
+Данная глава разделена на две части. Первая часть описывает основную
+функциональность структур, которая очень проста и позволяет пользователю
+воспользоваться проверкой типов, модульностью и удобством определённых им типов
+данных. Вторая часть начинается с раздела~\ref{Defstruct-Hairy-Stuff},
+описывающего специализированные возможности для сложных приложений. Эти
+возможности совершенно необязательны к использованию, и вам даже не нужно о них
+знать для того, чтобы делать хорошие программы.
+
+\section{Введение в структуры}
+\label{DEFSTRUCT-INTRO-SECTION}
+
+Функциональность структур воплощена в макросе \cdf{defstruct}, который позволяет
+пользователю создавать и использовать сгруппированные типы данных с именованными
+элементами. Она похожа на функциональность <<структур (structures)>> в {PL/I}
+или <<записей (records)>> в Pascal'е.
+
+В качестве примера, предположим, что вы пишете программу на Lisp'е, которая
+управляет космическими кораблями в двухмерном пространстве.
+В вашей программе, вам необходимо представить космический корабль как некоторого
+вида Lisp'овый объект. Интересующие вашу программу свойства корабля являются: его
+позиция (представленная как \emph{x} и \emph{y} координаты), скорость
+(представленная как отрезки по осям \emph{x} и \emph{y}) и масса.
+
+Таким образом, корабль может быть представлен как запись структуры с пятью
+компонентами: позиция-\emph{x}, позиция-\emph{y}, скорость-\emph{x},
+скорость-\emph{y} и масса.
+Эта структура может быть реализована как Lisp'овый объект несколькими способами.
+Она может быть списком из пяти элементов; позиция-\emph{x} будет \emph{car}
+элементом, позиция-\emph{y} будет \emph{cadr}, и так далее. Подобным образом
+структура может быть вектором из пяти элементов: позиция-\emph{x} будет 0-ым
+элементом, позиция-\emph{y} будет 1-ым, и так далее. Проблема данных
+представлений состоит в том, что компоненты занимают совершенно случайные
+позиции и их сложно запомнить. Кто-нибудь увидев где-то в коде
+строки \cd{(cadddr~ship1)} или \cd{(aref~ship1~3)}, обнаружит сложность в
+определении того, что это производится доступ к компоненту скорости-\emph{y}
+структуры \cd{ship1}. Более того, если представление корабля должно быть
+изменено, то будет очень сложно найти все места в коде для изменения в
+соответствие с новым представлением (не все появления \cdf{cadddr} означают
+доступ к скорости-\emph{y} корабля). 
+
+Лучше было бы если бы записи структур имели имена. Можно было бы написать что-то
+вроде \cd{(ship-y-velocity ship1)} вместо \cd{(cadddr ship1)}. Кроме того было
+бы неплохо иметь более информативную запись для создания структур, чем эта:
+\begin{lisp}
+(list 0 0 0 0 0)
+\end{lisp}
+Несомненно, хочется, чтобы \cdf{ship} был новым типом данных, как и любой другой
+тип Lisp'овых данных, чтобы, например, осуществить проверку с помощью
+\cdf{typep}.
+Функциональность \cdf{defstruct} предоставляет все, что выше было необходимо.
+
+\cdf{defstruct} является макросом, который определяет структуру. Например, для
+космического корабля, можно определить структуру так:
+\begin{lisp}
+(defstruct ship \\
+~~x-position \\
+~~y-position \\
+~~x-velocity \\
+~~y-velocity \\
+~~mass)
+\end{lisp}
+Запись декларирует, что каждый объект \cdf{ship} является объектом с пятью
+именованными компонентами. Вычисление этой формы делает несколько вещей.
+
+\begin{itemize}
+
+\item 
+Она определяет \cdf{ship-x-position} как функцию одного аргумента, а именно,
+корабля, которая возвращает позицию-\emph{x} корабля.
+\cdf{ship-y-position} и другие компоненты получают такие же определения функций.
+Эти функции называются \emph{функциями доступа}, так как используются для
+доступа к компонентам структуры.
+
+\item 
+Символ \cdf{ship} становится именем типа данных, к которому принадлежат
+экземпляры объектом кораблей. Например, это имя может использоваться в
+\cdf{typep}.
+\cd{(typep x 'ship)} истинен, если \cd{x} является кораблём, и ложен, если
+\cdf{x} является любым другим объектом.
+
+\item 
+Определяется функция одного аргумента с именем \cdf{ship-p}. Она является
+предикатом, который истинен, если аргумент является кораблём, и ложен в
+противных случаях. 
+
+\item 
+Определяется функция с именем \cdf{make-ship}, при вызове которой создаётся
+структура данных из пяти компонентов, готовая к использованию в \emph{функциях
+  доступа}.
+Так, выполнение
+\begin{lisp}
+(setq ship2 (make-ship))
+\end{lisp}
+устанавливает в ship2 свеже созданный объект \cdf{ship}.
+Можно указать первоначальные значения для компонентов структуры используя
+именованные параметры:
+\begin{lisp}
+(setq ship2 (make-ship \cd{:mass} *default-ship-mass* \\
+~~~~~~~~~~~~~~~~~~~~~~~\cd{:x-position} 0 \\
+~~~~~~~~~~~~~~~~~~~~~~~\cd{:y-position} 0))
+\end{lisp}
+Форма создаёт новый корабль и инициализирует три его компонента.
+Эта функция называется \emph{функцией-конструктором}, потому что создаёт новую
+структуру.
+
+\item
+Синтаксис \cd{\#S} может использоваться для чтения экземпляров структур
+\cdf{ship}, и также предоставляется функция вывода для печати структур кораблей.
+Например, значение ранее упомянутой переменной \cd{ship2} может быть выведено
+как
+\begin{lisp}
+\#S(ship  x-position 0  y-position 0  x-velocity nil \\
+~~~~~~~~~y-velocity nil  mass 170000.0)
+\end{lisp}
+
+\item 
+Определяется функция одного аргумента с именем \cdf{copy-ship}, которая получая
+объект \cdf{ship}, будет создавать новый объект \cdf{ship}, который является
+копией исходного.
+Эта функция называется \emph{функцией копирования}.
+
+\item 
+Можно использовать \cdf{setf} для изменения компонентов объекта \cdf{ship}:
+\begin{lisp}
+(setf (ship-x-position ship2) 100)
+\end{lisp}
+Данная запись изменяет позицию-\emph{x} переменной \emph{ship2} в \cd{100}.
+Она работает, потому что \cdf{defstruct} ведёт себя так, будто создаёт
+соответствующие \cdf{defsetf} формы для \emph{функций доступа}.
+\end{itemize}
+
+Этот простой пример отображает мощь и удобство \cdf{defstruct} для представления
+записей структур.
+\cdf{defstruct} имеет много других возможностей для специализированных целей.
+
+\section{Как использовать defstruct}
+
+Все структуры определяются с помощью конструкции \cdf{defstruct}.
+Вызов \cdf{defstruct} определяет новый тип данных, экземпляры которого содержат
+именованные слоты.
+
+\begin{defmac}
+defstruct name-and-options [doc-string] {slot-description}+
+
+Этот макрос определяет структурный тип данных.
+Обычно вызов \cdf{defstruct} выглядит как следующий пример.
+\begin{lisp}
+(defstruct (\emph{name} \emph{option-1} \emph{option-2} ... \emph{option-m}) \\
+~~~~~~~~~~~\emph{doc-string} \\
+~~~~~~~~~~~\emph{slot-description-1} \\
+~~~~~~~~~~~\emph{slot-description-2} \\
+~~~~~~~~~~~... \\
+~~~~~~~~~~~\emph{slot-description-n}) \\
+\end{lisp}
+Имя структуры \emph{name} должно быть символом. Он становиться именем нового типа данных,
+который включает в себя все экземпляры данной структуры.
+Соответственно функция \cdf{typep} будет принимать и использовать это
+имя. Имя структуры \emph{name} возвращается как значение формы \emph{defstruct}.
+
+Обычно опции не нужны. Если они не заданы, то после слова \cdf{defstruct} вместо
+\cd{(\emph{name})} можно записать просто \emph{name} . Синтаксис опций и их
+смысл раскрываются в разделе~\ref{DEFSTRUCT-OPTIONS}.
+
+Если присутствует необязательная строка документации \emph{doc-string}, тогда
+она присоединяется к символу \emph{name}, как документация для типа
+\cdf{structure}. Смотрите \cdf{documentation}.
+
+Каждое описание слота \emph{slot-description-j} выглядит так:
+\begin{lisp}
+(\emph{slot-name} \emph{default-init} \\
+~~~~~\emph{slot-option-name-1} \emph{slot-option-value-1} \\
+~~~~~\emph{slot-option-name-2} \emph{slot-option-value-2} \\
+~~~~~... \\
+~~~~~\emph{slot-option-name-k${}_{j}$} \emph{slot-option-value-k${}_{j}$})
+\end{lisp}
+Каждое имя слота \emph{slot-name} должно быть символом. Для каждого слота
+определяется функция доступа. Если опции и первоначальные значения не указаны,
+тогда в качестве описания слота вместо \cd{(slot-name)} можно записать просто
+\emph{slot-name}.
+
+Форма \emph{default-init} вычисляется, только если соответствующий аргумент не
+указан при вызове функции конструктора.
+\emph{default-init} вычисляется \emph{каждый раз}, когда необходимо получить
+первоначальное значение для слота.
+
+Если \emph{default-init} не указано, тогда первоначальное значение слота не
+определено и зависит от реализации. Доступные опции для слотов разобраны в
+разделе~\ref{Defstruct-Slot-Options}.
+
+\cdf{defstruct} не только определяет функции доступа к слотам, но также
+выполняет интеграцию с \cdf{setf} для этих функций, определяет предикат с
+именем \cd{\emph{name}-p}, определяет функцию конструктора с именем
+\cd{make-\emph{name}} и определяет функцию копирования с именем
+\cd{copy-\emph{name}}.
+Все имена автоматически создаваемых функций интернируются в текущий пакет на время
+выполнения \cdf{defstruct} (смотрите \cdf{*package*}).
+Кроме того, все эти функции могут быть задекларированы как \cdf{inline} на
+усмотрение реализации для повышения производительности.
+Если вы не хотите, чтобы функции были задекларированы как \cdf{inline}, укажите
+декларацию \cdf{notinline} после формы \cdf{defstruct} для перезаписи декларации
+\cdf{inline}.
+\end{defmac}
+
+\section{Использование автоматически определяемого конструктора}
+
+После того, как вы определили новую структуру с помощью \cdf{defstruct}, вы
+можете создавать экземпляры данной структуры с помощью функции конструктора.
+По-умолчанию \cdf{defstruct} автоматически определяет эту функцию.
+Для структуры с именем \cdf{foo}, функция конструктора обычно называется
+\cdf{make-foo}.
+Вы можете указать другое имя, передав его в качестве аргумента для опции
+\cd{:constructor}, или, если вы вообще не хотите обычную функцию
+конструктора, указав в качества аргумента {\false}. 
+В последнем случае должны быть запрошены один или более конструкторов
+с <<позиционными>> аргументами FIXME, смотрите раздел~\ref{DEFSTRUCT-CONSTRUCTOR-SYNTAX}.
+
+Общая форма вызова функции конструктора выглядит так:
+\begin{lisp}
+(\emph{name-of-constructor-function} \\*
+~~~~~~~~\emph{slot-keyword-1} \emph{form-1} \\*
+~~~~~~~~\emph{slot-keyword-2} \emph{form-2} \\*
+~~~~~~~~...)
+\end{lisp}
+Все аргументы являются именованными. Каждый \emph{slot-keyword} должен быть
+ключевым символом, имя которого совпадает со именем слота структуры
+(\cdf{defstruct} определяет возможные ключевые символы интернируя каждое имя
+слота в пакет ключевых символов (keyword). Все ключевые символы \emph{keywords}
+и формы \emph{forms} вычисляются. В целом, это выглядит как если функция
+конструктора принимает все аргументы как \cd{\&key} параметры. Например,
+структура \cd{ship} упомянутая ранее в разделе~\ref{DEFSTRUCT-INTRO-SECTION}
+имеет функцию конструктора, которая принимает аргументы в соотвествие со
+следующим определением:
+\begin{lisp}
+(defun make-ship (\&key x-position y-position \\
+~~~~~~~~~~~~~~~~~~~~~~~x-velocity y-velocity mass) \\
+~~...)
+\end{lisp}
+
+\label{defstruct-initialization}
+Если \emph{slot-keyword-j} задаёт имя слота, тогда элемент созданной структуры
+будет инициализирован значением \emph{form-j}.
+Если пара \emph{slot-keyword-j} и \emph{form-j} для слота не указана, тогда слот
+будет инициализирован результатом вычисления указанной в вызове \cdf{defstruct}
+для этого слота формой \emph{default-init}.
+(Другими словами, инициализация указанная в \cdf{defstruct} замещается
+инициализацией указанной в вызове функции конструктора.)
+Если используется форма инициализации \emph{default-init}, она вычисляется в
+время создания экземпляра структуры, но в лексическом окружении формы
+\cdf{defstruct}, в которой она используется.
+Если эта форма инициализации не указана, первоначальное значение слота не
+определено.
+Если вам необходимо инициализировать слоты некоторыми значениями, вы должны
+всегда указывать первоначальное значение или в \cdf{defstruct}, или в 
+вызове функции конструктора. 
+
+Каждая форма инициализации, указанная в компоненте формы \cdf{defstruct}, когда
+используется функцией конструктора, перевычисляется при каждом вызове
+функции. Это, как если бы формы инициализации использовались как формы
+\emph{init} для именованных параметров функции конструктора.
+Например, если форма \cd{(gensym)} используется как форма инициализации или в
+вызове функции конструктора, или форме инициализации слота в форме
+\cdf{defstruct}, тогда каждый вызов функции конструктора вызывал бы \cdf{gensym}
+для создания нового символа.
+
+\section{Опции слотов для defstruct}
+\label{Defstruct-Slot-Options}
+
+Каждая форма \emph{slot-description} в форме \cdf{defstruct} может указывать
+одно или более опций слота. \emph{slot-option} является парой ключевого символа и
+значения (которое не является формой для вычисления, а является просто
+значением).
+Например:
+\begin{lisp}
+(defstruct ship \\
+~~(x-position 0.0 \cd{:type} short-float) \\
+~~(y-position 0.0 \cd{:type} short-float) \\
+~~(x-velocity 0.0 \cd{:type} short-float) \\
+~~(y-velocity 0.0 \cd{:type} short-float) \\
+~~(mass *default-ship-mass* \cd{:type} short-float \cd{:read-only} t))
+\end{lisp}
+Этот пример содержит определение, что каждый слот будет всегда содержать
+короткое с плавающей точкой число, и что последний слот не может быть изменён
+после создания корабля.
+Доступные опции для слотов \emph{slot-options}:
+\begin{flushdesc}
+\item[\cd{:type}]
+Опция \cd{\cd{:type} \emph{type}} указывает, что содержимое слота будет всегда
+принадлежать указанному типу данных. Она похожа на аналогичную декларацию для
+переменной или функции. И конечно же, она также декларирует возвращаемый
+\emph{функцией доступа} тип. Реализация может проверять или не проверять тип
+нового объекта при инициализации или присваивании слота.
+Следует отметить, что форма аргумента \emph{type} не вычисляется, и
+следовательно должна быть корректным спецификатором типа.
+
+\item[\cd{:read-only}]
+Опция \cd{\cd{:read-only} \emph{x}}, при \emph{x} не {\false}, указывает , что
+этот слот не может быть изменён. Он будет всегда содержать значение, указанное
+во время создания экземпляра структуры.
+\cdf{setf} не принимает \emph{функцию доступа} к данному слоту.
+Если \emph{x} {\false}, эта опция ничего не меняет.
+Следует отметить, что форма аргумента \emph{x} не вычисляется.
+\end{flushdesc}
+
+Следует отметить, что невозможно определить опцию для слота без указания
+значение по-умолчанию.
+
+\section{Опции defstruct}
+\label{DEFSTRUCT-OPTIONS}
+\label{Defstruct-Hairy-Stuff}
+
+Предыдущее описание \cdf{defstruct} достаточно для среднестатистического
+использования. Оставшуюся часть этой главы занимает описание более сложных
+возможностей функционала \cdf{defstruct}.
+
+Данный раздел объясняет каждую опцию, которая может быть использована в
+\cdf{defstruct}.
+Опция для \cdf{defstruct} может быть или ключевым символом, или списком из
+ключевого символа и аргумента для него.
+(Следует отметить, что синтаксис для опций \cdf{defstruct} отличается от
+синтаксиса пар, используемых для опций слота. Никакая часть этих опций не
+вычисляется.)
+
+\begin{flushdesc}
+
+\item[\cd{:conc-name}]
+Данная опция предоставляет префикс для имён функций доступа.
+По соглашению, имена всех функций доступа к слотам структура начинаются с
+префикса --- имени структуры с последующим дефисом. Это поведение
+по-умолчанию.
+
+Аргумент \cd{:conc-name} указывает альтернативный префикс. (Если в качестве
+разделителя используется дефис, он указывается как часть префикса.)
+Если в качестве аргумента указано {\false}, тогда префикс не устанавливается
+вообще.
+Тогда имена функций доступа совпадают с именами слотов, и это повод давать
+слотам информативные имена. 
+
+Следует отметить, что не зависимо от того, что указана в \cd{:conc-name}, в
+функции конструктора используются ключевые символы, совпадающие с именами
+слотов без присоединяемого префикса.
+С другой стороны префикс используется в именах функций доступа. Например:
+\begin{lisp}
+(defstruct door knob-color width material) \\
+(setq my-door \\
+~~~~~~(make-door :knob-color 'red :width 5.0)) \\
+(door-width my-door) \EV\ 5.0 \\
+(setf (door-width my-door) 43.7) \\
+(door-width my-door) \EV\ 43.7 \\
+(door-knob-color my-door) \EV\ red
+\end{lisp}
+
+\item[\cd{:constructor}]
+Данная опция принимает один аргумент, символ, который указывает имя функции
+конструктора. Если аргумент не предоставлен, или если опция не указана, имя
+конструктора создаётся соединением строки \cd{"MAKE-"} и имени структуры, и
+помещается в текущий пакет в время выполнения формы \cdf{defstruct} (смотрите
+\cdf{*package*}).
+Если аргумент указан и равен {\fase}, то функция конструктор не создаётся.
+
+Эта опция имеет более сложный синтаксис, описываемый в
+разделе~\ref{DEFSTRUCT-CONSTRUCTOR-SYNTAX}.
+
+\item[\cd{:copier}]
+Данная опция принимает один аргумент, символ, который указывает имя функции
+копирования. Если аргумент не предоставлен, или если опция не указана, имя
+функции копирования создаётся соединением строки \cd{"COPY-"} и имени структуры, и
+помещается в текущий пакет в время выполнения формы \cdf{defstruct} (смотрите
+\cdf{*package*}).
+Если аргумент указан и равен {\fase}, то функция копирования не создаётся.
+
+Автоматически создаваемая функция копирования просто создаёт новую структуру и
+переносит все компоненты из структуры аргумента в свеже создаваемую
+структуру. Копирование самих компонентов структуры не производится.
+Соответствующие элементы старой и новой структуры равны \cdf{eql} между собой.
+
+\item[\cd{:predicate}]
+Эта опция принимает один аргумент, который задаёт имя предиката типа.
+Если аргумент не указан, или если не указана опция, то имя предиката создаётся
+соединением имени структуры и строки \cd{"-P"}, помещая имя в текущий пакет на
+момент вычисления формы \cdf{defstruct} (смотрите \cdf{*package*}).
+Если указанный аргумент равен {\false}, предикат не создаётся.
+Предикат может быть определён, только если структура имеет <<имя>>.
+Если указана опция \cd{:type} и не указана \cd{:named}, тогда опция
+\cd{:predicate} не должна использоваться или должна иметь значение {\false}.
+
+\item[\cd{:include}]
+Эта опция используется для создания нового определения структуры как расширения
+для старого определения структуры. В качестве примера, предположим у вас есть
+структура, называемая \cdf{person}, которая выглядит так:
+\begin{lisp}
+(defstruct person name age sex)
+\end{lisp}
+Теперь, предположим, вы хотите создать новую структуру для представления
+астронавта.
+Так как астронавт также человек, вы хотите, чтобы он также имел свойства имя,
+возраст и пол, и вы хотите чтобы Lisp'овые функции работали со структурами \cdf{astronaut}
+также как и с структурами \cdf{person}. Вы можете сделать это определив
+структуру \cdf{astronaut} с опцией \cd{:include}, так:
+\begin{lisp}
+(defstruct (astronaut (:include person) \\
+~~~~~~~~~~~~~~~~~~~~~~(:conc-name astro-)) \\
+~~~helmet-size \\
+~~~(favorite-beverage 'tang))
+\end{lisp}
+
+Опция \cd{:include} заставляет структуру, будучи определённой, иметь те же слоты,
+что и включаемая структура из опции.
+Это осуществляется с помощью того, что функции доступа включаемой структуры
+будут также работать с определяемой структурой.
+Таким образом, в этом примере, \cdf{astronaut} будет иметь пять слотов: три
+определены в \cdf{person} и два в самом \cdf{astronaut}.
+Функции доступа, определённые с помощью структуры \cdf{person}, могут применяться к
+экземплярам структуры \cdf{astronaut}, и будут корректно работать.
+Более того, \cdf{astronaut} будет иметь свои функции доступа для компонентов
+унаследованных от структуры \cdf{person}.
+Следующий пример иллюстрирует то, как вы можете использовать структуры
+\cd{astronaut}:
+\begin{lisp}
+(setq x (make-astronaut :name 'buzz \\
+~~~~~~~~~~~~~~~~~~~~~~~~:age 45 \\
+~~~~~~~~~~~~~~~~~~~~~~~~:sex t \\
+~~~~~~~~~~~~~~~~~~~~~~~~:helmet-size 17.5)) \\
+ \\
+(person-name x) \EV\ buzz \\
+(astro-name x) \EV\ buzz \\
+\\
+(astro-favorite-beverage x) \EV\ tang
+\end{lisp}
+Различие между функциями доступа \cdf{person-name} и \cdf{astro-name} в том, что
+\cdf{person-name} может быть корректно применена к любому экземпляру
+\cdf{person}, включая \cdf{astronaut}, тогда как \cdf{astro-name} может работать
+только с \cdf{astronaut}. (Реализация может проверять или не проверять
+корректное использоваться таких функций доступа.)
+
+В одной форме \cdf{defstruct} может использовать не более одной опции
+\cdf{:include}.
+Аргумент для опции \cd{:include} является обязательным и должен быть именем
+определённой ранее структуры. Если структура, будучи определённой, не имела
+опции \cd{:type}, тогда наследуемая структура также не должна была содержать
+опцию \cd{:type}.
+Если структура, будучи определённой, имела опцию \cd{:type}, тогда наследуемая
+структура должна была иметь опцию \cd{:type} с тем же типом.
+
+Если опция \cd{:type} не указана, тогда имя структуры становиться именем типа
+данных. Более того, тип будет является подтипом типа структуры, от которой
+произошло наследование. В вышеприведённом примере, \cdf{astronaut} является
+подтипом \cdf{person}. Так,
+\begin{lisp}
+(typep (make-astronaut) 'person)
+\end{lisp}
+но и указывает, что все операции над \cdf{person} будут также работать для
+\cdf{astronaut}.
+
+Далее рассказывается чуть более сложные возможности опции \cd{:include}.
+Иногда, когда одна структура включает другую, необходимо, чтобы значения
+по-умолчанию или опции слотов из родительской структуры при наследовании
+стали слегка другими.  Новая структура может задать значения по-умолчанию или
+опции для наследуемых слотов отличными от родительских, с помощью конструкции:
+\begin{lisp}
+(:include \emph{name} \emph{slot-description-1} \emph{slot-description-2} ...)
+\end{lisp}
+Каждая форма \emph{slot-description-j} должна иметь имя \emph{slot-name} или
+\emph{slot-keyword}, такое же как в родительской структуре.
+Если \emph{slot-description-j} не имеет формы инициализации \emph{default-init},
+тогда в новой структуре слот также не будет иметь первоначального значения. В
+противном случае его первоначальное значение будет заменено формой
+\emph{default-init} из \emph{slot-description-j}.
+Доступный для записи слот может быть переделан в слот только для чтения.
+Если слот только для чтения в родительской структуре, тогда он также должен быть
+только для чтения в дочерней.
+Если для слота указан тип, он должен быть таким же или подтипом в
+дочерней структуре. Если это строгий подтип, то реализация может проверять или
+не проверять ошибки несовпадения типов при присваивании значений слотам.
+
+Например, если мы хотели бы определить \cdf{astronaut} так, чтобы по-умолчанию
+возрастом астронавта было 45 лет, то мы могли бы сказать:
+\begin{lisp}
+(defstruct (astronaut (:include person (age 45))) \\
+~~~helmet-size \\
+~~~(favorite-beverage 'tang))
+\end{lisp}
+
+\item[\cd{:print-function}]
+Эта опция может использоваться, только если не опция \cd{:type} не была указана.
+Аргумент для опции \cd{:print-function} должен быть функцией трёх аргументов, в
+форме принимаемой специальной формой \cdf{function}. Эта функция используется
+для вывода рассматриваемой структуры.
+Когда структура выводится на консоль, данная функция вызывается с тремя
+аргументами:
+структура для печати,
+поток, в который производить вывод,
+и целое число, отображающее текущую глубину (можно сравнить с
+\cdf{*print-level*}).
+Функция вывода должна следить за значениями таких переменных настройки вывода,
+как \cdf{*print-escape*} и \cdf{*print-pretty*}.
+
+Если опции \cd{:print-function} и \cd{:type} не указаны, тогда функция вывода
+по-умолчанию выводит все слоты используя синтаксис \cd{\#S} (смотрите
+раздел~\ref{SHARP-SIGN-MACRO-CHARACTER-SECTION}).
+
+\item[\cd{:type}]
+Опция \cd{:type} явно задаёт представление используемое для структуры. Она
+принимает один аргумент, который должен быть одним из перечисленных ниже.
+
+Задание этой опции заставляет использовать указанное представление и
+заставляет компоненты быть размещёнными в порядке, предусмотренном
+в \cdf{defstruct} форме,
+в соответствующие последовательные элементы указанного представления.
+Опция также отключает возможность имени структуры стать именем типа.
+(смотрите раздел~\ref{EXPLICIT-TYPE-STRUCTURES}).
+
+Обычно эта опция не используется, и тогда структура представляется так, как
+предусмотрено в реализации.
+
+\begin{quotation}    % Merely to advance the left margin
+\begin{flushdesc}
+
+\item[\cdf{vector}]
+Структура представляется как вектор \cd{(vector t)}. размещая
+компоненты как элементы вектора. Первый компонент находится в первом
+элементе вектора, если структура содержит опцию \cd{:named}, и в нулевом, если
+структура содержит \cd{:unnamed}.
+
+\item[\cd{(vector \emph{element-type})}]
+Структура представляется как (возможно специализированный) вектор, размещая
+компоненты как элементы вектора. Каждый компонент должен принадлежать типу,
+который мог быть указан для вектора. Первый компонент находится в первом
+элементе вектора, если структура содержит опцию \cd{:named}, и в нулевом, если
+структура содержит \cd{:unnamed}.
+Структура может быть \cd{:named}, только если тип \cdf{symbol} является подтипом
+указанного в \cdf{element-type}.
+
+\item[\cdf{list}]
+Структура представляется как список.
+Первый компонент является \emph{cadr} элементом, если структура содержит \cd{:named}, и
+является \emph{car} элементом, если структура содержит \cd{:unnamed}.
+\end{flushdesc}
+\end{quotation}
+
+\item[\cd{:named}]
+Опция \cd{:named} указывает, что структура будет иметь <<имя>>. Эта опция не
+принимает аргументов. Если опция \cd{:type} не указана, тогда структура имеет
+имя. Таким образом эта опция полезно только при использовании вместе опцией
+\cd{:type}.
+Смотрите раздел~\ref{EXPLICIT-TYPE-STRUCTURES} для подробного описания этой
+опции.
+
+\item[\cd{:initial-offset}]
+Эта опция позволяет вам указать \cdf{defstruct} пропустить указанное количество
+слотов, перед тем как начинать размещать указанные в теле слоты. Эта опция
+требует аргумент, а именно, неотрицательное целое, обозначающее количество
+пропускаемых слотов.
+Опция \cd{:initial-offset} может использоваться, только если также указана опция
+\cd{:type}.
+Смотрите раздел~\ref{DEFSTRUCTU-INIITAL-OFFSET} для подробного описания этой
+опции.
+\end{flushdesc}
+
+\section{Функции конструктора с позиционными аргументами}
+\label{DEFSTRUCT-CONSTRUCTOR-SYNTAX}
+
+Если опция \cd{:constructor} указана так \cd{(\cd{:constructor} \emph{name}
+  \emph{arglist})}, тогда вместо создания конструктора с именованными
+параметрами, \cdf{defstruct} определит конструктор с позиционными аргументами.
+Форма \emph{arglist} используется для описания того, какие аргументы будет
+принимать конструктор. В простейшем случае что-то вроде \cd{(\cd{:constructor}
+  make-foo (a b c))} определяет функцию \cdf{make-foo} с тремя аргументами,
+которые используются для инициализации слотов \cdf{a}, \cdf{b} и \cdf{c}.
+
+Кроме того в список аргументов могут использоваться \cd{\&optional}, \cd{\&rest}
+и \cd{\&aux}. Они работают так, как и ожидается, но есть несколько тонкостей
+достойных объяснения. Рассмотрим пример:
+\begin{lisp}
+(\cd{:constructor} create-foo \\
+~~~~~~~~(a \&optional b (c 'sea) \&rest d \&aux e (f 'eff)))
+\end{lisp}
+Эта конструкция определяет конструктор \cdf{create-foo} для использования с
+одним или более аргументами. Первый аргумент используется для инициализации
+слота \cdf{a}. Если второй параметр не указан, используется значение (если
+указано) по-умолчанию из тела \cdf{defstruct}. Третий аргумент используется для
+инициализации слота \cdf{c}. Если третий параметр не указан, тогда используется
+символ \cdf{sea}. Все параметры после третьего собираются в список и
+используются для инициализации слота \cdf{d}. Если указано три и более
+параметров, тогда в слот \cdf{d} помещается значение {\false}. Слот \cdf{e}
+\emph{не инициализируется}. Его первоначальное значение не определено. Наконец,
+слот \cdf{f} инициализируется символом \cdf{eff}.
+
+Действия со слотами \cdf{b} и \cdf{e} выбраны не случайно, а для того чтобы
+показать все возможные случаи использования аргументов.
+Следует отметить, что \cd{\&aux} (вспомогательные) <<переменные>> могут
+использоваться для перекрытия форм инициализации из тела \cdf{defstruct}.
+
+Следуя этому определению можно записать
+\begin{lisp}
+(create-foo 1 2)
+\end{lisp}
+вместо
+\begin{lisp}
+(make-foo \cd{:a} 1 \cd{:b} 2)
+\end{lisp}
+и, конечно, \cdf{create-foo} предоставляет инициализацию отличную от
+\cdf{make-foo}.
+
+Использовать \cd{:constructor} можно более одного раза. Таким образом вы можете
+определить несколько различных функций конструктора с различными аргументами.
+
+\section{Структуры с явно заданным типом представления}
+\label{EXPLICIT-TYPE-STRUCTURES}
+
+Иногда необходимо явно контролировать представление структуры. Опция \cd{:type}
+позволяет выбрать представление между списком или некоторым видом вектора и
+указать соотвествие для размещения слотов в выбранном представлении.
+Структура также может быть <<безымянной>> или <<именованной>>. Это означает
+может ли имя структуры быть сохранено в ней самой (и соответственно, прочитано
+из неё).
+
+\subsection{Безымянные структуры}
+
+Иногда конкретное представление данных навязывается внешними требованиями и,
+кроме того, формат данных прекрасно ложится в структурный стиль хранения.
+Например, рассмотрим выражение созданное из чисел, символов и таких операций как
+\cdf{+} и \cdf{*}. Операция может быть представлена, как в Lisp'е, списком из
+оператора и двух операндов. Этот факт может быть выражен кратко в терминах
+\cdf{defstruct}:
+е\begin{lisp}
+(defstruct (binop (:type list)) \\
+~~(operator '? :type symbol) \\
+~~operand-1 \\
+~~operand-2)
+\end{lisp}
+
+Результатом выполнения \cdf{make-binop} является 3-ёх элементный список:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (+ x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (* {\nil} 4)
+\end{lisp}
+Выглядит как функция \cdf{list} за исключением того, что принимает именованные
+параметры и выполняет инициализацию слотов соответствующую концептуальному типу
+данных \cdf{binop}.
+Таким же образом, селекторы \cdf{binop-operator}, \cdf{binop-operand-1} и
+\cdf{binop-operand-2} эквивалентны соответственно \cdf{car}, \cdf{cadr} и
+\cdf{caddr}. (Они, конечно, не полностью эквивалентны, так как реализация
+может осуществлять проверки типов элементов, длины массивов при использовании
+селекторов слотов структур.)
+
+Мы говорим о \cdf{binop} как о <<концептуальном>> типе данных, потому что
+\cdf{binop} не принадлежит Common Lisp'овой системе типов. Предикат \cdf{typep}
+не может использовать \cdf{binop} как спецификатор типа, и \cdf{type-of} будет
+возвращать \cdf{list} для заданной \cdf{binop} структуры. Несомненно, различий
+между структурой данных, созданной с помощью \cdf{make-binop}, и  простым
+списком нет.
+
+Невозможно даже получить имя структуры для объекта, созданного с помощью
+\cdf{make-binop}. Однако имя может быть сохранено и получено, если структура
+содержит <<имя>>.
+
+\subsection{Именованные структуры}
+
+Структура с <<именем>> имеет свойство, которое заключается в том, что для любого
+экземпляра структуры можно получить имя этой структуры. Для структур
+определённых без указания опции \cd{:type}, имя структуры фактически становится
+частью Common Lisp'овой системы типов. Функция \cdf{type-of} при применении к
+экземпляру такой структуры будет возвращать имя структуры. Предикат \cdf{typep}
+будет рассматривать имя структуры, как корректный спецификатор типа.
+
+Для структур определённых с опцией \cd{:type}, \cdf{type-of} будет возвращать
+спецификатор типа один из \cdf{list} или \cdf{(vector t)}, в зависимости от
+указанного аргумента опции \cd{:type}.
+Имя структуры не становится корректным спецификатором типа. Однако если также
+указана опция \cd{:named}, тогда первый компонент структуры всегда содержит её
+имя. Это позволяет получить это имя, имея только экземпляр структуры. Это также
+позволяет автоматически определить предикат для концептуального типа.
+Предикат \cd{\emph{name}-p} для структуры принимает в качестве первого аргумента
+объект и истинен, если объект является экземпляром структуры, иначе ложен.
+
+Рассмотрим вышеупомянутый пример \cdf{binop} и модифицируем его, добавив
+опцию \cd{:named}:
+\begin{lisp}
+(defstruct (binop (:type list) :named) \\
+~~(operator '? :type symbol) \\
+~~operand-1 \\
+~~operand-2)
+\end{lisp}
+Как и раньше, конструкция определить функцию конструктор \cdf{make-binop} и три
+функции-селектора  \cdf{binop-operator}, \cd{binop-operand-1} и
+\cd{binop-operand-2}. Она также определит предикат \cdf{binop-p}.
+
+Результатом \cdf{make-binop} теперь является список с 4-мя элементами:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (binop + x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (binop * {\nil} 4)
+\end{lisp}
+Структура имеет такую же разметку как и раньше за исключением имени структуры в
+первом элементе.
+Функции-селекторы
+\cdf{binop-operator}, \cd{binop-operand-1}и \cd{binop-operand-2} эквивалентны
+соответственно \cdf{cadr}, \cdf{caddr} и \cdf{cadddr}.
+Предикат \cdf{binop-p} примерно соответствует следующему определению.
+\begin{lisp}
+(defun binop-p (x) \\
+~~(and (consp x) (eq (car x) 'binop)))
+\end{lisp}
+Имя \cdf{binop} не является корректным спецификатором типа, и не может
+использоваться в \cdf{typep}. Но с помощью предиката структура теперь отличима 
+от других структур. 
+
+\subsection{Другие аспекты явно определённых типов для представления структур}
+\label{DEFSTRUCT-INITIAL-OFFSET}
+
+Опция \cd{:initial-offset} позволяет указывать начало размещения слотов в
+представлении структуры. Например, форма
+\begin{lisp}
+(defstruct (binop (:type list) (:initial-offset 2)) \\*
+~~(operator '? :type symbol) \\*
+~~operand-1 \\*
+~~operand-2)
+\end{lisp}
+создаст конструктор \cdf{make-binop} со следующим поведением:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (nil nil + x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (nil nil * {\nil} 4)
+\end{lisp}
+Селекторы
+\cdf{binop-operator}, \cd{binop-operand-1} и \cd{binop-operand-2} 
+будут эквивалентны соответственно \cdf{caddr},
+\cdf{cadddr}, и \cdf{car} от \cdf{cddddr}.
+Таким же образом, форма
+\begin{lisp}
+(defstruct (binop (:type list) :named (:initial-offset 2)) \\*
+~~(operator '? :type symbol) \\*
+~~operand-1 \\*
+~~operand-2)
+\end{lisp}
+создаст конструктор \cdf{make-binop} со следующим поведением:
+\begin{lisp}
+(make-binop :operator '+ :operand-1 'x :operand-2 5) \\*
+~~~\EV\ (nil nil binop + x 5) \\
+\\
+(make-binop :operand-2 4 :operator '*) \\*
+~~~\EV\ (nil nil binop * {\nil} 4)
+\end{lisp}
+
+Если вместе с опцией \cd{:type} используется \cd{:include}, тогда в
+представлении выделяется столько места, сколько необходимо для родительской
+структуры, затем пропускается столько места, сколько указано в опции
+\cd{:initial-offset}, и затем начинается расположение элементов определяемой
+структуры.
+Например:
+\begin{lisp}
+(defstruct (binop (:type list) :named (:initial-offset 2)) \\
+~~(operator '? :type symbol) \\
+~~operand-1 \\
+~~operand-2) \\
+ \\
+(defstruct (annotated-binop (:type list) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~(:initial-offset 3) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~(:include binop)) \\
+~~commutative associative identity) \\
+ \\
+(make-annotated-binop :operator '* \\
+~~~~~~~~~~~~~~~~~~~~~~:operand-1 'x \\
+~~~~~~~~~~~~~~~~~~~~~~:operand-2 5 \\
+~~~~~~~~~~~~~~~~~~~~~~:commutative t \\
+~~~~~~~~~~~~~~~~~~~~~~:associative t \\
+~~~~~~~~~~~~~~~~~~~~~~:identity 1) \\
+~~~\EV\ (nil nil binop * x 5 nil nil nil t t 1)
+\end{lisp}
+Первые два {\nil} элемента пропущены по причине опции \cd{:initial-offset} со значением
+\cd{2} в определении \cdf{binop}. Следующие четыре элемента содержат имя и три слота
+структуры \cdf{binop}. Следующие три {\nil} элементы пропущено по причине опции
+\cd{:initial-offset} за значением \cd{3} в определении структуры
+\cdf{annotated-binop}. Последние три элемента содержат три слота, определённых в
+структуре \cdf{annotated-binop}.
+
+
+\fi

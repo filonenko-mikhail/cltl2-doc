@@ -9,5 +9,6 @@ if [ -f issues.idx ]; then
     makeindex -o issues.ind issues.4dx 
 fi
 
-htlatex clm.tex 'cltl,3,next,charset=utf-8' ' -cunihtf -utf8' '' '-interaction=batchmode'
+htlatex clm.tex 'cltl,3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<' ' -cunihtf -utf8' '' '-interaction=batchmode'
+#htlatex clm.tex 'cltl,3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,obj-toc' ' -cunihtf -utf8' '' '-interaction=batchmode'
 cp -f clm.html index.html
