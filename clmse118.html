@@ -1,109 +1,476 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Accessing Directories</title> 
+<head><title>General Error-Signaling Functions Базовые функции для создания сигналов
+ошибок</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-20 20:04:00"> 
+<meta name="date" content="2012-03-28 14:08:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 3130--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
-href="clmch24.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse117.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse117.html#tailclmse117.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+   <!--l. 55--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse119.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch24.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch24.html#tailclmch24.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse118.html">В-конец</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch23.html#clmse118.html" >Вверх</a><tt>&#x003E;</tt></p></div>
-   <h3 class="sectionHead"><span class="titlemark">23.5   </span> <a 
-href="clm.html#QQ2-146-318" id="x146-28200023.5">Accessing Directories</a></h3>
-<!--l. 3132--><p class="noindent" >The following function is a very simple portable primitive for examining a
-directory. Most ﬁle systems can support much more powerful directory-searching
-primitives, but no two are alike. It is expected that most implementations of
-Common Lisp will extend the <a 
-href="#x146-282002r741">directory</a> function or provide more powerful
-primitives.
-<div class=defun>
-<!--l. 3139--><p class="noindent" ><i>[Function]</i><a 
- id="dx146-282001"></a><a 
- id="x146-282002r741"></a><b> directory</b>  <i>pathname</i> &#x0026;key
-<!--l. 3141--><p class="noindent" >A list of pathnames is returned, one for each ﬁle in the ﬁle system that matches
-the given <i>pathname</i>. (The <i>pathname</i> argument may be a pathname, a string, or
-a stream associated with a ﬁle.) For a ﬁle that matches, the <a 
-href="clmse114.html#x142-277010r699">truename</a>
-appears in the result list. If no ﬁle matches the <i>pathname</i>, it is not an
-error; <a 
-href="#x146-282002r741">directory</a> simply returns <a 
-href="clmse31.html#x42-74002r18">nil</a>, the list of no results. Keywords such
-as :wild and :newest may be used in <i>pathname</i> to indicate the search
-space.
-<div class=new>
-<!--l. 3154--><p class="indent" >   X3J13 voted in March 1988 <a 
- id="dx146-282003"></a>to specify exactly which streams may be used as
-pathnames. See section <a 
-href="clmse114.html#x142-27700023.1.6">23.1.6<!--tex4ht:ref: PATHNAME-FUNCTIONS --></a>.
-</div>
-<div class=new>
-<!--l. 3161--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx146-282004"></a>to specify that <a 
-href="#x146-282002r741">directory</a> is unaﬀected by
-whether the ﬁrst argument, if a stream, is open or closed. If the ﬁrst argument is a
-stream, <a 
-href="#x146-282002r741">directory</a> behaves as if the function <a 
-href="clmse114.html#x142-277005r698">pathname</a> were applied to the stream
-and the resulting pathname used instead. However, X3J13 commented that the
-treatment of open streams may diﬀer considerably from one implementation to
-another; for example, in some operating systems open ﬁles are written under a
-temporary or invisible name and later renamed when closed. In general,
-programmers writing code intended to be portable should be careful when using
-<a 
-href="#x146-282002r741">directory</a>.
-</div>
-<div class=newer>
+href="clmch24.html#clmse118.html" >Вверх</a><tt>&#x003E;</tt></p></div>
+   <h3 class="sectionHead"><span class="titlemark">24.1   </span> <a 
+href="clm.html#QQ2-147-323" id="x147-28300024.1">General Error-Signaling Functions Базовые функции для создания
+сигналов ошибок</a></h3>
+<!--l. 58--><p class="noindent" >The functions in this section provide various mechanisms for signaling warnings,
+breaks, continuable errors, and fatal errors.
+<!--l. 61--><p class="indent" >   Функции в данном разделе предоставляют различные механизмы для
+сигнализирования предупреждений, прерываний, исправимых ошибок, и
+неисправивым (fatal) ошибок.
+<!--l. 64--><p class="indent" >   In each case, the caller speciﬁes an error message (a string) that may be
+processed (and perhaps displayed to the user) by the error-handling mechanism.
+All messages are constructed by applying the function <a 
+href="clmse111.html#x138-262003r666">format</a> to the quantities <a 
+href="clmse31.html#x42-74002r18">nil</a>,
+<i>format-string</i>, and all the <i>args</i> to produce a string.
+<!--l. 71--><p class="indent" >   В каждом случае, вызывающий код указывает сообщение ошибки
+(строка), которая может быть обработана (и, возможно, показана
+пользователю) с помощью механизма обработки ошибок. Все сообщения
+создаются с помощью применения функции <a 
+href="clmse111.html#x138-262003r666">format</a> к аргументам <a 
+href="clmse31.html#x42-74002r18">nil</a>,
+<i>format-string</i> и всем параметрам <i>args</i>.
+<!--l. 77--><p class="indent" >   An error message string should not contain a newline character at either the
+beginning or end, and should not contain any sort of herald indicating that it is
+an error. The system will take care of these according to whatever its preferred
+style may be.
+<!--l. 82--><p class="indent" >   Строка ошибка не должна содержать символов новой строки ни в начале,
+ни в конце, и не должна содержать информацию о том, что это ошибка.
+Система позаботится об этом в своем стиле.
+<!--l. 86--><p class="indent" >   Conventionally, error messages are complete English sentences ending with a
+period. Newlines in the middle of long messages are acceptable. There should be
                                                                           
 
                                                                           
-<!--l. 3175--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx146-282005"></a>to require <a 
-href="#x146-282002r741">directory</a> to accept logical pathnames (see
-section <a 
-href="clmse114.html#x142-27100023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>). However, the result returned by <a 
-href="#x146-282002r741">directory</a> never contains a logical
-pathname.
-</div>
+no indentation after a newline in the middle of an error message. The
+error message need not mention the name of the function that signals
+the error; it is assumed that the debugger will make this information
+available.
 <div class=implementation>
-<!--l. 3181--><p class="noindent" ><b>Implementation note:</b> It is anticipated that an implementation may need to provide
-additional parameters to control the directory search. Therefore <a 
-href="#x146-282002r741">directory</a> is
-speciﬁed to take additional keyword arguments so that implementations may
-experiment with extensions, even though no particular keywords are speciﬁed
-here.
-<!--l. 3189--><p class="indent" >   As a simple example of such an extension, for a ﬁle system that supports the notion
-of cross-directory ﬁle links, a keyword argument :links might, if non-<a 
-href="clmse31.html#x42-74002r18">nil</a>, specify that such
-links be included in the result list.
+<!--l. 95--><p class="noindent" ><b>Заметка для реализации:</b> If the debugger in a particular implementation displays
+error messages indented from the prevailing left margin (for example, indented by seven
+spaces because they are preﬁxed by the seven-character herald “Error: ”), then the
+debugger should take care of inserting the appropriate indentation into a multi-line error
+message. Similarly, a debugger that preﬁxes error messages with semicolons so that they
+appear to be comments should take care of inserting a semicolon at the beginning
+of each line in a multi-line error message. These rules are suggested because,
+even within a single implementation, there may be more than one program
+that presents error messages to the user, and they may use diﬀerent styles of
+presentation. The caller of <a 
+href="clmse149.html#x183-470012r952">error</a> cannot anticipate all such possible styles, and
+so it is incumbent upon the presenter of the message to make any necessary
+adjustments.
+</div>
+<!--l. 116--><p class="indent" >   Common Lisp does not specify the manner in which error messages and other
+messages are displayed. For the purposes of exposition, a fairly simple
+style of textual presentation will be used in the examples in this chapter.
+The character <a 
+href="clmse63.html#x80-177008r176">&#x003E;</a> is used to represent the command prompt symbol for a
+debugger.
+<div class=defun>
+<!--l. 122--><p class="noindent" ><i>[Function]</i><a 
+ id="dx147-283001"></a><a 
+ id="x147-283002r715"></a><b> error</b>  <i>format-string</i> &#x0026;rest  <i>args</i>
+<!--l. 124--><p class="noindent" ><div class=obsolete>This function signals a fatal error. It is impossible to continue from this kind of
+error; thus <a 
+href="clmse149.html#x183-470012r952">error</a> will never return to its caller.
+<!--l. 130--><p class="indent" >   The debugger printout in the following example is typical of what an
+implementation might print when <a 
+href="clmse149.html#x183-470012r952">error</a> is called. Suppose that the (misspelled)
+symbol emergnecy-shutdown has no property named command (all too
+likely, as it is probably a typographical error for emergency-shutdown).
+<div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(defun command-dispatch (cmd)
+</td></tr></table>
+<!--l. 136--><p class="indent" >                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (let ((fn (get cmd &#x2019;command)))</td></tr></table>
+<!--l. 137--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (if (not (null fn))</td></tr></table>
+<!--l. 138--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (funcall fn))</td></tr></table>
+                                                                          
+
+                                                                          
+<!--l. 139--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">        (error &#x0022;The command ~S is unrecognized.&#x0022; cmd))))</td></tr></table>
+<!--l. 140--><p class="indent" >                                                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing"></td></tr></table>
+<!--l. 141--><p class="indent" >                                <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(command-dispatch &#x2019;emergnecy-shutdown)</td></tr></table>
+<!--l. 142--><p class="indent" >       <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">Error: The command EMERGNECY-SHUTDOWN is unrecognized.</td></tr></table>
+<!--l. 143--><p class="indent" >                      <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">Error signaled by function COMMAND-DISPATCH.</td></tr></table>
+<!--l. 144--><p class="indent" >                                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x003E;</td></tr></table>
+<!--l. 146--><p class="indent" >
+</div>
+</div>
+</div>
+<div class=new>
+<!--l. 150--><p class="indent" >   X3J13 voted in June 1988 <a 
+ id="dx147-283003"></a>to adopt a proposal for a Common Lisp Condition
+System. This proposal modiﬁes the deﬁnition of <a 
+href="clmse149.html#x183-470012r952">error</a> to specify its interaction
+with the condition system. See section <a 
+href="clmse148.html#x182-44500029.4.1">29.4.1<!--tex4ht:ref: SIGNALLING-CONDITIONS --></a>.
+</div>
+</div>
+<div class=defun>
+<!--l. 158--><p class="noindent" ><i>[Function]</i><a 
+ id="dx147-283004"></a><a 
+ id="x147-283005r716"></a><b> cerror</b>  <i>continue-format-string</i> <i>error-format-string</i> &#x0026;rest  <i>args</i>
+<!--l. 160--><p class="noindent" ><div class=obsolete><a 
+href="clmse148.html#x182-445004r916">cerror</a> is used to signal continuable errors. Like <a 
+href="clmse149.html#x183-470012r952">error</a>, it signals an error and enters
+the debugger. However, <a 
+href="clmse148.html#x182-445004r916">cerror</a> allows the program to be continued from the
+debugger after resolving the error.
+<!--l. 167--><p class="indent" >   If the program is continued after encountering the error, <a 
+href="clmse148.html#x182-445004r916">cerror</a> returns <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+The code that follows the call to <a 
+href="clmse148.html#x182-445004r916">cerror</a> will then be executed. This code should
+correct the problem, perhaps by accepting a new value from the user if a variable
+was invalid.
+<!--l. 172--><p class="indent" >   If the code that corrects the problem interacts with the program&#x2019;s use and
+might possibly be misled, it should make sure the error has really been corrected
+before continuing. One way to do this is to put the call to <a 
+href="clmse148.html#x182-445004r916">cerror</a> and the
+correction code in a loop, checking each time to see if the error has been corrected
+before terminating the loop.
+<!--l. 179--><p class="indent" >   The <i>continue-format-string</i> argument, like the <i>error-format-string</i> argument,
+is given as a control string to <a 
+href="clmse111.html#x138-262003r666">format</a> along with the <i>args</i> to construct a message
+string. The error message string is used in the same way that <a 
+href="clmse149.html#x183-470012r952">error</a> uses it.
+The continue message string should describe the eﬀect of continuing.
+The intent is that this message can be displayed as an aid to the user in
+deciding whether and how to continue. For example, it might be used by
+an interactive debugger as part of the documentation of its “continue”
+                                                                          
+
+                                                                          
+command.
+<!--l. 190--><p class="indent" >   The content of the continue message should adhere to the rules of style for
+error messages. It should not include any statement of how the “continue”
+command is given, since this may be diﬀerent for each debugger. (It is up to the
+debugger to supply this information according to its own particular style of
+presentation and user interaction.)
+</div>
+<div class=new>
+<!--l. 199--><p class="indent" >   X3J13 voted in June 1988 <a 
+ id="dx147-283006"></a>to adopt a proposal for a Common Lisp Condition
+System. This proposal modiﬁes the deﬁnition of <a 
+href="clmse148.html#x182-445004r916">cerror</a> to specify its interaction
+with the condition system. See section <a 
+href="clmse148.html#x182-44500029.4.1">29.4.1<!--tex4ht:ref: SIGNALLING-CONDITIONS --></a>.
+</div>
+<!--l. 206--><p class="indent" >   Here is an example where the caller of <a 
+href="clmse148.html#x182-445004r916">cerror</a>, if continued, ﬁxes the problem
+without any further user interaction: <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(let ((nvals (list-length vals)))
+</td></tr></table>
+<!--l. 209--><p class="indent" >                                                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (unless (= nvals 3)</td></tr></table>
+<!--l. 210--><p class="indent" >                                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    (cond ((&#x003C; nvals 3)</td></tr></table>
+<!--l. 211--><p class="indent" >                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (cerror &#x0022;Assume missing values are zero.&#x0022;</td></tr></table>
+<!--l. 212--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                   &#x0022;Too few values in ~S;~%~</td></tr></table>
+<!--l. 213--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                    three are required, ~</td></tr></table>
+<!--l. 214--><p class="indent" >                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                    but ~R ~:[were~;was~] supplied.&#x0022;</td></tr></table>
+<!--l. 215--><p class="indent" >                                  <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                   nvals (= nvals 1))</td></tr></table>
+<!--l. 216--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">           (setq vals (append vals (subseq &#x2019;(0 0 0) nvals))))</td></tr></table>
+<!--l. 217--><p class="indent" >              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          (t (cerror &#x0022;Ignore all values after the ﬁrst three.&#x0022;</td></tr></table>
+<!--l. 218--><p class="indent" >                     <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                     &#x0022;Too many values in ~S;~%~</td></tr></table>
+<!--l. 219--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      three are required, ~</td></tr></table>
+<!--l. 220--><p class="indent" >                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      but ~R were supplied.&#x0022;</td></tr></table>
+<!--l. 221--><p class="indent" >                                           <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">                      nvals)</td></tr></table>
+<!--l. 222--><p class="indent" >                            <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">             (setq vals (subseq vals 0 3))))))</td></tr></table>
+<!--l. 224--><p class="indent" >
+</div>
+</div>
+<!--l. 225--><p class="noindent" >If vals were the list (-47), the interaction might look like this: <div class=lisp><div class=tabbing>
+                                                                          
+
+                                                                          
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">Error: Too few values in (-47);
+</td></tr></table>
+<!--l. 228--><p class="indent" >                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">       three are required, but one was supplied.</td></tr></table>
+<!--l. 229--><p class="indent" >                                    <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">Error signaled by function EXAMPLE.</td></tr></table>
+<!--l. 230--><p class="indent" >                              <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">If continued: Assume missing values are zero.</td></tr></table>
+<!--l. 231--><p class="indent" >                                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">&#x003E;</td></tr></table>
+<!--l. 233--><p class="indent" >
+</div>
+</div>
+<!--l. 234--><p class="noindent" >In this example, a loop is used to ensure that a test is satisﬁed. (This example could
+be written more succinctly using <a 
+href="clmse148.html#x182-447002r920">assert</a> or <a 
+href="clmse148.html#x182-446002r919">check-type</a>, which indeed supply such
+loops.) <div class=lisp><div class=tabbing>
+<table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">(do ()
+</td></tr></table>
+<!--l. 238--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">    ((known-wordp word) word)</td></tr></table>
+<!--l. 239--><p class="indent" >                 <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (cerror &#x0022;You will be prompted for a replacement word.&#x0022;</td></tr></table>
+<!--l. 240--><p class="indent" >               <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          &#x0022;~S is an unknown word (possibly misspelled).&#x0022;</td></tr></table>
+<!--l. 241--><p class="indent" >                                                         <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">          word)</td></tr></table>
+<!--l. 242--><p class="indent" >                                   <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (format *query-io* &#x0022;~&#x0026;New word: &#x0022;)</td></tr></table>
+<!--l. 243--><p class="indent" >                                          <table  
+cellpadding="0" border="0" cellspacing="0" 
+class="tabbing"><tr  
+style="vertical-align:baseline;" class="tabbing"><td  
+class="tabbing">  (setq word (read *query-io*)))</td></tr></table>
+<!--l. 245--><p class="indent" >
+</div>
+</div>
+<!--l. 247--><p class="indent" >   In complex cases where the <i>error-format-string</i> uses some of the <i>args</i> and the
+<i>continue-format-string</i> uses others, it may be necessary to use the <a 
+href="clmse111.html#x138-262003r666">format</a>
+directives ~* and ~@* to skip over unwanted arguments in one or both of the
+format control strings.
+</div>
+<div class=defun>
+<!--l. 255--><p class="noindent" ><i>[Function]</i><a 
+ id="dx147-283007"></a><a 
+ id="x147-283008r717"></a><b> warn</b>  <i>format-string</i> &#x0026;rest  <i>args</i>
+<!--l. 257--><p class="noindent" ><div class=obsolete> <a 
+href="clmse148.html#x182-467002r939">warn</a> prints an error message but normally doesn&#x2019;t go into the debugger.
+(However, this may be controlled by the variable *break-on-warnings*.)
+</div> <div class=newer> X3J13 voted in March 1989 <a 
+ id="dx147-283009"></a>to remove *break-on-warnings* from the language.
+See *break-on-signals*.
+                                                                          
+
+                                                                          
+</div> <div class=obsolete> <a 
+href="clmse148.html#x182-467002r939">warn</a> returns <a 
+href="clmse31.html#x42-74002r18">nil</a>.
+<!--l. 273--><p class="indent" >   This function would be just the same as <a 
+href="clmse111.html#x138-262003r666">format</a> with the output directed
+to the stream in error-output, except that <a 
+href="clmse148.html#x182-467002r939">warn</a> may perform various
+implementation-dependent formatting and other actions. For example, an
+implementation of <a 
+href="clmse148.html#x182-467002r939">warn</a> should take care of advancing to a fresh line before and
+after the error message and perhaps supplying the name of the function that
+called <a 
+href="clmse148.html#x182-467002r939">warn</a>.
+</div>
+<div class=new>
+<!--l. 283--><p class="indent" >   X3J13 voted in June 1988 <a 
+ id="dx147-283010"></a>to adopt a proposal for a Common Lisp Condition
+System. This proposal modiﬁes the deﬁnition of <a 
+href="clmse148.html#x182-467002r939">warn</a> to specify its interaction
+with the condition system. See section <a 
+href="clmse148.html#x182-46700029.4.9">29.4.9<!--tex4ht:ref: WARNING-CONDITIONS --></a>.
+</div>
+</div>
+<div class=defun>
+<!--l. 291--><p class="noindent" ><i>[Function]</i><a 
+ id="dx147-283011"></a><a 
+ id="x147-283012r718"></a><b> break</b>  &#x0026;optional  <i>format-string</i> &#x0026;rest  <i>args</i>
+<!--l. 293--><p class="noindent" ><div class=obsolete><a 
+href="clmse148.html#x182-469002r945">break</a> prints the message and goes directly into the debugger, without allowing
+any possibility of interception by programmed error-handling facilities. (Right
+now, there aren&#x2019;t any error-handling facilities deﬁned in Common Lisp, but there
+might be in particular implementations, and there will be some deﬁned by
+Common Lisp in the future.) When continued, <a 
+href="clmse148.html#x182-469002r945">break</a> returns <a 
+href="clmse31.html#x42-74002r18">nil</a>. It is
+permissible to call <a 
+href="clmse148.html#x182-469002r945">break</a> with no arguments; a suitable default message will be
+provided.
+<!--l. 304--><p class="indent" >   <a 
+href="clmse148.html#x182-469002r945">break</a> is presumed to be used as a way of inserting temporary debugging
+“breakpoints” in a program, not as a way of signaling errors; it is expected that
+continuing from a <a 
+href="clmse148.html#x182-469002r945">break</a> will not trigger any unusual recovery action. For this
+reason, <a 
+href="clmse148.html#x182-469002r945">break</a> does not take the additional <a 
+href="clmse111.html#x138-262003r666">format</a> control string argument that
+<a 
+href="clmse148.html#x182-445004r916">cerror</a> takes. This and the lack of any possibility of interception by programmed
+error handling are the only program-visible diﬀerences between <a 
+href="clmse148.html#x182-469002r945">break</a> and <a 
+href="clmse148.html#x182-445004r916">cerror</a>.
+The interactive debugger may choose to display them diﬀerently; for instance, a
+<a 
+href="clmse148.html#x182-445004r916">cerror</a> message might be preﬁxed with the herald “Error: ” and a <a 
+href="clmse148.html#x182-469002r945">break</a>
+message with “Break: ”. This depends on the user-interface style of the
+particular implementation. A particular implementation may choose, according
+to its own style and needs, when <a 
+href="clmse148.html#x182-469002r945">break</a> is called to go into a debugger
+diﬀerent from the one used for handling errors. For example, it might go
+into an ordinary read-eval-print loop identical to the top-level one except
+for the provision of a “continue” command that causes <a 
+href="clmse148.html#x182-469002r945">break</a> to return
+<a 
+href="clmse31.html#x42-74002r18">nil</a>.
+                                                                          
+
+                                                                          
+</div>
+<div class=new>
+<!--l. 328--><p class="indent" >   X3J13 voted in June 1988 <a 
+ id="dx147-283013"></a>to adopt a proposal for a Common Lisp Condition
+System. This proposal modiﬁes the deﬁnition of <a 
+href="clmse148.html#x182-469002r945">break</a> to specify its interaction
+with the condition system. See section <a 
+href="clmse148.html#x182-46900029.4.11">29.4.11<!--tex4ht:ref: DEBUGGING-UTILITIES --></a>.
 </div>
 </div>
                                                                           
 
                                                                           
-                                                                          
-
-                                                                          
-                                                                          
-
-                                                                          
-                                                                          
-
-                                                                          
-   <!--l. 6--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
-href="clmch24.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse117.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse117.html#tailclmse117.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+   <!--l. 336--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+href="clmse119.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch24.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch24.html#tailclmch24.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse118.html" >В-начало</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch23.html#clmse118.html" >Вверх</a><tt>&#x003E;</tt></p></div>
-<!--l. 6--><p class="indent" >   <a 
+href="clmch24.html#clmse118.html" >Вверх</a><tt>&#x003E;</tt></p></div>
+<!--l. 336--><p class="indent" >   <a 
  id="tailclmse118.html"></a>  
 </body></html> 

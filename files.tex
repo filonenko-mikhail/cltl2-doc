@@ -1,8 +1,7 @@
 %Part{Files, Root = "CLM.MSS"}
-%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
+%%%Chapter of Common Lisp Manual.  Copyright 1984, 1988, 1989 Guy L. Steele Jr.
 
 \clearpage\def\pagestatus{FINAL PROOF}
-
 
 \chapter{File System Interface}
 \label{FILES}
@@ -185,20 +184,6 @@ no file types.)
   such a value from another pathname, for example).
 \end{newer}
 
-\begin{obsolete}
-A component of a pathname can also be the keyword \cd{:wild}.
-This is only useful when the pathname is being used with a
-directory-manipulating operation, where it means that the pathname
-component matches anything.  The printed representation of a pathname
-typically designates \cd{:wild} by an asterisk; however, this is
-host-dependent.
-\end{obsolete}
-
-\begin{newer}
-See section~\ref{WILD-PATHNAME-SECTION} for a discussion of
-new wildcard pathname facilities.
-\end{newer}
-
 What values are allowed for components of a pathname depends, in general,
 on the pathname's host.  However, in order for pathnames to be usable
 in a system-independent way, certain global conventions are adhered to.
@@ -235,26 +220,6 @@ but such interpretations are implementation-dependent.
 The host may be a string, indicating a file system, or a list
 of strings, of which the first names the file system and the rest
 may be used for such a purpose as inter-network routing.
-
-\begin{obsolete}
-The device, directory, and name can each be a string (with
-host-dependent rules on allowed characters and length) or possibly
-some other Common Lisp data structure
-(in which case such a component is said to be \emph{structured}
-and has an implementation-dependent format).
-Structured components may be used to handle such file system features as
-hierarchical directories.  Common Lisp programs do not need to know about
-structured components unless they do host-dependent operations.
-Specifying a string as a pathname component for a host that requires a
-structured component will cause conversion of the string to the appropriate
-form.
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in June 1989 \issue{PATHNAME-SUBDIRECTORY-LIST}
-to define a specific format for structured directories
-(see section~\ref{STRUCTURED-DIRECTORY-SECTION}).
-\end{newer}
 
 \begin{newer}
 X3J13 voted in June 1989 \issue{PATHNAME-COMPONENT-VALUE}
@@ -366,29 +331,6 @@ in strings appearing in components depends on the file
 name conventions of the file system.)  Pathnames
 that are \cdf{equal} should be functionally equivalent.
 
-\begin{obsolete}
-Some host file systems have features that do not fit into this pathname
-model.  For instance, directories might be accessible as files; there
-might be complicated structure in the directories or names; or there
-might be a way to specify a directory relative to a
-``current'' directory, such as the \cdf{<} syntax in
-{MULTICS} or the special ``\cd{..}'' file name of {UNIX}.  Such
-features are not allowed for by the standard Common Lisp file system
-interface.  An implementation is free to accommodate such features in its
-pathname representation and provide a parser that can process such
-specifications in namestrings; such features are then likely to work
-within that single implementation.  However, note that once a program
-depends explicitly on any such features, it will not be portable.
-\end{obsolete}
-\begin{newer}
-X3J13 voted in June 1989 \issue{PATHNAME-SUBDIRECTORY-LIST}
-to define a specific format for structured directories
-(see section~\ref{STRUCTURED-DIRECTORY-SECTION}), so some of the specific
-examples in the previous paragraph no longer apply, but the principle is
-still correct.
-\end{newer}
-
-\begin{newer}
 \subsection{Case Conventions}
 \label{PATHNAME-COMPONENT-CASE-SECTION}
 
@@ -529,9 +471,7 @@ A big advantage of this set of conventions is that one can, for example,
 call \cdf{make-pathname} with \cd{:type~"LISP"} and \cd{:case~:common},
 and the result will appear in a namestring as \cd{.LISP} or \cd{.lisp},
 whichever is appropriate.
-\end{newer}
 
-\begin{newer}
 \subsection{Structured Directories}
 \label{STRUCTURED-DIRECTORY-SECTION}
 
@@ -677,12 +617,9 @@ host \cdf{V} supports a VAX/VMS file system.
 (pathname-directory (parse-namestring "L:>foo>*>bar>baz.lisp")) \\*
 ~~~\EV\ (:ABSOLUTE "FOO" :WILD "BAR")
 \end{lisp}
-\end{newer}
 
-\begin{newer}
-\subsection{Extended Wildcar{\kern-1pt}ds}
+\subsection{Extended Wildcards}
 \label{WILD-PATHNAME-SECTION}
-
 
   Some file systems provide more complex conventions for wildcards than
   simple component-wise wildcards representable by \cd{:wild}.
@@ -1433,7 +1370,6 @@ For a UNIX file system with 14-character file names, using \cd{.l} as the type
   files and more complicated situations such as program-generated file
   names or porting a program developed on a system with long file names
   onto a system with a very restrictive limit on the length of file names.
-\end{newer}
 
 \subsection{Pathname Functions}
 \label{PATHNAME-FUNCTIONS}
@@ -1700,16 +1636,6 @@ of the resulting pathname.
 \begin{defun}[Function]
 merge-pathnames pathname &optional defaults default-version
 
-
-\begin{obsolete}
-This is the function that most programs should call to process a file
-name supplied by the user.  It fills in unspecified components of
-\emph{pathname} from the \emph{defaults}, and returns a new pathname.  The
-\emph{pathname} and \emph{defaults} arguments may each
-be a pathname, stream, string, or symbol.  The
-result is always a pathname.
-\end{obsolete}
-
 \begin{new}
 X3J13 voted in March 1988
 not to permit symbols as pathnames
@@ -1832,32 +1758,6 @@ As a general rule, however, each program
 should have its own pathname defaults rather than using this one.
 \end{defun}
 
-\begin{obsolete}
-\begin{defun}[Function]
-make-pathname &key :host :device :directory :name :type :version :defaults
-
-Given some components, \cdf{make-pathname}
-constructs and returns a pathname.  After the components specified
-explicitly by the \cd{:host}, \cd{:device}, \cd{:directory},
-\cd{:name}, \cd{:type}, and \cd{:version} arguments are filled in,
-the merging rules used by \cdf{merge-pathnames} are used to fill
-in any missing components from the defaults specified by the
-\cd{:defaults} argument.
-The default value of the
-\cd{:defaults} argument is a pathname whose host component
-is the same as the host component of the value of
-\cd{*default-pathname-defaults*}, and whose other components
-are all {\nil}.
-
-Whenever a pathname is constructed, whether by \cdf{make-pathname} or some
-other function, the components may be canonicalized if appropriate.
-For example, if a file system is insensitive to case, then
-alphabetic characters may be forced to be all uppercase or all lowercase
-by the implementation.
-\end{defun}
-\end{obsolete}
-
-\begin{newer}
 The following example assumes the use of UNIX syntax and conventions.
 \begin{lisp}
 (make-pathname :host "technodrome" \\
@@ -1883,7 +1783,6 @@ and signal an error in problematical cases,
 \cdf{namestring} yet might or might not signal an error when given the resulting
 pathname.  User beware: this could cause portability problems.
 \end{defun}
-\end{newer}
 
 \begin{defun}[Function]
 pathnamep object
@@ -1893,24 +1792,6 @@ This predicate is true if \emph{object} is a pathname, and otherwise is false.
 (pathnamep x) \EQ\ (typep x 'pathname)
 \end{lisp}
 \end{defun}
-
-\begin{obsolete}
-\begin{defun}[Function]
-pathname-host pathname \\
-pathname-device pathname \\
-pathname-directory pathname \\
-pathname-name pathname \\
-pathname-type pathname \\
-pathname-version pathname
-
-These return the components of the argument \emph{pathname}, which may be a
-pathname, string or symbol, or stream.
-The returned values can be strings, special
-symbols, or some other object in the case of structured components.  The
-type will always be a string or a symbol.  The version will always be a
-number or a symbol.
-\end{defun}
-\end{obsolete}
 
 \begin{new}
 X3J13 voted in March 1988
@@ -1929,7 +1810,6 @@ argument is a stream, each operation behaves as if the function \cdf{pathname}
 were applied to the stream and the resulting pathname used instead.
 \end{new}
 
-\begin{newer}
 X3J13 voted in June 1989 \issue{PATHNAME-COMPONENT-CASE} to add a keyword
 argument \cd{:case} to all of the pathname accessor functions except
 \cdf{pathname-version}.  The new argument descriptions
@@ -1953,7 +1833,6 @@ to specify that
   If a list is returned, it is not guaranteed to be freshly consed; the
   consequences of modifying this list are undefined.
 \end{defun}
-\end{newer}
 
 \begin{defun}[Function]
 namestring pathname \\
@@ -2128,31 +2007,6 @@ Anything that can be recognized as being a finite subtype of
 \cdf{character} or \cdf{integer} is acceptable.  In particular,
 the following types are recognized:
 
-\begin{obsolete}
-\begin{quotation}
-\begin{flushdesc}
-\item[\cdf{string-char}]
-The unit of transaction is a string-character.
-The functions \cdf{read-char} and/or \cdf{write-char} may be
-used on the stream.  This is the default.
-
-\item[\cdf{character}]
-The unit of transaction is any character, not just a string-character.
-The functions \cdf{read-char} and/or \cdf{write-char} may be
-used on the stream.
-\end{flushdesc}
-\end{quotation}
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in June 1989 \issue{MORE-CHARACTER-PROPOSAL}
-to eliminate the type \cdf{string-char}, add the type \cdf{base-char},
-and redefine \cdf{open} to use the type \cdf{character} as the default
-\cd{:element-type}.
-
-The preceding two possibilities should therefore be
-replaced by the following.
-
 \begin{quotation}
 \begin{flushdesc}
 \item[\cdf{character}]
@@ -2166,7 +2020,6 @@ The functions \cdf{read-char} and \cdf{write-char} (depending on the value of th
 \cd{:direction} argument) may be used on the stream.
 \end{flushdesc}
 \end{quotation}
-\end{newer}
 
 \begin{quotation}
 \begin{flushdesc}
@@ -2482,36 +2335,10 @@ The third value is the \cdf{truename} of the file after it was renamed.
 
 If the renaming operation is not successful, an error is signaled.
 
-\begin{obsolete}
-It is an error to specify a file name containing a \cd{:wild} component,
-for \emph{file} to contain a {\nil} component where the file system does
-not permit a {\nil} component, or for the result of defaulting missing
-components of \emph{new-name} from \emph{file} to contain a {\nil} component
-where the file system does not permit a {\nil} component.
-\end{obsolete}
-\begin{newer}
-X3J13 voted in June 1989 \issue{PATHNAME-WILD}
-to specify that supplying a wild pathname
-as the \emph{file} argument to \cdf{rename-file} has implementation-dependent consequences;
-\cdf{rename-file} might signal an error, for example,
-or might rename all files that match the wild pathname.
-\end{newer}
-
 \begin{newer}
 X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL} to require \cdf{rename-file}
 to accept logical pathnames (see section~\ref{LOGICAL-PATHNAMES-SECTION}).
 \end{newer}
-
-\beforenoterule
-\begin{incompatibility}
-This corresponds to the function
-called \cdf{renamef} in MacLisp and Lisp Machine Lisp.
-The name \cdf{renamef} is not used in Common Lisp
-because the convention that a trailing \cdf{f} means ``file''
-conflicts with the use of a trailing \cdf{f}
-for forms related to \cdf{setf}.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -2537,30 +2364,10 @@ It is left to the discretion of the implementation whether an attempt
 to delete a non-existent file is considered to be successful.
 If the deleting operation is not successful, an error is signaled.
 
-\begin{obsolete}
-It is an error to specify a file name that contains a \cd{:wild} component
-or one that contains a {\nil} component where the file system does not
-permit a {\nil} component.
-\end{obsolete}
-\begin{newer}
-X3J13 voted in June 1989 \issue{PATHNAME-WILD}
-to clarify that supplying a wild pathname
-as the \emph{file} argument to \cdf{delete-file} has implementation-dependent consequences;
-\cdf{delete-file} might signal an error, for example,
-or might delete all files that match the wild pathname.
-\end{newer}
-
 \begin{newer}
 X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL} to require \cdf{delete-file}
 to accept logical pathnames (see section~\ref{LOGICAL-PATHNAMES-SECTION}).
 \end{newer}
-
-\beforenoterule
-\begin{incompatibility}
-This corresponds to the function
-called \cdf{deletef} in MacLisp and Lisp Machine Lisp.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -2575,13 +2382,6 @@ then \cdf{probe-file} cannot return {\nil} but will produce the
 true name of the associated file.
 See \cdf{truename} and the \cd{:probe} value for the
 \cd{:direction} argument to \cdf{open}.
-
-\beforenoterule
-\begin{incompatibility}
-This corresponds to the function
-called \cdf{probef} in MacLisp and Lisp Machine Lisp.
-\end{incompatibility}
-\afternoterule
 
 \begin{new}
 X3J13 voted in March 1988
@@ -2707,7 +2507,6 @@ With two arguments,
 successfully, or {\false} if it was not (for example,
 because the file was not random-access).
 
-\beforenoterule
 \begin{implementation}
 Implementations that have character files represented
 as a sequence of records of bounded size might choose to encode the
@@ -2720,12 +2519,6 @@ as a second argument to \cdf{file-position} if, when decoded into
 record number and character number, it turned out that the
 specified record was too short for the specified character number.
 \end{implementation}
-\betweennoterule
-\begin{incompatibility}
-This corresponds to the function
-called \cdf{filepos} in MacLisp and Lisp Machine Lisp.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -2738,13 +2531,6 @@ For a binary file,
 the length is specifically
 measured in units of the \cd{:element-type} specified
 when the file was opened (see \cdf{open}).
-
-\beforenoterule
-\begin{incompatibility}
-This corresponds to the function
-called \cdf{lengthf} in MacLisp and Lisp Machine Lisp.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 

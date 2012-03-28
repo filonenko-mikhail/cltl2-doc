@@ -138,20 +138,6 @@ same as the type \cdf{number}.
 The call \cd{(typep x '(satisfies p))} results in applying \cdf{p} to \cdf{x}
 and returning \cdf{t} if the result is true and {\nil} if the result is false.
 
-\begin{obsolete}
-As an example, the type \cdf{string-char} could be defined as
-\begin{lisp}
-(deftype string-char () \\
-~~'(and character (satisfies string-char-p)))
-\end{lisp}
-See \cdf{deftype}.
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{COMMON-TYPE} to remove the type \cdf{string-char}
-and the function \cdf{string-char-p} from the language.
-\end{newer}
-
 It is not a good idea for
 a predicate appearing in a \cdf{satisfies} type specifier to
 cause any side effects when invoked.
@@ -270,20 +256,6 @@ If one were then to ask whether the array were actually of type
 \cd{(array short-float)}, implementation A would say ``yes,'' but
 implementation B would say ``no.''  This is a property of \cdf{make-array}
 and similar functions: what you ask for is not necessarily what you get. 
-
-\begin{obsolete}
-Types can therefore be used for two different purposes:
-\emph{declaration} and \emph{discrimination}.  Declaring to \cdf{make-array}
-that elements will always be of type \cdf{short-float} permits
-optimization.  Similarly, declaring that a variable takes on
-values of type \cd{(array short-float)} amounts to saying that
-the variable will take on values that might be produced by specifying
-element type \cdf{short-float} to \cdf{make-array}.
-On the other hand, if the predicate \cdf{typep} is used to test
-whether an object is of type \cd{(array short-float)},
-only objects actually of that specialized type can satisfy the test;
-in implementation B no object can pass that test.
-\end{obsolete}
 
 \begin{new}
 X3J13 voted in January 1989
@@ -493,12 +465,6 @@ For example:
 (vector t 5)~~~~~~~~~~~~~~;\textrm{General vectors of length 5} \\
 (vector (mod 32) *)~~~~~~~;\textrm{Vectors of integers between 0 and 31}
 \end{lisp}
-\begin{obsolete}
-The specialized types \cd{(vector string-char)} and \cd{(vector bit)} are so
-useful that they have the special names \cdf{string} and \cdf{bit-vector}.
-Every implementation of Common Lisp must provide distinct representations for
-these as distinct specialized data types.
-\end{obsolete}
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
@@ -586,19 +552,6 @@ type specifier, other keyword arguments may be supplied
 when calling a function of the indicated type, and if supplied such
 arguments may possibly be used.
 \end{newer}
-
-\begin{obsolete}
-As an example, the function \cdf{cons} is of type \cd{(function (t t) cons)},
-because it can accept any two arguments and always returns a cons.
-The function \cdf{cons} is
-also of type \cd{(function (float string) list)}, because it can certainly
-accept a floating-point number and a string (among other things), and its
-result is always of type \cdf{list} (in fact a \cdf{cons} is never \cdf{null},
-but that does not matter for this type declaration).
-The function \cdf{truncate} is of type
-\cd{(function (number number) (values number number))}, as well as of type
-\cd{(function (integer (mod 8)) integer)}.
-\end{obsolete}
 
 \begin{new}
 X3J13 voted in January 1989
@@ -699,7 +652,8 @@ as the \emph{value-type} in a \cdf{function} type specifier or in
 a \cdf{the} special form.  It is used to specify individual types when
 multiple values are involved.
 The
-\cd{\&optional}, \cd{\&rest}, and \cd{\&key} markers may appear in the \emph{value-type} list;
+\cd{\&optional}, \cd{\&rest}, and \cd{\&key} markers may appear in the
+\emph{value-type} list;
 they thereby indicate the parameter list of a
 function that, when given to \cdf{multiple-value-call} along with
 the values, would be suitable for receiving those values.
@@ -790,19 +744,6 @@ a list of a real is an exclusive limit, and
 and so effectively denotes minus or plus infinity, respectively.
 \end{flushdesc}
 \end{newer}
-
-\begin{obsolete}
-\begin{flushdesc}
-\item[\cd{(string \emph{size})}]
-Means the same as
-\cd{(array string-char (\emph{size}))}: the set of strings of the indicated size.
-
-\item[\cd{(simple-string \emph{size})}]
-Means the same
-as \cd{(simple-array string-char (\emph{size}))}: the set of simple
-strings of the indicated size.
-\end{flushdesc}
-\end{obsolete}
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
@@ -990,21 +931,6 @@ then it is understood to mean \cd{(vector character)},
 and \cdf{simple-string} is understood to mean \cd{(simple-array character (*))}.
 \end{newer}
 
-\begin{obsolete}
-\begin{itemize}
-\item
-Some strings, symbols, and integers may be converted to characters.
-If \emph{object} is a string of length 1, then the
-sole element of the string is returned.  If \emph{object} is a symbol
-whose print name is of length 1, then the sole element of the print name
-is returned.  If \emph{object} is an integer \emph{n}, then \cd{(int-char \emph{n})}
-is returned.  See \cdf{character}.
-\begin{lisp}
-(coerce "a" 'character) \EV\ \#{\Xbackslash}a
-\end{lisp}
-\end{itemize}
-\end{obsolete}
-
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
 to eliminate \cdf{int-char} from Common Lisp.
@@ -1081,26 +1007,6 @@ describing the type of a given object.
 
 \begin{defun}[Function]
 type-of object
-
-\begin{obsolete}
-\noindent
-\cd{(type-of \emph{object})} returns an implementation-dependent result:
-some \emph{type} of which the \emph{object} is a member.  Implementors
-are encouraged to arrange for
-\cdf{type-of} to return the most specific type that can be
-conveniently computed and is likely to be useful to the user.
-If the argument is a user-defined named
-structure created by \cdf{defstruct}, then \cdf{type-of} will return the type name
-of that structure.
-Because the result is implementation-dependent, it is usually better
-to use \cdf{type-of} primarily for debugging purposes;
-however, in a few situations portable code requires the use of
-\cdf{type-of}, such as when the result is to be given to the
-\cdf{coerce} or \cdf{map} function.
-On the other hand, often the \cdf{typep} function
-or the \cdf{typecase} construct
-is more appropriate than \cdf{type-of}.
-\end{obsolete}
 
 \beforenoterule
 \begin{incompatibility}

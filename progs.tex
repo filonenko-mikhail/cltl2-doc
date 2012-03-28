@@ -40,22 +40,6 @@ self-evaluating forms, such as numbers; symbols, which stand
 for variables; and lists.  The lists in turn may be divided
 into three categories: special forms, macro calls, and function calls.
 
-\begin{obsolete}
-Any Common Lisp data object not explicitly defined here to be a valid form
-is not a valid form.  It is an error to evaluate
-anything but a valid form.
-
-\beforenoterule
-\begin{implementation}
-An implementation is free to make
-implementation-dependent extensions to the evaluator but is
-strongly encouraged to signal an error on any attempt to
-evaluate anything but a valid form or an object for which
-a meaningful evaluation extension has been purposely defined.
-\end{implementation}
-\afternoterule
-\end{obsolete}
-
 \begin{newer}
 X3J13 voted in October 1988 \issue{EVAL-OTHER} to specify that
 \emph{all} standard Common Lisp data objects other than symbols
@@ -467,12 +451,6 @@ they do not belong to the keyword package.  They are ordinary symbols
 each of whose names begins with an ampersand.  This terminology
 is unfortunately confusing but is retained for historical reasons.)
 
-\begin{obsolete}
-In all cases a \emph{var} or \emph{svar} must be a symbol, the name of a variable;
-each \emph{keyword} must be a keyword symbol, such as \cd{:start}.
-An \emph{initform} may be any form.
-\end{obsolete}
-
 \begin{newer}
 X3J13 voted in March 1988 \issue{KEYWORD-ARGUMENT-NAME-PACKAGE}
 to allow a \emph{keyword} in the preceding specification of a lambda-list
@@ -603,36 +581,6 @@ If \cd{\&key} is specified, there must remain
 an even number of arguments; these are considered as pairs,
 the first argument in each pair being interpreted as a keyword name
 and the second as the corresponding value.
-
-\begin{obsolete}
-It is an error for the first object of each pair to be
-anything but a keyword.
-
-\beforenoterule
-\begin{rationale}
-This last restriction is imposed so that a compiler may
-issue warnings about certain malformed calls to functions
-that take keyword arguments.  It must be remembered that the
-arguments in a function call that evaluate to keywords are just
-like any other arguments and may be any evaluable forms.
-A compiler could not, without additional context, issue a warning
-about the call
-\begin{lisp}
-(fill seq item x y)
-\end{lisp}
-because in principle the variable \cdf{x} might have as its value a keyword
-such as \cd{:start}.  However, a compiler would be justified in issuing
-a warning about the call
-\begin{lisp}
-(fill seq item 0 10)
-\end{lisp}
-because the constant \cd{0} is definitely not a keyword.  Similarly,
-if in the first case the variable \cdf{x} had been declared to be
-of type \cdf{integer}, then type analysis could enable the compiler
-to justify a warning.
-\end{rationale}
-\afternoterule
-\end{obsolete}
 
 \begin{newer}
 X3J13 voted in March 1988 \issue{KEYWORD-ARGUMENT-NAME-PACKAGE}
@@ -890,16 +838,6 @@ is embedded within \cd{(if p (+ 3 4) 6)}.
 These top-level special forms may be used to define globally named
 functions, to define macros, to make declarations,
 and to define global values for special variables.
-
-\begin{obsolete}
-It is not illegal to use these forms at other than top level,
-but whether it is meaningful to do so depends on context.
-Compilers, for example, may not recognize these forms properly
-in other than top-level contexts.  (As a special case, however,
-if a \cdf{progn} form appears at top level, then all forms
-within that \cdf{progn} are considered by the compiler to be top-level
-forms.)
-\end{obsolete}
 
 \newpage%manual
 
@@ -1173,90 +1111,6 @@ value returned by each of these constructs is the \emph{name} declared.
 \end{defmac}
 
 \subsection{Control of Time of Evaluation}
-
-\begin{obsolete}
-The \cdf{eval-when} special form allows pieces of code to
-be executed only at compile time, only at load time, or
-when interpreted but not compiled.  Its uses are relatively esoteric.
-
-\begin{defspec}
-eval-when ({situation}*) {\,form}*
-
-The body of an \cdf{eval-when} form is processed as an implicit
-\cdf{progn}, but only in the situations listed.  Each \emph{situation}
-must be a symbol, either \cdf{compile}, \cdf{load}, or \cdf{eval}.
-
-\cdf{eval} specifies that the interpreter should process the body.
-\cdf{compile} specifies that the compiler should evaluate the body
-at compile time in the compilation context.
-\cdf{load} specifies that the compiler should arrange to evaluate
-the forms in the body when the compiled file containing the
-\cdf{eval-when} form is loaded.
-
-The \cdf{eval-when} construct may be more precisely understood in terms
-of a model of how the compiler processes forms in a file to
-be compiled.  Successive forms are read from the file using the
-function \cdf{read}.
-These top-level forms are normally processed in what we shall call
-\emph{not-compile-time} mode.  There is another mode called \emph{compile-time-too}
-mode.  The \cdf{eval-when} special form controls which of these two
-modes to use.
-
-Every form is processed as follows:
-\begin{itemize}
-\item
-If the form is an \cdf{eval-when} form:
-\begin{itemize}
-\item
-If the situation \cdf{load} is specified:
-\begin{itemize}
-\item
-If the situation \cdf{compile} is specified, \emph{or} if the
-current processing mode is \emph{compile-time-too} and the situation \cdf{eval}
-is specified, then process each of the forms in the body
-in \emph{compile-time-too} mode.
-
-\item
-Otherwise, process each of the forms in the body in \emph{not-compile-time} mode.
-\end{itemize}
-
-\item
-If the situation \cdf{load} is not specified:
-\begin{itemize}
-\item
-If the situation \cdf{compile} is specified, \emph{or} if the
-current processing mode is \emph{compile-time-too} and the situation \cdf{eval}
-is specified, then evaluate each of the forms in the body
-in the compiler's executing environment.
-
-\item
-Otherwise, ignore the \cdf{eval-when} form entirely.
-\end{itemize}
-\end{itemize}
-
-\item
-If the form is not an \cdf{eval-when} form, then do two things.
-First, if the current processing mode is \emph{compile-time-too} mode,
-evaluate the form in the compiler's executing environment.
-Second, perform normal compiler processing of the form
-(compiling functions defined by \cdf{defun} forms, and so on).
-\end{itemize}
-
-One example of the use of \cdf{eval-when} is that
-if the compiler is to be able to properly read a file
-that uses user-defined reader macro characters,
-it is necessary to write
-\begin{lisp}
-(eval-when (compile load eval) \\
-~~(set-macro-character \#{\Xbackslash}\$ \#'(lambda (stream char) \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(declare (ignore char)) \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(list 'dollar (read stream)))))
-\end{lisp}
-This causes the call to \cdf{set-macro-character} to be executed
-in the compiler's execution environment, thereby modifying its
-reader syntax table.
-\end{defspec}
-\end{obsolete}
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{EVAL-WHEN-NON-TOP-LEVEL} to

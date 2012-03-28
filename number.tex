@@ -21,7 +21,7 @@ ratios, floating-point numbers, and complex numbers.  Many numeric
 functions will accept any kind of number; they are \emph{generic}.  Other
 functions accept only certain kinds of numbers.
 
-Common Lisp предоставляет несколько различных представлений для чисел.
+Common Lisp содержит несколько различных представлений для чисел.
 Эти представления могут быть разделены на четыре категории: целые, дробные, с
 плавающей точкой и комплексные. Многие числовые функции принимают любой тип
 числа. Другие принимают только определенный тип.
@@ -569,13 +569,8 @@ any required coercions when arguments are of different types.
 This returns the sum of the arguments.  If there are no arguments, the result
 is \cd{0}, which is an identity for this operation.
 
-\beforenoterule
-\begin{incompatibility}
-While \cdf{+} is compatible with its use in Lisp Machine Lisp,
-it is incompatible with MacLisp, which uses \cdf{+} for fixnum-only
-addition.
-\end{incompatibility}
-\afternoterule
+Данная функция возвращает сумму всех аргументов. Если аргументов не было,
+результатом является \cd{0}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -588,15 +583,12 @@ The function \cdf{-}, when given more than one argument, successively subtracts
 from the first argument all the others, and returns the result.
 For example, \cd{(- 3 4 5)} \EV\ \cd{-6}.
 
-\beforenoterule
-\begin{incompatibility}
-While \cdf{-} is compatible with its use in Lisp Machine Lisp,
-it is incompatible with MacLisp, which uses \cdf{-} for fixnum-only
-subtraction.
-Also, \cdf{-} differs from \cdf{difference} as used in most Lisp
-systems in the case of one argument.
-\end{incompatibility}
-\afternoterule
+Функция \cdf{-} при использовании с одним аргументом возваращает отрицательное
+значение для этого аргумента.
+
+Функция \cdf{-} при использовании с более чем одним аргументом вычитает из
+первого аргумента все остальные и возвращает результат.
+Например, \cd{(- 3 4 5)} \EV\ \cd{-6}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -606,13 +598,8 @@ This returns the product of the arguments.
 If there are no arguments, the result
 is \cd{1}, which is an identity for this operation.
 
-\beforenoterule
-\begin{incompatibility}
-While \cdf{*} is compatible with its use in Lisp Machine Lisp,
-it is incompatible with MacLisp, which uses \cdf{*} for fixnum-only
-multiplication.
-\end{incompatibility}
-\afternoterule
+Функция возвращает произведение всех аргументов.
+Если вызывается без аргументов, тогда возвращает \cd{1}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -648,27 +635,31 @@ or \cdf{round}.
 If any argument is a floating-point number,
 then the rules of floating-point contagion apply.
 
-\beforenoterule
-\begin{incompatibility}
-What \cdf{/} does is totally unlike what the usual
-\cdf{//} or \cdf{quotient} operator does.  In most Lisp systems,
-\cdf{quotient} behaves like \cdf{/} except when dividing integers,
-in which case it behaves like \cdf{truncate} of two arguments;
-this behavior is mathematically intractable, leading to such
-anomalies as
+Функция \cdf{/} при использовании с более чем одним аргументом производит
+деление первого аргумента на все остальные значения и возвращает полученный
+результат.
+
+Ноль может использоваться только для первого аргумента.
+
+Для одного аргумента \cdf{/} возвращает обратное значение. В таком случае ноль в
+первом аргументе недопустим.
+
+Если математическое отношение двух целых
+чисел не является целым числом, \cdf{/} вернёт дробный тип. 
+Например:
 \begin{lisp}
-(quotient 1.0 2.0) \EV\ 0.5   \textrm{but}   (quotient 1 2) \EV\ 0
+(/ 12 4) \EV\ 3 \\
+(/ 13 4) \EV\ 13/4 \\
+(/ -8) \EV\ -1/8 \\
+(/ 3 4 5) \EV\ 3/20
 \end{lisp}
-In contrast, the Common Lisp function \cdf{/} produces these results:
-\begin{lisp}
-(/ 1.0 2.0) \EV\ 0.5          \textrm{and}   (/ 1 2) \EV\ 1/2
-\end{lisp}
-In practice \cdf{quotient} is used only when one is sure that both arguments
-are integers, \emph{or} when one is sure that at least one argument
-is a floating-point number.  \cdf{/} is tractable for its purpose
-and works for \emph{any} numbers.
-\end{incompatibility}
-\afternoterule
+
+Для целочисленного деления используйте одну из функций  
+\cdf{floor}, \cdf{ceiling}, \cdf{truncate}
+или \cdf{round}.
+
+Если один из аргументов является числом с плавающей точкой, тогда применяются
+правила обработки чисел с плавающей точкой.
 \end{defun}
 
 \begin{defun}[Function]
@@ -682,12 +673,6 @@ Note that the short name may be confusing: \cd{(1- \emph{x})} does \emph{not} me
 $1-\emph{x}$; rather, it means $\emph{x}-1$.
 
 \beforenoterule
-\begin{rationale}
-These are included primarily for compatibility with MacLisp
-and Lisp Machine Lisp.  Some programmers prefer always to write \cd{(+ x 1)} and
-\cd{(- x 1)} instead of \cd{(1+ x)} and \cd{(1- x)}.
-\end{rationale}
-\betweennoterule
 \begin{implementation}
 Compiler writers are very strongly encouraged to ensure
 that \cd{(1+ x)} and \cd{(+ x 1)} compile into identical code, and
@@ -696,6 +681,11 @@ programmer to write possibly less clear code for the sake of efficiency.
 This can easily be done as a source-language transformation.
 \end{implementation}
 \afternoterule
+
+\cd{(1+ \emph{x})} является тем же самым, что \cd{(+ \emph{x} 1)}.
+\cd{(1- \emph{x})} является тем же самым, что \cd{(- \emph{x} 1)}.
+Следует отметить, что короткое имя может ввести в заблуждение: 
+\cd{(1- \emph{x})} \emph{не значит} то же, что и $1-\emph{x}$.
 \end{defun}
 
 \begin{defmac}
@@ -732,6 +722,32 @@ significantly more efficient than the \cdf{setf} version.
 X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
 to clarify order of evaluation (see section~\ref{SETF-SECTION}).
 \end{newer}
+
+Значение обобщенной переменной \emph{place} увеличивается (\cdf{incf}) или
+уменьшается (\cdf{decf}) на значение формы
+\emph{delta} и затем присваивается переменной \emph{place}.
+Результатом формы является присвоенное значение.
+Форма \emph{place} может быть любой формой подходящей для \cdf{setf}.
+Если форма \emph{delta} не указана, тогда число в \emph{place} изменяется на
+\cd{1}.
+Например:
+\begin{lisp}
+\hskip 9pc\=\kill
+(setq n 0) \\
+(incf n) \EV\ 1\>\textrm{and now} n \EV\ 1 \\
+(decf n 3) \EV\ -2\>\textrm{and now} n \EV\ -2 \\
+(decf n -5) \EV\ 3\>\textrm{and now} n \EV\ 3 \\
+(decf n) \EV\ 2\>\textrm{and now} n \EV\ 2
+\end{lisp}
+Результат \cd{(incf \emph{place} \emph{delta})} примерно эквивалентен
+\begin{lisp}
+(setf \emph{place} (+ \emph{place} \emph{delta}))
+\end{lisp}
+за исключением того, что в последнем случае \emph{place} вычисляется дважды,
+тогда как \cdf{incf} гарантирует, что вычисление \emph{place} будет выполнено
+только один раз.
+Более того, для некоторых форма \emph{place} \cdf{incf} может быть
+производительнее чем \cdf{setf}.
 \end{defmac}
 
 \begin{defun}[Function]
@@ -743,6 +759,19 @@ of a non-complex number is itself.  For a complex number \cdf{z},
 (conjugate z) \EQ\ (complex (realpart z) (- (imagpart z)))
 \end{lisp}
 For example:
+\begin{lisp}
+(conjugate \#C(3/5 4/5)) \EV\ \#C(3/5 -4/5) \\
+(conjugate \#C(0.0D0 -1.0D0)) \EV\ \#C(0.0D0 1.0D0) \\
+(conjugate 3.7) \EV\ 3.7
+\end{lisp}
+
+Функция возвращает комлексное сопряжение с числа \emph{number}. 
+Сопряжением некомплексного числа является само число. Для комплесного числа
+\cdf{z},
+\begin{lisp}
+(conjugate z) \EQ\ (complex (realpart z) (- (imagpart z)))
+\end{lisp}
+Например,
 \begin{lisp}
 (conjugate \#C(3/5 4/5)) \EV\ \#C(3/5 -4/5) \\
 (conjugate \#C(0.0D0 -1.0D0)) \EV\ \#C(0.0D0 1.0D0) \\
@@ -765,6 +794,26 @@ For three or more arguments,
 \end{lisp}
 
 Here are some examples of the use of \cdf{gcd}:
+\begin{lisp}
+(gcd 91 -49) \EV\ 7 \\
+(gcd 63 -42 35) \EV\ 7 \\
+(gcd 5) \EV\ 5 \\
+(gcd -4) \EV\ 4 \\
+(gcd) \EV\ 0
+\end{lisp}
+
+Функция возвращает наибольший общий делитель всех аргументов, которые в свою
+очередь должны быть целыми числами. Результатом \cdf{gcd} всегдя является
+неотрицательное целое число.
+Если передан только один параметр, то возвращается его абсолютное значение
+(модуль).
+Если ни один параметр не был передан, \cdf{gcd} возвращает \cd{0}.
+Для трёх и более аргументов,
+\begin{lisp}
+(gcd \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (gcd (gcd \emph{a} \emph{b}) \emph{c} ... \emph{z})
+\end{lisp}
+
+Несколько примеров использования \cdf{gcd}:
 \begin{lisp}
 (gcd 91 -49) \EV\ 7 \\
 (gcd 63 -42 35) \EV\ 7 \\
@@ -802,20 +851,46 @@ Some examples:
 (lcm 1 2 3 4 5 6) \EV\ 60
 \end{lisp}
 
-Mathematically, \cd{(lcm)} should return infinity.  Because Common Lisp
-does not have a representation for infinity, \cdf{lcm}, unlike \cdf{gcd},
-always requires at least one argument.
+\begin{lisp}
+\cd{(lcm)~\EV~1}.  
+\end{lisp}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{LCM-NO-ARGUMENTS}
-to specify that \cd{(lcm)~\EV~1}.
+\cd{(lcm)} ought to have been defined to return 1.
 
-This is one of my biggest boners.  The identity for \cdf{lcm} is of course 1,
-not infinity, and so \cd{(lcm)} ought to have been defined to return 1.
-Sorry about that, though in point of fact very few users have complained
-to me that this mistake in the first edition has cramped their programming style.
-\end{new}
+Функция возвращает наименьшее общее кратное для аргументов, которые в свою
+очередь должны быть целыми числами.
+Результатом \cdf{lcm} всегда является неотрицательное целое число.
+Для двух аргументов, не являющихся нулями,
+\begin{lisp}
+(lcm \emph{a} \emph{b}) \EQ\ (/ (abs (* \emph{a} \emph{b})) (gcd \emph{a} \emph{b}))
+\end{lisp}
+Если один или оба аргумента является нулём.
+\begin{lisp}
+(lcm \emph{a} 0) \EQ\ (lcm 0 \emph{a}) \EQ\ 0
+\end{lisp}
+
+Для одного аргумента, \cdf{lcm} возвращает абсолютное значение этого аргумента
+(модуль). 
+Для трёх и более аргументов,
+\begin{lisp}
+(lcm \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (lcm (lcm \emph{a} \emph{b}) \emph{c} ... \emph{z})
+\end{lisp}
+
+Примеры использования:
+\begin{lisp}
+(lcm 14 35) \EV\ 70 \\
+(lcm 0 5) \EV\ 0 \\
+(lcm 1 2 3 4 5 6) \EV\ 60
+\end{lisp}
+
+%Математически \cd{(lcm)} должна возвращать бесконечность. Но так как Common Lisp
+%не имеет представления для бесконечности, \cdf{lcm}, в отличие от \cdf{gcd},
+%всегда требует как минимум одного аргумента.
+
+\cdf{lcm}, вызванная без аргументов, возвращает \cd{1}.
+\begin{lisp}
+(lcm)~\EV~1
+\end{lisp}
 \end{defun}
 
 \section{Irrational and Transcendental Functions}
@@ -840,6 +915,16 @@ type \cdf{rational} or a single-precision floating-point approximation.
 If the arguments are all rational but the result cannot be expressed
 as a rational number, then a single-precision floating-point
 approximation is always returned.
+
+Common Lisp не содержит тип данных, который точно отображает иррациональные
+числовые значения.
+В данном разделе функции описаны так, как если бы результаты были математически
+точными, но фактически все они возвращают число с плавающей точкой
+приблизительно равное настоящему математическому значению.
+В некоторых местах изложены математические тождества, связанные со значениями
+функций, однако, два математически идентичных выражения могут быть различными
+по причине ошибок процесса апроксимации при вычислениях чисел с плавающей
+точкой.
 
 \begin{newer}
 X3J13 voted in March 1989
@@ -876,17 +961,24 @@ in implementing the functions defined in this section.
 \end{implementation}
 \afternoterule
 
-\subsection{Exponential and Logarithmic Functions}
+\subsection{Exponential and Logarithmic Functions Экспоненциальные и логарифмические функции}
 
 Along with the usual one-argument and two-argument exponential and
 logarithm functions, \cdf{sqrt} is considered to be an exponential
 function, because it raises a number to the power 1/2.
+
+Наряду с обычными одно-аргументными и двух-аргументными экспоненциальными и
+логарифмическими функциями, \cdf{sqrt} рассматривается как экспоненциальная
+функция, потому что она возводит число в степень 1/2.
 
 \begin{defun}[Function]
 exp number
 
 Returns \emph{e} raised to the power \emph{number},
 where \emph{e} is the base of the natural logarithms.
+
+Возвращает \emph{е}, возведенное в степень \emph{number},
+где \emph{е} является основанием натурального логарифма.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1047,6 +1139,16 @@ For example:
 (isqrt 300) \EV\ 17 \\
 (isqrt 325) \EV\ 18
 \end{lisp}
+
+Целочисленный квадратный корень: аргумент должен быть неотрицательным целым, и
+результат является наибольшим целым числом, которое меньше или равно точному
+положительному квадратному корню аргумента.
+\begin{lisp}
+(isqrt 9) \EV\ 3 \\
+(isqrt 12) \EV\ 3 \\
+(isqrt 300) \EV\ 17 \\
+(isqrt 325) \EV\ 18
+\end{lisp}
 \end{defun}
 
 \subsection{Trigonometric and Related Functions}
@@ -1096,12 +1198,6 @@ as a complex number.  That is,
 \begin{lisp}
 (phase \emph{z}) \EQ\ (atan (imagpart \emph{z}) (realpart \emph{z}))
 \end{lisp}
-\begin{obsolete}
-The result is in radians, in the range $-\pi$ (exclusive)
-to $\pi$ (inclusive).  The phase of a positive non-complex number
-is zero; that of a negative non-complex number is $\pi$.
-The phase of zero is arbitrarily defined to be zero.
-\end{obsolete}
 
 \begin{new}
 X3J13 voted in January 1989
@@ -1287,16 +1383,6 @@ Note that the case $\emph{y}=0,\emph{x}=0$ is an error in the absence of minus z
 but the four cases $\emph{y}=\pm 0,\emph{x}=\pm 0$ are defined in the presence of minus zero.
 \end{new}
 
-\begin{obsolete}
-With only one argument \emph{y}, the argument may be complex.
-The result is the arc tangent of \emph{y}, which may be defined by
-the following formula:
-\begin{tabbing}
-\hskip 10pc\=\kill
-Arc tangent\>$ -\emph{i}\log \left((1+\emph{i}\emph{y}) \sqrt{1/(1+\emph{y}^2)}\right) $
-\end{tabbing}
-\end{obsolete}
-
 \newpage%manual
 
 \beforenoterule
@@ -1379,7 +1465,6 @@ asinh number \\
 acosh number \\
 atanh number
 
-\begin{obsolete}\noindent
 These functions compute the hyperbolic sine, cosine, tangent,
 arc sine, arc cosine, and arc tangent functions, which are mathematically
 defined for an argument \emph{z} as follows:
@@ -1390,25 +1475,10 @@ Hyperbolic sine\>$ (\emph{e}^{z}-\emph{e}^{-z})/2 $ \\
 Hyperbolic cosine\>$ (\emph{e}^{z}+\emph{e}^{-z})/2 $ \\
 Hyperbolic tangent\>$ (\emph{e}^{z}-\emph{e}^{-z})/(\emph{e}^{z}+\emph{e}^{-z}) $ \\[2pt]
 Hyperbolic arc sine\>$ \log \left(\emph{z}+\sqrt{1+\emph{z}^2}\right) $ \\[2pt]
-Hyperbolic arc cosine\>$ \log \left(\emph{z}+(\emph{z}+1)\sqrt{(\emph{z}-1)/(\emph{z}+1)}\right) $ \\[2pt]
-Hyperbolic arc tangent\>$ \log \left((1+\emph{z})\sqrt{1-1/\emph{z}^2}\right) $\`{\bf WRONG!}
-\end{tabbing}
-\end{obsolete}
-
-\begin{newer}
-WARNING!  \emph{The formula shown above for hyperbolic arc tangent is incorrect.}
-It is not a matter of incorrect branch cuts; it simply does not compute anything
-like a hyperbolic arc tangent.  This unfortunate error in the first edition
-was the result of mistranscribing a (correct) APL formula from Penfield's paper
-\cite{APL-BRANCH-CUTS}.  The formula should have been transcribed as
-\begin{tabbing}
-\hskip 10pc\=\kill
+Hyperbolic arc cosine\>$ \log
+\left(\emph{z}+(\emph{z}+1)\sqrt{(\emph{z}-1)/(\emph{z}+1)}\right) $ \\[2pt]
 Hyperbolic arc tangent\>$ \log \left((1+\emph{z})\sqrt{1/(1-\emph{z}^2)}\right) $
 \end{tabbing}
-A proposal was submitted to X3J13 in September 1989 to replace the
-formulae for \cdf{acosh} and \cdf{atanh}.
-See section~\ref{BRANCH-CUTS-SECTION} for further discussion.
-\end{newer}
 
 Note that the result of \cdf{acosh} may be
 complex even if the argument is not complex; this occurs
@@ -1431,7 +1501,6 @@ to define the branch cuts in desirable ways for the complex case.
 
 \subsection{Branch Cuts, Principal Values, and Boundary Conditions in the Complex Plane}
 \label{BRANCH-CUTS-SECTION}
-
 
 
 Many of the irrational and transcendental functions are multiply defined
@@ -1626,29 +1695,6 @@ the range if and only if its imaginary part is non-positive.
 \item[\cdf{atan}]
 The following definition for (one-argument) arc tangent determines the
 range and branch cuts:
-\begin{obsolete}
-\noindent\leavevmode\vtop{
-\begin{tabbing}
-$ \arctan \emph{z}=-\emph{i} \log \left((1+\emph{i} \emph{z}) \sqrt{1/(1+\emph{z}^2)}\right)$
-\end{tabbing}
-}
-
-Beware of simplifying this formula; ``obvious'' simplifications are likely
-to alter the branch cuts or the values on the branch cuts incorrectly.
-
-The branch cut for the arc tangent function is in two pieces:
-one along the positive imaginary axis above \emph{i}
-(exclusive), continuous with quadrant II, and one along the negative imaginary
-axis below $-\emph{i}$ (exclusive), continuous with quadrant IV.  
-The points \emph{i} and $-\emph{i}$ are excluded from the domain.
-The range is that strip of the complex plane containing numbers whose real
-part is between $-\pi/2$ and $\pi/2$.  A number with real
-part equal to $-\pi/2$ is in the range if and only if its imaginary
-part is strictly positive; a number with real part equal to $\pi/2$ is in
-the range if and only if its imaginary part is strictly negative.  Thus the range of
-the arc tangent function is identical to that of the arc sine function with the points
-$-\pi/2$ and $\pi/2$ excluded.
-\end{obsolete}
 
 \begin{new}
 X3J13 voted in January 1989
@@ -1730,13 +1776,6 @@ if its imaginary part is between zero (inclusive) and $\pi$ (inclusive).
 \item[\cdf{atanh}]
 The following definition for the inverse hyperbolic tangent
 determines the range and branch cuts:
-\begin{obsolete}
-\noindent\leavevmode\vtop{
-\begin{tabbing}
-$ \arctanh \emph{z}=\log \left((1+\emph{z})\sqrt{1-1/\emph{z}^2}\right) $\`{\bf WRONG!}
-\end{tabbing}
-}
-\end{obsolete}
 
 \begin{newer}
 WARNING!  \emph{The formula shown above for hyperbolic arc tangent is incorrect.}
@@ -1748,28 +1787,6 @@ was the result of mistranscribing a (correct) APL formula from Penfield's paper
 $ \arctanh \emph{z}=\log \left((1+\emph{z})\sqrt{1/(1-\emph{z}^2)}\right) $
 \end{tabbing}
 \end{newer}
-
-\begin{obsolete}
-Beware of simplifying this formula; ``obvious'' simplifications are
-likely to alter the branch cuts or the values on the branch cuts
-incorrectly.
-
-The branch cut for the inverse hyperbolic tangent function
-is in two pieces: one along the negative real axis to the left of
-$-1$ (inclusive), continuous with quadrant III, and one along
-the positive real axis to the right of 1 (inclusive), continuous with
-quadrant I.  The points $-1$ and 1 are excluded from the
-domain.
-The range is that strip of the complex plane containing
-numbers whose imaginary part is between $-\pi/2$ and
-$\pi/2$.  A number with imaginary part equal to $-\pi/2$
-is in the range if and only if its real part is strictly negative; a number with
-imaginary part equal to $\pi/2$ is in the range if and only if its real
-part is strictly positive.  Thus the range of the inverse
-hyperbolic tangent function is identical to
-that of the inverse hyperbolic sine function with the points
-$-\pi \emph{i}/2$ and $\pi \emph{i}/2$ excluded.
-\end{obsolete}
 
 \begin{newer}
 A proposal was submitted to X3J13 in September 1989 to replace the
@@ -1901,7 +1918,6 @@ infinities.
 
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Initial Decoration of the Complex Plane (Identity Function)}
 \label{IDENTITY-PLOT}
 \numplot{identity}
@@ -1910,14 +1926,12 @@ This figure was produced in exactly the same manner as succeeding figures,
 simply by plotting the function \cdf{identity} instead of a numerical function.
 Thus the first of these figures was produced by the last function of the first edition.
 I knew it would come in handy someday!
-}
 \end{figure}
 
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Square Root Function}
 \label{SECOND-PLOT}
 \numplot{sqrt}
@@ -1936,13 +1950,11 @@ onto the southeast diagonal.  More generally, lines are mapped to rectangular hy
 (or fragments thereof\,) centered on the origin;
 lines through the origin are mapped to degenerate
 hyperbolas (perpendicular lines through the origin).
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Exponential Function}
 \numplot{exp}
 \small\noindent
@@ -1959,13 +1971,11 @@ It follows that the entire left half-plane is mapped to the interior of the unit
 and the right half-plane is mapped to the exterior of the unit circle.
 A line at any angle other than horizontal or vertical is mapped to a
 logarithmic spiral (but this is not illustrated here).
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Natural Logarithm Function}
 \numplot{log}
 \small\noindent
@@ -1977,14 +1987,11 @@ The positive real axis is mapped to the entire real axis, and the negative
 real axis to a horizontal line of height $\pi$.  The positive and negative
 imaginary axes are mapped to horizontal lines of height $\pm\pi/2$.
 The origin is mapped to $-\infty$.
-
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Function $(\emph{z}-1)/(\emph{z}+1)$}
 \numplot{minus-over-plus}
 \small\noindent
@@ -2005,13 +2012,11 @@ It bends down and briefly paddles water between its legs so furiously that the w
 directly beneath is pushed out into the entire area behind it; much that was
 behind swirls forward to either side; and all that was before is
 sucked in to lie between its feet.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Function $(1+\emph{z})/(1-\emph{z})$}
 \numplot{plus-over-minus}
 \small\noindent
@@ -2032,13 +2037,11 @@ transformations $(\emph{a}\emph{z}+\emph{b})/(\emph{c}\emph{z}+\emph{d})$,
 all of which are conformal (angle-preserving) and map circles
 onto circles.  Now, doesn't that tangle of circles through $-1$ look like something
 the cat got into?
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Sine Function}
 \numplot{sin}
 \small\noindent
@@ -2054,13 +2057,11 @@ the ellipse for horizontal
 lines at distance $\pm1$ from the real axis appears to intercept the real axis at
 $\pm\pi/2\approx \pm1.57\ldots$ but this is not so; the intercepts are actually at
 $\pm(\emph{e}+1/\emph{e})/2\approx \pm1.54\ldots\,\hbox{}$.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Arc Sine Function}
 \numplot{asin}
 \small\noindent
@@ -2076,13 +2077,11 @@ The imaginary axis is mapped to itself as if by \cdf{asinh} considered as a real
 The real axis is mapped to a bent path, turning corners at $\pm\pi/2$ (the points to
 which $\pm 1$ are mapped); $+\infty$ is mapped to $\pi/2-\infty \emph{i}$, and
 $-\infty$ to $-\pi/2+\infty \emph{i}$.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Cosine Function}
 \numplot{cos}
 \small\noindent
@@ -2099,13 +2098,11 @@ The origin is mapped to 1.  Whereas \cdf{sin} is an odd function, \cdf{cos} is a
 even function; as a result \emph{two} points in each annulus, one the negative
 of the other, are mapped to the same shaded point in this graph; the shading shown here
 is taken from points in the original upper half-plane.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Arc Cosine Function}
 \numplot{acos}
 \small\noindent
@@ -2120,14 +2117,11 @@ The imaginary axis is mapped upside down to the vertical line at $\pi/2$.
 The point $+1$ is mapped to the origin, and $-1$ to $\pi$.
 The image of the real axis is again cranky; $+\infty$ is mapped to $+\infty \emph{i}$,
 and $-\infty$ to $\pi-\infty \emph{i}$.
-
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Tangent Function}
 \numplot{tan}
 \small\noindent
@@ -2148,13 +2142,11 @@ two vertical lines separated by $(2\emph{k}+1)\pi$ for integer $\emph{k}$
 together become a complete circle.  It seems that two arcs
 shown hit the real axis at $\pm\pi/2=\pm 1.57\ldots$ but that is a coincidence;
 they really hit the axis at $\pm\tan 1= 1.55\ldots\,\hbox{}$.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Arc Tangent Function}
 \numplot{xatan}
 \small\noindent
@@ -2170,13 +2162,11 @@ so the imaginary axis is mapped into three pieces: the segment
 $[-\infty \emph{i},-\emph{i}]$ is mapped to $[\pi/2,\pi/2-\infty \emph{i}]$; the segment
 $[-\emph{i},\emph{i}]$ is mapped to the imaginary axis $[-\infty \emph{i},+\infty \emph{i}]$; and the segment
 $[+\emph{i},+\infty \emph{i}]$ is mapped to $[-\pi/2+\infty \emph{i},-\pi/2]$.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Hyperbolic Sine Function}
 \numplot{sinh}
 \small\noindent
@@ -2190,13 +2180,11 @@ rotate the complex plane by $-90$ degrees, then apply \cdf{sin}, then
 rotate the result by 90 degrees. In other words, $\sinh \emph{z} = \emph{i} \sin (-\emph{i\/})\emph{z}$;
 consistently replacing $\emph{z}$ with $\emph{i}\emph{z}$ in this formula yields the familiar identity
 $\sinh \emph{i}\emph{z} = \emph{i} \sin \emph{z}$.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Hyperbolic Arc Sine Function}
 \numplot{asinh}
 \small\noindent
@@ -2204,13 +2192,11 @@ The peacock sleeps.  Because $\arcsinh \emph{i}\emph{z} = \emph{i} \arcsin \emph
 the graph of \cdf{asinh}
 is related to that of \cdf{asin} by pre- and post-rotations of the complex plane
 in the same way as for \cdf{sinh} and \cdf{sin}.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Hyperbolic Cosine Function}
 \numplot{cosh}
 \small\noindent
@@ -2220,13 +2206,11 @@ That is because $\cosh \emph{i}\emph{z}$ is not equal to $\emph{i} \cos \emph{z}
 rather, $\cosh \emph{i}\emph{z} = \cos \emph{z}$.
 Interpreted, that means that the shading is pre-rotated but there is no
 post-rotation.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Hyperbolic Arc Cosine Function}
 \numplot{acosh}
 \small\noindent
@@ -2236,14 +2220,11 @@ value for \cdf{acosh} is so chosen that its graph does not look simply
 like a rotated version of the graph of \cdf{acos}, but if all values were
 shown, the two graphs would fill the plane in repeating patterns related
 by a rotation.
-
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Hyperbolic Tangent Function}
 \numplot{tanh}
 \small\noindent
@@ -2264,25 +2245,21 @@ Magnification maps lines to lines of the same slope; the exponential maps
 horizontal lines to circles and vertical lines to radial lines;
 and a bilinear transform maps generalized circles (including lines) to
 generalized circles.  Q.E.D.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Hyperbolic Arc Tangent Function}
 \label{ATANH-PLOT}
 \numplot{really-good-atanh}
 \small\noindent
 A sleeping peacock of another color: $\arctanh \emph{i}\emph{z} = \emph{i} \arctan \emph{z}$.
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Function $\protect\sqrt{1-\emph{z}^2}$}
 \numplot{sqrt-one-minus-sq}
 \small\noindent
@@ -2300,14 +2277,11 @@ to have its \emph{inner} edge at $\pi$ on the real axis and its \emph{outer}
 edge at 3 on the imaginary axis, but this is another accident; the intercept
 on the real axis, for example, is not really at $\pi\approx 3.14\ldots$ but
 at $\sqrt{1-(3\emph{i\/})^2}=\sqrt{10}\approx 3.16\ldots\,\hbox{}$.
-
-}
 \end{figure}
 
 \clearpage
 
 \begin{figure}
-\vbox to \foodimen{
 \caption{Illustration of the Range of the Function $\protect\sqrt{1+\emph{z}^2}$}
 \label{LAST-PLOT}
 \numplot{sqrt-one-plus-sq}
@@ -2326,7 +2300,6 @@ $[-\emph{,}-\infty \emph{i}]$ are each mapped onto the positive imaginary axis
 (but if minus zero is supported then opposite sides of the
 imaginary axis map to opposite halves of the imaginary axis---for example,
 $q(+0+2\emph{i\/})=\sqrt{5}\emph{i}$ but $q(-0+2\emph{i\/})=-\sqrt{5}\emph{i}$).
-}
 \end{figure}
 
 \clearpage

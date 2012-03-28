@@ -14,7 +14,7 @@ an error.
 
 По разным причинам могут быть сигнализированы ошибки.
 Многие встроенные Common Lisp'овые функции, когда получают некорректные
-аргумента, могут сигнализировать ошибку. Другие функции, описанные в этой главе,
+аргументы, могут сигнализировать ошибку. Другие функции, описанные в этой главе,
 могут быть использованы пользователем в целях сигнализирования ошибки.
 
 When an error is signaled, it is
@@ -38,32 +38,6 @@ for each error-signaling function.
 того, как была сигнализирована ошибка. Эти детали указаны ниже для каждой
 функции, создающией сигналы ошибок.
 
-\begin{obsolete}
-An implementation may also choose to provide means (such as the
-\cdf{errset} special form in MacLisp) for a program to trap
-all errors and prevent the debugger from stepping in for
-certain errors.
-
-\beforenoterule
-\begin{rationale}
-Error handling of adequate
-flexibility and power for all systems written in Common Lisp appears to
-require a complex error classification system.
-Experience with several error-handling systems
-in such dialects as MacLisp and Lisp Machine Lisp indicates that
-further experimentation is needed in this area;
-it is too early to define a standard error-handling mechanism.
-Therefore Common Lisp provides standard ways to \emph{signal} errors,
-but no standard ways to \emph{handle} errors.
-Of course a
-complete Lisp system requires error-handling mechanisms, but many useful
-portable programs do not require them.  It is expected that a future
-revision of Common Lisp will address the problem of portable error-handling
-mechanisms.
-\end{rationale}
-\afternoterule
-\end{obsolete}
-
 \begin{newer}
 X3J13 voted in June 1988
 \issue{CONDITION-SYSTEM}
@@ -77,19 +51,6 @@ for restarting a computation after a condition has been signaled.
 See chapter~\ref{CONDITION}.
 \end{newer}
 
-\beforenoterule
-\begin{incompatibility}
-What is here called ``continuing,''
-Lisp Machine Lisp calls ``proceeding'' from an error.
-\begin{new}
-In the new terminology introduced in chapter~\ref{CONDITION},
-what Lisp Machine Lisp called ``proceeding'' would be called
-``restarting,'' and ``continuing'' refers to the particular
-restart named \cdf{continue}.
-\end{new}
-\end{incompatibility}
-\afternoterule
-
 \section{General Error-Signaling Functions Базовые функции для создания сигналов
 ошибок}
 \label{ERROR-SIGNALLING-FUNCTIONS}
@@ -98,7 +59,7 @@ The functions in this section provide various mechanisms
 for signaling warnings, breaks, continuable errors, and fatal errors.
 
 Функции в данном разделе предоставляют различные механизмы для сигнализирования
-предупреждений, прерываний, ошибок с возможностью продолжения, и фатальных ошибок.
+предупреждений, прерываний, исправимых ошибок, и неисправивым (fatal) ошибок.
 
 In each case, the caller specifies an error message (a string) that may be
 processed (and perhaps displayed to the user) by the error-handling
@@ -192,14 +153,6 @@ to adopt a proposal for a Common Lisp Condition System.
 This proposal modifies the definition of \cdf{error} to specify its interaction
 with the condition system.  See section~\ref{SIGNALLING-CONDITIONS}.
 \end{new}
-
-\beforenoterule
-\begin{incompatibility}
-Lisp Machine Lisp calls this function \cdf{ferror}.
-MacLisp has a function named \cdf{error} that takes
-different arguments and can signal either a fatal or a continuable error.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -209,7 +162,7 @@ cerror continue-format-string error-format-string &rest args
 \cdf{cerror} is used to signal continuable errors.  Like \cdf{error}, it
 signals an error and enters the debugger.  However, \cdf{cerror} allows
 the program to be continued from the debugger after resolving the
-error.  
+error.
 
 If the program is continued after encountering the error, \cdf{cerror}
 returns {\false}.  The code that follows the call to \cdf{cerror} will
@@ -297,15 +250,6 @@ uses some of the \emph{args} and the
 \cdf{format} directives \cd{{\Xtilde}*} and \cd{{\Xtilde}{\Xatsign}*}
 to skip over unwanted arguments in one or both of the
 format control strings.
-
-\beforenoterule
-\begin{incompatibility}
-The Lisp Machine Lisp function \cdf{fsignal} is similar to this, but
-returns \cd{:no-action}
-rather than {\false}, and fails to distinguish between the error message
-and the continue message.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -335,13 +279,6 @@ care of advancing to a fresh line before and after the error message
 and perhaps supplying the name of the function that called \cdf{warn}.
 \end{obsolete}
 
-\beforenoterule
-\begin{incompatibility}
-The Lisp Machine Lisp function \cd{compiler:warn} is an
-approximate equivalent to this.
-\end{incompatibility}
-\afternoterule
-
 \begin{new}
 X3J13 voted in June 1988
 \issue{CONDITION-SYSTEM}
@@ -350,26 +287,6 @@ This proposal modifies the definition of \cdf{warn} to specify its interaction
 with the condition system.  See section~\ref{WARNING-CONDITIONS}.
 \end{new}
 \end{defun}
-
-\begin{obsolete}
-\begin{defun}[Variable]
-*break-on-warnings*
-
-If \cd{*break-on-warnings*} is not {\false}, then the function
-\cdf{warn} behaves like
-\cdf{break}.  It prints its message and then goes to the debugger or break
-loop.  Continuing causes \cdf{warn} to return {\false}.  This flag is intended
-primarily for use when the user is debugging programs that issue warnings;
-in ``production'' use, the value of \cd{*break-on-warnings*} should be {\false}.
-\end{defun}
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in March 1989
-\issue{BREAK-ON-WARNINGS-OBSOLETE}
-to remove \cd{*break-on-warnings*} from the language.
-See \cd{*break-on-signals*}.
-\end{newer}
 
 \begin{defun}[Function]
 break &optional format-string &rest args
@@ -406,18 +323,6 @@ For example, it might go into an ordinary read-eval-print loop identical to
 the top-level one except for the provision of a ``continue'' command that
 causes \cdf{break} to return {\false}.
 \end{obsolete}
-
-\beforenoterule
-\begin{incompatibility}
-In MacLisp, \cdf{break} is a special form (FEXPR)
-that takes two optional arguments.  The first is a symbol (it would be a
-string if MacLisp had strings), which is not evaluated.  The second is
-evaluated to produce a truth value specifying whether \cdf{break} should
-break (true) or return immediately (false).  In Common Lisp one makes a call
-to \cdf{break} conditional by putting it inside a conditional form such as
-\cdf{when} or \cdf{unless}.
-\end{incompatibility}
-\afternoterule
 
 \begin{new}
 X3J13 voted in June 1988
@@ -502,12 +407,6 @@ Error: The value of AARDVARKS, (SAM HARRY FRED), \\
 Error: The value of NAARDS, FOO, is not a positive integer.
 \end{lisp}
 
-\beforenoterule
-\begin{incompatibility}
-In Lisp Machine Lisp the equivalent facility
-is called \cdf{check-arg-type}.
-\end{incompatibility}
-\afternoterule
 \end{defmac}
 
 
