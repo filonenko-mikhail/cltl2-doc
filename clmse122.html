@@ -1,566 +1,81 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Debugging Tools Отладочные средства</title> 
+<head><title>How the Loop Facility Works</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-03-28 14:08:00"> 
+<meta name="date" content="2012-03-30 23:01:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 </head><body 
 >
-   <!--l. 1126--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 48--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse123.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse121.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse121.html#tailclmse121.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse122.html">В-конец</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch25.html#clmse122.html" >Вверх</a><tt>&#x003E;</tt></p></div>
    <h3 class="sectionHead"><span class="titlemark">25.2   </span> <a 
-href="clm.html#QQ2-152-340" id="x152-30000025.2">Debugging Tools Отладочные средства</a></h3>
-<!--l. 1128--><p class="noindent" >The utilities described in this section are suﬃciently complex and suﬃciently
-dependent on the host environment that their complete deﬁnition is beyond the
-scope of this book. However, they are also suﬃciently useful to warrant mention
-here. It is expected that every implementation will provide some version of these
-utilities, however clever or however simple.
-<!--l. 1136--><p class="indent" >   Коммунальные услуги, описанные в этом разделе достаточно сложны и
-достаточно зависит от внешней среды, что их полное описание выходит
-за рамки этой книги. Тем не менее, они также достаточно полезно,
-чтобы оправдать упомянуть здесь. Ожидается, что каждая реализация
-предоставить некоторые версии этих программ, однако умный или же
-просто.
-<!--l. 1144--><p class="indent" >   Описанные в этом разделе утилиты достаточно сложны и зависят
-от внешней среды ОС, что их полное описание выходит за рамки
-книги. Тем не менее их описание будет полезным. Предполагается,
-что каждая реализация будет представлять некоторую версию этих
-утилит.
-<div class=defmac>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Макрос]</i><b> trace </b><a 
- id="dx152-300001"></a><a 
- id="x152-300002r735"></a> { function-name}*
-</td></tr></table>
-<!--l. 1150--><p class="indent" >                                  <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">  <i>[Макрос]</i><b> untrace </b><a 
- id="dx152-300003"></a><a 
- id="x152-300004r736"></a> { function-name}* </td></tr></table>
-<!--l. 1152--><p class="indent" >
-</div>
-<!--l. 1152--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x152-30100025.2" id="x152-30100025.2"></a></span>
+href="clm.html#QQ2-152-339" id="x152-29900025.2">How the Loop Facility Works</a></h3>
+<!--l. 50--><p class="noindent" >The driving element of the Loop Facility is the <tt><a 
+href="clmse41.html#x53-117002r90">loop</a></tt> macro. When Lisp
+encounters a <tt><a 
+href="clmse41.html#x53-117002r90">loop</a></tt> macro call form, it invokes the Loop Facility and passes to it
+the loop clauses as a list of unevaluated forms, as with any macro. The loop
+clauses contain Common Lisp forms and loop keywords. The loop keywords are
+recognized by their symbol name, regardless of the packages that contain them.
+The <tt><a 
+href="clmse41.html#x53-117002r90">loop</a></tt> macro translates the given form into Common Lisp code and returns
+the expanded form.
+<!--l. 59--><p class="indent" >   The expanded loop form is one or more lambda-expressions for the local
+binding of loop variables and a block and a tagbody that express a looping control
+structure. The variables established in the loop construct are bound as if
+by using <tt><a 
+href="clmse38.html#x50-99002r74">let</a></tt> or <tt>lambda</tt>. Implementations can interleave the setting of
+initial values with the bindings. However, the assignment of the initial
+values is always calculated in the order speciﬁed by the user. A variable
+is thus sometimes bound to a harmless value of the correct data type,
+and then later in the prologue it is set to the true initial value by using
+<tt><a 
+href="clmse34.html#x46-86002r59">setq</a></tt>.
+<!--l. 70--><p class="indent" >   The expanded form consists of three basic parts in the tagbody:
+      <ul class="itemize1">
+      <li class="itemize">The <i>loop prologue</i> contains forms that are executed before iteration
+      begins, such as initial settings of loop variables and possibly an initial
+      termination test.
+      </li>
+      <li class="itemize">The <i>loop body</i> contains those forms that are executed during iteration,
+      including  application-speciﬁc  calculations,  termination  tests,  and
+      variable stepping. <i>Stepping</i> is the process of assigning a variable the
+      next item in a series of items.
+      </li>
                                                                           
 
                                                                           
-   <div class=obsolete>Invoking <a 
-href="#x152-300002r735">trace</a> with one or more function-names (symbols) causes the
-functions named to be traced. Henceforth, whenever such a function is invoked,
-information about the call, the arguments passed, and the eventually returned
-values, if any, will be printed to the stream that is the value of <a 
-href="clmse106.html#x132-240014r584">*trace-output*</a>. For
-example:
-</div> <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(trace ﬀt gcd string-upcase)
-</td></tr></table>
-<!--l. 1163--><p class="indent" >
-</div>
-</div>
-<!--l. 1164--><p class="noindent" >If a function call is open-coded (possibly as a result of an inline declaration), then
-such a call may not produce trace output.
-<!--l. 1167--><p class="indent" >   Invoking <a 
-href="#x152-300004r736">untrace</a> with one or more function names will cause those functions
-not to be traced any more.
-<!--l. 1170--><p class="indent" >   Tracing an already traced function, or untracing a function not currently being
-traced, should produce no harmful eﬀects but may produce a warning
-message.
-<!--l. 1174--><p class="indent" >   Calling <a 
-href="#x152-300002r735">trace</a> with no argument forms will return a list of functions currently
-being traced.
-<!--l. 1177--><p class="indent" >   Calling <a 
-href="#x152-300004r736">untrace</a> with no argument forms will cause all currently traced
-functions to be no longer traced.
-<div class=newer>
-<!--l. 1181--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx152-301001"></a>to extend <a 
-href="#x152-300002r735">trace</a> and <a 
-href="#x152-300004r736">untrace</a> to accept any
-function-name (a symbol or a list whose <i>car</i> is <a 
-href="clmse36.html#x48-90002r64">setf</a>—see section <a 
-href="clmse35.html#x47-830007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>). Thus
-one may write (trace (setf cadr)) to trace the <a 
-href="clmse36.html#x48-90002r64">setf</a> expansion function for
-<a 
-href="clmse80.html#x100-201008r396">cadr</a>.
-</div>
-<div class=new>
-<!--l. 1190--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx152-301002"></a>to specify that the values returned by <a 
-href="#x152-300002r735">trace</a> and
-<a 
-href="#x152-300004r736">untrace</a> when given argument forms are implementation-dependent.
-</div>
-<!--l. 1196--><p class="indent" >   <a 
-href="#x152-300002r735">trace</a> and <a 
-href="#x152-300004r736">untrace</a> may also accept additional implementation-dependent
-argument formats. The format of the trace output is implementation-dependent.
-</div>
+      <li class="itemize">The  <i>loop  epilogue</i>  contains  forms  that  are  executed  after  iteration
+      terminates, such as code to return values from the loop.</li></ul>
+<!--l. 91--><p class="indent" >   Expansion of the <tt><a 
+href="clmse41.html#x53-117002r90">loop</a></tt> macro produces an implicit block (named <tt><a 
+href="clmse30.html#x41-73002r18">nil</a></tt>). Thus,
+the Common Lisp macro <tt><a 
+href="clmse131.html#x161-330002r798">return</a></tt> and the special form <tt><a 
+href="clmse40.html#x52-113002r88">return-from</a></tt> can be used
+to return values from a loop or to exit a loop.
+<!--l. 97--><p class="indent" >   Within the executable parts of loop clauses and around the entire loop
+form, you can still bind variables by using the Common Lisp special form
+<tt><a 
+href="clmse38.html#x50-99002r74">let</a></tt>.
                                                                           
 
                                                                           
-<div class=defmac>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Макрос]</i><b> step </b><a 
- id="dx152-301003"></a><a 
- id="x152-301004r737"></a> form
-</td></tr></table>
-<!--l. 1203--><p class="indent" >
-</div>
-<!--l. 1203--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x152-30200025.2" id="x152-30200025.2"></a></span>
-   This evaluates <i>form</i> and returns what <i>form</i> returns. However, the user is
-allowed to interactively “single-step” through the evaluation of <i>form</i>, at least
-through those evaluation steps that are performed interpretively. The nature of
-the interaction is implementation-dependent. However, implementations are
-encouraged to respond to the typing of the character ? by providing help,
-including a list of commands.
-<div class=new>
-<!--l. 1214--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx152-302001"></a>to clarify that <a 
-href="#x152-301004r737">step</a> evaluates its argument <i>form</i>
-in the current lexical environment (not simply a null environment), and that calls
-to <a 
-href="#x152-301004r737">step</a> may be compiled, in which case an implementation may step through only
-those parts of the evaluation that are interpreted. (In other words, the <i>form</i> itself
-is unlikely to be stepped, but if executing it happens to invoke interpreted code,
-then that code may be stepped.)
-</div>
-</div>
-<div class=defmac>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing"> <i>[Макрос]</i><b> time </b><a 
- id="dx152-302002"></a><a 
- id="x152-302003r738"></a> form
-</td></tr></table>
-<!--l. 1228--><p class="indent" >
-</div>
-                                                                          
-
-                                                                          
-<!--l. 1228--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x152-30300025.2" id="x152-30300025.2"></a></span>
-   This evaluates <i>form</i> and returns what <i>form</i> returns. However, as a side eﬀect,
-various timing data and other information are printed to the stream that is the
-value of <a 
-href="clmse106.html#x132-240014r584">*trace-output*</a>. The nature and format of the printed information is
-implementation-dependent. However, implementations are encouraged to provide
-such information as elapsed real time, machine run time, storage management
-statistics, and so on.
-<div class=new>
-<!--l. 1237--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx152-303001"></a>to clarify that <a 
-href="#x152-302003r738">time</a> evaluates its argument <i>form</i>
-in the current lexical environment (not simply a null environment), and that calls
-to <a 
-href="#x152-302003r738">time</a> may be compiled.
-</div>
-</div>
-<div class=newer>
-<!--l. 1246--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx152-303002"></a>to let <a 
-href="#x152-303004r739">describe</a> take an optional second
-argument:
-<div class=defun>
-<!--l. 1249--><p class="noindent" ><i>[Function]</i><a 
- id="dx152-303003"></a><a 
- id="x152-303004r739"></a><b> describe</b>  <i>object</i> &#x0026;optional  <i>stream</i>
-<!--l. 1251--><p class="noindent" ><a 
-href="#x152-303004r739">describe</a> prints, to the stream information about the <i>object</i>. Sometimes it will
-describe something that it ﬁnds inside something else; such recursive descriptions
-are indented appropriately. For instance, <a 
-href="#x152-303004r739">describe</a> of a symbol will exhibit the
-symbol&#x2019;s value, its deﬁnition, and each of its properties. <a 
-href="#x152-303004r739">describe</a> of a
-ﬂoating-point number will exhibit its internal representation in a way that is
-useful for tracking down round-oﬀ errors and the like. The nature and format of
-the output is implementation-dependent.
-<!--l. 1261--><p class="indent" >   <a 
-href="#x152-303004r739">describe</a> returns no values (that is, it returns what the expression (values)
-returns: zero values).
-<!--l. 1264--><p class="indent" >   The output is sent to the speciﬁed <i>stream</i>, which defaults to the value of
-<a 
-href="clmse106.html#x132-240004r579">*standard-output*</a>; the <i>stream</i> may also be <a 
-href="clmse31.html#x42-74002r18">nil</a> (meaning <a 
-href="clmse106.html#x132-240004r579">*standard-output*</a>) or <a 
-href="clmse31.html#x42-74004r19">t</a>
-(meaning <a 
-href="clmse106.html#x132-240012r583">*terminal-io*</a>).
-<!--l. 1269--><p class="indent" >   The behavior of <a 
-href="#x152-303004r739">describe</a> depends on the generic function <a 
-href="#x152-303009r741">describe-object</a> (see
-below).
-</div>
-<div class=new>
-<!--l. 1274--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx152-303005"></a>to specify that <a 
-href="#x152-303004r739">describe</a> is forbidden
-to prompt for or require user input when given exactly one argument;
-it also voted to permit implementations to extend <a 
-href="#x152-303004r739">describe</a> to accept
-keyword arguments that may cause it to prompt for or to require user
-                                                                          
-
-                                                                          
-input.
-</div>
-<div class=newer>
-<div class=defun>
-<!--l. 1284--><p class="noindent" ><i>[Generic function]</i><a 
- id="dx152-303006"></a><a 
- id="x152-303007r740"></a><b> describe-object</b>  <i>object</i> <i>stream</i><br 
-class="newline" /><i>[Primary method]</i><a 
- id="dx152-303008"></a><a 
- id="x152-303009r741"></a><b> describe-object</b>  (<i>object</i> standard-object) <i>stream</i>
-<!--l. 1287--><p class="noindent" >X3J13 voted in March 1989 <a 
- id="dx152-303010"></a>to add the generic function <a 
-href="#x152-303009r741">describe-object</a>, which
-writes a description of an object to a stream. The function <a 
-href="#x152-303009r741">describe-object</a> is
-called by the <a 
-href="#x152-303004r739">describe</a> function; it should not be called by the user.
-<!--l. 1293--><p class="indent" >   Each implementation must provide a method on the class standard-object and
-methods on enough other classes to ensure that there is always an applicable
-method. Implementations are free to add methods for other classes. Users can
-write methods for <a 
-href="#x152-303009r741">describe-object</a> for their own classes if they do not wish to
-inherit an implementation-supplied method.
-<!--l. 1300--><p class="indent" >   The ﬁrst argument may be any Lisp object. The second argument is a
-stream; it cannot be <a 
-href="clmse31.html#x42-74004r19">t</a> or <a 
-href="clmse31.html#x42-74002r18">nil</a>. The values returned by <a 
-href="#x152-303009r741">describe-object</a> are
-unspeciﬁed.
-<!--l. 1304--><p class="indent" >   Methods on <a 
-href="#x152-303009r741">describe-object</a> may recursively call <a 
-href="#x152-303004r739">describe</a>. Indentation, depth
-limits, and circularity detection are all taken care of automatically, provided that
-each method handles exactly one level of structure and calls <a 
-href="#x152-303004r739">describe</a> recursively if
-there are more structural levels. If this rule is not obeyed, the results are
-undeﬁned.
-<!--l. 1310--><p class="indent" >   In some implementations the <i>stream</i> argument passed to a <a 
-href="#x152-303009r741">describe-object</a>
-method is not the original stream but is an intermediate stream that implements
-parts of <a 
-href="#x152-303004r739">describe</a>. Methods should therefore not depend on the identity of this
-stream.
-<div class=rationale>
-<!--l. 1316--><p class="noindent" ><b>Обоснование:</b> This proposal was closely modeled on the CLOS description of
-<a 
-href="clmse144.html#x177-418038r893">print-object</a>, which was well thought out and provides a great deal of functionality and
-implementation freedom. Implementation techniques for <a 
-href="clmse144.html#x177-418038r893">print-object</a> are applicable to
-<a 
-href="#x152-303009r741">describe-object</a>.
-<!--l. 1322--><p class="indent" >   The reason for making the return values for <a 
-href="#x152-303009r741">describe-object</a> unspeciﬁed is to avoid
-forcing users to write (values) explicitly in all their methods; <a 
-href="#x152-303004r739">describe</a> should take care of
-that.
-</div>
-</div>
-</div>
-<div class=defun>
-                                                                          
-
-                                                                          
-<!--l. 1331--><p class="noindent" ><i>[Function]</i><a 
- id="dx152-303011"></a><a 
- id="x152-303012r742"></a><b> inspect</b>  <i>object</i>
-<!--l. 1333--><p class="noindent" ><a 
-href="#x152-303012r742">inspect</a> is an interactive version of <a 
-href="#x152-303004r739">describe</a>. The nature of the interaction is
-implementation-dependent, but the purpose of <a 
-href="#x152-303012r742">inspect</a> is to make it easy to
-wander through a data structure, examining and modifying parts of it.
-Implementations are encouraged to respond to the typing of the character ? by
-providing help, including a list of commands.
-<div class=new>
-<!--l. 1343--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx152-303013"></a>to specify that the values returned by <a 
-href="#x152-303012r742">inspect</a> are
-implementation-dependent.
-</div>
-</div>
-<div class=defun>
-<!--l. 1350--><p class="noindent" ><i>[Function]</i><a 
- id="dx152-303014"></a><a 
- id="x152-303015r743"></a><b> room</b>  &#x0026;optional  <i>x</i>
-<!--l. 1352--><p class="noindent" ><a 
-href="#x152-303015r743">room</a> prints, to the stream in the variable <a 
-href="clmse106.html#x132-240004r579">*standard-output*</a>, information about
-the state of internal storage and its management. This might include descriptions
-of the amount of memory in use and the degree of memory compaction, possibly
-broken down by internal data type if that is appropriate. The nature and format
-of the printed information is implementation-dependent. The intent is to
-provide information that may help a user to tune a program to a particular
-implementation.
-<!--l. 1361--><p class="indent" >   (room nil) prints out a minimal amount of information. (room t) prints out a
-maximal amount of information. Simply (room) prints out an intermediate
-amount of information that is likely to be useful.
-<div class=new>
-<!--l. 1367--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx152-303016"></a>to specify that the argument <i>x</i> may also be the
-keyword :default, which has the same eﬀect as passing no argument at
-all.
-</div>
-</div>
-<div class=defun>
-<!--l. 1375--><p class="noindent" ><i>[Function]</i><a 
- id="dx152-303017"></a><a 
- id="x152-303018r744"></a><b> ed</b>  &#x0026;optional  <i>x</i>
-<!--l. 1377--><p class="noindent" >If the implementation provides a resident editor, this function should invoke
-it.
-<!--l. 1381--><p class="indent" >   (ed) or (ed nil) simply enters the editor, leaving you in the same state as the
-last time you were in the editor.
-<!--l. 1384--><p class="indent" >   (ed <i>pathname</i>) edits the contents of the ﬁle speciﬁed by <i>pathname</i>. The
-<i>pathname</i> may be an actual pathname or a string.
-<div class=newer>
-                                                                          
-
-                                                                          
-<!--l. 1389--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx152-303019"></a>to require <a 
-href="#x152-303018r744">ed</a> to accept logical pathnames (see
-section <a 
-href="clmse113.html#x141-27000023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
-</div>
-<!--l. 1393--><p class="indent" >   (ed <i>symbol</i>) tries to let you edit the text for the function named <i>symbol</i>. The
-means by which the function text is obtained is implementation-dependent; it
-might involve searching the ﬁle system, or pretty printing resident interpreted
-code, for example.
-<div class=newer>
-<!--l. 1399--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx152-303020"></a>to extend <a 
-href="clmse121.html#x151-293003r725">compile</a> to accept as a <i>name</i> any
-function-name (a symbol or a list whose <i>car</i> is <a 
-href="clmse36.html#x48-90002r64">setf</a>—see section <a 
-href="clmse35.html#x47-830007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>). Thus
-one may write (ed &#x2019;(setf cadr)) to edit the <a 
-href="clmse36.html#x48-90002r64">setf</a> expansion function for
-<a 
-href="clmse80.html#x100-201008r396">cadr</a>.
-</div>
-</div>
-<div class=defun>
-<!--l. 1408--><p class="noindent" ><i>[Function]</i><a 
- id="dx152-303021"></a><a 
- id="x152-303022r745"></a><b> dribble</b>  &#x0026;optional  <i>pathname</i>
-<!--l. 1410--><p class="noindent" >(dribble <i>pathname</i>) may rebind <a 
-href="clmse106.html#x132-240002r578">*standard-input*</a> and <a 
-href="clmse106.html#x132-240004r579">*standard-output*</a>, and
-may take other appropriate action, so as to send a record of the input/output
-interaction to a ﬁle named by <i>pathname</i>. The primary purpose of this is to create
-a readable record of an interactive session.
-<!--l. 1418--><p class="indent" >   (dribble) terminates the recording of input and output and closes the dribble
-ﬁle.
-<div class=newer>
-<!--l. 1422--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx152-303023"></a>to require <a 
-href="#x152-303022r745">dribble</a> to accept logical pathnames (see
-section <a 
-href="clmse113.html#x141-27000023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
-</div>
-<div class=new>
-<!--l. 1427--><p class="indent" >   X3J13 voted in March 1988 <a 
- id="dx152-303024"></a>to clarify that <a 
-href="#x152-303022r745">dribble</a> is intended primarily for
-interactive debugging and that its eﬀect cannot be relied upon for use in portable
-programs.
-<!--l. 1434--><p class="indent" >   Diﬀerent implementations of Common Lisp have used radically diﬀerent
-techniques for implementing <a 
-href="#x152-303022r745">dribble</a>. All are reasonable interpretations of the
-original speciﬁcation, and all behave in approximately the same way if
-<a 
-href="#x152-303022r745">dribble</a> is called only from the interactive top level. However, they may
-have quite diﬀerent behaviors if <a 
-href="#x152-303022r745">dribble</a> is called from within compound
-forms.
-<!--l. 1441--><p class="indent" >   Consider two models of the operation of <a 
-href="#x152-303022r745">dribble</a>. In the “redirecting” model, a
-call to <a 
-href="#x152-303022r745">dribble</a> with a pathname argument alters certain global variables such as
-                                                                          
-
-                                                                          
-<a 
-href="clmse106.html#x132-240004r579">*standard-output*</a>, perhaps by constructing a broadcast stream directed to both
-the original value of <a 
-href="clmse106.html#x132-240004r579">*standard-output*</a> and to the dribble ﬁle; other streams may
-be aﬀected as well. A call to <a 
-href="#x152-303022r745">dribble</a> with no arguments undoes these side
-eﬀects.
-<!--l. 1449--><p class="indent" >   In the “recursive” model, by contrast, a call to <a 
-href="#x152-303022r745">dribble</a> with a pathname
-argument creates a new interactive command loop and calls it recursively. This
-new command loop is just like an ordinary read-eval-print loop except that it also
-echoes the interaction to the dribble ﬁle. A call to <a 
-href="#x152-303022r745">dribble</a> with no arguments does
-a <a 
-href="clmse44.html#x56-141002r116">throw</a> that exits the recursive command loop and returns to the original caller of
-<a 
-href="#x152-303022r745">dribble</a> with an argument.
-<!--l. 1457--><p class="indent" >   The two models may be distinguished by this test case: <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(progn (dribble &#x0022;basketball&#x0022;)
-</td></tr></table>
-<!--l. 1459--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (print &#x0022;Larry&#x0022;)</td></tr></table>
-<!--l. 1460--><p class="indent" >                                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (dribble)</td></tr></table>
-<!--l. 1461--><p class="indent" >                                                   <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (princ &#x0022;Bird&#x0022;))</td></tr></table>
-<!--l. 1463--><p class="indent" >
-</div>
-</div>
-<!--l. 1464--><p class="noindent" >If this form is input to the Lisp top level, in either model a newline (provided by the
-function <a 
-href="clmse111.html#x138-259008r650">print</a>) and the words Larry Bird will be printed to the standard output.
-The redirecting dribble model will additionally print all but the word Bird to a
-ﬁle named basketball.
-<!--l. 1470--><p class="indent" >   By contrast, the recursive dribble model will enter a recursive command loop
-and not print anything until (dribble) is executed from within the new interactive
-command loop. At that time the ﬁle named basketball will be closed,
-and then execution of the <a 
-href="clmse38.html#x50-96002r71">progn</a> form will be resumed. A newline and
-“Larry ” (note the trailing space) will be printed to the standard output, and
-then the call (dribble) may complain that there is no active dribble ﬁle.
-Once this error is resolved, the word Bird may be printed to the standard
-output.
-<!--l. 1480--><p class="indent" >   Here is a slightly diﬀerent test case: <div class=lisp><div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(dribble &#x0022;baby-food&#x0022;)
-</td></tr></table>
-                                                                          
-
-                                                                          
-<!--l. 1483--><p class="indent" >
-</div>
-</div>
-<div class=lisp>
-<div class=tabbing>
-<table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">(progn (print &#x0022;Mashed banana&#x0022;)
-</td></tr></table>
-<!--l. 1485--><p class="indent" >                                                         <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (dribble)</td></tr></table>
-<!--l. 1486--><p class="indent" >                                      <table  
-cellpadding="0" border="0" cellspacing="0" 
-class="tabbing"><tr  
-style="vertical-align:baseline;" class="tabbing"><td  
-class="tabbing">       (princ &#x0022;and cream of rice&#x0022;))</td></tr></table>
-<!--l. 1488--><p class="indent" >
-</div>
-</div>
-<!--l. 1489--><p class="noindent" >If this form is input to the Lisp top level, in the redirecting model a newline and the
-words Mashed banana and cream of rice will be printed to the standard
-output and all but the words and cream of rice will be sent to a ﬁle named
-baby-food.
-<!--l. 1495--><p class="indent" >   The recursive model will direct exactly the same output to the ﬁle
-named baby-food but will never print the words and cream of rice to the
-standard output because the call (dribble) does not return normally; it
-throws.
-<!--l. 1500--><p class="indent" >   The redirecting model may be intuitively more appealing to some. The
-recursive model, however, may be more robust; it carefully limits the extent
-of the dribble operation and disables dribbling if a throw of any kind
-occurs. The vote by X3J13 was an explicit decision not to decide which
-model to use. Users are advised to call <a 
-href="#x152-303022r745">dribble</a> only interactively, at top
-level.
-</div>
-</div>
-<div class=defun>
-<!--l. 1510--><p class="noindent" ><i>[Function]</i><a 
- id="dx152-303025"></a><a 
- id="x152-303026r746"></a><b> apropos</b>  <i>string</i> &#x0026;optional  <i>package</i><br 
-class="newline" /><i>[Function]</i><a 
- id="dx152-303027"></a><a 
- id="x152-303028r747"></a><b> apropos-list</b>  <i>string</i> &#x0026;optional  <i>package</i>
-<!--l. 1513--><p class="noindent" >(apropos <i>string</i>) tries to ﬁnd all available symbols whose print names contain
-<i>string</i> as a substring. (A symbol may be supplied for the <i>string</i>, in which case the
-print name of the symbol is used.) Whenever <a 
-href="#x152-303026r746">apropos</a> ﬁnds a symbol, it prints out
-the symbol&#x2019;s name; in addition, information about the function deﬁnition and
-                                                                          
-
-                                                                          
-dynamic value of the symbol, if any, is printed. If <i>package</i> is speciﬁed and not <a 
-href="clmse31.html#x42-74002r18">nil</a>,
-then only symbols available in that package are examined; otherwise “all”
-packages are searched, as if by <a 
-href="clmse60.html#x76-172002r167">do-all-symbols</a>. Because a symbol may be
-available by way of more than one inheritance path, <a 
-href="#x152-303026r746">apropos</a> may print
-information about the same symbol more than once. The information is printed
-to the stream that is the value of <a 
-href="clmse106.html#x132-240004r579">*standard-output*</a>. <a 
-href="#x152-303026r746">apropos</a> returns
-no values (that is, it returns what the expression (values) returns: zero
-values).
-<!--l. 1531--><p class="indent" >   <a 
-href="#x152-303028r747">apropos-list</a> performs the same search that <a 
-href="#x152-303026r746">apropos</a> does but prints nothing.
-It returns a list of the symbols whose print names contain <i>string</i> as a
-substring.
-</div>
-                                                                          
-
-                                                                          
-   <!--l. 1536--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
+   <!--l. 103--><div class="crosslinks"><p class="noindent"><tt>&#x003C;</tt><a 
 href="clmse123.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse121.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse121.html#tailclmse121.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse122.html" >В-начало</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch25.html#clmse122.html" >Вверх</a><tt>&#x003E;</tt></p></div>
-<!--l. 1536--><p class="indent" >   <a 
+<!--l. 103--><p class="indent" >   <a 
  id="tailclmse122.html"></a>  
 </body></html> 

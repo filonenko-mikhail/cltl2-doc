@@ -3,10 +3,13 @@
 
 \clearpage\def\pagestatus{FINAL PROOF}
 
-\chapter{Characters}
+\chapter{Characters Строковые символы}
 
 Common Lisp provides a character data type; objects of this type
 represent printed symbols such as letters.
+
+Common Lisp содержит тип данных для строковых типов. Объекты данного типа
+представляют печатаемые символы, как например буквы.
 
 In general, characters in Common Lisp are not true objects; \cdf{eq} cannot
 be counted upon to operate on them reliably.  In particular,
@@ -15,6 +18,14 @@ it is possible that the expression
 (let ((x z) (y z)) (eq x y))
 \end{lisp}
 may be false rather than true, if the value of \cdf{z} is a character.
+
+Строковые символы в Common Lisp'е не совсем объекты. Нельзя положится на то, что
+\cdf{eq} будет работать с ними правильно. В частности, возможно что выражение
+\begin{lisp}
+(let ((x z) (y z)) (eq x y))
+\end{lisp}
+может быть ложным, а не истины, если значение \cdf{z} является строковым
+символом.
 
 \beforenoterule
 \begin{rationale}
@@ -122,7 +133,7 @@ categorizes the character as Latin, Numeric, or Special.
 \begin{small}
 \noindent
 Символы в этой таблице, а также пробел и символы новой строки составляют
-стандартный набор символом для Common Lisp'а (тип \cdf{standard-char}).
+стандартный набор символов для Common Lisp'а (тип \cdf{standard-char}).
 Метки символов и описания символов взяти из ISO 6937/2. Первый символ на метке
 классифицирует символ как Latin, Numeric или Special.
 \end{small}
@@ -131,6 +142,9 @@ categorizes the character as Latin, Numeric, or Special.
 
 If two objects are to be compared for ``identity,'' but either might be
 a character, then the predicate \cdf{eql} is probably appropriate.
+
+Для сравнения двух объектов, один из которых может быть символом, необходимо
+использовать предикат \cdf{eql}.
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
@@ -216,13 +230,16 @@ by a Common Lisp standard, but Common Lisp should not define
 standard character sets or standard character scripts.
 \end{newer}
 
-\section{Character Attributes}
+\section{Character Attributes Свойства }
 
 Every character has three attributes: code, bits, and font.
 The code attribute is intended to distinguish among the printed glyphs
 and formatting functions for characters.  The bits attribute allows extra
 flags to be associated with a character.  The font attribute permits
 a specification of the style of the glyphs (such as italics).
+
+Каждый символ имеет три свойства: код, биты и шрифт.
+
 
 \begin{new}
 The treatment of character attributes in Common Lisp has not been
@@ -274,6 +291,11 @@ of a given character; that is, the values returned by \cdf{char-code}
 are non-negative and strictly less than the value of
 \cdf{char-code-limit}.
 
+Значением \cdf{char-code-limit} является неотрицательное целое число, которое
+отображает наибольшее из возможных значений функции \cdf{char-code}
+невключительно. То есть значения, возвращаемые \cdf{char-code} неотрицательных и
+строго меньше чем значение \cdf{char-code-limit}.
+
 \begin{new}
 Common Lisp does not at present explicitly guarantee that all integers between
 zero and the value of \cdf{char-code-limit} are valid character codes, and so
@@ -293,10 +315,14 @@ A system based on typeface names, type styles, and point sizes would be much bet
 converted to a new font identification scheme.)
 \end{newer}
 
-\section{Predicates on Characters}
+\section{Predicates on Characters Предикаты для строковых символов}
 
 The predicate \cdf{characterp} may be used to determine
 whether any Lisp object is a character object.
+
+Для определения является ли
+Lisp'овый объект строковым символом может использоваться предикат
+\cdf{characterp}. 
 
 \begin{defun}[Function]
 standard-char-p char
@@ -307,6 +333,13 @@ that is, an object of type \cdf{standard-char}.
 
 Note that any character with a non-zero bits or
 font attribute is non-standard.
+
+Аргумент \emph{char} должен быть строковым символом.
+\cdf{standard-char-p} истинен, если аргумент являеются <<стандартным строковым
+символом>>, то есть объект принадлежит типу \cdf{standard-char}.
+
+Следует отметить, что любой символ с ненулевым битом или свойством шрифта не
+является стандартным.
 \end{defun}
 
 \begin{defun}[Function]
@@ -323,6 +356,20 @@ all but \cd{\#{\Xbackslash}Newline} are graphic.
 The semi-standard characters
 \cd{\#{\Xbackslash}Backspace}, \cd{\#{\Xbackslash}Tab}, \cd{\#{\Xbackslash}Rubout}, \cd{\#{\Xbackslash}Linefeed}, \cd{\#{\Xbackslash}Return},
 and \cd{\#{\Xbackslash}Page} are not graphic.
+
+Аргумент \emph{char} должен быть строковым символом.
+\cdf{graphic-char-p} истинен, если аргумент является <<графическим>> (выводимым)
+символом, или ложен, если аргумент является <<неграфическим>> (форматирующим или
+управляющим) символом. Графические символы имеют стандартное текстовое
+представление в качестве одного знака, такого как например \cdf{A} или \cdf{*}
+или \cdf{=}.
+По соглашению, символы пробела рассматриваются как графические.
+Все стандартные символы за исключением \cd{\#{\Xbackslash}Newline} являются
+графическими.
+Не совсем стандартные символы
+\cd{\#{\Xbackslash}Backspace}, \cd{\#{\Xbackslash}Tab},
+\cd{\#{\Xbackslash}Rubout}, \cd{\#{\Xbackslash}Linefeed},
+\cd{\#{\Xbackslash}Return} и  \cd{\#{\Xbackslash}Page} графическими не являются.
 
 Programs may assume that
 graphic characters of font 0 are all of the same width
@@ -351,6 +398,15 @@ Whether a character is alphabetic may depend on its font number.
 
 Of the standard characters (as defined by \cdf{standard-char-p}),
 the letters \cdf{A} through \cdf{Z} and \cdf{a} through \cdf{z} are alphabetic.
+
+Аргумент \emph{char} должен быть строковым символом.
+\cdf{alpha-char-p} истинен, если аргумент являются алфавитным символом, иначе
+предикат ложен.
+
+Если символ является алфавитным, тогда он является графическим.
+
+Из стандартных символов (как определено с помощью \cdf{standard-char-p}), буквы
+c \cdf{A} по \cdf{Z} и с \cdf{a} по \cdf{z} являются алфавитными.
 \end{defun}
 
 \begin{defun}[Function]
@@ -360,17 +416,32 @@ both-case-p char
 
 The argument \emph{char} must be a character object.
 
+Аргумент \emph{char} должен быть строковым символом.
+
 \cdf{upper-case-p} is true if the argument is an uppercase
 character, and otherwise is false.
 
+\cdf{upper-case-p} истинен, если аргумент является символом в верхнем регистре,
+иначе ложен.
+
 \cdf{lower-case-p} is true if the argument is a lowercase
 character, and otherwise is false.
+
+\cdf{lower-case-p} истинен, если аргумент является символом в нижнем регистре,
+иначе ложен.
 
 \cdf{both-case-p} is true if the argument is an uppercase character and
 there is a corresponding lowercase character (which can be obtained
 using \cdf{char-downcase}), or if the argument is a lowercase character and
 there is a corresponding uppercase character (which can be obtained
 using \cdf{char-upcase}).
+
+\cdf{lower-case-p} истинен, если аргумент является символом в верхнем регистре,
+и для этого символа существует аналогичный в нижнем регистре (это может быть
+установлено с помощью \cdf{char-downcase}), или если аргумент является символом
+в нижнем регистре, 
+и для этого символа существует аналогичный в верхнем регистре (это может быть
+установлено с помощью \cdf{char-upcase}).
 
 If a character is either uppercase or lowercase, it is necessarily
 alphabetic (and therefore is graphic, and therefore has a zero bits
@@ -381,6 +452,9 @@ for example).
 Of the standard characters (as defined by \cdf{standard-char-p}),
 the letters \cdf{A} through \cdf{Z} are uppercase and \cdf{a}
 through \cdf{z} are lowercase.
+
+Из стандартных символов (как определено с помощью \cdf{standard-char-p}), буквы
+c \cdf{A} по \cdf{Z} имеют верхний регистр и буквы с \cdf{a} по \cdf{z} в нижний.
 \end{defun}
 
 \begin{defun}[Function]
@@ -393,7 +467,15 @@ specified by \emph{radix}, then \cdf{digit-char-p} is
 false; otherwise it returns
 a non-negative integer that is the ``weight'' of \emph{char} in that radix.
 
+Аргумент \emph{char} должен быть строковым символом, и \emph{radix}
+неотрицательным целым числом.
+Если \emph{char} не является цифрой для указанной в \emph{radix} системы
+счисления, тогда \cdf{digit-char-p} ложен, иначе предикат позвращает значение
+данного символа в этой системе счисления.
+
 Digits are necessarily graphic characters.
+
+Цифры принадлежат графическим символам.
 
 Of the standard characters (as defined by \cdf{standard-char-p}),
 the characters \cd{0} through \cd{9}, \cdf{A} through \cdf{Z},
@@ -407,10 +489,34 @@ the digits for radix 16 are
 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
 \end{lisp}
 
+Из стандартных символов (как определено с помощью \cdf{standard-char-p}),
+символы с \cd{0} по \cd{9}, с \cd{A} по \cd{Z} и с \cd{a} по \cd{z} являются
+цифровыми. Веса c \cd{0} по \cd{9} совпадают с числами с 0 по 9, и с \cd{A} по
+\cd{Z} (а также с \cdf{a} по \cd{z}) совпадают с числами с 10 по 35.
+\cdf{digit-char-p} возвращает вес одной их этих цифр тогда и только тогда, когда
+их вес строко меньше чем \emph{radix}. Таким образом, например, цифры для
+шестнадцатеричной системы счисления будут такими
+\begin{lisp}
+0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+\end{lisp}
+
 Here is an example of the use of \cdf{digit-char-p}:
 \begin{lisp}
 (defun convert-string-to-integer (str \&optional (radix 10)) \\
 ~~"Given a digit string and optional radix, return an integer." \\
+~~(do ((j 0 (+ j 1)) \\
+~~~~~~~(n 0 (+ (* n radix) \\
+~~~~~~~~~~~~~~~(or (digit-char-p (char str j) radix) \\
+~~~~~~~~~~~~~~~~~~~(error "Bad radix-{\Xtilde}D digit: {\Xtilde}C" \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~radix \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~(char str j)))))) \\
+~~~~~~((= j (length str)) n)))
+\end{lisp}
+
+Далее указан пример использования \cdf{digit-char-p}:
+\begin{lisp}
+(defun convert-string-to-integer (str \&optional (radix 10)) \\
+~~"Принимает строку и опционально систему счисления, возвращает целое число." \\
 ~~(do ((j 0 (+ j 1)) \\
 ~~~~~~~(n 0 (+ (* n radix) \\
 ~~~~~~~~~~~~~~~(or (digit-char-p (char str j) radix) \\
@@ -452,6 +558,9 @@ These functions compare the objects using the implementation-dependent
 total ordering on characters, in a manner analogous to numeric
 comparisons by \cdf{=} and related functions.
 
+Все аргументы должны быть строковыми символами.
+Эти функции сравнивают объекты используя 
+
 The total ordering on characters is guaranteed to have the following
 properties:
 \begin{itemize}
@@ -480,7 +589,6 @@ whereas in the EBCDIC ordering \cd{z<A} and \cd{Z<0}.)
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
 to replace the notion of bits and font attributes with
 that of implementation-defined attributes.
-
 \begin{itemize}
 \item
 If two characters have identical implementation-defined attributes,
@@ -540,6 +648,41 @@ lowercase letter.  That is why a separate
 (char> \#{\Xbackslash}Z \#{\Xbackslash}a) \textrm{may be true or false.}
 \end{lisp}
 
+\begin{lisp}
+(char= \#{\Xbackslash}d \#{\Xbackslash}d) \textrm{истина.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}d) \textrm{ложь.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}x) \textrm{ложь.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}x) \textrm{истина.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}D) \textrm{ложь.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}D) \textrm{истина.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d) \textrm{истина.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}d) \textrm{ложь.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}x \#{\Xbackslash}d) \textrm{ложь.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}x \#{\Xbackslash}d) \textrm{ложь.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}y \#{\Xbackslash}x \#{\Xbackslash}c) \textrm{ложь.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}y \#{\Xbackslash}x \#{\Xbackslash}c) \textrm{истина.} \\
+(char= \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}d) \textrm{ложь.} \\
+(char/= \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}d) \textrm{ложь.} \\
+(char< \#{\Xbackslash}d \#{\Xbackslash}x) \textrm{истина.} \\
+(char<= \#{\Xbackslash}d \#{\Xbackslash}x) \textrm{истина.} \\
+(char< \#{\Xbackslash}d \#{\Xbackslash}d) \textrm{ложь.} \\
+(char<= \#{\Xbackslash}d \#{\Xbackslash}d) \textrm{истина.} \\
+(char< \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}y \#{\Xbackslash}z) \textrm{истина.} \\
+(char<= \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}y \#{\Xbackslash}z) \textrm{истина.} \\
+(char< \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}e \#{\Xbackslash}y) \textrm{ложь.} \\
+(char<= \#{\Xbackslash}a \#{\Xbackslash}e \#{\Xbackslash}e \#{\Xbackslash}y) \textrm{истина.} \\
+(char> \#{\Xbackslash}e \#{\Xbackslash}d) \textrm{истина.} \\
+(char>= \#{\Xbackslash}e \#{\Xbackslash}d) \textrm{истина.} \\
+(char> \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}b \#{\Xbackslash}a) \textrm{истина.} \\
+(char>= \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}b \#{\Xbackslash}a) \textrm{истина.} \\
+(char> \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}a) \textrm{ложь.} \\
+(char>= \#{\Xbackslash}d \#{\Xbackslash}d \#{\Xbackslash}c \#{\Xbackslash}a) \textrm{истина.} \\
+(char> \#{\Xbackslash}e \#{\Xbackslash}d \#{\Xbackslash}b \#{\Xbackslash}c \#{\Xbackslash}a) \textrm{ложь.} \\
+(char>= \#{\Xbackslash}e \#{\Xbackslash}d \#{\Xbackslash}b \#{\Xbackslash}c \#{\Xbackslash}a) \textrm{ложь.} \\
+(char> \#{\Xbackslash}z \#{\Xbackslash}A) \textrm{может быть истиной или ложью.} \\
+(char> \#{\Xbackslash}Z \#{\Xbackslash}a) \textrm{может быть истиной или ложью.}
+\end{lisp}
+
 There is no requirement that \cd{(eq c1 c2)} be true merely because
 \cd{(char= c1 c2)} is true.  While \cdf{eq} may distinguish two character
 objects that \cdf{char=} does not, it is distinguishing them not
@@ -580,6 +723,14 @@ For example:
 (char= \#{\Xbackslash}A \#{\Xbackslash}a) \textrm{is false.} \\
 (char-equal \#{\Xbackslash}A \#{\Xbackslash}Control-A) \textrm{is true.}
 \end{lisp}
+
+Для стандартных символов, порядок 
+\begin{lisp}
+(char-equal \#{\Xbackslash}A \#{\Xbackslash}a) \textrm{истина.} \\
+(char= \#{\Xbackslash}A \#{\Xbackslash}a) \textrm{ложь.} \\
+(char-equal \#{\Xbackslash}A \#{\Xbackslash}Control-A) \textrm{истина.}
+\end{lisp}
+
 \end{defun}
 
 \section{Character Construction and Selection}
@@ -628,16 +779,25 @@ For example:
 \end{lisp}
 \end{defun}
 
-\section{Character Conversions}
+\section{Character Conversions Преобразование строковых символов}
 
 These functions perform various transformations on characters,
 including case conversions.
+
+Данные функции выполняют различные преобразования символов, включая изменение
+регистра.
 
 \begin{defun}[Function]
 character object
 
 The function \cdf{character} coerces its argument to be a character
 if possible; see \cdf{coerce}.
+\begin{lisp}
+(character x) \EQ\ (coerce x 'character)
+\end{lisp}
+
+Функция \cdf{character} если возможно возвращает преобразованный в символ
+аргумент \emph{object}. Смотрите \cdf{coerce}.
 \begin{lisp}
 (character x) \EQ\ (coerce x 'character)
 \end{lisp}
@@ -653,6 +813,9 @@ The argument \emph{char} must be a character object.
 equivalent; \cdf{char-downcase} attempts to convert its argument
 to a lowercase equivalent.
 
+Аргумент \emph{char} должен быть строковым символом.
+\cdf{char-upcase} пытается возвести символ в верхний
+регистр. \cdf{char-downcase} пытается возвести символ в нижний регистр.
 \begin{newer}
 X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
 to replace the notion of bits and font attributes with
@@ -664,19 +827,27 @@ implementation-defined attributes.
 \end{defun}
 
 \begin{defun}[Function]
-digit-char weight &optional (radix 10) (font 0)
+digit-char weight &optional (radix 10)
 
 All arguments must be integers.  \cdf{digit-char}
 determines whether or not it is possible to construct
-a character object
-whose font attribute is \emph{font}, and whose \emph{code} is such that the
+a character object whose \emph{code} is such that the
 result character has the weight \emph{weight} when considered as
 a digit of the radix \emph{radix} (see the predicate \cdf{digit-char-p}).
 It returns such a character if that is possible, and otherwise returns {\false}.
 
-\cdf{digit-char} cannot return {\false} if \emph{font} is zero,
-\emph{radix} is between 2 and 36 inclusive, and \emph{weight} is non-negative
-and less than \emph{radix}.
+Все аргумента должны быть целыми числами. \cdf{digit-char} устанавливает может
+ли быть создан символ, у которого код \emph{code} такой, что итоговый символ
+имеет вес \emph{weight}, когда рассматривается как цифра системы счисления
+\emph{radix} (смотрите предикат \cdf{digit-char-p}).
+В случае успеха возвращается этот символ, иначе {\false}.
+
+\cdf{digit-char} cannot return {\false} \emph{radix} is between 2 and 36
+inclusive, and \emph{weight} is non-negative and less than \emph{radix}.
+
+\cdf{digit-char} не может вернуть {\false}, если \emph{radix} находится между 2
+и 36 включительно и \emph{weight} имеет неотрицательное значение и меньше чем
+\emph{radix}.
 
 If more than one character object can encode
 such a weight in the given radix, one will be chosen consistently
@@ -690,16 +861,17 @@ For example:
 (digit-char 6 2) \EV\ {\false} \\
 (digit-char 1 2) \EV\ \#{\Xbackslash}1
 \end{lisp}
-Note that no argument is provided for specifying the \emph{bits} component
-of the returned character, because a digit cannot have a non-zero
-\emph{bits} component.  The reasoning is that every digit is graphic
-(see \cdf{digit-char-p}) and no graphic character has a non-zero
-\emph{bits} component (see \cdf{graphic-char-p}).
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
-to eliminate the \emph{font} argument from the specification of \cdf{digit-char}.
-\end{newer}
+Если для результата подходят несколько символов, выбор лежит на плечах
+реализации. Но символы в верхнем регистре предпочтительнее символов в нижем.
+Например:
+\begin{lisp}
+(digit-char 7) \EV\ \#{\Xbackslash}7 \\
+(digit-char 12) \EV\ {\false} \\
+(digit-char 12 16) \EV\ \#{\Xbackslash}C~~~~~;\textrm{not} \#{\Xbackslash}c \\
+(digit-char 6 2) \EV\ {\false} \\
+(digit-char 1 2) \EV\ \#{\Xbackslash}1
+\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -717,6 +889,15 @@ Also,
 for characters \cd{c1} and \cd{c2}.
 
 This function is provided primarily for the purpose of hashing characters.
+
+Аргумент \emph{char} должен быть строковым символом.
+\cdf{char-int} возвращает неотрицательный целый числовой код символа.
+
+Следует отметить, что
+\begin{lisp}
+(char= c1 c2) \EQ\ (= (char-int c1) (char-int c2))
+\end{lisp}
+для любых символов \cd{c1} и \cd{c2}
 \end{defun}
 
 \begin{defun}[Function]
@@ -753,9 +934,15 @@ a character \cdf{c} is \cd{(format nil "{\Xtilde}:C" c)}.
 \begin{defun}[Function]
 name-char name
 
-The argument \cdf{name} must be an object coerceable to a string
+The argument \emph{name} must be an object coerceable to a string
 as if by the function \cdf{string}.
 If the name is the same as the name of a character object
 (as determined by \cdf{string-equal}), that object
 is returned; otherwise {\false} is returned.
+
+Аргумент \emph{name} должен быть объектом, который можно превратить в строку,
+например, с помощью функции \cdf{string}.
+Если имя совпадает с именем некоторого строкового символа (проверка
+осуществляется с помощью \cdf{string-equal}), тогда будет
+возвращен этот символ, иначе возвращается {\false}.
 \end{defun}
