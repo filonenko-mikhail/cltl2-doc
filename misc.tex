@@ -11,6 +11,8 @@ the compiler, the \cdf{documentation}
 function, debugging aids, environment inquiries (including facilities
 for calculating and measuring time), and the \cdf{identity} function.
 
+
+
 \section{The Compiler}
 \label{COMPILER-SECTION}
 
@@ -59,6 +61,11 @@ and the resulting compiled code is put back into the symbol
 as its function definition.
 \end{obsolete}
 
+\emph{name} may be any function-name (a symbol or a list
+whose car is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+One may write \cd{(compile '(setf cadr))} to compile the \cdf{setf}
+expansion function for \cdf{cadr}.
+
 \begin{newer}
 X3J13 voted in October 1988 \issue{COMPILE-ARGUMENT-PROBLEMS}
 to restate the preceding paragraph more precisely and to extend the
@@ -101,14 +108,6 @@ X3J13 voted in June 1989 \issue{COMPILER-DIAGNOSTICS} to specify that
 \cdf{compile} returns two additional values
 indicating whether the compiler issued any diagnostics
 (see section~\ref{COMPILER-DIAGNOSTICS-SECTION}).
-\end{newer}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cdf{compile}
-to accept as a \emph{name} any function-name (a symbol or a list
-whose car is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
-One may write \cd{(compile '(setf cadr))} to compile the \cdf{setf}
-expansion function for \cdf{cadr}.
 \end{newer}
 \end{defun}
 
@@ -277,7 +276,6 @@ to rename this  \cd{*compile-\discretionary{}{}{}file-\discretionary{}{}{}print*
 \end{newer}
 
 
-\begin{newer}
 \begin{defun}[Variable]
 *compile-file-pathname*
 
@@ -294,7 +292,6 @@ X3J13 voted in June 1989 \issue{LOAD-TRUENAME} to introduce \cd{*compile-file-tr
 it is initially \cdf{nil} but \cdf{compile-file} binds it to the ``true name'' of
 the pathname of the file being compiled.  See \cdf{truename}.
 \end{defun}
-\end{newer}
 
 \begin{newer}
 \begin{defspec}
@@ -367,7 +364,7 @@ X3J13 voted in March 1989 \issue{LOAD-TIME-EVAL} to add
 \begin{defun}[Function]
 disassemble name-or-compiled-function
 
-The argument should be a function object,\vadjust{\penalty-8000} a lambda-expression, or
+The argument should be a function object, a lambda-expression, or
 a symbol with a function definition.  If the relevant function is not a
 compiled function, it is first compiled.  In any case, the compiled code
 is then ``reverse-assembled'' and printed out in a symbolic format.  This
@@ -491,7 +488,6 @@ to add \cdf{with-compilation-unit}, which
 \end{defmac}
 \end{newer}
 
-\begin{newer}
 \subsection{Compiler Diagnostics}
 \label{COMPILER-DIAGNOSTICS-SECTION}
 
@@ -566,9 +562,8 @@ See the definitions of these functions for descriptions of the first value.
     ``serious'' compiler diagnostics issued or that other conditions of
     type \cdf{error} or \cdf{warning} (but not \cdf{style-warning}) were signaled during
     compilation.
-\end{newer}
 
-\begin{newer}
+
 \subsection{Compiled Functions}
 
 X3J13 voted in June 1989 \issue{COMPILED-FUNCTION-REQUIREMENTS}
@@ -610,9 +605,7 @@ target instruction set.  For example, a compiled function does not necessarily c
 native machine instructions.  These requirements merely specify the behavior of the type
 system with respect to certain actions taken by \cdf{compile}, \cdf{compile-file}, and
 \cdf{load}.
-\end{newer}
 
-\begin{newer}
 \subsection{Compilation Environment}
 
 X3J13 voted in June 1989 \issue{COMPILE-ENVIRONMENT-CONSISTENCY}
@@ -905,9 +898,7 @@ The method combination can be used in subsequent \cdf{defgeneric} forms.
     evaluate these forms at compile time but must not depend on being able
     to do so.
 \end{flushdesc}
-\end{newer}
 
-\begin{newer}
 \subsection{Similarity of Constants}
 \label{SIMILAR-AS-A-CONSTANT-SECTION}
 
@@ -1121,7 +1112,6 @@ that objects containing circular or infinitely recursive references may legitima
 appear as constants to be compiled.  The compiler is
 required to preserve \cdf{eql}-ness of substructures within a file compiled
 by \cdf{compile-file}.
-\end{newer}
 
 \section{Debugging Tools Отладочные средства}
 
@@ -1150,14 +1140,14 @@ provide some version of these utilities, however clever or however simple.
 trace {\,function-name}* \\
 untrace {\,function-name}*
 
-\begin{obsolete}\noindent
-Invoking \cdf{trace} with one or more function-names (symbols) causes
+Invoking \cdf{trace} with one or more function-names (symbols or lists, whose
+\emph{car} is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}),
+ causes
 the functions named to be traced.  Henceforth, whenever such
 a function is invoked, information about the call, the arguments
 passed, and the eventually returned values, if any, will be printed
 to the stream that is the value of \cdf{*trace-output*}.
 For example:
-\end{obsolete}
 \begin{lisp}
 (trace fft gcd string-upcase)
 \end{lisp}
@@ -1177,21 +1167,8 @@ currently being traced.
 Calling \cdf{untrace} with no argument forms will cause all currently
 traced functions to be no longer traced.
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cdf{trace}
-and \cdf{untrace}
-to accept any function-name (a symbol or a list
-whose \emph{car} is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
-Thus one may write \cd{(trace (setf cadr))} to trace the \cdf{setf}
-expansion function for \cdf{cadr}.
-\end{newer}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{RETURN-VALUES-UNSPECIFIED}
-to specify that the values returned by \cdf{trace} and \cdf{untrace} when
+The values returned by \cdf{trace} and \cdf{untrace} when
 given argument forms are implementation-dependent.
-\end{new}
 
 \cdf{trace} and \cdf{untrace} may also accept additional
 implementation-dependent argument formats.  The format of the trace
@@ -1210,17 +1187,13 @@ However, implementations are encouraged to respond to the typing
 of the character \cd{?} by providing help, including a list
 of commands.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{STEP-ENVIRONMENT}
-to clarify that \cdf{step} evaluates its argument \emph{form}
+\cdf{step} evaluates its argument \emph{form}
 in the current lexical environment (not simply a null environment),
 and that calls to \cdf{step} may be compiled, in which case
 an implementation may step through only those parts of the
 evaluation that are interpreted.  (In other words, the \emph{form}
 itself is unlikely to be stepped, but if executing it happens to
 invoke interpreted code, then that code may be stepped.)
-\end{new}
 \end{defmac}
 
 \begin{defmac}
@@ -1233,18 +1206,10 @@ format of the printed information is implementation-dependent.  However,
 implementations are encouraged to provide such information as elapsed
 real time, machine run time, storage management statistics, and so on.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{STEP-ENVIRONMENT}
-to clarify that \cdf{time} evaluates its argument \emph{form}
+\cdf{time} evaluates its argument \emph{form}
 in the current lexical environment (not simply a null environment),
 and that calls to \cdf{time} may be compiled.
-\end{new}
 \end{defmac}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{DESCRIBE-UNDERSPECIFIED}
-to let \cdf{describe} take an optional second argument:
 
 \begin{defun}[Function]
 describe object &optional stream
@@ -1270,17 +1235,12 @@ The behavior of \cdf{describe} depends on the generic function
 \cdf{describe-object} (see below).
 \end{defun}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{DESCRIBE-INTERACTIVE}
-to specify that \cdf{describe} is forbidden
+That \cdf{describe} is forbidden
 to prompt for or require user input when given exactly one argument;
-it also voted to permit implementations
+It is permitted implementations
 to extend \cdf{describe} to accept keyword arguments that may cause
 it to prompt for or to require user input.
-\end{new}
 
-\begin{newer}
 \begin{defun}[Generic function][Primary method]
 describe-object object stream \\
 describe-object (object standard-object) stream
@@ -1325,8 +1285,6 @@ X3J13 voted in March 1989 \issue{DESCRIBE-UNDERSPECIFIED} to add
 \end{rationale}
 \afternoterule
 \end{defun}
-\end{newer}
-
 
 \begin{defun}[Function]
 inspect object
@@ -1339,12 +1297,8 @@ Implementations are encouraged to respond to the typing
 of the character \cd{?} by providing help, including a list
 of commands.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{RETURN-VALUES-UNSPECIFIED}
-to specify that the values returned by \cdf{inspect}
+The values returned by \cdf{inspect}
 are implementation-dependent.
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1363,14 +1317,9 @@ help a user to tune a program to a particular implementation.
 Simply \cd{(room)} prints out an intermediate amount
 of information that is likely to be useful.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{ROOM-DEFAULT-ARGUMENT}
-to specify that the argument \emph{x} may also be the keyword \cd{:default},
+The argument \emph{x} may also be the keyword \cd{:default},
 which has the same effect as passing no argument at all.
-\end{new}
 \end{defun}
-
 
 \begin{defun}[Function]
 ed &optional x
@@ -1385,23 +1334,18 @@ state as the last time you were in the editor.
 by \emph{pathname}.  The \emph{pathname} may be an actual pathname
 or a string.
 
-\begin{newer}
-X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL} to require \cdf{ed}
-to accept logical pathnames (see section~\ref{LOGICAL-PATHNAMES-SECTION}).
-\end{newer}
+\cdf{ed} accepts logical pathnames (see
+section~\ref{LOGICAL-PATHNAMES-SECTION}).
 
 \cd{(ed \emph{symbol})} tries to let you edit the text for the function
 named \emph{symbol}.  The means by which the function text is obtained
 is implementation-dependent; it might involve searching the file system,
 or pretty printing resident interpreted code, for example.
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cdf{compile}
-to accept as a \emph{name} any function-name (a symbol or a list
+Function name may be any function-name (a symbol or a list
 whose \emph{car} is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
 Thus one may write \cd{(ed '(setf cadr))} to edit the \cdf{setf}
 expansion function for \cdf{cadr}.
-\end{newer}
 \end{defun}
 
 
@@ -1418,10 +1362,8 @@ session.
 \cd{(dribble)} terminates the recording of input and output and
 closes the dribble file.
 
-\begin{newer}
-X3J13 voted in June 1989 \issue{PATHNAME-LOGICAL} to require \cdf{dribble}
-to accept logical pathnames (see section~\ref{LOGICAL-PATHNAMES-SECTION}).
-\end{newer}
+\cdf{dribble} also accepts logical pathnames (see
+section~\ref{LOGICAL-PATHNAMES-SECTION}).
 
 \begin{new}
 X3J13 voted in March 1988
@@ -1533,7 +1475,7 @@ prints nothing.  It returns a list of the symbols whose print names
 contain \emph{string} as a substring.
 \end{defun}
 
-\section{Environment Inquiries}
+\section{Environment Inquiries Справка о среде}
 
 Environment inquiry functions provide information about the
 environment in which a Common Lisp program is being executed.
@@ -1541,6 +1483,11 @@ They are described here in two categories: first, those dealing with
 determination and measurement of time, and second, all the others,
 most of which deal with identification of the computer hardware
 and software.
+
+Справочные функции представляют информацию о среде, в которой исполняется Common
+Lisp'овая программа.
+Функции разделены на две категории: первые для работы со временем, и остальные
+для получения имен, версий, типов программ и оборудования.
 
 \subsection{Time Functions}
 \label{TIME-SECTION}
@@ -1668,6 +1615,8 @@ get-universal-time
 
 The current time of day is returned as a single integer
 in Universal Time format.
+
+Функция возвращает текущее время всемирное время в 
 \end{defun}
 
 \begin{defun}[Function]
@@ -1679,16 +1628,13 @@ are returned: \emph{second}, \emph{minute}, \emph{hour}, \emph{date}, \emph{mont
 \emph{year}, \emph{day-of-week}, \emph{daylight-saving-time-p}, and \emph{time-zone}.
 
 The \emph{time-zone} argument defaults to the current time zone.
-\begin{new}
-X3J13 voted in January 1989
-\issue{DECODE-UNIVERSAL-TIME-DAYLIGHT}
-to specify that \cdf{decode-universal-time},
+
+\cdf{decode-universal-time},
 like \cdf{encode-universal-time}, ignores daylight saving time information
 if a \emph{time-zone} is explicitly specified; in this case
 the returned \emph{daylight-saving-time-p} value will necessarily be
 \cdf{nil} even if daylight saving time happens to be in effect in that
 time zone at the specified time.
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1699,6 +1645,12 @@ encoded into Universal Time format and returned.  If you do not specify
 \emph{time-zone}, it defaults to the current time zone adjusted for daylight
 saving time.  If you provide \emph{time-zone} explicitly, no adjustment for
 daylight saving time is performed.
+
+Функция преобразует время, заданное компонентами формата декодированного
+времени, в формат всемирного времени. Если вы не укажете часовой пояс
+\emph{time-zone}, то он будет по-умолчанию равен текущему часовому поясу с
+учетом перехода на летнее время. Если вы укажете явно часовой пояс
+\emph{time-zon}, учет летнего времени производиться не будет.
 \end{defun}
 
 \begin{defun}[Constant]
@@ -1707,6 +1659,11 @@ internal-time-units-per-second
 This value is an integer, the implementation-dependent
 number of internal time units in a second.  (The internal time unit must
 be chosen so that one second is an integral multiple of it.)
+
+Значение константы является целым числом и зависит от того, сколько единиц
+внутреннего времени в секунде для данной реализации Common Lisp'а.
+(Единица внутреннего времени должна быть выбрана так, чтобы в секунде помещалось
+целое число таких единиц.)
 
 \beforenoterule
 \begin{rationale}
@@ -1738,6 +1695,13 @@ The intent is that the difference between the values of two calls
 to this function be the amount of time between the two calls
 during which computational effort was expended on behalf of the
 executing program.
+
+Функция возвращает целое число в формате Внутреннего Времени. 
+Точное значение этой величины зависит от реализации и может измерятся в реальном
+времени, времени выполнения, циклов центрального процессора, или в чем-либо
+другом.
+Суть в том, что разница между значениями двух вызовов будет количеством времени,
+потраченным на исполнение программы между этими вызовами.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1748,6 +1712,11 @@ format.  This time is relative to an arbitrary time base,
 but the difference between the values of two calls
 to this function will be the amount of elapsed real time between the two calls,
 measured in the units defined by \cdf{internal-time-units-per-second}.
+
+Функция возвращает целое число в формате Внутреннего Времени. Данное время
+относительно некоторого базового значения, но разница между значениями двух
+вызовов этой функции будет количеством прошедшего (между этими вызовами)
+реального времени, выраженным в \cdf{internal-time-units-per-second}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1757,13 +1726,21 @@ sleep seconds
 approximately \emph{n} seconds of real time, whereupon execution is resumed.
 The argument may be any non-negative non-complex number.
 \cdf{sleep} returns {\nil}.
+
+\cd{(sleep \emph{n})} приостанавливает исполнение примерно на \emph{n} секунд в
+реальном времени.
+Аргумент может быть любым неотрицательным некомплексным числом.
+\cdf{sleep} возвращает {\nil}.
 \end{defun}
 
-\subsection{Other Environment Inquiries}
+\subsection{Other Environment Inquiries Справочные функции о среде}
 
 For any of the following functions, if no appropriate
 and relevant result can be produced, {\nil} is returned instead
 of a string.
+
+Любая из этих функций вместо строки может возвращать результат {\nil}, если
+подходящей информации нет.
 
 \beforenoterule
 \begin{rationale}
@@ -1775,12 +1752,25 @@ containing a compiler and then shipping it to another site.
 \end{rationale}
 \afternoterule
 
+\beforenoterule
+\begin{rationale}
+Эти справочные данные возвращаются функциями, а не хранятся переменных, так как
+процесс Common Lisp'а может мигрировать между компьютерами (машинами).
+Это необязтально случается в распределенной среде.
+Например может служить сохранение образа содержащего компилятор и затем
+восстановление данного образа на другой машине. 
+\end{rationale}
+\afternoterule
+
 \begin{defun}[Function]
 lisp-implementation-type 
 
 A string is returned that identifies the generic name of
 the particular Common Lisp implementation.
-Examples: \cd{"Spice LISP"}, \cd{"Zetalisp"}.
+Examples: \cd{"Spice LISP"}, \cd{"Zetalisp"}, \cd{"SBCL"}.
+
+Функция возвращают имя текущей реализации Common Lisp'а.
+Примеры: \cd{"Spice LISP"}, \cd{"Zetalisp"}, \cd{"SBCL"}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1791,6 +1781,11 @@ the particular Common Lisp implementation; this information
 should be of use to maintainers of the implementation.
 Examples: \cd{"1192"}, \cd{"53.7 with complex numbers"},
 \cd{"1746.9A, NEWIO 53, ETHER 5.3"}.
+
+Функция возвращает версию текущей реализации Common Lisp'а.
+Эта информация должно быть использована сопровождающими реализацию.
+Примеры: \cd{"1192"}, \cd{"53.7 with complex numbers"},
+\cd{"1746.9A, NEWIO 53, ETHER 5.3"}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1798,7 +1793,11 @@ machine-type
 
 A string is returned that identifies the generic name of
 the computer hardware on which Common Lisp is running.
-Examples: \cd{"IMLAC"}, \cd{"DEC PDP-10"}, \cd{"DEC VAX-11/780"}.
+Examples: \cd{"IMLAC"}, \cd{"DEC PDP-10"}, \cd{"DEC VAX-11/780"}, \cd{"X86-64"}.
+
+Функция возвращает имя типа аппаратного обеспечения, на котором запущен Common
+Lisp.
+Примеры: \cd{"IMLAC"}, \cd{"DEC PDP-10"}, \cd{"DEC VAX-11/780"}, \cd{"X86-64"}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1806,7 +1805,11 @@ machine-version
 
 A string is returned that identifies the version of
 the computer hardware on which Common Lisp is running.
-Example: \cd{"KL10, microcode 9"}.
+Example: \cd{"KL10, microcode 9"}, \cd{"AMD Athlon(tm) 64 X2 Dual Core Processor 3600+"}.
+
+Функция возвращает версию аппаратного обеспечения, на котором запущен Common
+Lisp.
+Примеры: \cd{"KL10, microcode 9"}, \cd{"AMD Athlon(tm) 64 X2 Dual Core Processor 3600+"}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1816,6 +1819,9 @@ A string is returned that identifies the particular
 instance of the computer hardware on which Common Lisp is running;
 this might be a local nickname, for example, or a serial number.
 Examples: \cd{"MIT-MC"}, \cd{"CMU GP-VAX"}.
+
+Функция возвращает имя компьютера, на котором запущена реализация Common Lisp'а.
+Примеры: \cd{"MIT-MC"}, \cd{"CMU GP-VAX"}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1823,7 +1829,10 @@ software-type
 
 A string is returned that identifies the generic name of
 any relevant supporting software.
-Examples: \cd{"Spice"}, \cd{"TOPS-20"}, \cd{"ITS"}.
+Examples: \cd{"Spice"}, \cd{"TOPS-20"}, \cd{"ITS"}, \cd{Linux}.
+
+Функция возвращает имя типа текущей операционной системы.
+Примеры: \cd{"Spice"}, \cd{"TOPS-20"}, \cd{"ITS"}, \cd{Linux}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1831,7 +1840,11 @@ software-version
 
 A string is returned that identifies the version of
 any relevant supporting software; this information
-should be of use to maintainers of the implementation.
+should be of use to maintainer of the implementation.
+
+Функция возвращает версию текущей операционной системы. Данная информация должно
+использоваться сопровождающими ОС.
+Пример для ArchLinux'а: \cd{"3.2.13-1-ARCH"}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1848,53 +1861,71 @@ Examples of long names:
 Artificial Intelligence Laboratory" \\
 "Carnegie-Mellon University Computer Science Department"
 \end{lisp}
+
+Функции возвращают строки, обозначающие физическое расположение аппаратной части
+компьютера.
+Примеры для кратких имен: \cd{"MIT AI Lab"}, \cd{"CMU-CSD"}.
+Примеры для длинных имен:
+\begin{lisp}
+"MIT Artificial Intelligence Laboratory" \\
+"Massachusetts Institute of Technology \\
+Artificial Intelligence Laboratory" \\
+"Carnegie-Mellon University Computer Science Department"
+\end{lisp}
 \end{defun}
 
 \noindent
 See also \cdf{user-homedir-pathname}.
 
+\noindent
+Смотрите также \cd{user-homedir-pathname}.
+
 
 \begin{defun}[Variable]
 *features*
 
-The value of the variable \cd{*features*} should be a list of symbols
+The value of the variable \cdf{*features*} should be a list of symbols
 that name ``features'' provided by the implementation.
 Most such names will be implementation-specific; typically
 a name for the implementation will be included.
 
-\begin{obsolete}
-One standard feature name is \cdf{ieee-floating-point}, which should
-be present if and only if full {IEEE} proposed floating-point
-arithmetic \cite{IEEE-PROPOSED-FLOATING-POINT-STANDARD} is supported.
-\end{obsolete}
+Значение переменной \cdf{*features} должно быть списком символов, которые
+указывают на имена <<возможностей>> данной реализации.
+Большинство этих имен специфичны. 
 
 The value of this variable is used by the \cd{\#+} and \cd{\#-}
 reader syntax.
 
-\begin{newer}
-X3J13 voted in March 1988 \issue{SHARPSIGN-PLUS-MINUS-PACKAGE}
-to specify that feature names used with \cd{\#+} and \cd{\#-}
+Значение этой переменной используется с помощью синтаксических конструкций считывателя: \cd{\#+} и \cd{\#-}.
+
+Feature names used with \cd{\#+} and \cd{\#-}
 are read in the \cdf{keyword} package unless an explicit prefix
 designating some other package appears.  The standard
 feature name \cdf{ieee-floating-point} is therefore actually the
 keyword \cd{:ieee-floating-point}, though one need not write the colon
 when using it with \cd{\#+} or \cd{\#-}; thus \cd{\#+ieee-floating-point}
 and \cd{\#+:ieee-floating-point} mean the same thing.
-\end{newer}
+
+По-умолчанию символы для имен <<возможностей>>, использованные в конструкциях
+\cd{\#+} и \cd{\#-}, ищутся в пакете
+\cdf{keyword}. Таким образом \cd{\#+ieee-floating-point}
+и \cd{\#+:ieee-floating-point} означают одно и то же.
 \end{defun}
 
 
-\section{Identity Function}
+\section{Identity Function Функция идентичность (identity)}
 
 This function is occasionally useful as an argument to
 other functions that require functions as arguments.  (Got that?)
+
+Эта функция иногда бывает полезна для использования в качестве аргумента других
+функций, которые требуют функции в качестве аргументов. (Понял?)
 
 \begin{defun}[Function]
 identity object
 
 The \emph{object} is returned as the value of \cdf{identity}.
 
-\begin{new}
 The \cdf{identity} function is the default value for the \cd{:key}
 argument to many sequence functions (see chapter~\ref{KSEQUE}).
 
@@ -1908,5 +1939,18 @@ in place of \cdf{identity}.  However, writing \cdf{values} of a single
 argument conventionally indicates that the argument form might deliver
 multiple values and that the intent is to pass on only the first of
 those values.
-\end{new}
+
+Результатом функции является переданный объект \emph{object}.
+
+Функция \cdf{identity} используется по-умолчанию для аргумента \cd{:key} для
+большинства функций для последовательностей (смотрите главу~\ref{KSEQUE}).
+
+Поведение функции \cdf{identity} для комплексного числа проиллюстрировано в
+таблице~\ref{IDENTITY-PLOT}.
+
+Множество других Common Lisp'овых конструкций с одним аргументом ведут себя так
+же как и \emph{identity}. Например, можно использовать \cdf{values} вместо
+\cdf{identity}. Однако, запись \cdf{values} с одним аргументом означает, что
+форма аргумента возвращает несколько значений, но необходимо вернуть только одно
+из них.
 \end{defun}
