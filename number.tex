@@ -10,20 +10,16 @@
 \def\cis{\mathop\textrm{cis}\nolimits}
 \def\phase{\mathop\textrm{phase}\nolimits}
 
-\chapter{Numbers Числа}
-\label{NUMBER}
+\ifx \rulang\Undef
 
+\chapter{Numbers}
+\label{NUMBER}
 
 Common Lisp provides several different representations for numbers.
 These representations may be divided into four categories: integers,
 ratios, floating-point numbers, and complex numbers.  Many numeric
 functions will accept any kind of number; they are \emph{generic}.  Other
 functions accept only certain kinds of numbers.
-
-Common Lisp содержит несколько различных представлений для чисел.
-Эти представления могут быть разделены на четыре категории: целые, дробные, с
-плавающей точкой и комплексные. Большинство функций принимают любой тип
-числа. Некоторые другие --- только определенный тип.
 
 \begin{new}
 Note that this remark, predating the design of the Common Lisp Object System,
@@ -39,14 +35,6 @@ it is possible that the expression
 (let ((x z) (y z)) (eq x y))
 \end{lisp}
 may be false rather than true if the value of \cdf{z} is a number.
-
-В целом, числа в Common Lisp'е не является объектами в прямом понимании
-слова. Нельзя полагатся, например, на использование \cdf{eq} для чисел. В
-частности, возможно, что значение выражения
-\begin{lisp}
-(let ((x z) (y z)) (eq x y))
-\end{lisp}
-может быть ложным, а не истинным, если значение \cdf{z} является числом.
 
 \beforenoterule
 \begin{rationale}
@@ -65,12 +53,7 @@ a number, then the predicate \cdf{eql} is probably appropriate;
 if both objects are known to be numbers, then \cdf{=}
 may be preferable.
 
-Если два объекта сравниваются для <<идентичности>>, но один из может быть
-числом, то использование предиката \cdf{eql} является более подходящим.
-Если оба объекта являются числами, то преимущество стоит отдать \cdf{=}.
-
-\section{Precision, Contagion, and Coercion Точность, неявное приведение и явное
-  приведение}
+\section{Precision, Contagion, and Coercion}
 \label{PRECISION-CONTAGION-COERCION-SECTION}
 
 In general,
@@ -92,35 +75,11 @@ This assumption can be overridden by first explicitly converting
 a small floating-point number to a larger representation.
 (Common Lisp never converts automatically from a larger size to a smaller one.)
 
-Вычисления с числами с плавающей точкой являются приблизительными.
-\emph{Точность} чисел с плавающей точкой не обязательно коррелирует с
-\emph{<<аккуратностью>>} числа.
-Например, 3.142857142857142857 имеет более точное приближение к $pi$ чем
-3.14159, но последнее число более <<аккуратно>>.
-Точность указывает на количество бит используемых при представлении числа.
-Если операция объединяла числа с плавающей точкой короткого формата и длинного,
-то результат будет иметь длинный формат. Это правило создано для уверенности,
-что при вычислениях аккуратности будет как можно больше. Однако это не
-гарантированно.
-Однако, численные процедуры Common Lisp'а предполагают, что аккуратность
-аргумента не превыщает его точность. Поэтому, когда объединяются два 
-числа с плавающей точкой небольшой точности, результатом всегда будет число с
-плавающей точкой небольшой точности.
-Это предположение может быть изменено первым же явным преобразованием
-число с плавающей точкой в более точное представление.
-(Common Lisp никогда не преобразует числа из более точного формата в менее точный.)
-
 Rational computations cannot overflow in the usual sense
 (though of course there may not be enough storage
 to represent one), as integers and ratios may in principle be of any magnitude.
 Floating-point computations may get exponent overflow or underflow;
 this is an error.
-
-Вычисления рациональных чисел не может вызвать переполнения в обычном смысле
-этого слова (хотя, конечно, может быть возникнуть недостаток места для
-представления), целые и дробные числа в принципе могут быть любой величины.
-Вычисления с плавающей точкой могут вызвать переполнение экспоненты. Это
-является ошибкой.
 
 \vskip 0pt plus 24pt
 
@@ -165,15 +124,6 @@ the same format.  For functions such as \cdf{+}
 that take more than two arguments,
 it may be that part of the operation is carried out exactly using
 rationals and then the rest is done using floating-point arithmetic.
-
-Когда числовой функцией между собой сравниваются или объединяются рациональное и
-число с плавающей точкой, то вступает в силу правило \emph{заражения плавающей
-  точкой}.
-Когда рациональное встречает число с плавающей точкой, то рациональное
-преобразуется в тот же формат второго числа.
-Для функций, например \cdf{+}, которые принимает более двух аргументов, может
-быть, что все рациональные будут вычислены и результат будет преобразован в
-число с плавающей точкой.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -246,51 +196,12 @@ processing explicitly by writing several calls; for example:
 The user can also control all coercions simply by writing calls
 to coercion functions explicitly.
 
-Для функций, которые математически ассоциативны (и возможно коммутативны),
-реализация Common Lisp'а может обрабатывать аргументы любым подходящим методом с
-ассоциативной (и возможно коммутативной) перестановкой.
-Это конечно не влияет на порядок вычисления форм, данный порядок всегда слева
-направо, как и во всех Common Lisp'овых вызовах функций. Порядок, который может
-быть изменен, это обработка значений аргументов.
-Смысл всего этого в том, что реализация может различатся в том, какие
-автоматические приведения типов и в каком порядке производятся. Например,
-рассмотрим выражение:
-\begin{lisp}
-(+ 1/3 2/3 1.0D0 1.0 1.0E-15)
-\end{lisp}
-Одна реализация может обрабатывать аргументы слева нарпаво, складывая сначала
-\cd{1/3} и \cd{2/3} для получения \cd{1}, затем преобразовывая результат в число
-с плавающей точкой двойной точности для сложения с \cd{1.0D0}, затем
-преобразовывая и добавляя \cd{1.0} и \cd{1.0E-15}. Другая реализация может
-обрабатывать значения аргументов справа налево, сначала выполняя сложение чисел
-с плавающей точкой \cdf{1.0} и \cd{1.0E-15} (и возможно теряя аккуратность в
-процессе!), затем преобразовывая результат в часле двойной точности и прибавляя
-\cd{1.0D0}, затем преобразовывая \cd{2/3} к числу с плавающей точкой двойной
-точности, и затем преобразовывая \cd{1/3} и добавляя его.
-Третья реализация может сначала просканировать все аргументы, и сгруппировав их
-по типам, выполнить сложения сначала одинаковых типов, затем преобразовать
-результаты к наиболее точному типу и сложить их. В этом случае все три стратегии
-являются допустимыми. Пользователь конечно может контролировать порядок
-обработки аргументов явно задавая вызовы вычислений, например:
-\begin{lisp}
-(+ (+ 1/3 2/3) (+ 1.0D0 1.0E-15) 1.0)
-\end{lisp}
-Пользовать может также контролировать приведения, явно используя  для этого
-функцию.
-
 In general, then, the type of the result of a numerical function
 is a floating-point number of the largest format among all the
 floating-point arguments to the function; but if the arguments
 are all rational, then the result is rational (except for functions
 that can produce mathematically irrational results, in which case
 a single-format floating-point number may result).
-
-В целом, тип результата числовой функции является числом с плавающей точкой
-наиболее точного формата, который был в аргументах данной функции.
-Но если все аргументы были рационального типа, тогда результат будет
-рациональным (за исключением функций, который математически возвращают
-иррациональные результаты, в случае который используется одинарная точность с
-плавающей точкой) 
 
 There is a separate rule of complex contagion.
 As a rule, complex numbers never result from a numerical function
@@ -304,23 +215,10 @@ When a non-complex number meets a complex number, the non-complex
 number is in effect first converted to a complex number by providing an
 imaginary part of zero.
 
-Другое правило для комплексных чисел.
-Комплексные числа никогда не возвращаются из числовых функций, если только в
-аргументах не было использовано хоть одно комплексное число. (Исключением из
-этого правила являются иррациональные и трансцендентальные функции, в частности
-\cdf{expt}, \cdf{log}, \cdf{sqrt}, \cdf{asin}, \cdf{acos}, \cdf{acosh} и
-\cdf{atanh}. Смотрите раздел~\ref{TRANSCENDENTAL-SECTION}.)
-Когда некомплексное число встречает комплексно, то первое сначала конвертируется
-во второе с нулевой мнимой частью, а потом вычисляется результат.
-
 If any computation produces a result that is a ratio of
 two integers such that the denominator evenly divides the
 numerator, then the result is immediately converted to the equivalent
 integer.  This is called the rule of \emph{rational canonicalization}.
-
-Если любое вычисление привело к дробному результату, в котором числительно
-нацело делится на знаменатель, то результат немедленно преобразуется к
-эквивалентному целому числу. Это правило называется \emph{канонизацией дробей}.
 
 If the result of any computation would be a complex rational
 with a zero imaginary part, the result is immediately
@@ -332,26 +230,12 @@ distinct values in Common Lisp (they are always \cdf{eql}),
 \cd{\#C(5.0 0.0)} and \cd{5.0} are always distinct values in Common Lisp
 (they are never \cdf{eql}, although they are \cdf{equalp}).
 
-Если результат любого вычисления должен быть комлексным числом с рациональными
-частями и нулевой мнимой частью, то результат немедленно преобразуется в
-некомплексное рациональное число и равен действительной части исходного.
-Это называется правилом \emph{канонизации комлексного числа}.
-Следует отметить, что это правило \emph{не} применяется к комплексным числам с
-компонентами из чисел с плавающими точками. Таким образом \cd{\#C(5 0)} и \cd{5}
-равны \cdf{eql}, а \cd{\#C(5.0 0.0)} и \cd{5.0} не равны \cdf{eql}, но равны
-\cdf{equalp}.
-
-\section{Predicates on Numbers Предикаты для чисел}
+\section{Predicates on Numbers}
 
 Each of the following functions tests a single number for
 a specific property.
 Each function requires that its argument be
 a number; to call one with a non-number is an error.
-
-Каждая из следующих функций проверяет одиночное число на наличие некоторого
-свойства.
-Каждая функция требует числовой аргумент. Вызов с аргументом другого типа
-является ошибкой.
 
 \begin{defun}[Function]
 zerop number
@@ -362,12 +246,6 @@ Regardless of whether an implementation provides distinct representations
 for positive and negative floating-point zeros,
 \cd{(zerop -0.0)} is always true.
 It is an error if the argument \emph{number} is not a number.
-
-Если \emph{number} является нулем (целым нулем, нулем с
-плавающей точкой, компексным нулем), этот предикат истинен, иначе ложен.
-Вне зависимости от того, предоставляет различные представления для
-положительного и отрицательного нулей система, \cd{(zerop -0.0)} всегда истинно.
-Если аргумент \emph{number} не является числом, то сигнализируется ошибка.
 \end{defun}
 
 \begin{defun}[Function]
@@ -376,10 +254,6 @@ plusp number
 This predicate is true if \emph{number} is strictly greater than zero,
 and is false otherwise.
 It is an error if the argument \emph{number} is not a non-complex number.
-
-Если \emph{number} строго больше нуля, то предикат истинен, иначе ложен.
-Аргумент \emph{number} должен быть любым числом, кроме комплексного, иначе
-сигнализируется ошибка. 
 \end{defun}
 
 \begin{defun}[Function]
@@ -392,15 +266,6 @@ for positive and negative floating-point zeros,
 \cd{(minusp -0.0)} is always false.
 (The function \cdf{float-sign} may be used to distinguish a negative zero.)
 It is an error if the argument \emph{number} is not a non-complex number.
-
-Если \emph{number} строго меньше нуля, то предикат истинен, иначе ложен.
-Вне зависимости от того, предоставляет ли система различные отображения для
-отрицательного и положительного нулей с плавающей точкой, \cd{(minusp -0.0)}
-всегда ложно.
-(Для проверки отрицательного нуля, может использоваться функция
-\cdf{float-sign}.)
-Аргумент \emph{number} должен быть любым числом, кроме комплексного, иначе
-сигнализируется ошибка. 
 \end{defun}
 
 \begin{defun}[Function]
@@ -409,10 +274,6 @@ oddp integer
 This predicate is true if the argument \emph{integer} is odd (not divisible
 by 2), and otherwise is false.  It is an error if the argument is not
 an integer.
-
-Если аргумент \emph{integer} является нечетным числом (то есть не делится на два
-нацело), то предикат истинен, иначе ложен.
-Если аргумент не целое число, сигнализируется ошибка.
 \end{defun}
 
 \begin{defun}[Function]
@@ -421,29 +282,17 @@ evenp integer
 This predicate is true if the argument \emph{integer} is even (divisible
 by 2), and otherwise is false.  It is an error if the argument is not
 an integer.
-
-Если аргумент \emph{integer} является четным числом (то есть делится на два
-нацело), то предикат истинен, иначе ложен.
-Если аргумент не целое число, сигнализируется ошибка.
 \end{defun}
 
 See also the data-type predicates \cdf{integerp},
 \cdf{rationalp}, \cdf{floatp}, \cdf{complexp}, and \cdf{numberp}.
 
-Смотрите также предикаты типов данных \cdf{integerp},
-\cdf{rationalp}, \cdf{floatp}, \cdf{complexp} и \cdf{numberp}.
-
-\section{Comparisons on Numbers Сравнение чисел}
+\section{Comparisons on Numbers}
 
 Each of the functions in this section requires that its arguments all be
 numbers; to call one with a non-number is an error.  Unless otherwise
 specified, each works on all types of numbers, automatically performing
 any required coercions when arguments are of different types.
-
-Каждая функция в данном разделе требует, что все аргументы были
-числами. Использование в качестве аргумента не числа является ошибкой. Если не
-указано иное, то каждая функция работает со всеми типами чисел, автоматически
-выполняя необходимые приведения, когда типы аргументы различаются.
 
 \begin{defun}[Function]
 = number &rest more-numbers \\
@@ -508,59 +357,6 @@ as shown in the following example:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{indices for \cdf{s} and $\cdf{j}\leq\cdf{k}$}
 \end{lisp}
 
-Каждая из этих функций принимает один и более аргументов. Если последовательно
-аргументов удовлетворяет следующему условию:
-\begin{tabbing}
-\hskip 5pc\=\kill
-\cdf{=}\>все равны \\
-\cdf{/=}\>все различны \\
-\cdf{<}\>монотонно возрастают \\
-\cdf{>}\>монотонно убывают \\
-\cdf{<=}\>монотонно не убывают \\
-\cdf{>=}\>монотонно не возрастают
-\end{tabbing}
-тогда предикат истинен, иначе ложен.
-Комплексные числа могут сравниваться с помощью \cdf{=} и \cdf{/=}, но остальные
-предикаты требуют некомплексных аргументов.
-Два комплексных числа равны \cdf{=}, если их действительные части равны между
-собой и мнимые равны между собой с помощью предиката \cdf{=}.
-Комплексное число может быть сравнено с некомплексным с помошью \cdf{=} или
-\cdf{/=}.
-Например
-\begin{lisp}
-\hskip 0.5\textwidth\=\kill
-(= 3 3) \textrm{истина}\>(/= 3 3) \textrm{ложь} \\
-(= 3 5) \textrm{ложь}\>(/= 3 5) \textrm{истина} \\
-(= 3 3 3 3) \textrm{истина}\>(/= 3 3 3 3) \textrm{ложь} \\
-(= 3 3 5 3) \textrm{ложь}\>(/= 3 3 5 3) \textrm{ложь} \\
-(= 3 6 5 2) \textrm{ложь}\>(/= 3 6 5 2) \textrm{истина} \\
-(= 3 2 3) \textrm{ложь}\>(/= 3 2 3) \textrm{ложь} \\
-(< 3 5) \textrm{истина}\>(<= 3 5) \textrm{истина} \\
-(< 3 -5) \textrm{ложь}\>(<= 3 -5) \textrm{ложь} \\
-(< 3 3) \textrm{ложь}\>(<= 3 3) \textrm{истина} \\
-(< 0 3 4 6 7) \textrm{истина}\>(<= 0 3 4 6 7) \textrm{истина} \\
-(< 0 3 4 4 6) \textrm{ложь}\>(<= 0 3 4 4 6) \textrm{истина} \\
-(> 4 3) \textrm{истина}\>(>= 4 3) \textrm{истина} \\
-(> 4 3 2 1 0) \textrm{истина}\>(>= 4 3 2 1 0) \textrm{истина} \\
-(> 4 3 3 2 0) \textrm{ложь}\>(>= 4 3 3 2 0) \textrm{истина} \\
-(> 4 3 1 2 0) \textrm{ложь}\>(>= 4 3 1 2 0) \textrm{ложь} \\
-(= 3) \textrm{истина}\>(/= 3) \textrm{истина} \\
-(< 3) \textrm{истина}\>(<= 3) \textrm{истина} \\
-(= 3.0 \#C(3.0 0.0)) \textrm{истина}\>(/= 3.0 \#C(3.0 1.0)) \textrm{истина} \\
-(= 3 3.0) \textrm{истина}\>(= 3.0s0 3.0d0) \textrm{истина} \\
-(= 0.0 -0.0) \textrm{истина}\>(= 5/2 2.5) \textrm{истина} \\
-(> 0.0 -0.0) \textrm{ложь}\>(= 0 -0.0) \textrm{истина}
-\end{lisp}
-С двумя аргументами, эти функции выполняют обычные арифметические сравнения.
-С тремя и более аргуметами, они полезны для проверок рядов, как показано в
-следующем примере:
-\begin{lisp}
-(<= 0 x 9)~~~~~~~~~~~~~~~~~~~~~~;\textrm{истина, если \cdf{x} между 0 и 9, включительно} \\
-(< 0.0 x 1.0)~~~~~~~~~~~~~~~~~~~;\textrm{истина, если \cdf{x} между 0.0 и 1.0} \\
-(< -1 j (length s))~~~~~~~~~~~~~;\textrm{истина, если \cdf{j} корректный индекс для \cdf{s}} \\
-(<= 0 j k (- (length s) 1))~~~~~;\textrm{истина, если \cdf{j} и \cdf{k} оба корректные} \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{индексы \cdf{s} и $\cdf{j}\leq\cdf{k}$}
-\end{lisp}
 
 \beforenoterule
 \begin{rationale}
@@ -571,16 +367,6 @@ arguments is not the same as the \cdf{or} of \cdf{<} and \cdf{>} of those same
 arguments.  Second, unequality is meaningful for complex numbers even though
 \cdf{<} and \cdf{>} are not.  For both reasons it would be misleading to
 associate unequality with the names of \cdf{<} and \cdf{>}.
-\end{rationale}
-\afternoterule
-
-\beforenoterule
-\begin{rationale}
-Отношение <<неравенства>> называется \cdf{/=}, а не \cd{<>} (как в Pascal'е) по
-двум причинам. Первое, \cdf{/=} для более чем двух аргументов не означает то же,
-что и \cd{или} \cd{<}, или \cd{>}. Второе, неравенство для комплексная не
-означает то же, что и \cd{<} и \cd{>}. По этим двум причинам неравенство не
-означает больше или меньше.
 \end{rationale}
 \afternoterule
 \end{defun}
@@ -626,63 +412,20 @@ Similar remarks apply to \cdf{min} (replacing ``largest argument'' by
 (max 3 1 1.0s0 1.0d0) \EV\ 3 \emph{or} 3.0d0 \\
 (min 3 1 1.0s0 1.0d0) \EV\ 1 \emph{or} 1.0s0 \emph{or} 1.0d0
 \end{lisp}
-
-Аргументы могут быть некомплексными числами.
-\cdf{max} возвращает наибольший аргумент (ближайший к положительной
-бесконечности).
-\cdf{max} возвращает наименьший аргумент (ближайший к отрицательной
-бесконечности).
-
-Для \cdf{max}, если аргументы являеются смесью из дробных и с плавающей точкой
-чисел, и наибольший является дробным, реализация может вернуть как дробное
-число, так и его апроксимацию с плавающей точкой.
-Если наибольший аргумент является числом с плавающей точкой меньшего формата в
-сравнении с числом большего формата, то реализация может вернуть число без
-изменения, либо конвертировать его в больший формат.
-More concisely, the implementation has the choice of returning the largest
-argument as is or applying the rules of floating-point contagion,
-taking all the arguments into consideration for contagion purposes.
-Если среди наибольших два аргумента равны, то реализация может вернуть любой из
-них.
-Те же правила применяются и ко второй функции \cdf{min} (только <<наибольший
-аргумент>> нужно заменить на <<наименьший аргумент>>).
-
-\begin{lisp}
-\hskip 0.5\textwidth\=\kill
-(max 6 12) \EV\ 12\>(min 6 12) \EV\ 6 \\
-(max -6 -12) \EV\ -6\>(min -6 -12) \EV\ -12 \\
-(max 1 3 2 -7) \EV\ 3\>(min 1 3 2 -7) \EV\ -7 \\
-(max -2 3 0 7) \EV\ 7\>(min -2 3 0 7) \EV\ -2 \\
-(max 3) \EV\ 3\>(min 3) \EV\ 3 \\
-(max 5.0 2) \EV\ 5.0\>(min 5.0 2) \EV\ 2 \emph{или} 2.0 \\
-(max 3.0 7 1) \EV\ 7 \emph{или} 7.0\>(min 3.0 7 1) \EV\ 1 \emph{или} 1.0 \\
-(max 1.0s0 7.0d0) \EV\ 7.0d0 \\
-(min 1.0s0 7.0d0) \EV\ 1.0s0 \emph{или} 1.0d0 \\
-(max 3 1 1.0s0 1.0d0) \EV\ 3 \emph{или} 3.0d0 \\
-(min 3 1 1.0s0 1.0d0) \EV\ 1 \emph{или} 1.0s0 \emph{или} 1.0d0
-\end{lisp}
 \end{defun}
 
-\section{Arithmetic Operations Арифметические операции}
+\section{Arithmetic Operations}
 
 Each of the functions in this section requires that its arguments all be
 numbers; to call one with a non-number is an error.  Unless otherwise
 specified, each works on all types of numbers, automatically performing
 any required coercions when arguments are of different types.
 
-Каждая из функций в этом разделе в качестве аргументов принимает числа. Применение
-какой-либо из них к нечисловому аргументу является ошибкой. Каждая из них
-работает со всеми типами чисел, автоматически приводя типы для различных
-аргументов, если не указано иное.
-
 \begin{defun}[Function]
 + &rest numbers
 
 This returns the sum of the arguments.  If there are no arguments, the result
 is \cd{0}, which is an identity for this operation.
-
-Данная функция возвращает сумму всех аргументов. Если аргументов не было,
-результатом является \cd{0}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -694,13 +437,6 @@ of that argument.
 The function \cdf{-}, when given more than one argument, successively subtracts
 from the first argument all the others, and returns the result.
 For example, \cd{(- 3 4 5)} \EV\ \cd{-6}.
-
-Функция \cdf{-} при использовании с одним аргументом возваращает отрицательное
-значение для этого аргумента.
-
-Функция \cdf{-} при использовании с более чем одним аргументом вычитает из
-первого аргумента все остальные и возвращает результат.
-Например, \cd{(- 3 4 5)} \EV\ \cd{-6}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -709,9 +445,6 @@ For example, \cd{(- 3 4 5)} \EV\ \cd{-6}.
 This returns the product of the arguments.
 If there are no arguments, the result
 is \cd{1}, which is an identity for this operation.
-
-Функция возвращает произведение всех аргументов.
-Если вызывается без аргументов, тогда возвращает \cd{1}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -746,32 +479,6 @@ or \cdf{round}.
 
 If any argument is a floating-point number,
 then the rules of floating-point contagion apply.
-
-Функция \cdf{/} при использовании с более чем одним аргументом производит
-деление первого аргумента на все остальные значения и возвращает полученный
-результат.
-
-Ноль может использоваться только для первого аргумента.
-
-Для одного аргумента \cdf{/} возвращает обратное значение. В таком случае ноль в
-первом аргументе недопустим.
-
-Если математическое отношение двух целых
-чисел не является целым числом, \cdf{/} вернёт дробный тип. 
-Например:
-\begin{lisp}
-(/ 12 4) \EV\ 3 \\
-(/ 13 4) \EV\ 13/4 \\
-(/ -8) \EV\ -1/8 \\
-(/ 3 4 5) \EV\ 3/20
-\end{lisp}
-
-Для целочисленного деления используйте одну из функций  
-\cdf{floor}, \cdf{ceiling}, \cdf{truncate}
-или \cdf{round}.
-
-Если один из аргументов является числом с плавающей точкой, тогда применяются
-правила обработки чисел с плавающей точкой.
 \end{defun}
 
 \begin{defun}[Function]
@@ -793,11 +500,6 @@ programmer to write possibly less clear code for the sake of efficiency.
 This can easily be done as a source-language transformation.
 \end{implementation}
 \afternoterule
-
-\cd{(1+ \emph{x})} является тем же самым, что \cd{(+ \emph{x} 1)}.
-\cd{(1- \emph{x})} является тем же самым, что \cd{(- \emph{x} 1)}.
-Следует отметить, что короткое имя может ввести в заблуждение: 
-\cd{(1- \emph{x})} \emph{не значит} то же, что и $1-\emph{x}$.
 \end{defun}
 
 \begin{defmac}
@@ -834,32 +536,6 @@ significantly more efficient than the \cdf{setf} version.
 X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
 to clarify order of evaluation (see section~\ref{SETF-SECTION}).
 \end{newer}
-
-Значение обобщенной переменной \emph{place} увеличивается (\cdf{incf}) или
-уменьшается (\cdf{decf}) на значение формы
-\emph{delta} и затем присваивается переменной \emph{place}.
-Результатом формы является присвоенное значение.
-Форма \emph{place} может быть любой формой подходящей для \cdf{setf}.
-Если форма \emph{delta} не указана, тогда число в \emph{place} изменяется на
-\cd{1}.
-Например:
-\begin{lisp}
-\hskip 9pc\=\kill
-(setq n 0) \\
-(incf n) \EV\ 1\>\textrm{and now} n \EV\ 1 \\
-(decf n 3) \EV\ -2\>\textrm{and now} n \EV\ -2 \\
-(decf n -5) \EV\ 3\>\textrm{and now} n \EV\ 3 \\
-(decf n) \EV\ 2\>\textrm{and now} n \EV\ 2
-\end{lisp}
-Результат \cd{(incf \emph{place} \emph{delta})} примерно эквивалентен
-\begin{lisp}
-(setf \emph{place} (+ \emph{place} \emph{delta}))
-\end{lisp}
-за исключением того, что в последнем случае \emph{place} вычисляется дважды,
-тогда как \cdf{incf} гарантирует, что вычисление \emph{place} будет выполнено
-только один раз.
-Более того, для некоторых форма \emph{place} \cdf{incf} может быть
-производительнее чем \cdf{setf}.
 \end{defmac}
 
 \begin{defun}[Function]
@@ -871,19 +547,6 @@ of a non-complex number is itself.  For a complex number \cdf{z},
 (conjugate z) \EQ\ (complex (realpart z) (- (imagpart z)))
 \end{lisp}
 For example:
-\begin{lisp}
-(conjugate \#C(3/5 4/5)) \EV\ \#C(3/5 -4/5) \\
-(conjugate \#C(0.0D0 -1.0D0)) \EV\ \#C(0.0D0 1.0D0) \\
-(conjugate 3.7) \EV\ 3.7
-\end{lisp}
-
-Функция возвращает комлексное сопряжение с числа \emph{number}. 
-Сопряжением некомплексного числа является само число. Для комплесного числа
-\cdf{z},
-\begin{lisp}
-(conjugate z) \EQ\ (complex (realpart z) (- (imagpart z)))
-\end{lisp}
-Например,
 \begin{lisp}
 (conjugate \#C(3/5 4/5)) \EV\ \#C(3/5 -4/5) \\
 (conjugate \#C(0.0D0 -1.0D0)) \EV\ \#C(0.0D0 1.0D0) \\
@@ -906,26 +569,6 @@ For three or more arguments,
 \end{lisp}
 
 Here are some examples of the use of \cdf{gcd}:
-\begin{lisp}
-(gcd 91 -49) \EV\ 7 \\
-(gcd 63 -42 35) \EV\ 7 \\
-(gcd 5) \EV\ 5 \\
-(gcd -4) \EV\ 4 \\
-(gcd) \EV\ 0
-\end{lisp}
-
-Функция возвращает наибольший общий делитель всех аргументов, которые в свою
-очередь должны быть целыми числами. Результатом \cdf{gcd} всегдя является
-неотрицательное целое число.
-Если передан только один параметр, то возвращается его абсолютное значение
-(модуль).
-Если ни один параметр не был передан, \cdf{gcd} возвращает \cd{0}.
-Для трёх и более аргументов,
-\begin{lisp}
-(gcd \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (gcd (gcd \emph{a} \emph{b}) \emph{c} ... \emph{z})
-\end{lisp}
-
-Несколько примеров использования \cdf{gcd}:
 \begin{lisp}
 (gcd 91 -49) \EV\ 7 \\
 (gcd 63 -42 35) \EV\ 7 \\
@@ -968,45 +611,9 @@ Some examples:
 \end{lisp}
 
 \cd{(lcm)} ought to have been defined to return 1.
-
-Функция возвращает наименьшее общее кратное для аргументов, которые в свою
-очередь должны быть целыми числами.
-Результатом \cdf{lcm} всегда является неотрицательное целое число.
-Для двух аргументов, не являющихся нулями,
-\begin{lisp}
-(lcm \emph{a} \emph{b}) \EQ\ (/ (abs (* \emph{a} \emph{b})) (gcd \emph{a} \emph{b}))
-\end{lisp}
-Если один или оба аргумента является нулём.
-\begin{lisp}
-(lcm \emph{a} 0) \EQ\ (lcm 0 \emph{a}) \EQ\ 0
-\end{lisp}
-
-Для одного аргумента, \cdf{lcm} возвращает абсолютное значение этого аргумента
-(модуль). 
-Для трёх и более аргументов,
-\begin{lisp}
-(lcm \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (lcm (lcm \emph{a} \emph{b}) \emph{c} ... \emph{z})
-\end{lisp}
-
-Примеры использования:
-\begin{lisp}
-(lcm 14 35) \EV\ 70 \\
-(lcm 0 5) \EV\ 0 \\
-(lcm 1 2 3 4 5 6) \EV\ 60
-\end{lisp}
-
-%Математически \cd{(lcm)} должна возвращать бесконечность. Но так как Common Lisp
-%не имеет представления для бесконечности, \cdf{lcm}, в отличие от \cdf{gcd},
-%всегда требует как минимум одного аргумента.
-
-\cdf{lcm}, вызванная без аргументов, возвращает \cd{1}.
-\begin{lisp}
-(lcm)~\EV~1
-\end{lisp}
 \end{defun}
 
-\section{Irrational and Transcendental Functions Иррациональные и
-  трансцендентные функции}
+\section{Irrational and Transcendental Functions}
 \label{TRANSCENDENTAL-SECTION}
 
 Common Lisp provides no data type that can accurately represent irrational
@@ -1029,23 +636,6 @@ If the arguments are all rational but the result cannot be expressed
 as a rational number, then a single-precision floating-point
 approximation is always returned.
 
-Common Lisp не содержит тип данных, который точно отображает иррациональные
-числовые значения.
-В данном разделе функции описаны так, как если бы результаты были математически
-точными, но фактически все они возвращают число с плавающей точкой
-приблизительно равное настоящему математическому значению.
-В некоторых местах изложены математические тождества, связанные со значениями
-функций, однако, два математически идентичных выражения могут быть различными
-по причине ошибок процесса апроксимации при вычислениях чисел с плавающей
-точкой.
-
-Когда все аргументы для функции данного раздела являются рациональными и Ъ
-математический результат также является (математически) рациональным, тогда,
-если не указано иное, реализация может вернуть или точный результат типа
-\cdf{rational} или приближенное значение с плавающей точкой одинарной точности.
-Если все аргументы рациональны, но результат не может быть рациональным, тогда
-возвращается число с плавающей точкой одинарной точности.
-
 If the arguments to a function are all of type
 \cd{(or~rational (complex rational))} and the true mathematical result
 is (mathematically) a complex number with rational real
@@ -1061,30 +651,12 @@ as a rational or complex rational number, then the returned value
 will be of type \cdf{single-float} (permissible only if the imaginary part
 of the true mathematical result is zero) or \cd{(complex single-float)}.
 
-Если все переданные в функцию аргументы приндлежат типу \cd{(or~rational
-  (complex rational))} и Ъ математический результат является (математически)
-комплексным числом с рациональными действительной и мнимой частями, тогда, если
-не указано иное, реализация может вернуть или точный результат типа \cd{(or
-  rational (complex rational))} или приближененный типа с плавающей точкой с
-одинарной точностью \cdf{single-float} (только если мнимая часть равна нулю) или 
- \cd{(complex single-float)}.
-Если все аргументы типа \cd{(or~rational (complex rational))}, но результат не
-может быть выражен рациональными или комплексным рациональным числом, тогда он
-будет принадлежать типу \cdf{single-float} (только если мнимая часть равна нулю)
-или \cd{(complex single-float)}.
-
 The rules of floating-point contagion and complex contagion are 
 effectively obeyed by all the functions in this section except \cdf{expt},
 which treats some cases of rational exponents specially.
 When, possibly after contagious conversion, all of the arguments are of
 the same floating-point or complex floating-point type,
 then the result will be of that same type unless otherwise noted.
-
-Все функции за исключением \cdf{expt} подчиняются правилам неявного приведения
-плавающей точки или комплексного числа. Когда, возможно после приведения типов,
-все аргументы становятся с плавающей точкой или комлексным числом с плавающей
-точкой, тогда результат будет такого же типа, что и аргумента, если не указано
-иное.
 
 \beforenoterule
 \begin{implementation}
@@ -1094,32 +666,17 @@ in implementing the functions defined in this section.
 \end{implementation}
 \afternoterule
 
-\beforenoterule
-\begin{implementation}
-Для понмания работы функций из данного раздела может быть полезной <<поваренная
-книга чисел с плавающей точкой>> от Cody и Waite~\cite{CODY-AND-WAITE}.
-\end{implementation}
-\afternoterule
-
-\subsection{Exponential and Logarithmic Functions Экспоненциальные и
-  логарифмические функции}
+\subsection{Exponential and Logarithmic Functions}
 
 Along with the usual one-argument and two-argument exponential and
 logarithm functions, \cdf{sqrt} is considered to be an exponential
 function, because it raises a number to the power 1/2.
-
-Наряду с обычными одно-аргументными и двух-аргументными экспоненциальными и
-логарифмическими функциями, \cdf{sqrt} рассматривается как экспоненциальная
-функция, потому что она возводит число в степень 1/2.
 
 \begin{defun}[Function]
 exp number
 
 Returns \emph{e} raised to the power \emph{number},
 where \emph{e} is the base of the natural logarithms.
-
-Возвращает \emph{е}, возведенное в степень \emph{number},
-где \emph{е} является основанием натурального логарифма.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1130,12 +687,6 @@ If the \emph{base-number} is of type \cdf{rational} and the \emph{power-number} 
 an \cdf{integer},
 the calculation will be exact and the result will be of type \cdf{rational};
 otherwise a floating-point approximation may result.
-
-Возвращает \emph{base-number} возведенный в степень \emph{power-number}.
-Если \emph{base-number} принадлежит типу \cdf{rational} и \emph{power-number}
---- \cdf{integer}, тогда результат вычислений будет принадлежать типу
-\cdf{rational}, в противном случае результат будет приближенным числом с
-плавающей точкой.
 
 \begin{newer}
 X3J13 voted in March 1989
@@ -1161,18 +712,6 @@ after the application of the contagion rules, with one exception:
 it is an error if \emph{base-number} is zero when the \emph{power-number}
 is a zero not of type integer.
 
-Если \emph{power-number} равен \cd{0} (ноль целочисленного типа), тогда
-результат всегда будет значение 1, такого же типа что и \emph{base-number}, даже
-если \emph{base-number} равен нулю (любого типа). То есть:
-\begin{lisp}
-(expt \emph{x} 0) \EQ\ (coerce 1 (type-of \emph{x}))
-\end{lisp}
-Если \emph{power-number} является нулем любого другого типа данных, тогда
-результат также равен 1 такого же типа, что и аргументы после применения правил
-приведения числовых типов, с одним условием:
-если \emph{base-number} равен нулю, когда \emph{power-number} является
-нецелочисленным нулем, то это является ошибкой.
-
 Implementations of \cdf{expt} are permitted to use different algorithms
 for the cases of a rational \emph{power-number} and a floating-point
 \emph{power-number}; the motivation is that in many cases greater accuracy
@@ -1185,14 +724,6 @@ been written \cd{(sqrt (expt x 3))}, perhaps producing a more accurate
 result than would \cd{(expt x 1.5)}.  It is left to the implementor
 to determine the best strategies.
 
-Реализация \cdf{expt} может использовать различные алгоритмы для случаев с
-рациональным и с плавающей точкой аргументом \emph{power-number}. Суть в том,
-что в большинстве случаев боле аккуратный результат может быть достигнут для
-рационального \emph{power-number}.
-Например, \cd{(expt pi 16)} и  \cd{(expt pi 16.0)} могут вернуть слегка разные
-результаты, если в первом случае алгоритм <<повторных квадратов>>, а во втором
-использование логарифмов.
-
 The result of \cdf{expt} can be a complex number, even when neither argument
 is complex, if \emph{base-number} is negative and \emph{power-number}
 is not an integer.  The result is always the principal complex value.
@@ -1200,15 +731,7 @@ Note that \cd{(expt -8 1/3)} is not permitted to return \cd{-2};
 while \cd{-2} is indeed one of the cube roots of \cd{-8}, it is
 not the principal cube root, which is a complex number
 approximately equal to \cd{\#C(1.0 1.73205)}.
-
-Результатом \cdf{expt} может быть комплексное число, даже если ни один аргумент
-не был комплексным. Такой результат получается если \emph{base-number}
-отрицательное число и \emph{power-number} не является целочисленным.
-Следует отметить, что  \cd{(expt -8 1/3)} не может вернуть \cd{-2}, хотя и
-\cd{-2} несомненно является одним из кубических корней для \cd{-8}, но основным
-корнем является апроксимированное комплексное число \cd{\#C(1.0 1.73205)}.
 \end{defun}
-
 
 \begin{defun}[Function]
 log number &optional base
@@ -1225,21 +748,6 @@ implementation.
 
 Note that \cdf{log} may return a complex result when given a non-complex
 argument if the argument is negative.  For example:
-\begin{lisp}
-(log -1.0) \EQ\ (complex 0.0 (float pi 0.0))
-\end{lisp}
-
-Функция возвращает логарифм числа \emph{number} c основанием \emph{base},
-которое по умолчанию равно \emph{e} (эпсилон, основание для натурального
-логарифма).
-Например:
-\begin{lisp}
-(log 8.0 2) \EV\ 3.0 \\
-(log 100.0 10) \EV\ 2.0
-\end{lisp}
-В зависимости от реализации, результатом \cd{(log 8 2)} может быть как \cd{3},
-так и \cd{3.0}.
-Например:
 \begin{lisp}
 (log -1.0) \EQ\ (complex 0.0 (float pi 0.0))
 \end{lisp}
@@ -1275,18 +783,6 @@ The result of \cd{(sqrt 9)} may be either \cd{3} or \cd{3.0}, depending on the
 implementation.  The result of \cd{(sqrt -9)} may be either \cd{\#c(0 3)}
 or \cd{\#c(0.0 3.0)}.
 
-Функция возвращает квадратный корень числа \emph{number}.
-Если \emph{number} не является комплексным числом и отрицательно, тогда
-результат будет комплексным числом.
-Например:
-\begin{lisp}
-(sqrt 9.0) \EV\ 3.0 \\
-(sqrt -9.0) \EV\ \#c(0.0 3.0)
-\end{lisp}
-В зависмости от реализации результат \cd{(sqrt 9)} может быть как \cd{3}, так и
-\cd{3.0}. Результат \cd{(sqrt -9)} может быть как \cd{\#(0 3)} или \cd{\#c(0.0
-  3.0)}.
-
 \begin{new}
 X3J13 voted in January 1989
 \issue{IEEE-ATAN-BRANCH-CUT}
@@ -1315,32 +811,15 @@ For example:
 (isqrt 300) \EV\ 17 \\
 (isqrt 325) \EV\ 18
 \end{lisp}
-
-Целочисленный квадратный корень: аргумент должен быть неотрицательным целым, и
-результат является наибольшим целым числом, которое меньше или равно точному
-положительному квадратному корню аргумента.
-\begin{lisp}
-(isqrt 9) \EV\ 3 \\
-(isqrt 12) \EV\ 3 \\
-(isqrt 300) \EV\ 17 \\
-(isqrt 325) \EV\ 18
-\end{lisp}
 \end{defun}
 
-\subsection{Trigonometric and Related Functions Тригонометрические и связанные с
-ними функции}
+\subsection{Trigonometric and Related Functions}
 
 Some of the functions in this section, such as \cdf{abs}
 and \cdf{signum}, are apparently unrelated
 to trigonometric functions when considered as functions of
 real numbers only.  The way in which they are extended to
 operate on complex numbers makes the trigonometric connection clear.
-
-Некоторые из функций в данном разделе, такие как \cdf{abs} и \cdf{signum},
-несомененно не относятся к тригонометрическим функциям, когда рассматриваются
-как функции только для действительных чисел. Однако, путь, с помощью которого
-они расширены для операций на комплексных числах, делает их связь с
-тригонометрическими функциями явной.
 
 \begin{defun}[Function]
 abs number
@@ -1356,28 +835,12 @@ For a complex number \emph{z}, the absolute value may be computed as
 (sqrt (+ (expt (realpart \emph{z}) 2) (expt (imagpart \emph{z}) 2)))
 \end{lisp}
 
-Возвращает абсолютное значение аргумента. Для некомплексных чисел \emph{x}, 
-\begin{lisp}
-(abs \emph{x}) \EQ\ (if (minusp \emph{x}) (- \emph{x}) \emph{x})
-\end{lisp}
-и результат всегда имеет тот же тип, что и аргумент.
-
-Для комплексных чисел \emph{z}, абсолютное значение может быть вычислено как
-\begin{lisp}
-(sqrt (+ (expt (realpart \emph{z}) 2) (expt (imagpart \emph{z}) 2)))
-\end{lisp}
-
 \beforenoterule
 \begin{implementation}
 The careful implementor will not use this formula directly
 for all complex numbers
 but will instead handle very large or very small components specially
 to avoid intermediate overflow or underflow.
-
-Аккуратные разработчики не будут напрямую использовать эту формулу для всех
-комплексных чисел. Очень большие и очень маленькие части комплексных чисел будут
-обрабатываться специализированно для избежания выходов за верхние и нижние
-границы значений.
 \end{implementation}
 \afternoterule
 
@@ -1387,13 +850,6 @@ For example:
 \end{lisp}
 The result of \cd{(abs \#c(3 4))} may be either \cd{5} or \cd{5.0},
 depending on the implementation.
-
-Например:
-\begin{lisp}
-(abs \#c(3.0 -4.0)) \EV\ 5.0
-\end{lisp}
-Результатом \cd{(abs \#(3 4))} может быть или \cd{5} или \cd{5.0}, в зависимости
-от реализации.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1404,10 +860,6 @@ as a complex number.  That is,
 \begin{lisp}
 (phase \emph{z}) \EQ\ (atan (imagpart \emph{z}) (realpart \emph{z}))
 \end{lisp}
-
-Аргументом (так называется функция phase) числа z (arg(z) \EQ (phase z))
-является угол $\varphi$ (в радианах) радиус-вектора точки, соответствующей
-комплексному числу z.
 
 \begin{new}
 X3J13 voted in January 1989
@@ -1430,13 +882,6 @@ If the argument is a floating-point number, the result is a
 floating-point number of the same type.
 If the argument is a rational number or complex rational number, the result
 is a single-format floating-point number.
-
-Если аргумент является комплексным числом с частями из чисел с плавающей точкой,
-то результатом является число с плавающей точкой того же типа.
-Если аргумент является числом с плавающей точкой,
-то результатом является число с плавающей точкой того же типа.
-Если аргумент является комплексным числом с частями из рациональных чисел,
-то результатом является число с плавающей точкой одинарного типа.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1463,29 +908,6 @@ For example:
 \end{lisp}
 For non-complex rational numbers, \cdf{signum} is a rational function,
 but it may be irrational for complex arguments.
-
-По определению,
-\begin{lisp}
-(signum \emph{x}) \EQ\ (if (zerop \emph{x}) \emph{x} (/ \emph{x} (abs \emph{x})))
-\end{lisp}
-Для рационального числа, \cdf{signum} будет возвращаеть один из вариантов:
-\cd{-1}, \cd{0} или \cd{1}, в соответсвии с тем, является ли число
-отрицательным, нулём или положительным.
-Для числа с плавающей точкой, результатом будет число с плавающей точкой того же
-типа и значением: $-1$, $0$ или $1$.
-Для комплексного числа \emph{z}, \cd{(signum \emph{z})} является комплексным
-числом с таким же аргументом (phase), но с единичным модулем. Но если \emph{z}
-равен комплексному нулю, результатом является само число \emph{z}.
-Например:
-\begin{lisp}
-(signum 0) \EV\ 0 \\
-(signum -3.7L5) \EV\ -1.0L0 \\
-(signum 4/5) \EV\ 1 \\
-(signum \#C(7.5 10.0)) \EV\ \#C(0.6 0.8) \\
-(signum \#C(0.0 -14.7)) \EV\ \#C(0.0 -1.0)
-\end{lisp}
-Для некомплексных рациональных чисел \cdf{signum} является рациональной
-функцией, но для комплексных чисел может быть иррациональной.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1496,10 +918,6 @@ tan radians
 \cdf{sin} returns the sine of the argument, \cdf{cos} the cosine,
 and \cdf{tan} the tangent.  The argument is in radians.
 The argument may be complex.
-
-\cdf{sin} возвращает синус аргумента, \cdf{cos} --- косинус, \cdf{tan} ---
-тангенс. Аргумент рассамтривается как угол в радианах. Аргумент может быть
-комплексным числом.
 \end{defun}
 
 \begin{defun}[Function]
@@ -1521,22 +939,6 @@ Often it is cheaper to calculate the sine and cosine
 of a single angle together than to perform two disjoint calculations.
 \end{implementation}
 \afternoterule
-
-Функция вычисляет $ \emph{e} ^ {i \cdot radians} $.
-Имя \cdf{cis} обозначает <<cos + \emph{i} sin>>, потому что 
-$ \emph{e} ^{ i \theta } = \cos \theta + \emph{i} \sin \theta $.
-Аргумент рассматривается как угол в радианах и может быть любым некомплексным
-числом. Результатом является комплексное число, у которого действительная часть
-это косинус аргумента, и мнимая --- синус аргумента. Другими словами, результат
-это комплексное число, у которого аргумент (фаза) равна (mod $2/pi$) и модуль
-равен единице.
-
-\beforenoterule
-\begin{implementation}
-Чаще всего дешевле вычислить синус и косинус угла вместе, чем выполнять два
-раздельных вычисления.
-\end{implementation}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -1556,20 +958,6 @@ Arc cosine\>$ -\emph{i} \log \left(\emph{z} + \emph{i}\sqrt{1-\emph{z}^2}\right)
 Note that the result of \cdf{asin} or \cdf{acos} may be
 complex even if the argument is not complex; this occurs
 when the absolute value of the argument is greater than 1.
-
-\cdf{asin} возвращаем арксинус аргумента, и \cdf{acos} --- арккосинус аргумента.
-Результат будет в радианах. Аргумент может быть комплексным числом.
-
-Функции арксинус и арккосинус могут быть математически определены для аргумента
-\emph{z} следующим образом:
-\begin{tabbing}
-\hskip 10pc\=\kill
-Арксинус\>$ -\emph{i} \log \left(\emph{i}\emph{z} + \sqrt{1-\emph{z}^2}\right) $ \\[2pt]
-Арккосинус\>$ -\emph{i} \log \left(\emph{z} + \emph{i}\sqrt{1-\emph{z}^2}\right) $
-\end{tabbing}
-Следует отметить, что результат \cdf{asin} или \cd{acos} может быть комплексным
-числом, даже если аргумент не являлся комплексным. Такое происходит, когда
-абсолютное значение аргумента превышает 1.
 
 \begin{newer}
 Kahan \cite{KAHAN-COMPLEX-FNS} suggests for \cdf{acos} the
@@ -1627,41 +1015,9 @@ $y=-0$&$x=-0$&Near origin&$-\pi$ \\
 \end{tabular*}
 \end{flushleft}
 
-Функция вычисляет арктангенс и возвращает результат в радианах.
-
-Ни один из дву аргументов \emph{y} и \emph{x} не может быть комплексным.
-Знаки \emph{y} и \emph{x} используются для определения квадранта. \emph{x} может
-быть нулем при условии, что \emph{y} не ноль.
-Значение \cdf{atan} лежит между $-pi$ (невключительно) и $pi$ (включительно).
-Следующая таблица описывает различные специальные случаи.
-
-\begin{flushleft}
-\begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}llc@{}}
-\multicolumn{2}{c}{Условие}&Декартово местоположение&Промежуток результата \\
-$y=+0$&$x>0$&Точно выше положительной оси x&$+0$ \\
-$y>0$&$x>0$&Квадрант I&$+0 < result < \pi/2$ \\
-$y>0$&$x=\pm 0$&Положительная ось y&$\pi/2$ \\
-$y>0$&$x<0$&Квадрант II&$\pi/2 < result < \pi$ \\
-$y=+0$&$x<0$&Точно ниже негативной оси x&$\pi$ \\
-$y=-0$&$x<0$&Точно выше отрицательной оси x&$\pi$ \\
-$y<0$&$x<0$&Квадрант III&$-\pi < result < -\pi/2$ \\
-$y<0$&$x=\pm 0$&Отрицательная ось y&$-\pi/2$ \\
-$y<0$&$x>0$&Квадрант IV&$-\pi/2 < result < -0$ \\
-$y=-0$&$x>0$&Точно ниже положительной оси x&$-0$ \\
-$y=+0$&$x=+0$&Рядом с центром&$+0$ \\
-$y=-0$&$x=+0$&Рядом с центром&$-0$ \\
-$y=+0$&$x=-0$&Рядом с центром&$\pi$ \\
-$y=-0$&$x=-0$&Рядом с центром&$-\pi$ \\
-\end{tabular*}
-\end{flushleft}
-
 Note that the case $y=0,x=0$ is an error in the absence of minus zero,
 but the four cases $y=\pm 0,x=\pm 0$ are defined in the presence
 of minus zero.
-
-Следует отметить, что случай $y=0,x=0$ при отсутствии минус ноля
-является ошибкой, но четыре случая $y=\pm 0,x=\pm 0$ определены при условии
-существования минус ноля.
 
 With only one argument \emph{y}, the argument may be complex.
 The result is the arc tangent of \emph{y}, which may be defined by
@@ -1670,15 +1026,6 @@ the following formula:
 \hskip 10pc\=\kill
 Arc tangent\>$\log (1+\emph{i}\emph{y}) - \log (1-\emph{i}\emph{y}) \over 2\emph{i}$
 \end{tabbing}
-
-Если не указывать \emph{x}, \emph{y} может быть комплексным.
-Результатом функции является арктангенс \emph{y}, который может быть определен
-следующей формулой:
-\begin{tabbing}
-\hskip 10pc\=\kill
-Арктангенс\>$\log (1+\emph{i}\emph{y}) - \log (1-\emph{i}\emph{y}) \over 2\emph{i}$
-\end{tabbing}
-
 
 \beforenoterule
 \begin{implementation}
@@ -1693,9 +1040,6 @@ to define the branch cuts in desirable ways for the complex case.
 
 For a non-complex argument \emph{y}, the result is non-complex and lies between
 $-\pi/2$ and $\pi/2$ (both exclusive).
-
-Для некомплексного аргумента \emph{y}, результат будет некомплексным и будет
-лежать между $-\pi/2$ и $\pi/2$ (оба невключительно).
 \end{defun}
 
 \begin{defun}[Constant]
@@ -1713,18 +1057,6 @@ be obtained by writing \cd{(float pi \emph{x})}, where \emph{x} is a
 floating-point number of the desired precision,
 or by writing \cd{(coerce pi \emph{type})}, where \emph{type} is the
 name of the desired type, such as \cdf{short-float}.
-
-Данная глобальная переменная содержит значение наиболее приближенное к $pi$ в
-\emph{длинном} формате числа с плавающей точкой.
-Например:
-\begin{lisp}
-(defun sind (x)~~~~~;\textrm{Аргумент в градусах} \\
-~~(sin (* x (/ (float pi x) 180))))
-\end{lisp}
-Приближение к $pi$ с другими точностями может быть выполнено с помощью
-\cd{(float pi \emph{x})}, где \emph{x} является числом с плавающей точкой
-необходимой точности, или с помощью  \cd{(coerce pi \emph{type})}, где
-\emph{type} является именем необходимого типа, как например \cdf{short-float}.
 \end{defun}
 
 \penalty-10000\relax
@@ -1769,29 +1101,10 @@ the simplest ones for real-valued computations, either; they are chosen
 to define the branch cuts in desirable ways for the complex case.
 \end{implementation}
 \afternoterule
-
-Данные функции вычисляют гиперболический синус, косинус, тангенс, арксинус,
-арккосинус и арктангенс, которые для аргумента \emph{z} математически определены
-следующим образом:
-\begin{tabbing}
-\hskip 10pc\=\kill
-Гиперболический синус\>$ (\emph{e}^{z}-\emph{e}^{-z})/2 $ \\
-Гиперболический косинус\>$ (\emph{e}^{z}+\emph{e}^{-z})/2 $ \\
-Гиперболический тангенс\>$ (\emph{e}^{z}-\emph{e}^{-z})/(\emph{e}^{z}+\emph{e}^{-z}) $ \\[2pt]
-Гиперболический арксинус\>$ \log \left(\emph{z}+\sqrt{1+\emph{z}^2}\right) $ \\[2pt]
-Гиперболический арккосинус\>$ \log
-\left(\emph{z}+(\emph{z}+1)\sqrt{(\emph{z}-1)/(\emph{z}+1)}\right) $ \\[2pt]
-Гиперболический арктангенс\>$ \log \left((1+\emph{z})\sqrt{1/(1-\emph{z}^2)}\right) $
-\end{tabbing}
-
-Следует отметить, что результат \cdf{acosh} может быть комплексным, даже если
-аргумент комплексным числом не был. Это происходит если аргумент меньше 1.
-Также результат \cdf{atanh} может быть комплексным, даже если аргумент не был
-комплексным. Это происходит если абсолютное значение аргумента было больше 1.
 \end{defun}
 
 \subsection{Branch Cuts, Principal Values, and Boundary Conditions in the
-  Complex Plane Точки ветвления, главные значения и краевые условия на комплексной плоскости}
+  Complex Plane}
 \label{BRANCH-CUTS-SECTION}
 
 Many of the irrational and transcendental functions are multiply defined
@@ -1803,20 +1116,10 @@ continuous; lines in the domain
 called \emph{branch cuts} must be defined, which in turn
 define the discontinuities in the range.
 
-Многие иррациональные и трансцендетальные функции на комплексной
-плоскости многозначны. Например, в общем случае, логарифмическая функция имеет 
-бесконечное количество комплексных значений. В каждом таком случае для возврата 
-должно быть выбрано одно главное значение.
-
 Common Lisp defines the branch cuts, principal values, and boundary
 conditions for the complex functions following
 a proposal for complex functions in APL \cite{APL-BRANCH-CUTS}.
 The contents of this section are borrowed largely from that proposal.
-
-Common Lisp определяет точки ветвления, главные значения и краевые условия для
-комплесных функции в соотвествие с предложениями для комплексных функций в APL
-\cite{APL-BRANCH-CUTS}.
-Содержимое раздела по большей части скопировано из этих предложений.
 
 \begin{new}
 Indeed, X3J13 voted in January 1989
@@ -2165,7 +1468,6 @@ as PostScript \cite{ADOBE-POSTSCRIPT} code by Common Lisp code.  This PostScript
 code was then fed directly to the typesetting equipment that set the pages for this book.
 Samples of this PostScript code follow the figures themselves,
 after which the code for the entire program is presented.
-
 
 In the commentaries that accompany the figures I
 sometimes speak of mapping the points $\pm\infty$ or $\pm\infty i$.
@@ -3227,16 +2529,11 @@ The program is offered here without further comment or apology.
 \endgroup
 \end{new}
 
-\section{Type Conversions and Component Extractions on Numbers Приведение типов
-  и доступ к компонентам чисел}
+\section{Type Conversions and Component Extractions on Numbers}
 
 While most arithmetic functions will operate on any kind of number,
 coercing types if necessary, the following functions are provided to
 allow specific conversions of data types to be forced when desired.
-
-Тогда как большинство арифметических функций будут оперировать любым типом
-чисел, выполняя при необходимости приведения, следующие функции позволяют явно
-преобразовывать типы данных.
 
 \begin{defun}[Function]
 float number &optional other
@@ -3248,16 +2545,6 @@ otherwise a \cdf{single-float} is produced.
 If the argument \emph{other} is provided, then it must be a floating-point
 number, and \emph{number} is converted to the same format as \emph{other}.
 See also \cdf{coerce}.
-
-Преобразует любое некомплексное число в число с плавающей точкой.
-При отсутствии необязательного параметра, если \emph{number} уже
-является числом с плавающей точкой, то оно и будет возвращено, иначе число будет
-преобразовано в \cdf{single-float}.
-Если аргумент \emph{other} указан, тогда он должен быть числом с плавающей
-точкой, и \emph{number} будет сконвертирован в такой же формат как у
-\emph{other}.
-
-Смотрите также \cdf{coerce}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -3268,17 +2555,9 @@ Each of these functions converts any non-complex number to a rational
 number.  If the argument is already rational, it is returned.
 The two functions differ in their treatment of floating-point numbers.
 
-Каждая из этих функций преобразует любое некомплексное числое в рациональное.
-Если аргумент уже является рациональным, он возвращается как есть.
-Две функции различаются в том, как они обрабатывают числа с плавающей точкой.
-
 \cdf{rational} assumes that the floating-point number is completely accurate
 and returns a rational number mathematically equal to the precise
 value of the floating-point number.
-
-\cdf{rational} предполагает, что число с плавающей точкой совершенно точно, и
-возвращает рациональное число математически эквивалентное значию числа с
-плавающей точкой.
 
 \cdf{rationalize} assumes that the
 floating-point number is accurate only to the precision of the
@@ -3286,11 +2565,6 @@ floating-point representation and may return any rational number for
 which the floating-point number is the best available approximation of
 its format; in doing this it attempts to keep both numerator and
 denominator small.
-
-\cdf{rationalize} предполагает, что число с плавающей точкой приближенное, и
-может возвращать любое рациональное число, для которого исходное число является
-наилучшим приближением. Функция пытается сохранить числитель и знаменатель
-наименьшими насколько это возможно.
 
 It is always the case that
 \begin{lisp}
@@ -3307,19 +2581,6 @@ What distinguishes the two functions is that \cdf{rational} typically
 has a simple, inexpensive implementation, whereas \cdf{rationalize} goes
 to more trouble to produce a result that is more pleasant to view and
 simpler to compute with for some purposes.
-
-Следующие тождества всегда справедливы
-\begin{lisp}
-(float (rational \emph{x}) \emph{x}) \EQ\ \emph{x}
-\end{lisp}
-и
-\begin{lisp}
-(float (rationalize \emph{x}) \emph{x}) \EQ\ \emph{x}
-\end{lisp}
-То есть, преобразование числа с плавающей точкой любым из методов туда и обратно
-дает исходное число.
-Различие в том, что \cdf{rational} обычно имеет более простую недорогую
-реализацию, тогда как \cdf{rationalize} представляет более <<красивое>> число.
 \end{defun}
 
 \begin{defun}[Function]
@@ -3340,32 +2601,12 @@ For example:
 (numerator (/ 8 -6)) \EV\ -4 \\
 (denominator (/ 8 -6)) \EV\ 3
 \end{lisp}
-
-Эти функции принимают рациональное число (целое или дробное)
-и возвращают в качестве целого числа числитель или знаменатель дроби,
-приведенное к каноническому виду. Числитель целого числа и является этим
-числом. Знаменатель целого числа \cd{1}. Следует отметить, что
-\begin{lisp}
-(gcd (numerator \emph{x}) (denominator \emph{x})) \EV\ 1
-\end{lisp}
-Знаменатель будет всегда строго положительным числом. Числитель может быть любым
-целым числом.
-Например:
-\begin{lisp}
-(numerator (/ 8 -6)) \EV\ -4 \\
-(denominator (/ 8 -6)) \EV\ 3
-\end{lisp}
 \end{defun}
 
 There is no \cdf{fix} function in Common Lisp because there are several
 interesting ways to convert non-integral values to integers.
 These are provided by the functions below, which perform not only
 type conversion but also some non-trivial calculations as well.
-
-В Common Lisp'е нет функции \cdf{fix}, потому что есть несколько интересных
-способов преобразовать нецелое число к целому.
-Эти способы представлены функциями ниже, которые выполняются не только
-преобразование типа, но также некоторые нетривиальные вычисления.
 
 \begin{defun}[Function]
 floor number &optional divisor \\
@@ -3380,46 +2621,23 @@ If the argument is already an integer, it is returned directly.
 If the argument is a ratio or floating-point number, the functions use
 different algorithms for the conversion.
 
-При вызове с одним аргументом, каждая из этих функций преобразует аргумент
-\emph{number} (который не может быть комплексным числом) в целое число.
-Если аргумент уже является целым числом, то он немедленно возвращается в
-качестве результата.
-Если аргумент дробь или число с плавающей точкой, для конвертации функции используют различные
-алгоритмы.
-
 \cdf{floor} converts its argument by truncating toward negative
 infinity; that is, the result is the largest integer that is not larger
 than the argument.
 
-\cdf{floor} преобразовывает аргумент путем отсечения к отрицательной
-бесконечности, то есть, результатом является наибольшее целое число, которое не
-больше чем аргумент.
-
 \cdf{ceiling} converts its argument by truncating toward positive
 infinity; that is, the result is the smallest integer that is not smaller
 than the argument.
-
-\cdf{ceiling} преобразовывает аргумент путем отсечения к положительной
-бесконечности, то есть, результатом является наименьшее целое число, которое не
-меньше чем аргумент.
 
 \cdf{truncate} converts its argument by truncating toward zero;
 that is, the result is the integer of the same sign as the argument
 and which has the greatest integral
 magnitude not greater than that of the argument.
 
-\cdf{ceiling} преобразовывает аргумент путем отсечения к нулю, то есть,
-результатом является целое число с таким же знаком, которое имеет наибольшую
-целую величину, но не большую чем аргумент.
-
 \cdf{round} converts its argument by rounding to the nearest
 integer; if \emph{number} is exactly halfway between two integers
 (that is, of the form $integer+0.5$), then it is rounded to the one that
 is even (divisible by 2).
-
-\cdf{round} преобразовывает аргумент округлением к ближайшему целому числу. Если
-\emph{number} находится между двумя целыми (то есть $integer+0.5$), тогда он
-округляется к ближайщему чётному числу.
 
 The following table shows what the four functions produce when given
 various arguments.
@@ -3428,27 +2646,6 @@ various arguments.
 \cf
 \begin{tabular}{@{}ccccc@{}}
 \textrm{Argument}&floor&ceiling&truncate&round\\
-\hlinesp
-~2.6& ~2& ~3& ~2& ~3 \\
-~2.5& ~2& ~3& ~2& ~2 \\
-~2.4& ~2& ~3& ~2& ~2 \\
-~0.7& ~0& ~1& ~0& ~1 \\
-~0.3& ~0& ~1& ~0& ~0 \\
--0.3& -1& ~0& ~0& ~0 \\
--0.7& -1& ~0& ~0& -1 \\
--2.4& -3& -2& -2& -2 \\
--2.5& -3& -2& -2& -2 \\
--2.6& -3& -2& -2& -3 \\
-\hline
-\end{tabular}
-\end{flushleft}
-
-Следующая таблица содержит то, что возвращают четыре функции для разных
-аргументов.
-\begin{flushleft}
-\cf
-\begin{tabular}{@{}ccccc@{}}
-\textrm{Аргумент}&floor&ceiling&truncate&round\\
 \hlinesp
 ~2.6& ~2& ~3& ~2& ~3 \\
 ~2.5& ~2& ~3& ~2& ~2 \\
@@ -3488,15 +2685,6 @@ It is generally accepted that it is an error for the \emph{divisor} to be zero.
 The one-argument case is exactly like the two-argument case where the second
 argument is \cd{1}.
 
-Если указан второй аргумент \emph{divisor}, тогда аргумент \emph{number} будет
-разделен на \emph{divisor}, а затем уже будут проведены вышеописанные действия.
-Например, \cd{(floor 5~2)}~\EQ~\cd{(values (floor (/~5~2)))}, но первый вариант
-потенциально эффективнее.
-\emph{divisor} может любым числом, кроме комплексного.
-\emph{divisor} не может равняться нулю.
-Случай вызова функции с одним аргументом эквивалентен вызову с двумя
-аргументами, последний из которых равен \cd{1}.
-
 \begin{newer}
 In other words, the one-argument case returns an integer and fractional part
 for the \emph{number}: \cd{(truncate 5.3) \EV\ 5.0 \textrm{and} 0.3}, for example.
@@ -3518,22 +2706,6 @@ as the argument.
 When only one argument is given, the two results are exact;
 the mathematical sum of the two results is always equal to the
 mathematical value of the argument.
-
-Каждая из функций возвращает \emph{два} значения. Второе значение является
-остатком и может быть получено с помощью \cdf{multiple-value-bind} или другими
-подобными конструкциями.
-Если любая из этих функций получает два аргумента \emph{x} и \emph{y} и
-возвращает \emph{q} и \emph{r}, тогда  $\emph{q} \cdot
-\emph{y}+\emph{r}=\emph{x}$.
-Первое значение результата \emph{q} всегда целочисленное.
-Остаток \emph{r} целочисленно, если оба аргумента были целочисленными, и
-рациональное, если оба аргумента были рациональными,
-и с плавающей точкой, если один из аргументов был с плавающей точкой.
-Если при вызове был указан один аргумент, то тип данных остатка всегда такой же
-как и этот аргумент.
-
-Когда указывается только один аргумент, сумма двух значений результата точно
-равняется переданному в параметре значению.
 \end{defun}
 
 \begin{defun}[Function]
@@ -3546,28 +2718,10 @@ Similarly,
 \cdf{rem} performs the operation \cdf{truncate} on its arguments
 and returns the \emph{second} result of \cdf{truncate} as its only result.
 
-\cdf{mod} выполняет операцию \cdf{floor} для двух аргументов и возвращает
-\emph{второй} результат \cdf{floor}.
-Таким же образом, \cdf{rem} выполняет операцию \cdf{truncate} для двух аргументов и возвращает
-\emph{второй} результат \cdf{truncate}.
-
 \cdf{mod} and \cdf{rem} are therefore the usual modulus
 and remainder functions when applied to two integer arguments.
 In general, however, the arguments may be integers or floating-point
 numbers.
-\begin{lisp}
-\hskip 0.5\textwidth\=\kill
-(mod 13 4) \EV\ 1\>(rem 13 4) \EV\ 1 \\
-(mod -13 4) \EV\ 3\>(rem -13 4) \EV\ -1 \\
-(mod 13 -4) \EV\ -3\>(rem 13 -4) \EV\ 1 \\
-(mod -13 -4) \EV\ -1\>(rem -13 -4) \EV\ -1 \\
-(mod 13.4 1) \EV\ 0.4\>(rem 13.4 1) \EV\ 0.4 \\
-(mod -13.4 1) \EV\ 0.6\>(rem -13.4 1) \EV\ -0.4
-\end{lisp}
-
-Таким образом \cdf{mod} и \cdf{rem} являются обычными функциями вычисления
-остатка от деления двух чисел. Аргументы могут быть также числами с плавающей
-точкой.
 \begin{lisp}
 \hskip 0.5\textwidth\=\kill
 (mod 13 4) \EV\ 1\>(rem 13 4) \EV\ 1 \\
@@ -3600,21 +2754,6 @@ For example:
 (ffloor -4.7) \EV\ -5.0 and 0.3 \\
 (ffloor 3.5d0) \EV\ 3.0d0 and 0.5d0
 \end{lisp}
-
-Эти функции похожи на \cdf{floor}, \cdf{ceiling}, \cdf{truncate} и \cdf{round}
-за исключением того, что результат (первый из двух) всегда целое число, а не
-число с плавающей точкой. Это примерно, как если бы \cdf{ffoor} передала
-аругменты в \cdf{floor}, а затем применила к первому результату \cdf{float} и
-вернула полученную пару значений. Однако, на практике \cdf{ffloor} может быть
-реализована более эффективно. Такое же описание подходит к остальным трем
-функциям. Если первый аргумент является числом с плавающей точкой, и второй
-аргумент не точнее типа первого, тогда первый результат будет такого же типа как
-первый аргумент.
-Например:
-\begin{lisp}
-(ffloor -4.7) \EV\ -5.0 and 0.3 \\
-(ffloor 3.5d0) \EV\ 3.0d0 and 0.5d0
-\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -3629,9 +2768,6 @@ integer-decode-float float
 The function \cdf{decode-float} takes a floating-point number
 and returns three values.
 
-Функция \cdf{decode-float} принимает числа с плавающей точкой и возвращает три
-значения.
-
 The first value is a new floating-point number of the same format
 representing the significand; the second value is an integer
 representing the exponent; and the third value is a floating-point
@@ -3644,35 +2780,15 @@ If the argument is zero, however, the result
 is equal to the absolute value of the argument (that is, if there is a negative
 zero, its significand is considered to be a positive~zero).
 
-Первое значение является манитиссой и числом того же типа, что и
-аргумент. Второе значение является целочисленной экспонентой.
-Третье значение отображает знак аргумента (-1.0 или 1.0) и является и числом
-того же типа, что и аргумент .
-Пусть \emph{b} есть система счисления для отображения чисел с плавающей точкой,
-тогда \cdf{decode-float} делит аргумент на \emph{b} в некоторой степени, чтобы
-привести значение в промежуток включая 1/\emph{b} и невключая 1 и возвращает
-частное в качестве первого значения FIXME. Однако, если аргумент равен нулю
-результат равен абсолютному значению аргумента (то есть, если существует
-отрицательный ноль, то для него возвращается положительный ноль).
-
 The second value of \cdf{decode-float} is
 the integer exponent \emph{e} to which \emph{b} must be raised
 to produce the appropriate power for the division.
 If the argument is zero, any integer value may be returned, provided
 that the identity shown below for \cdf{scale-float} holds.
 
-Второе значение \cdf{decode-float} является целочисленным экспонентой \emph{e},
-которая равняется степени, в которую было возведено \emph{b}.
-Если аргумент равен нулю, то может быть возвращено любое целое число, при
-условии, что тожество, описанное ниже для \cdf{scale-format}, имеет место быть.
-
 The third value of \cdf{decode-float} is a floating-point number,
 of the same format as the argument, whose absolute value is 1
 and whose sign matches that of the argument.
-
-Третье значение \cdf{decode-float} является числом с плавающей точкой в том же
-формате, что и аргумент, абсолютное значение которого равно 1, и знак совпадает
-со знаком аргумента.
 
 The function \cdf{scale-float} takes a floating-point number \emph{f}
 (not necessarily between 1/\emph{b} and 1) and
@@ -3680,12 +2796,6 @@ an integer \emph{k}, and returns \cd{(* \emph{f} (expt (float \emph{b} \emph{f})
 (The use of \cdf{scale-float} may be much more efficient than using
 exponentiation and multiplication and avoids intermediate
 overflow and underflow if the final result is representable.)
-
-Функция \cdf{scale-float} принимает число с плавающей точкой \emph{f} (не
-обязательно между 1/\emph{b} и 1) и целое число \emph{k}, и возвращает \cd{(*
-  \emph{f} (expt (float \emph{b} \emph{f}) \emph{k}))}.
-(Использование \cdf{scale-float} может быть более эффективным, чем использование
-возведения в степень или умножения и позволяет избежать переполнений).
 
 Note that
 \begin{lisp}
@@ -3702,26 +2812,8 @@ and
 \EQ\ \emph{f}
 \end{lisp}
 
-Следует отметить, что
-\begin{lisp}
-(multiple-value-bind (signif expon sign) \\*
-~~~~~~~~~~~~~~~~~~~~~(decode-float \emph{f}) \\*
-~~(scale-float signif expon)) \\*
-\EQ\ (abs \emph{f})
-\end{lisp}
-и
-\begin{lisp}
-(multiple-value-bind (signif expon sign) \\*
-~~~~~~~~~~~~~~~~~~~~~(decode-float \emph{f}) \\*
-~~(* (scale-float signif expon) sign)) \\*
-\EQ\ \emph{f}
-\end{lisp}
-
 The function \cdf{float-radix} returns (as an integer)
 the radix \emph{b} of the floating-point argument.
-
-Функция \cdf{float-radix} возвращает (в качестве целого числа)
-основание \emph{b} для числа с плавающей точкой.
 
 The function \cdf{float-sign} returns a floating-point number \emph{z} such
 that \emph{z} and \emph{float1} have the same sign and also such that
@@ -3732,15 +2824,6 @@ of appropriate format
 according to the sign of \cdf{x}.  (Note that if an implementation
 has distinct representations for negative zero and positive zero,
 then \cd{(float-sign -0.0)} \EV\ \cd{-1.0}.)
-
-Функция \cdf{float-sign} возвращает такое число с плавающей точкой \emph{z}, что
-\emph{z} и \emph{float1} имеют одинаковый знак, и \emph{z} и \emph{float2} имеют
-равное абсолютное значение.
-Аргумент \emph{float2} по-умолчанию имеет значение \cd{(float 1 \emph{float1})}.
-Таким образом \cd{(float-sign x)} всегда возвращает \cd{1.0} или \cd{-1.0} в
-таком же формате и с тем же знаком, что и \emph{x}. (Следует отметить, что если
-реализация содержит различные представления для отрицательного и положительного
-нулей, тогда \cd{(float-sign -0.0)} \EV\ \cd{-1.0}.)
 
 The function \cdf{float-digits} returns, as a non-negative integer,
 the number of radix-\emph{b} digits
@@ -3756,14 +2839,6 @@ and \cdf{float-precision}
 will be the same, but the precision will be less than the
 number of representation digits for a denormalized or zero number.
 
-Функция \cdf{float-digits} возвращает целочисленное количество
-цифр используемых в представлении аргумента. Функция \cdf{float-precision}
-возвращает целочисленное количество цифр в мантиссе аргумента. Если аргумент
-равен нулю, то результатом также будет ноль.
-Для нормализованных чисел с плавающей точкой, результаты \cdf{float-digits} и
-\cdf{float-precision} будут такими же. Но в случае с ненормализованными числами
-или нулём точность будет меньше чем количество цифр в представлении.
-
 The function \cdf{integer-decode-float} is similar to \cdf{decode-float}
 but for its first value returns,
 as an \cdf{integer}, the significand scaled so as to be an integer.
@@ -3777,19 +2852,6 @@ but no less than
 \end{lisp}
 except that if \emph{f} is zero, then the integer value will be zero.
 
-Функция \cdf{integer-decode-float} похожа на \cdf{decode-float}, но в качестве
-первого значение возвращает смасштабированную целочисленную мантиссу.
-Для аргумента \emph{f}, это число будет строго меньше чем
-\begin{lisp}
-\cd{(expt \emph{b} (float-precision \emph{f}))}
-\end{lisp}
-на не менее чем 
-\begin{lisp}
-\cd{(expt \emph{b} (- (float-precision \emph{f}) 1))}
-\end{lisp}
-за исключением того, что если \emph{f} равно нулю, тогда целочисленное значение
-также будет равно нулю.
-
 The second value bears the same relationship to the first value
 as for \cdf{decode-float}:
 \begin{lisp}
@@ -3799,28 +2861,13 @@ as for \cdf{decode-float}:
 \EQ\ (abs \emph{f})
 \end{lisp}
 
-Второе значение имеет такую же связь с первым значением, как и для
-\cdf{decode-float}: 
-\begin{lisp}
-(multiple-value-bind (signif expon sign) \\*
-~~~~~~~~~~~~~~~~~~~~~(integer-decode-float \emph{f}) \\*
-~~(scale-float (float signif \emph{f}) expon)) \\*
-\EQ\ (abs \emph{f})
-\end{lisp}
-
 The third value of \cdf{integer-decode-float} will be \cd{1} or \cd{-1}.
-
-Третье зачение \cdf{integer-decode-float} будет \cd{1} или \cd{-1}.
 
 \beforenoterule
 \begin{rationale}
 These functions allow the writing of machine-independent,
 or at least machine-parameterized, floating-point software of reasonable
 efficiency.
-
-Эти функции позволяют писать машиннонезависиммые или как минимум
-машиннопараметризированные приложения с вычислениями чисел с плавающими точками
-с необходимой эффективностью.
 \end{rationale}
 \afternoterule
 \end{defun}
@@ -3839,17 +2886,6 @@ rational and the \emph{imagpart} is zero, then the result is just the
 \emph{realpart} because of the rule of canonical representation
 for complex rationals.  It follows that the result of \cdf{complex}
 is not always a complex number; it may be simply a \cdf{rational}.
-
-Аргументы должны быть некомплексными числами. Результатом является число,
-которое имеет действительную часть \emph{realpart} и мнимую \emph{imagpart},
-возможно конвертированные к одному типу.
-Если \emph{imagpart} не указаны, тогда используется \cd{(coerce 0 (type-of
-  \emph{realpart}))}.
-Необходимо отметить, что если обе части комплексного число рациональны, и мнимая
-часть равна нуля, то результатом будет только действительная часть
-\emph{realpart} так как в силу вступят правила канонизации.
-Таким образом результат \cdf{complex} не всегда является комплексным числом. Он
-может быть просто рациональным числом (\cdf{rational}).
 \end{defun}
 
 \begin{defun}[Function]
@@ -3862,11 +2898,6 @@ argument \emph{number} and \cdf{imagpart}
 returns \cd{(* 0 \emph{number})}, which
 has the effect that the imaginary part of a rational is \cd{0} and that of
 a floating-point number is a floating-point zero of the same format.
-
-Эти функции возвращают действительную и мнимую части комплексного числа. Если
-\emph{number} не является комплексным числом, тогда \cdf{realpart} возвращает
-это число, а \cdf{imagpart} возвращает \cd{(* 0 \emph{number})}, другими
-словами, \cd{0} того типа, каким был аргумент.
 
 \begin{newer}
 A clever way to multiply a complex number \emph{z} by \emph{i} is to write
@@ -3888,17 +2919,12 @@ land on the wrong side of a branch cut, for example.
 \end{newer}
 \end{defun}
 
-\section{Logical Operations on Numbers Логические операции над числами}
+\section{Logical Operations on Numbers}
 
 The logical operations in this section require integers
 as arguments; it is an error to supply a non-integer as an argument.
 The functions all treat integers as if
 they were represented in two's- complement notation.
-
-Логические операции в данном разделе в качестве аргументов требуют целых
-чисел. Передача числа любого другого формата является ошибкой.
-Функции обрабатывают целые числа, как если бы они были представлены в двух
-системах счисления. FIXME
 
 \beforenoterule
 \begin{implementation}
@@ -3906,10 +2932,6 @@ Internally, of course, an implementation of
 Common Lisp may or may not use a two's-complement representation.
 All that is necessary is that the logical operations
 perform calculations so as to give this appearance to the user.
-
-Внутренне, конечно, реализация Common Lisp'а может использовать и может и нет
-представление числа с дополнительным кодом. Все, что необходимо это чтобы
-логические операции выполняли вычисление так, как описано в разделе.
 \end{implementation}
 \afternoterule
 
@@ -3924,16 +2946,6 @@ as the sum of the weights of the one-bits, a positive integer.
 A vector with only a finite number of zero-bits is represented
 as \cd{-1} minus the sum of the weights of the zero-bits, a negative integer.
 
-Логические операции предоставляют удобный способ для представления бесконечного
-вектора битов. Пусть такой концептуальный вектор будет индексироваться с помощью
-неотрицательного целого. Тогда биту $j$ присваивается <<вес (weight)>> $2^{j}$.
-Предположим, что лишь конечное число битов являются 1 или только конечное
-число битов являются 0.
-Вектор, у которого конечное число битов 1, представлен как сумма всех весов этих
-битов, и является положительным числом.
-Вектор, у которого конечное число битов 0, представлен как \cd{-1} минус сумма
-всех весов этих битов, и является отрицательным числом. FIXME
-
 This method of using integers to represent bit-vectors can in turn
 be used to represent sets. Suppose that some (possibly countably
 infinite) universe of discourse
@@ -3947,27 +2959,12 @@ and \cdf{logxor} defined below then compute the union,
 intersection, and symmetric difference operations on sets
 represented in this way.
 
-Данный метод использования целых чисел для представления битовых векторов может
-в свою очередь использоваться для представления множеств. Предположим, что
-некоторая (возможно бесконечная) совокупность рассуждений для множеств отображается
-в неотрицательные целые числа. FIXME
-Тогда множество может быть представлено как битовый вектор. Элемент принадлежит
-множеству, если бит, индекс которого соотвествует элементу, является 1.
-Таким образом все конечные множества могут быть представлены с помощью
-положительных целых, и множества, дополнения которых конечны, с помощью
-отрицательных чисел. Функции \cdf{logior}, \cdf{logand} и \cdf{logxor},
-определенные ниже, вычисляют объединение, пересечение и симметричную разность для
-таких множеств.
-
 \begin{defun}[Function]
 logior &rest integers
 
 This returns the bit-wise logical \emph{inclusive or} of its arguments.
 If no argument is given, then the result is zero,
 which is an identity for this operation.
-
-Функция возвращает побитовое логическое \emph{или} для аргументов.
-Если не задан ни один аргумент, возвращается ноль.
 \end{defun}
 
 \begin{defun}[Function]
@@ -3976,9 +2973,6 @@ logxor &rest integers
 This returns the bit-wise logical \emph{exclusive or} of its arguments.
 If no argument is given, then the result is zero,
 which is an identity for this operation.
-
-Функция возвращает побитовое логическое \emph{исключающее или} для аргументов.
-Если не задан ни один аргумент, возвращается ноль.
 \end{defun}
 
 \begin{defun}[Function]
@@ -3987,9 +2981,6 @@ logand &rest integers
 This returns the bit-wise logical \emph{and} of its arguments.
 If no argument is given, then the result is \cd{-1},
 which is an identity for this operation.
-
-Функция возвращает побитовое логическое \emph{и} для аргументов.
-Если ни один аргумент не задан, возвращается ноль.
 \end{defun}
 
 \begin{defun}[Function]
@@ -3999,10 +2990,6 @@ This returns the bit-wise logical \emph{equivalence} (also known as \emph{exclus
 of its arguments.
 If no argument is given, then the result is \cd{-1},
 which is an identity for this operation.
-
-Функция возвращает побитовую логическую \emph{эквивалентность} (также известную
-как \emph{исключающее отрицающее или} для аргументов.
-Если не задан ни один аргумент, возвращается ноль.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4017,18 +3004,6 @@ These are the other six non-trivial bit-wise logical operations
 on two arguments.  Because they are not associative,
 they take exactly two arguments rather than any non-negative number
 of arguments.
-\begin{lisp}
-(lognand \emph{n1} \emph{n2}) \EQ\ (lognot (logand \emph{n1} \emph{n2})) \\[2pt]
-(lognor \emph{n1} \emph{n2}) \EQ\ (lognot (logior \emph{n1} \emph{n2})) \\[2pt]
-(logandc1 \emph{n1} \emph{n2}) \EQ\ (logand (lognot \emph{n1}) \emph{n2}) \\[2pt]
-(logandc2 \emph{n1} \emph{n2}) \EQ\ (logand \emph{n1} (lognot \emph{n2})) \\[2pt]
-(logorc1 \emph{n1} \emph{n2}) \EQ\ (logior (lognot \emph{n1}) \emph{n2}) \\[2pt]
-(logorc2 \emph{n1} \emph{n2}) \EQ\ (logior \emph{n1} (lognot \emph{n2}))
-\end{lisp}
-
-Данные функции служат для шести нетривиальные битовый логический операций для
-двух аргументов. Так как они не ассоциативны, они принимают только два
-аргумента.
 \begin{lisp}
 (lognand \emph{n1} \emph{n2}) \EQ\ (lognot (logand \emph{n1} \emph{n2})) \\[2pt]
 (lognor \emph{n1} \emph{n2}) \EQ\ (lognot (logior \emph{n1} \emph{n2})) \\[2pt]
@@ -4057,28 +3032,6 @@ logandc1&0&1&0&0&\textrm{and complement of \emph{integer1} with \emph{integer2}}
 logandc2&0&0&1&0&\textrm{and \emph{integer1} with complement of \emph{integer2}} \\
 logorc1~&1&1&0&1&\textrm{or complement of \emph{integer1} with \emph{integer2}} \\
 logorc2~&1&0&1&1&\textrm{or \emph{integer1} with complement of \emph{integer2}} \\
-\hline
-\end{tabular}
-\end{flushleft}
-
-В следующей таблице перечислены десять битовых логических операций для двух
-целых чисел.
-\begin{flushleft}
-\cf
-\begin{tabular}{@{}rlllll@{}}
-\emph{integer1}&0&0&1&1 \\
-\emph{integer2}&0&1&0&1&\textrm{Имя операции} \\
-\hlinesp
-logand~~&0&0&0&1&\textrm{и} \\
-logior~~&0&1&1&1&\textrm{или} \\
-logxor~~&0&1&1&0&\textrm{исключающее или} \\
-logeqv~~&1&0&0&1&\textrm{эквивалентность (исключающее отрицающее или)} \\
-lognand~&1&1&1&0&\textrm{не и} \\
-lognor~~&1&0&0&0&\textrm{не или} \\
-logandc1&0&1&0&0&\textrm{не \emph{integer1} и \emph{integer2}} \\
-logandc2&0&0&1&0&\textrm{\emph{integer1} и не \emph{integer2}} \\
-logorc1~&1&1&0&1&\textrm{не \emph{integer1} или \emph{integer2}} \\
-logorc2~&1&0&1&1&\textrm{\emph{integer1} или не \emph{integer2}} \\
 \hline
 \end{tabular}
 \end{flushleft}
@@ -4133,36 +3086,6 @@ boole-orc2~&1&0&1&1&\textrm{or \emph{integer1} with complement of \emph{integer2
 \end{tabular}
 \end{flushleft}
 
-Функция \cdf{boole} принимает операцию \emph{op} и два целых числа, и возвращает
-целое число полученное применением операции \emph{op} к этим двум числам. Точные
-значения шестнадцати констант зависят от реализации, но они подходят для
-использования в качестве первого аргумента для \cdf{boole}:
-\begin{flushleft}
-\cf
-\begin{tabular}{@{}rlllll@{}}
-\emph{integer1}&0&0&1&1 \\
-\emph{integer2}&0&1&0&1&\textrm{ВЫполняемая операция} \\
-\hlinesp
-boole-clr~~&0&0&0&0&\textrm{всегда 0} \\
-boole-set~~&1&1&1&1&\textrm{всегда 1} \\
-boole-1~~~~&0&0&1&1&\emph{integer1} \\
-boole-2~~~~&0&1&0&1&\emph{integer2} \\
-boole-c1~~~&1&1&0&0&\textrm{дополнение \emph{integer1}} \\
-boole-c2~~~&1&0&1&0&\textrm{дополнение \emph{integer2}} \\
-boole-and~~&0&0&0&1&\textrm{и} \\
-boole-ior~~&0&1&1&1&\textrm{или} \\
-boole-xor~~&0&1&1&0&\textrm{исключающее или} \\
-boole-eqv~~&1&0&0&1&\textrm{эквивалентность (исключительное отрицающее или)} \\
-boole-nand~&1&1&1&0&\textrm{не и} \\
-boole-nor~~&1&0&0&0&\textrm{не или} \\
-boole-andc1&0&1&0&0&\textrm{не \emph{integer1} и \emph{integer2}} \\
-boole-andc2&0&0&1&0&\textrm{\emph{integer1} и не \emph{integer2}} \\
-boole-orc1~&1&1&0&1&\textrm{не \emph{integer1} или \emph{integer2}} \\
-boole-orc2~&1&0&1&1&\textrm{\emph{integer1} или не \emph{integer2}} \\
-\hline
-\end{tabular}
-\end{flushleft}
-
 \cdf{boole} can therefore compute all sixteen logical functions on two
 arguments.  In general,
 \begin{lisp}
@@ -4171,15 +3094,6 @@ arguments.  In general,
 and the latter is more perspicuous.  However, \cdf{boole} is useful when it
 is necessary to parameterize a procedure so that it can use
 one of several logical operations.
-
-Таким образом \cdf{boole} может вычислять все шестнадцать логических функций для
-двух аргументов. В целом,
-\begin{lisp}
-(boole boole-and x y) \EQ\ (logand x y)
-\end{lisp}
-и далее по аналогии. \cdf{boole} полезна, когда необходимо
-параметризировать процедуру так, что они может использовать одну из нескольких
-логических операций. 
 \end{defun}
 
 \begin{defun}[Function]
@@ -4191,13 +3105,6 @@ in the argument.
 \begin{lisp}
 (logbitp \emph{j} (lognot \emph{x})) \EQ\ (not (logbitp \emph{j} \emph{x}))
 \end{lisp}
-
-Функция возвращает битовое логическое \emph{отрицание} аргумента.
-Каждый бит результата является дополнение соотвествующего исходного бита
-аргумента.
-\begin{lisp}
-(logbitp \emph{j} (lognot \emph{x})) \EQ\ (not (logbitp \emph{j} \emph{x}))
-\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -4205,13 +3112,6 @@ logtest integer1 integer2
 
 \cdf{logtest} is a predicate that is true if any of
 the bits designated by the 1's in \emph{integer1} are 1's in \emph{integer2}.
-\begin{lisp}
-(logtest \emph{x} \emph{y}) \EQ\ (not (zerop (logand \emph{x} \emph{y})))
-\end{lisp}
-
-\cdf{logtest} является предикатом, который истинен, если любой бит определенный
-как 1 в \emph{integer1} также является соответствующим битом 1 в
-\emph{integer2}.
 \begin{lisp}
 (logtest \emph{x} \emph{y}) \EQ\ (not (zerop (logand \emph{x} \emph{y})))
 \end{lisp}
@@ -4231,18 +3131,6 @@ For example:
 \end{lisp}
 
 The \emph{index} must be a non-negative integer.
-
-Предикат \cdf{logbitp} является истиной, если бит в позиции \emph{index} в целом
-числе \emph{integer} (то есть, его вес $2^{index}$), является 1, иначе предикат
-ложен.
-Например:
-\begin{lisp}
-(logbitp 2 6) \textrm{is true} \\
-(logbitp 0 6) \textrm{is false} \\
-(logbitp \emph{k} \emph{n}) \EQ\ (ldb-test (byte 1 \emph{k}) \emph{n})
-\end{lisp}
-
-\emph{index} должен быть неотрицательным целым числом.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4265,24 +3153,6 @@ For example:
 \begin{lisp}
 (logbitp \emph{j} (ash \emph{n} \emph{k})) \EQ\ (and (>= \emph{j} \emph{k}) (logbitp (- \emph{j} \emph{k}) \emph{n}))
 \end{lisp}
-
-Если \emph{count} положительное число, данная функция арифметически сдвигает
-число \emph{integer} влево на количество бит \emph{count}. Если \emph{count}
-отрицательное число, функция сдвигает число \emph{integer} вправо.  
-Знак результата всегда такое же как и исходного числа \emph{integer}.
-
-Говоря математически, эта операция выполняет вычисления
-$\emph{floor}(\emph{integer}\cdot2^{count}$).
-
-Логически, функция перемещает все биты числа \emph{integer} влева, добавляя
-нулевый биты в конец, или вправо отбрасывая биты в конце числа. (В этом
-контексте вопрос о том, что сдвигается налево, не относится к делу. Целые
-числое, рассматриваемые как строки битов, являются <<полубесконечными>>,
-то есть концептуально расширяются бесконечно влево FIXME.)
-Например:
-\begin{lisp}
-(logbitp \emph{j} (ash \emph{n} \emph{k})) \EQ\ (and (>= \emph{j} \emph{k}) (logbitp (- \emph{j} \emph{k}) \emph{n}))
-\end{lisp}
 \end{defun}
 
 \begin{defun}[Function]
@@ -4301,25 +3171,6 @@ For example:
 (logcount -30) \EV\ 4~~~~~;\textrm{Binary representation is} ...1100010
 \end{lisp}
 The following identity always holds:
-\begin{lisp}
-(logcount x) \EQ\ (logcount (- (+ x 1))) \\
-~~~~~~~~~~~~~\EQ\ (logcount (lognot x))
-\end{lisp}
-
-Функция возвращает количество бит в числе \emph{integer}.
-Если \emph{integer} положительное число, тогда подсчитаны будут биты
-\cd{1}. Если число \emph{integer} отрицательно, то в два раза дополненной
-(two's-complement) бинарной форме будут подсчитаны биты
-\cd{0}. FIXME 
-Результатом всегда является неотрицательное целое число.
-Например:
-\begin{lisp}
-(logcount 13) \EV\ 3~~~~~~;\textrm{Бинарное представление} ...0001101 \\
-(logcount -13) \EV\ 2~~~~~;\textrm{Бинарное представление} ...1110011 \\
-(logcount 30) \EV\ 4~~~~~~;\textrm{Бинарное представление} ...0011110 \\
-(logcount -30) \EV\ 4~~~~~;\textrm{Бинарное представление} ...1100010
-\end{lisp}
-Следующее тождество всегда верно:
 \begin{lisp}
 (logcount x) \EQ\ (logcount (- (+ x 1))) \\
 ~~~~~~~~~~~~~\EQ\ (logcount (lognot x))
@@ -4353,49 +3204,16 @@ For example:
 (integer-length -7) \EV\ 3 \\
 (integer-length -8) \EV\ 3
 \end{lisp}
-
-Данная функция выполняет следующие вычисления
-\begin{tabbing}
-$ \emph{ceiling}(\log_2 ({\bf if}\; \emph{integer} < 0 \;{\bf then} \;
-    -\emph{integer} \;{\bf else}\; \emph{integer}+1)) $
-\end{tabbing}
-Эта функция полезна в двух случаях.
-Первое, если целое число \emph{integer} не отрицательно, тогда его значение
-может быть представлено в беззнаковой бинарной форме в поле, ширина которого в
-битах не меньше чем \cd{(integer-length \emph{integer})}.
-Второе, независимо от знака числа \emph{integer}, его значение может быть
-представлено как знаковая бинарная два раза дополненная (two's-complement) форма
-в поле, ширина которого в битах не меньше чем
- \cd{(+ (integer-length \emph{integer}) 1)}. FIXME
-Например:
-\begin{lisp}
-(integer-length 0) \EV\ 0 \\
-(integer-length 1) \EV\ 1 \\
-(integer-length 3) \EV\ 2 \\
-(integer-length 4) \EV\ 3 \\
-(integer-length 7) \EV\ 3 \\
-(integer-length -1) \EV\ 0 \\
-(integer-length -4) \EV\ 2 \\
-(integer-length -7) \EV\ 3 \\
-(integer-length -8) \EV\ 3
-\end{lisp}
 \end{defun}
 
 
-\section{Byte Manipulation Functions Функции для манипуляции с байтами}
+\section{Byte Manipulation Functions}
 
 Several functions are provided for dealing with an arbitrary-width field of
 contiguous bits appearing anywhere in an integer.
 Such a contiguous set of bits is called a \emph{byte}.
 Here the term \emph{byte} does not imply some fixed number of bits
 (such as eight), rather a field of arbitrary and user-specifiable width.
-
-Common Lisp содержит несколько функций для работы с полями смежных битов
-произвольной длины, находящимися где-нибудь в целом числе.
-Такое множество смежных битов называется \emph{байт}.
-В Common Lisp'е термин \emph{байт} не означает некоторое определенное количество
-бит (как например восемь), а обозначает поле произвольной, определяемой
-пользователем длины.
 
 The byte-manipulation functions use objects called \emph{byte specifiers} to
 designate a specific byte position within an integer.
@@ -4410,28 +3228,12 @@ Such a specifier designates a byte whose width is \emph{size}
 and whose bits have weights $ 2^{position+size-1} $
 through $ 2^{position} $.
 
-Функции обработки байтом используют объекты, называющиеся \emph{спецификаторы
-  байта} для определения заданной позиции байта в целом числе.
-Представление спецификтора байта зависит от реализации. В частности оно может
-быть или не быть числом.
-Достаточно знать, что функция \cdf{byte} будет создавать такой спецификатор, и
-что функция для обработки байта будет принимать его.
-Функция \cdf{byte} принимает два целых числа указывающих на \emph{позицию} и
-\emph{размер} байта и возвращает его спецификатор.
-Такой спецификатор определяет байт, у которого ширина равна \emph{размеру}, и
-биты которого имеют веса с $ 2^{position+size-1} $
-по $ 2^{position} $.
-
 \begin{defun}[Function]
 byte size position
 
 \cdf{byte} takes two integers representing the size and position
 of a byte and returns a byte specifier suitable for use
 as an argument to byte-manipulation functions.
-
-\cdf{byte} принимает два целых числа, указывающих на размер и позицию байта и
-возвращает спецификатор, который может использоваться в функциях работы с
-байтами.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4441,14 +3243,6 @@ byte-position bytespec
 Given a byte specifier, \cdf{byte-size} returns the size specified as an
 integer; \cdf{byte-position} similarly returns the position.
 For example:
-\begin{lisp}
-(byte-size (byte \emph{j} \emph{k})) \EQ\ \emph{j} \\
-(byte-position (byte \emph{j} \emph{k})) \EQ\ \emph{k}
-\end{lisp}
-
-Принимая спецификатор байта, \cdf{byte-size} возвращает размер указанного
-байта, а \cdf{byte-position} --- позицию этого байта.
-Например:
 \begin{lisp}
 (byte-size (byte \emph{j} \emph{k})) \EQ\ \emph{j} \\
 (byte-position (byte \emph{j} \emph{k})) \EQ\ \emph{k}
@@ -4473,20 +3267,6 @@ a byte within the integer that is stored
 in that \emph{place}.
 The effect is to perform a \cdf{dpb} operation
 and then store the result back into the \emph{place}.
-
-Спецификатор байта \emph{bytespec} указывает на байт, который будет извлечен из
-целого числа \emph{integer}.
-Результат возвращается в качестве неотрицательного целого числа.
-Например:
-\begin{lisp}
-(logbitp \emph{j} (ldb (byte \emph{s} \emph{p}) \emph{n})) \EQ\ (and (< \emph{j} \emph{s}) (logbitp (+ \emph{j} \emph{p}) \emph{n}))
-\end{lisp}
-Имя функции \cdf{ldf} озаначает <<load byte (загрузить байт)>>.
-
-Если аргумент \emph{integer} задан формой, которая может использоваться в
-\cdf{setf}, тогда \cdf{setf} может использоваться вместе с \cdf{ldb} для
-изменения байта в целом числе указанном в форме \emph{integer}.
-Это действие выполняется с помощью операции \cdf{dpb}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4495,14 +3275,6 @@ ldb-test bytespec integer
 \cdf{ldb-test} is a predicate that is true if any of
 the bits designated by the byte specifier \emph{bytespec} are 1's in \emph{integer};
 that is, it is true if the designated field is non-zero.
-\begin{lisp}
-(ldb-test \emph{bytespec} \emph{n}) \EQ\ (not (zerop (ldb \emph{bytespec} \emph{n})))
-\end{lisp}
-
-\cdf{ldb-test} является предикатом, который истинен, если любой из битов,
-указанных в спецификаторе байта \emph{bytespec}, в целом числе \emph{integer}
-имеет значение 1.
-Другими словами, предикат истинен, если указанное поле не равно нулю.
 \begin{lisp}
 (ldb-test \emph{bytespec} \emph{n}) \EQ\ (not (zerop (ldb \emph{bytespec} \emph{n})))
 \end{lisp}
@@ -4534,26 +3306,6 @@ to modify a byte within the integer that is stored
 in that \emph{place}.
 The effect is to perform a \cdf{deposit-field} operation
 and then store the result back into the \emph{place}.
-
-Функция похожа а \cdf{ldb}. Однако результат содержит указанный байт целого
-числа \emph{integer} в той же позиции, что указана в спецификаторе
-\emph{bytespec}, а не в нулевой позиции, как делает \cdf{ldb}.
-Таким образом результат в указанном байте совпадает с целым числом
-\emph{integer} , но в остальных местах имеет нулевый биты.
-Например:
-\begin{lisp}
-(ldb \emph{bs} (mask-field \emph{bs} \emph{n})) \EQ\ (ldb \emph{bs} \emph{n}) \\
- \\
-(logbitp \emph{j} (mask-field (byte \emph{s} \emph{p}) \emph{n})) \\
-~~~\EQ\ (and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s})) (logbitp \emph{j} \emph{n})) \\
- \\
-(mask-field \emph{bs} \emph{n}) \EQ\ (logand \emph{n} (dpb -1 \emph{bs} 0))
-\end{lisp}
-
-Если аргумент \emph{integer} задан формой, которая может использоваться в
-\cdf{setf}, тогда \cdf{setf} может использоваться вместе с \cdf{mask-field} для
-изменения байта в целом числе указанном в форме \emph{integer}.
-Это действие выполняется с помощью операции \cdf{deposit-field}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4573,20 +3325,6 @@ For example:
 \>(logbitp \emph{j} \emph{n}))
 \end{lisp}
 The name of the function \cdf{dpb} means ``deposit byte.''
-
-Данная функция возвращает число, которое похоже на \emph{integer} за исключением
- битов, указанных спецификатором \emph{bytespec.}. Пусть \emph{s} будет
- размером, указанным в спецификаторе \emph{bytespec}.
-Тогда целое число \emph{newbyte} будет интпретировано, будучи выровненным вправо,
-как если бы было результатом \cdf{ldb}.
-Например:
-\begin{lisp}
-(logbitp \emph{j} (dpb \emph{m} (byte \emph{s} \emph{p}) \emph{n})) \\
-~~\EQ\ (if \=(and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s}))) \\
-\>(logbitp (- \emph{j} \emph{p}) \emph{m}) \\
-\>(logbitp \emph{j} \emph{n}))
-\end{lisp}
-Имя функции \cdf{dpb} означает <<deposit byte (сохранить байт)>>.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4597,18 +3335,6 @@ The result is an integer that contains the bits of \emph{newbyte}
 within the byte specified by \emph{bytespec}, and elsewhere contains the bits
 of \emph{integer}.
 For example:
-\begin{lisp}
-(logbitp \emph{j} (deposit-field \emph{m} (byte \emph{s} \emph{p}) \emph{n})) \\
-~~~\EQ\ (if \=(and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s}))) \\
-\>(logbitp \emph{j} \emph{m}) \\
-\>(logbitp \emph{j} \emph{n}))
-\end{lisp}
-
-Данная функция относится к \cdf{mask-field} так же, как \cdf{dpb} относится к
-\cdf{ldb}.
-Результатом является целое число, которе содержит биты \emph{newbyte} в том
-месте, куда указывает спецификатор \emph{bytespec}, и биты числа \emph{integer}
-во всех остальных местах.
 \begin{lisp}
 (logbitp \emph{j} (deposit-field \emph{m} (byte \emph{s} \emph{p}) \emph{n})) \\
 ~~~\EQ\ (if \=(and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s}))) \\
@@ -4647,15 +3373,9 @@ interchanges those bits of \cdf{x} and \cdf{y} for which the mask \cdf{m} is
 \cd{0}.
 \end{implementation}
 \afternoterule
-
-\beforenoterule
-\begin{implementation}
-Если спецификатор \emph{bytespec} является константой, 
-\end{implementation}
-\afternoterule
 \end{defun}
 
-\section{Random Numbers Случаные числа}
+\section{Random Numbers}
 \label{RANDOM}
 
 The Common Lisp facility for generating pseudo-random numbers has
@@ -4664,11 +3384,6 @@ While two implementations may produce different series
 of pseudo-random numbers, the distribution of values should
 be relatively independent of such machine-dependent aspects
 as word size.
-
-Функциональность Common Lisp'а для генерации псевдослучайных чисел была
-аккуратно проработана, чтобы быть портируемой. Тогда как две реализации могут
-создавать различные ряды псевдослучайных чисел, распределение значений должно
-быть независимо от таких характеристик компьютера как размер слова.
 
 \begin{defun}[Function]
 random number &optional state
@@ -4687,20 +3402,6 @@ The argument \emph{state} must be an object of type \cdf{random-state};
 it defaults to the value of the variable \cdf{*random-state*}.
 This object is used to maintain the state of the pseudo-random-number
 generator and is altered as a side effect of the \cdf{random} operation.
-
-\cd{(random \emph{n})} принимает положительное число \emph{n} и возвращает число
-такого же типа между нулем (включительно) и \emph{n} (невключительно).
-Число \emph{n} может быть целым или с плавающей точкой.
-При этом используется приблизительно равномерное распределения. FIXME
-Если \emph{n} целое число, каждый из возможных результатов встречается с
-(примерной) вероятностью 1/\emph{n}.
-(Слово <<примерно>> используется из-за различий реализаций. На практике отклонение
-от однородности должно быть весьма мало.)
-
-Аргумент \emph{state} должен быть объектом типа \cdf{random-state}.
-По-умолчанию он равен значению переменной \cdf{*random-state*}.
-Объект используется для сохранения состояния псевдослучаночислового генератора и
-изменяется как побочное действие от операции \cdf{random}.
 
 \beforenoterule
 \begin{implementation}
@@ -4795,16 +3496,6 @@ correctly as a random-number state object in another implementation.
 A call to \cdf{random} will perform a side effect on this data structure.
 Lambda-binding this variable to a different random-number state object
 will correctly save and restore the old state object.
-
-Данная переменная содержит объект типа \cdf{random-state}, который хранит
-состояние для генератора случайных чисел, которое по-умолчанию используется 
-функцией \cdf{random}.
-Природа этой структуры данных зависит от реализации. Она может быть выведена на
-печать и считана обработно, но не обязательно это может быть сделано между
-реализациями.
-Вызов \cdf{random} изменяет этот объект.
-Связывание этой переменной с другим значением будет корректно сохраняться и
-восстанавиливаться.
 \end{defun}
 
 \begin{defun}[Function]
@@ -4818,16 +3509,6 @@ the variable \cdf{*random-state*}).  If \emph{state} is a state object,
 a copy of that state object is returned.  If \emph{state} is {\true},
 then a new state object is returned that has been ``randomly''
 initialized by some means (such as by a time-of-day clock).
-
-Данная функция возвращает новый объект типа \cdf{random-state}, подходящий для
-использования в качестве значения переменной \cdf{*random-state*}.
-Если \emph{state} не указано или равно {\false}, тогда \cdf{make-random-state}
-возвращает \emph{копию} текущего объекта состояния случаночислового генератора
-(значение переменной \cdf{*random-state*}). Если \emph{state} является объектом
-состояния, то возвращается копия данного объекта.
-Если \emph{state} равен {\true}, тогда новый возвращается новый объект
-состояния, который в некотором смысле <<случайно>> инициализирован (текущим
-временем например).
 
 \beforenoterule
 \begin{rationale}
@@ -4889,22 +3570,13 @@ and otherwise is false.
 \begin{lisp}
 (random-state-p \emph{x}) \EQ\ (typep \emph{x} 'random-state)
 \end{lisp}
-
-\cdf{random-state-p} истинен, если аргумент является объектом состояния
-генератора случайных чисел, иначе --- ложен.
-\begin{lisp}
-(random-state-p \emph{x}) \EQ\ (typep \emph{x} 'random-state)
-\end{lisp}
 \end{defun}
 
-\section{Implementation Parameters Параметры реализации}
+\section{Implementation Parameters}
 
 The values of the named constants defined in this section are
 implementation-dependent.  They may be useful for parameterizing
 code in some situations.
-
-Значение констант, определенный в этом разделе, зависят от реализации. В
-некоторых случаях они могут быть полезны для параметризации кода.
 
 \begin{defun}[Constant]
 most-positive-fixnum \\
@@ -4926,12 +3598,6 @@ of \cdf{most-negative-fixnum} must be less than or equal to $-2^{15}$,
 and the value of \cdf{most-positive-fixnum} must be greater than or equal to
 both $2^{15}-1$ and the value of \cdf{array-dimension-limit}.
 \end{new}
-
-Значением \cdf{most-positive-fixnum} является такое число, которое ближе всего
-к положительной бесконечности.
-
-Значением \cdf{most-negative-fixnum} является такое число, которое ближе всего
-к отрицательной бесконечности.
 \end{defun}
 
 \begin{defun}[Constant]
@@ -4944,27 +3610,15 @@ The value of \cdf{most-positive-short-float} is that short-format
 floating-point number closest in value to (but not equal to)
 positive infinity provided by the implementation.
 
-Значением \cdf{most-positive-short-float} является такое значение числа
-короткого формата с плавающей точкой, которое ближе всего к (но не равно)
-положительной бесконечности. 
-
 The value of \cdf{least-positive-short-float} is that positive short-format
 floating-point number closest in value to (but not equal to) zero provided by
 the implementation.
-
-Значением \cdf{least-positive-short-float} является такое значение числа
-короткого формата с плавающей точкой, которое ближе всего к (но не равно) нулю. 
 
 The value of \cdf{least-negative-short-float} is that negative short-format
 floating-point number closest in value to (but not equal to) zero provided by
 the implementation.  (Note that even if an implementation supports
 minus zero as a distinct short floating-point value,
 \cdf{least-negative-short-float} must not be minus zero.)
-
-Значением \cdf{least-negative-short-float} является такое значение числа
-короткого формата с плавающей точкой, которое ближе всего к (но не равно) нулю
-слева. (Следует отметить, что если разработчики поддерживают минус ноль, то
-значение данной константы не может ему равняться.) 
 
 \begin{newer}
 X3J13 voted in June 1989 \issue{FLOAT-UNDERFLOW}
@@ -4977,10 +3631,6 @@ the values of \cdf{least-positive-short-float} and
 The value of \cdf{most-negative-short-float} is that short-format
 floating-point number closest in value to (but not equal to)
 negative infinity provided by the implementation.
-
-Значением \cdf{most-negative-short-float} является такое значение числа
-короткого формата с плавающей точкой, которое ближе всего к (но не равно)
-отрицательной бесконечности. 
 \end{defun}
 
 \begin{defun}[Constant]
@@ -4999,14 +3649,10 @@ most-negative-long-float
 
 These are analogous to the constants defined above for short-format
 floating-point numbers.
-
-Данные константы аналогичны предыдущим, но указывают на другие форматы чисел с
-плавающей точкой.
 \end{defun}
 
 \bigskip
 
-\begin{newer}
 \begin{defun}[Constant]
 least-positive-normalized-short-float \\
 least-negative-normalized-short-float
@@ -5029,21 +3675,6 @@ minus zero as a distinct short floating-point value,
 \cdf{least-negative-normalized-short-float} must not be minus zero.)
 In implementations that do not support denormalized numbers
 this may be the same as the value of \cdf{least-positive-short-float}.
-
-Значением \cdf{least-positive-normalized-short-float} является такое
-положительное нормализованное число в коротком формате с плавающей запятой,
-которое ближе всего к (но не равно) нулю. В реализации, которая не поддерживает
-денормализованные числа, может равнятся тому же, что и
-\cdf{least-positive-short-float}. 
-
-Значением \cdf{least-positive-normalized-short-float} является такое
-отрицательное нормализованное число в коротком формате с плавающей запятой,
-которое ближе всего к (но не равно) нулю. 
-(Следует отметить, что если реализация поддерживает минус ноль, то данная
-константа должна ему равняться.)
-В реализации, которая не поддерживает
-денормализованные числа, может равнятся тому же, что и
-\cdf{least-negative-short-float}. 
 \end{defun}
 
 \begin{defun}[Constant]
@@ -5056,11 +3687,7 @@ least-negative-normalized-long-float
 
 These are analogous to the constants defined above for short-format
 floating-point numbers.
-
-Данные константы аналогичны предыдущим, но указывают на другие форматы чисел с
-плавающей точкой.
 \end{defun}
-\end{newer}
 
 \begin{defun}[Constant]
 short-float-epsilon \\
@@ -5075,14 +3702,6 @@ the expression
 (not (= (float 1 \emph{e}) (+ (float 1 \emph{e}) \emph{e})))
 \end{lisp}
 is true when actually evaluated.
-
-Эти константы для каждого формата с плавающей точкой содержат наименьшее
-натуральное число с плавающей точкой \emph{e}, такое что при вычислении
-выражение
-\begin{lisp}
-(not (= (float 1 \emph{e}) (+ (float 1 \emph{e}) \emph{e})))
-\end{lisp}
-истинно.
 \end{defun}
 
 \begin{defun}[Constant]
@@ -5098,6 +3717,1783 @@ the expression
 (not (= (float 1 \emph{e}) (- (float 1 \emph{e}) \emph{e})))
 \end{lisp}
 is true when actually evaluated.
+\end{defun}
+
+\else % RUSSIAN
+
+\chapter{Числа}
+\label{NUMBER}
+
+Common Lisp содержит несколько различных представлений для чисел.
+Эти представления могут быть разделены на четыре категории: целые, дробные, с
+плавающей точкой и комплексные. Большинство функций принимают любой тип
+числа. Некоторые другие --- только определённый тип.
+
+В целом числа в Common Lisp'е не является объектами в прямом понимании
+слова. Нельзя полагаться, например, на использование \cdf{eq} для чисел. В
+частности, возможно, что значение выражения
+\begin{lisp}
+(let ((x z) (y z)) (eq x y))
+\end{lisp}
+может быть ложным, а не истинным, если значение \cdf{z} является числом.
+
+Если два объекта сравниваются для <<идентичности>>, но один из может быть
+числом, то использование предиката \cdf{eql} является более подходящим.
+Если оба объекта являются числами, то преимущество стоит отдать \cdf{=}.
+
+\section{Точность, неявное приведение и явное приведение}
+\label{PRECISION-CONTAGION-COERCION-SECTION}
+
+Вычисления с числами с плавающей точкой являются приблизительными.
+\emph{Точность} чисел с плавающей точкой не обязательно коррелирует с
+\emph{<<аккуратностью>>} числа.
+Например, 3.142857142857142857 имеет более точное приближение к $pi$ чем
+3.14159, но последнее число более <<аккуратно>>.
+Точность указывает на количество бит используемых при представлении числа.
+Если операция объединяла числа с плавающей точкой короткого формата и длинного,
+то результат будет иметь длинный формат. Это правило создано для уверенности,
+что при вычислениях аккуратности будет как можно больше. Однако это не
+гарантированно.
+Однако, численные процедуры Common Lisp'а предполагают, что аккуратность
+аргумента не превышает его точность. Поэтому, когда объединяются два 
+числа с плавающей точкой небольшой точности, результатом всегда будет число с
+плавающей точкой небольшой точности.
+Это предположение может быть изменено первым же явным преобразованием
+число с плавающей точкой в более точное представление.
+(Common Lisp никогда не преобразует числа из более точного формата в менее точный.)
+
+Вычисления рациональных чисел не может вызвать переполнения в обычном смысле
+этого слова (хотя, конечно, может быть возникнуть недостаток места для
+представления), целые и дробные числа в принципе могут быть любой величины.
+Вычисления с плавающей точкой могут вызвать переполнение экспоненты. Это
+является ошибкой.
+
+Когда числовой функцией между собой сравниваются или объединяются рациональное и
+число с плавающей точкой, то вступает в силу правило \emph{неявного приведения к
+ плавающей точке}.
+Когда рациональное встречает число с плавающей точкой, то рациональное
+преобразуется в тот же формат второго числа.
+Для функций, например \cdf{+}, которые принимает более двух аргументов, может
+быть, что все рациональные будут вычислены и результат будет преобразован в
+число с плавающей точкой.
+
+Для функций, которые математически ассоциативны (и возможно коммутативны),
+реализация Common Lisp'а может обрабатывать аргументы любым подходящим методом с
+ассоциативной (и возможно коммутативной) перестановкой.
+Это конечно не влияет на порядок вычисления форм, данный порядок всегда слева
+направо, как и во всех Common Lisp'овых вызовах функций. Порядок, который может
+быть изменён, это обработка значений аргументов.
+Смысл всего этого в том, что реализация может отличаться в том, какие
+автоматические приведения типов и в каком порядке производятся. Например,
+рассмотрим выражение:
+\begin{lisp}
+(+ 1/3 2/3 1.0D0 1.0 1.0E-15)
+\end{lisp}
+Одна реализация может обрабатывать аргументы слева направо, складывая сначала
+\cd{1/3} и \cd{2/3} для получения \cd{1}, затем преобразовывая результат в число
+с плавающей точкой двойной точности для сложения с \cd{1.0D0}, затем
+преобразовывая и добавляя \cd{1.0} и \cd{1.0E-15}. Другая реализация может
+обрабатывать значения аргументов справа налево, сначала выполняя сложение чисел
+с плавающей точкой \cdf{1.0} и \cd{1.0E-15} (и возможно теряя аккуратность в
+процессе!), затем преобразовывая результат в число двойной точности и прибавляя
+\cd{1.0D0}, затем преобразовывая \cd{2/3} к числу с плавающей точкой двойной
+точности, и затем преобразовывая \cd{1/3} и добавляя его.
+Третья реализация может сначала просканировать все аргументы, и сгруппировав их
+по типам, выполнить сложения сначала одинаковых типов, затем преобразовать
+результаты к наиболее точному типу и сложить их. В этом случае все три стратегии
+являются допустимыми. Пользователь конечно может контролировать порядок
+обработки аргументов явно задавая вызовы вычислений, например:
+\begin{lisp}
+(+ (+ 1/3 2/3) (+ 1.0D0 1.0E-15) 1.0)
+\end{lisp}
+Пользователь может также контролировать приведения, явно используя  для этого
+функцию.
+
+В целом, тип результата числовой функции является числом с плавающей точкой
+наиболее точного формата, который был в аргументах данной функции.
+Но если все аргументы были рационального типа, тогда результат будет
+рациональным (за исключением функций, который математически возвращают
+иррациональные результаты, в случае который используется одинарная точность с
+плавающей точкой) 
+
+Другое правило для комплексных чисел.
+Комплексные числа никогда не возвращаются из числовых функций, если только в
+аргументах не было использовано хоть одно комплексное число. (Исключением из
+этого правила являются иррациональные и трансцендентальные функции, в частности
+\cdf{expt}, \cdf{log}, \cdf{sqrt}, \cdf{asin}, \cdf{acos}, \cdf{acosh} и
+\cdf{atanh}. Смотрите раздел~\ref{TRANSCENDENTAL-SECTION}.)
+Когда некомплексное число встречает комплексно, то первое сначала конвертируется
+во второе с нулевой мнимой частью, а потом вычисляется результат.
+
+Если любое вычисление привело к дробному результату, в котором числитель
+нацело делится на знаменатель, то результат немедленно преобразуется к
+эквивалентному целому числу. Это правило называется \emph{канонизацией дробей}.
+
+Если результат любого вычисления должен быть комплексным числом с рациональными
+частями и нулевой мнимой частью, то результат немедленно преобразуется в
+некомплексное рациональное число и равен действительной части исходного.
+Это называется правилом \emph{канонизации комплексного числа}.
+Следует отметить, что это правило \emph{не} применяется к комплексным числам с
+компонентами из чисел с плавающими точками. Таким образом \cd{\#C(5 0)} и \cd{5}
+равны \cdf{eql}, а \cd{\#C(5.0 0.0)} и \cd{5.0} не равны \cdf{eql}, но равны
+\cdf{equalp}.
+
+\section{Предикаты для чисел}
+
+Каждая из следующих функций проверяет одиночное число на наличие некоторого
+свойства.
+Каждая функция требует числовой аргумент. Вызов с аргументом другого типа
+является ошибкой.
+
+\begin{defun}[Функция]
+zerop number
+
+Если \emph{number} является нулём (целым нулём, нулём с
+плавающей точкой, комплексным нулём), этот предикат истинен, иначе ложен.
+Вне зависимости от того, предоставляет различные представления для
+положительного и отрицательного нулей система, \cd{(zerop -0.0)} всегда истинно.
+Если аргумент \emph{number} не является числом, то сигнализируется ошибка.
+\end{defun}
+
+\begin{defun}[Функция]
+plusp number
+
+Если \emph{number} строго больше нуля, то предикат истинен, иначе ложен.
+Аргумент \emph{number} должен быть любым числом, кроме комплексного, иначе
+сигнализируется ошибка. 
+\end{defun}
+
+\begin{defun}[Функция]
+minusp number
+
+Если \emph{number} строго меньше нуля, то предикат истинен, иначе ложен.
+Вне зависимости от того, предоставляет ли система различные отображения для
+отрицательного и положительного нулей с плавающей точкой, \cd{(minusp -0.0)}
+всегда ложно.
+(Для проверки отрицательного нуля, может использоваться функция
+\cdf{float-sign}.)
+Аргумент \emph{number} должен быть любым числом, кроме комплексного, иначе
+сигнализируется ошибка. 
+\end{defun}
+
+\begin{defun}[Функция]
+oddp integer
+
+Если аргумент \emph{integer} является нечётным числом (то есть не делится на два
+нацело), то предикат истинен, иначе ложен.
+Если аргумент не целое число, сигнализируется ошибка.
+\end{defun}
+
+\begin{defun}[Функция]
+evenp integer
+
+Если аргумент \emph{integer} является чётным числом (то есть делится на два
+нацело), то предикат истинен, иначе ложен.
+Если аргумент не целое число, сигнализируется ошибка.
+\end{defun}
+
+Смотрите также предикаты типов данных \cdf{integerp},
+\cdf{rationalp}, \cdf{floatp}, \cdf{complexp} и \cdf{numberp}.
+
+\section{Сравнение чисел}
+
+Каждая функция из данного раздела требует, чтобы все аргументы были
+числами. Использование в качестве аргумента не числа является ошибкой. Если не
+указано иное, то каждая функция работает со всеми типами чисел, автоматически
+выполняя необходимые приведения, когда типы аргументы различаются.
+
+\begin{defun}[Функция]
+= number &rest more-numbers \\
+/= number &rest more-numbers \\
+< number &rest more-numbers \\
+> number &rest more-numbers \\
+<= number &rest more-numbers \\
+>= number &rest more-numbers
+Каждая из этих функций принимает один и более аргументов. Если последовательно
+аргументов удовлетворяет следующему условию:
+
+\begin{tabbing}
+\hskip 5pc\=\kill
+\cdf{=}\>все равны \\
+\cdf{/=}\>все различны \\
+\cdf{<}\>монотонно возрастают \\
+\cdf{>}\>монотонно убывают \\
+\cdf{<=}\>монотонно не убывают \\
+\cdf{>=}\>монотонно не возрастают
+\end{tabbing}
+
+тогда предикат истинен, иначе ложен.
+Комплексные числа могут сравниваться с помощью \cdf{=} и \cdf{/=}, но остальные
+предикаты требуют некомплексных аргументов.
+Два комплексных числа равны \cdf{=}, если их действительные части равны между
+собой и мнимые равны между собой с помощью предиката \cdf{=}.
+Комплексное число может быть сравнено с некомплексным с помощью \cdf{=} или
+\cdf{/=}.
+Например
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+(= 3 3) \textrm{истина}\>(/= 3 3) \textrm{ложь} \\
+(= 3 5) \textrm{ложь}\>(/= 3 5) \textrm{истина} \\
+(= 3 3 3 3) \textrm{истина}\>(/= 3 3 3 3) \textrm{ложь} \\
+(= 3 3 5 3) \textrm{ложь}\>(/= 3 3 5 3) \textrm{ложь} \\
+(= 3 6 5 2) \textrm{ложь}\>(/= 3 6 5 2) \textrm{истина} \\
+(= 3 2 3) \textrm{ложь}\>(/= 3 2 3) \textrm{ложь} \\
+(< 3 5) \textrm{истина}\>(<= 3 5) \textrm{истина} \\
+(< 3 -5) \textrm{ложь}\>(<= 3 -5) \textrm{ложь} \\
+(< 3 3) \textrm{ложь}\>(<= 3 3) \textrm{истина} \\
+(< 0 3 4 6 7) \textrm{истина}\>(<= 0 3 4 6 7) \textrm{истина} \\
+(< 0 3 4 4 6) \textrm{ложь}\>(<= 0 3 4 4 6) \textrm{истина} \\
+(> 4 3) \textrm{истина}\>(>= 4 3) \textrm{истина} \\
+(> 4 3 2 1 0) \textrm{истина}\>(>= 4 3 2 1 0) \textrm{истина} \\
+(> 4 3 3 2 0) \textrm{ложь}\>(>= 4 3 3 2 0) \textrm{истина} \\
+(> 4 3 1 2 0) \textrm{ложь}\>(>= 4 3 1 2 0) \textrm{ложь} \\
+(= 3) \textrm{истина}\>(/= 3) \textrm{истина} \\
+(< 3) \textrm{истина}\>(<= 3) \textrm{истина} \\
+(= 3.0 \#C(3.0 0.0)) \textrm{истина}\>(/= 3.0 \#C(3.0 1.0)) \textrm{истина} \\
+(= 3 3.0) \textrm{истина}\>(= 3.0s0 3.0d0) \textrm{истина} \\
+(= 0.0 -0.0) \textrm{истина}\>(= 5/2 2.5) \textrm{истина} \\
+(> 0.0 -0.0) \textrm{ложь}\>(= 0 -0.0) \textrm{истина}
+\end{lisp}
+С двумя аргументами, эти функции выполняют обычные арифметические сравнения.
+С тремя и более аргументами, они полезны для проверок рядов, как показано в
+следующем примере:
+\begin{lisp}
+(<= 0 x 9)~~~~~~~~~~~~~~~~~~~~~~;\textrm{истина, если \cdf{x} между 0 и 9, включительно} \\
+(< 0.0 x 1.0)~~~~~~~~~~~~~~~~~~~;\textrm{истина, если \cdf{x} между 0.0 и 1.0} \\
+(< -1 j (length s))~~~~~~~~~~~~~;\textrm{истина, если \cdf{j} корректный индекс для \cdf{s}} \\
+(<= 0 j k (- (length s) 1))~~~~~;\textrm{истина, если \cdf{j} и \cdf{k} оба корректные} \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{индексы \cdf{s} и $\cdf{j}\leq\cdf{k}$}
+\end{lisp}
+
+\beforenoterule
+\begin{rationale}
+Отношение <<неравенства>> называется \cdf{/=}, а не \cd{<>} (как в Pascal'е) по
+двум причинам. Первое, \cdf{/=} для более чем двух аргументов не означает то же,
+что и \cd{или} \cd{<}, или \cd{>}. Второе, неравенство для комплексная не
+означает то же, что и \cd{<} и \cd{>}. По этим двум причинам неравенство не
+означает больше или меньше.
+\end{rationale}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Функция]
+max number &rest more-numbers \\
+min number &rest more-numbers
+
+Аргументы могут быть некомплексными числами.
+\cdf{max} возвращает наибольший аргумент (ближайший к положительной
+бесконечности).
+\cdf{max} возвращает наименьший аргумент (ближайший к отрицательной
+бесконечности).
+
+Для \cdf{max}, если аргументы являются смесью из дробных и с плавающей точкой
+чисел, и наибольший является дробным, реализация может вернуть как дробное
+число, так и его аппроксимацию с плавающей точкой.
+Если наибольший аргумент является числом с плавающей точкой меньшего формата в
+сравнении с числом большего формата, то реализация может вернуть число без
+изменения, либо конвертировать его в больший формат.
+More concisely, the implementation has the choice of returning the largest
+argument as is or applying the rules of floating-point contagion,
+taking all the arguments into consideration for contagion purposes.
+Если среди наибольших два аргумента равны, то реализация может вернуть любой из
+них.
+Те же правила применяются и ко второй функции \cdf{min} (только <<наибольший
+аргумент>> нужно заменить на <<наименьший аргумент>>).
+
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+(max 6 12) \EV\ 12\>(min 6 12) \EV\ 6 \\
+(max -6 -12) \EV\ -6\>(min -6 -12) \EV\ -12 \\
+(max 1 3 2 -7) \EV\ 3\>(min 1 3 2 -7) \EV\ -7 \\
+(max -2 3 0 7) \EV\ 7\>(min -2 3 0 7) \EV\ -2 \\
+(max 3) \EV\ 3\>(min 3) \EV\ 3 \\
+(max 5.0 2) \EV\ 5.0\>(min 5.0 2) \EV\ 2 \emph{или} 2.0 \\
+(max 3.0 7 1) \EV\ 7 \emph{или} 7.0\>(min 3.0 7 1) \EV\ 1 \emph{или} 1.0 \\
+(max 1.0s0 7.0d0) \EV\ 7.0d0 \\
+(min 1.0s0 7.0d0) \EV\ 1.0s0 \emph{или} 1.0d0 \\
+(max 3 1 1.0s0 1.0d0) \EV\ 3 \emph{или} 3.0d0 \\
+(min 3 1 1.0s0 1.0d0) \EV\ 1 \emph{или} 1.0s0 \emph{или} 1.0d0
+\end{lisp}
+\end{defun}
+
+\section{Арифметические операции}
+
+Каждая из функций в этом разделе в качестве аргументов принимает числа. Применение
+какой-либо из них к нечисловому аргументу является ошибкой. Каждая из них
+работает со всеми типами чисел, автоматически приводя типы для различных
+аргументов, если не указано иное.
+
+\begin{defun}[Функция]
++ &rest numbers
+
+Данная функция возвращает сумму всех аргументов. Если аргументов не было,
+результатом является \cd{0}.
+\end{defun}
+
+\begin{defun}[Функция]
+- number &rest more-numbers
+
+Функция \cdf{-} при использовании с одним аргументом возвращает отрицательное
+значение для этого аргумента.
+
+Функция \cdf{-} при использовании с более чем одним аргументом вычитает из
+первого аргумента все остальные и возвращает результат.
+Например, \cd{(- 3 4 5)} \EV\ \cd{-6}.
+\end{defun}
+
+\begin{defun}[Функция]
+* &rest numbers
+
+Функция возвращает произведение всех аргументов.
+Если вызывается без аргументов, тогда возвращает \cd{1}.
+\end{defun}
+
+\begin{defun}[Функция]
+/ number &rest more-numbers
+
+Функция \cdf{/} при использовании с более чем одним аргументом производит
+деление первого аргумента на все остальные значения и возвращает полученный
+результат.
+
+Ноль может использоваться только для первого аргумента.
+
+Для одного аргумента \cdf{/} возвращает обратное значение. В таком случае ноль в
+первом аргументе недопустим.
+
+Если математическое отношение двух целых
+чисел не является целым числом, \cdf{/} вернёт дробный тип. 
+Например:
+\begin{lisp}
+(/ 12 4) \EV\ 3 \\
+(/ 13 4) \EV\ 13/4 \\
+(/ -8) \EV\ -1/8 \\
+(/ 3 4 5) \EV\ 3/20
+\end{lisp}
+
+Для целочисленного деления используйте одну из функций  
+\cdf{floor}, \cdf{ceiling}, \cdf{truncate}
+или \cdf{round}.
+
+Если один из аргументов является числом с плавающей точкой, тогда применяются
+правила обработки чисел с плавающей точкой.
+\end{defun}
+
+\begin{defun}[Функция]
+1+ number \\
+1- number
+
+\cd{(1+ \emph{x})} является тем же самым, что \cd{(+ \emph{x} 1)}.
+\cd{(1- \emph{x})} является тем же самым, что \cd{(- \emph{x} 1)}.
+Следует отметить, что короткое имя может ввести в заблуждение: 
+\cd{(1- \emph{x})} \emph{не значит} то же, что и $1-\emph{x}$.
+\end{defun}
+
+\begin{defmac}
+incf place [delta] \\
+decf place [delta]
+
+Значение обобщённой переменной \emph{place} увеличивается (\cdf{incf}) или
+уменьшается (\cdf{decf}) на значение формы
+\emph{delta} и затем присваивается переменной \emph{place}.
+Результатом формы является присвоенное значение.
+Форма \emph{place} может быть любой формой подходящей для \cdf{setf}.
+Если форма \emph{delta} не указана, тогда число в \emph{place} изменяется на
+\cd{1}.
+Например:
+\begin{lisp}
+\hskip 9pc\=\kill
+(setq n 0) \\
+(incf n) \EV\ 1\>\textrm{and now} n \EV\ 1 \\
+(decf n 3) \EV\ -2\>\textrm{and now} n \EV\ -2 \\
+(decf n -5) \EV\ 3\>\textrm{and now} n \EV\ 3 \\
+(decf n) \EV\ 2\>\textrm{and now} n \EV\ 2
+\end{lisp}
+Результат \cd{(incf \emph{place} \emph{delta})} примерно эквивалентен
+\begin{lisp}
+(setf \emph{place} (+ \emph{place} \emph{delta}))
+\end{lisp}
+за исключением того, что в последнем случае \emph{place} вычисляется дважды,
+тогда как \cdf{incf} гарантирует, что вычисление \emph{place} будет выполнено
+только один раз.
+Более того, для некоторых форма \emph{place} \cdf{incf} может быть
+эффективнее чем \cdf{setf}.
+\end{defmac}
+
+\begin{defun}[Функция]
+conjugate number
+
+Функция возвращает комплексное сопряжение с числа \emph{number}. 
+Сопряжением некомплексного числа является само число. Для комплексного числа
+\cdf{z},
+\begin{lisp}
+(conjugate z) \EQ\ (complex (realpart z) (- (imagpart z)))
+\end{lisp}
+Например,
+\begin{lisp}
+(conjugate \#C(3/5 4/5)) \EV\ \#C(3/5 -4/5) \\
+(conjugate \#C(0.0D0 -1.0D0)) \EV\ \#C(0.0D0 1.0D0) \\
+(conjugate 3.7) \EV\ 3.7
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+gcd &rest integers
+
+Функция возвращает наибольший общий делитель всех аргументов, которые в свою
+очередь должны быть целыми числами. Результатом \cdf{gcd} всегда является
+неотрицательное целое число.
+Если передан только один параметр, то возвращается его абсолютное значение
+(модуль).
+Если ни один параметр не был передан, \cdf{gcd} возвращает \cd{0}.
+Для трёх и более аргументов,
+\begin{lisp}
+(gcd \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (gcd (gcd \emph{a} \emph{b}) \emph{c} ... \emph{z})
+\end{lisp}
+
+Несколько примеров использования \cdf{gcd}:
+\begin{lisp}
+(gcd 91 -49) \EV\ 7 \\
+(gcd 63 -42 35) \EV\ 7 \\
+(gcd 5) \EV\ 5 \\
+(gcd -4) \EV\ 4 \\
+(gcd) \EV\ 0
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+lcm integer &rest more-integers
+
+Функция возвращает наименьшее общее кратное для аргументов, которые в свою
+очередь должны быть целыми числами.
+Результатом \cdf{lcm} всегда является неотрицательное целое число.
+Для двух аргументов, не являющихся нулями,
+\begin{lisp}
+(lcm \emph{a} \emph{b}) \EQ\ (/ (abs (* \emph{a} \emph{b})) (gcd \emph{a} \emph{b}))
+\end{lisp}
+Если один или оба аргумента является нулём.
+\begin{lisp}
+(lcm \emph{a} 0) \EQ\ (lcm 0 \emph{a}) \EQ\ 0
+\end{lisp}
+
+Для одного аргумента, \cdf{lcm} возвращает абсолютное значение этого аргумента
+(модуль). 
+Для трёх и более аргументов,
+\begin{lisp}
+(lcm \emph{a} \emph{b} \emph{c} ... \emph{z}) \EQ\ (lcm (lcm \emph{a} \emph{b}) \emph{c} ... \emph{z})
+\end{lisp}
+
+Примеры использования:
+\begin{lisp}
+(lcm 14 35) \EV\ 70 \\
+(lcm 0 5) \EV\ 0 \\
+(lcm 1 2 3 4 5 6) \EV\ 60
+\end{lisp}
+
+%Математически \cd{(lcm)} должна возвращать бесконечность. Но так как Common Lisp
+%не имеет представления для бесконечности, \cdf{lcm}, в отличие от \cdf{gcd},
+%всегда требует как минимум одного аргумента.
+
+\cdf{lcm}, вызванная без аргументов, возвращает \cd{1}.
+\begin{lisp}
+(lcm)~\EV~1
+\end{lisp}
+\end{defun}
+
+\section{Иррациональные и трансцендентные функции}
+\label{TRANSCENDENTAL-SECTION}
+
+Common Lisp не содержит тип данных, который точно отображает иррациональные
+числовые значения.
+В данном разделе функции описаны так, как если бы результаты были математически
+точными, но фактически все они возвращают число с плавающей точкой
+приблизительно равное настоящему математическому значению.
+В некоторых местах изложены математические тождества, связанные со значениями
+функций, однако, два математически идентичных выражения могут быть различными
+по причине ошибок процесса аппроксимации при вычислениях чисел с плавающей
+точкой.
+
+Когда все аргументы для функции данного раздела являются рациональными и Ъ
+математический результат также является (математически) рациональным, тогда,
+если не указано иное, реализация может вернуть или точный результат типа
+\cdf{rational} или приближенное значение с плавающей точкой одинарной точности.
+Если все аргументы рациональны, но результат не может быть рациональным, тогда
+возвращается число с плавающей точкой одинарной точности.
+
+Если все переданные в функцию аргументы принадлежат типу \cd{(or~rational
+  (complex rational))} и Ъ математический результат является (математически)
+комплексным числом с рациональными действительной и мнимой частями, тогда, если
+не указано иное, реализация может вернуть или точный результат типа \cd{(or
+  rational (complex rational))} или приближенный типа с плавающей точкой с
+одинарной точностью \cdf{single-float} (только если мнимая часть равна нулю) или 
+ \cd{(complex single-float)}.
+Если все аргументы типа \cd{(or~rational (complex rational))}, но результат не
+может быть выражен рациональными или комплексным рациональным числом, тогда он
+будет принадлежать типу \cdf{single-float} (только если мнимая часть равна нулю)
+или \cd{(complex single-float)}.
+
+Все функции за исключением \cdf{expt} подчиняются правилам неявного приведения
+плавающей точки или комплексного числа. Когда, возможно после приведения типов,
+все аргументы становятся с плавающей точкой или комплексным числом с плавающей
+точкой, тогда результат будет такого же типа, что и аргумента, если не указано
+иное.
+
+\beforenoterule
+\begin{implementation}
+Для понимания работы функций из данного раздела может быть полезной <<поваренная
+книга чисел с плавающей точкой>> от Cody и Waite~\cite{CODY-AND-WAITE}.
+\end{implementation}
+\afternoterule
+
+\subsection{Экспоненциальные и логарифмические функции}
+
+Наряду с обычными одно-аргументными и двух-аргументными экспоненциальными и
+логарифмическими функциями, \cdf{sqrt} рассматривается как экспоненциальная
+функция, потому что она возводит число в степень 1/2.
+
+\begin{defun}[Функция]
+exp number
+
+Возвращает \emph{е}, возведённое в степень \emph{number},
+где \emph{е} является основанием натурального логарифма.
+\end{defun}
+
+\begin{defun}[Функция]
+expt base-number power-number
+
+Возвращает \emph{base-number}, возведённый в степень \emph{power-number}.
+Если \emph{base-number} принадлежит типу \cdf{rational} и \emph{power-number}
+--- \cdf{integer}, тогда результат вычислений будет принадлежать типу
+\cdf{rational}, в противном случае результат будет приближенным числом с
+плавающей точкой.
+
+Если \emph{power-number} равен \cd{0} (ноль целочисленного типа), тогда
+результат всегда будет значение 1, такого же типа что и \emph{base-number}, даже
+если \emph{base-number} равен нулю (любого типа). То есть:
+\begin{lisp}
+(expt \emph{x} 0) \EQ\ (coerce 1 (type-of \emph{x}))
+\end{lisp}
+Если \emph{power-number} является нулём любого другого типа данных, тогда
+результат также равен 1 такого же типа, что и аргументы после применения правил
+приведения числовых типов, с одним условием:
+если \emph{base-number} равен нулю, когда \emph{power-number} является
+нецелочисленным нулём, то это является ошибкой.
+
+Реализация \cdf{expt} может использовать различные алгоритмы для случаев с
+рациональным и с плавающей точкой аргументом \emph{power-number}. Суть в том,
+что в большинстве случаев боле аккуратный результат может быть достигнут для
+рационального \emph{power-number}.
+Например, \cd{(expt pi 16)} и  \cd{(expt pi 16.0)} могут вернуть слегка разные
+результаты, если в первом случае алгоритм <<повторных квадратов>>, а во втором
+использование логарифмов.
+
+Результатом \cdf{expt} может быть комплексное число, даже если ни один аргумент
+не был комплексным. Такой результат получается если \emph{base-number}
+отрицательное число и \emph{power-number} не является целочисленным.
+Следует отметить, что  \cd{(expt -8 1/3)} не может вернуть \cd{-2}, хотя и
+\cd{-2} несомненно является одним из кубических корней для \cd{-8}, но основным
+корнем является аппроксимированное комплексное число \cd{\#C(1.0 1.73205)}.
+\end{defun}
+
+\begin{defun}[Функция]
+log number &optional base
+
+Функция возвращает логарифм числа \emph{number} c основанием \emph{base},
+которое по умолчанию равно \emph{e} (эпсилон, основание для натурального
+логарифма).
+Например:
+\begin{lisp}
+(log 8.0 2) \EV\ 3.0 \\
+(log 100.0 10) \EV\ 2.0
+\end{lisp}
+В зависимости от реализации, результатом \cd{(log 8 2)} может быть как \cd{3},
+так и \cd{3.0}.
+Например:
+\begin{lisp}
+(log -1.0) \EQ\ (complex 0.0 (float pi 0.0))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+sqrt number
+
+Функция возвращает квадратный корень числа \emph{number}.
+Если \emph{number} не является комплексным числом и отрицательно, тогда
+результат будет комплексным числом.
+Например:
+\begin{lisp}
+(sqrt 9.0) \EV\ 3.0 \\
+(sqrt -9.0) \EV\ \#c(0.0 3.0)
+\end{lisp}
+В зависимости от реализации результат \cd{(sqrt 9)} может быть как \cd{3}, так и
+\cd{3.0}. Результат \cd{(sqrt -9)} может быть как \cd{\#(0 3)} или \cd{\#c(0.0
+  3.0)}.
+\end{defun}
+
+\begin{defun}[Функция]
+isqrt integer
+
+Целочисленный квадратный корень: аргумент должен быть неотрицательным целым, и
+результат является наибольшим целым числом, которое меньше или равно точному
+положительному квадратному корню аргумента.
+\begin{lisp}
+(isqrt 9) \EV\ 3 \\
+(isqrt 12) \EV\ 3 \\
+(isqrt 300) \EV\ 17 \\
+(isqrt 325) \EV\ 18
+\end{lisp}
+\end{defun}
+
+\subsection{Тригонометрические и связанные с ними функции}
+
+Некоторые из функций в данном разделе, такие как \cdf{abs} и \cdf{signum},
+несомненно не относятся к тригонометрическим функциям, когда рассматриваются
+как функции только для действительных чисел. Однако, путь, с помощью которого
+они расширены для операций на комплексных числах, делает их связь с
+тригонометрическими функциями явной.
+
+\begin{defun}[Функция]
+abs number
+
+Возвращает абсолютное значение аргумента. Для некомплексных чисел \emph{x}, 
+\begin{lisp}
+(abs \emph{x}) \EQ\ (if (minusp \emph{x}) (- \emph{x}) \emph{x})
+\end{lisp}
+и результат всегда имеет тот же тип, что и аргумент.
+
+Для комплексных чисел \emph{z}, абсолютное значение может быть вычислено как
+\begin{lisp}
+(sqrt (+ (expt (realpart \emph{z}) 2) (expt (imagpart \emph{z}) 2)))
+\end{lisp}
+
+\beforenoterule
+\begin{implementation}
+Аккуратные разработчики не будут напрямую использовать эту формулу для всех
+комплексных чисел. Очень большие и очень маленькие части комплексных чисел будут
+обрабатываться специализированно для избежания выходов за верхние и нижние
+границы значений.
+\end{implementation}
+\afternoterule
+
+Например:
+\begin{lisp}
+(abs \#c(3.0 -4.0)) \EV\ 5.0
+\end{lisp}
+Результатом \cd{(abs \#(3 4))} может быть или \cd{5} или \cd{5.0}, в зависимости
+от реализации.
+\end{defun}
+
+\begin{defun}[Функция]
+phase number
+
+Аргументом (так называется функция phase) числа z (arg(z) \EQ (phase z))
+является угол $\varphi$ (в радианах) радиус-вектора точки, соответствующей
+комплексному числу z.
+
+Если аргумент является комплексным числом с частями из чисел с плавающей точкой,
+то результатом является число с плавающей точкой того же типа.
+Если аргумент является числом с плавающей точкой,
+то результатом является число с плавающей точкой того же типа.
+Если аргумент является комплексным числом с частями из рациональных чисел,
+то результатом является число с плавающей точкой одинарного типа.
+\end{defun}
+
+\begin{defun}[Функция]
+signum number
+
+По определению,
+\begin{lisp}
+(signum \emph{x}) \EQ\ (if (zerop \emph{x}) \emph{x} (/ \emph{x} (abs \emph{x})))
+\end{lisp}
+Для рационального числа, \cdf{signum} будет возвращать один из вариантов:
+\cd{-1}, \cd{0} или \cd{1}, в соответствии с тем, является ли число
+отрицательным, нулём или положительным.
+Для числа с плавающей точкой, результатом будет число с плавающей точкой того же
+типа и значением: $-1$, $0$ или $1$.
+Для комплексного числа \emph{z}, \cd{(signum \emph{z})} является комплексным
+числом с таким же аргументом (phase), но с единичным модулем. Но если \emph{z}
+равен комплексному нулю, результатом является само число \emph{z}.
+Например:
+\begin{lisp}
+(signum 0) \EV\ 0 \\
+(signum -3.7L5) \EV\ -1.0L0 \\
+(signum 4/5) \EV\ 1 \\
+(signum \#C(7.5 10.0)) \EV\ \#C(0.6 0.8) \\
+(signum \#C(0.0 -14.7)) \EV\ \#C(0.0 -1.0)
+\end{lisp}
+Для некомплексных рациональных чисел \cdf{signum} является рациональной
+функцией, но для комплексных чисел может быть иррациональной.
+\end{defun}
+
+\begin{defun}[Функция]
+sin radians \\
+cos radians \\
+tan radians
+
+\cdf{sin} возвращает синус аргумента, \cdf{cos} --- косинус, \cdf{tan} ---
+тангенс. Аргумент рассматривается как угол в радианах. Аргумент может быть
+комплексным числом.
+\end{defun}
+
+\begin{defun}[Функция]
+cis radians
+
+Функция вычисляет $ \emph{e} ^ {i \cdot radians} $.
+Имя \cdf{cis} обозначает <<cos + \emph{i} sin>>, потому что 
+$ \emph{e} ^{ i \theta } = \cos \theta + \emph{i} \sin \theta $.
+Аргумент рассматривается как угол в радианах и может быть любым некомплексным
+числом. Результатом является комплексное число, у которого действительная часть
+это косинус аргумента, и мнимая --- синус аргумента. Другими словами, результат
+это комплексное число, у которого аргумент (фаза) равна (mod $2/pi$) и модуль
+равен единице.
+
+\beforenoterule
+\begin{implementation}
+Чаще всего дешевле вычислить синус и косинус угла вместе, чем выполнять два
+раздельных вычисления.
+\end{implementation}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Функция]
+asin number \\
+acos number
+
+\cdf{asin} возвращаем арксинус аргумента, и \cdf{acos} --- арккосинус аргумента.
+Результат будет в радианах. Аргумент может быть комплексным числом.
+
+Функции арксинус и арккосинус могут быть математически определены для аргумента
+\emph{z} следующим образом:
+\begin{tabbing}
+\hskip 10pc\=\kill
+Арксинус\>$ -\emph{i} \log \left(\emph{i}\emph{z} + \sqrt{1-\emph{z}^2}\right) $ \\[2pt]
+Арккосинус\>$ -\emph{i} \log \left(\emph{z} + \emph{i}\sqrt{1-\emph{z}^2}\right) $
+\end{tabbing}
+Следует отметить, что результат \cdf{asin} или \cd{acos} может быть комплексным
+числом, даже если аргумент не являлся комплексным. Такое происходит, когда
+абсолютное значение аргумента превышает 1.
+\end{defun}
+
+\begin{defun}[Функция]
+atan y &optional x
+
+Функция вычисляет арктангенс и возвращает результат в радианах.
+
+Ни один из двух аргументов \emph{y} и \emph{x} не может быть комплексным.
+Знаки \emph{y} и \emph{x} используются для определения квадранта. \emph{x} может
+быть нулём при условии, что \emph{y} не ноль.
+Значение \cdf{atan} лежит между $-pi$ (невключительно) и $pi$ (включительно).
+Следующая таблица описывает различные специальные случаи.
+
+\begin{flushleft}
+\begin{tabular*}{\linewidth}{@{}l@{\extracolsep{\fill}}llc@{}}
+\multicolumn{2}{c}{Условие}&Декартово местоположение&Промежуток результата \\
+$y=+0$&$x>0$&Точно выше положительной оси x&$+0$ \\
+$y>0$&$x>0$&Квадрант I&$+0 < result < \pi/2$ \\
+$y>0$&$x=\pm 0$&Положительная ось y&$\pi/2$ \\
+$y>0$&$x<0$&Квадрант II&$\pi/2 < result < \pi$ \\
+$y=+0$&$x<0$&Точно ниже негативной оси x&$\pi$ \\
+$y=-0$&$x<0$&Точно выше отрицательной оси x&$\pi$ \\
+$y<0$&$x<0$&Квадрант III&$-\pi < result < -\pi/2$ \\
+$y<0$&$x=\pm 0$&Отрицательная ось y&$-\pi/2$ \\
+$y<0$&$x>0$&Квадрант IV&$-\pi/2 < result < -0$ \\
+$y=-0$&$x>0$&Точно ниже положительной оси x&$-0$ \\
+$y=+0$&$x=+0$&Рядом с центром&$+0$ \\
+$y=-0$&$x=+0$&Рядом с центром&$-0$ \\
+$y=+0$&$x=-0$&Рядом с центром&$\pi$ \\
+$y=-0$&$x=-0$&Рядом с центром&$-\pi$ \\
+\end{tabular*}
+\end{flushleft}
+
+Следует отметить, что случай $y=0,x=0$ при отсутствии минус ноля
+является ошибкой, но четыре случая $y=\pm 0,x=\pm 0$ определены при условии
+существования минус ноля.
+
+Если не указывать \emph{x}, \emph{y} может быть комплексным.
+Результатом функции является арктангенс \emph{y}, который может быть определён
+следующей формулой:
+\begin{tabbing}
+\hskip 10pc\=\kill
+Арктангенс\>$\log (1+\emph{i}\emph{y}) - \log (1-\emph{i}\emph{y}) \over 2\emph{i}$
+\end{tabbing}
+ 
+Для некомплексного аргумента \emph{y}, результат будет некомплексным и будет
+лежать между $-\pi/2$ и $\pi/2$ (оба невключительно).
+\end{defun}
+
+\begin{defun}[Константа]
+pi
+
+Данная глобальная переменная содержит значение наиболее приближенное к $pi$ в
+\emph{длинном} формате числа с плавающей точкой.
+Например:
+\begin{lisp}
+(defun sind (x)~~~~~;\textrm{Аргумент в градусах} \\
+~~(sin (* x (/ (float pi x) 180))))
+\end{lisp}
+Приближение к $pi$ с другими точностями может быть выполнено с помощью
+\cd{(float pi \emph{x})}, где \emph{x} является числом с плавающей точкой
+необходимой точности, или с помощью  \cd{(coerce pi \emph{type})}, где
+\emph{type} является именем необходимого типа, как например \cdf{short-float}.
+\end{defun}
+
+\penalty-10000\relax
+
+\begin{defun}[Функция]
+sinh number \\
+cosh number \\
+tanh number \\
+asinh number \\
+acosh number \\
+atanh number
+
+Данные функции вычисляют гиперболический синус, косинус, тангенс, арксинус,
+арккосинус и арктангенс, которые для аргумента \emph{z} математически определены
+следующим образом:
+\begin{tabbing}
+\hskip 10pc\=\kill
+Гиперболический синус\>$ (\emph{e}^{z}-\emph{e}^{-z})/2 $ \\
+Гиперболический косинус\>$ (\emph{e}^{z}+\emph{e}^{-z})/2 $ \\
+Гиперболический тангенс\>$ (\emph{e}^{z}-\emph{e}^{-z})/(\emph{e}^{z}+\emph{e}^{-z}) $ \\[2pt]
+Гиперболический арксинус\>$ \log \left(\emph{z}+\sqrt{1+\emph{z}^2}\right) $ \\[2pt]
+Гиперболический арккосинус\>$ \log
+\left(\emph{z}+(\emph{z}+1)\sqrt{(\emph{z}-1)/(\emph{z}+1)}\right) $ \\[2pt]
+Гиперболический арктангенс\>$ \log \left((1+\emph{z})\sqrt{1/(1-\emph{z}^2)}\right) $
+\end{tabbing}
+
+Следует отметить, что результат \cdf{acosh} может быть комплексным, даже если
+аргумент комплексным числом не был. Это происходит если аргумент меньше 1.
+Также результат \cdf{atanh} может быть комплексным, даже если аргумент не был
+комплексным. Это происходит если абсолютное значение аргумента было больше 1.
+\end{defun}
+
+\subsection{Точки ветвления, главные значения и краевые условия на комплексной плоскости}
+\label{BRANCH-CUTS-SECTION}
+
+Многие иррациональные и трансцендентные функции на комплексной
+плоскости многозначны. Например, в общем случае, логарифмическая функция имеет 
+бесконечное количество комплексных значений. В каждом таком случае для возврата 
+должно быть выбрано одно главное значение.
+
+Common Lisp определяет точки ветвления, главные значения и краевые условия для
+комплексных функции в соотвествие с предложениями для комплексных функций в APL
+\cite{APL-BRANCH-CUTS}.
+Содержимое раздела по большей части скопировано из этих предложений.
+
+[Однако перевод не сделан. Не могу назвать себя знатоком ТФКП]
+
+
+\section{Приведение типов и доступ к компонентам чисел}
+
+Тогда как большинство арифметических функций будут оперировать любым типом
+чисел, выполняя при необходимости приведения, следующие функции позволяют явно
+преобразовывать типы данных.
+
+\begin{defun}[Функция]
+float number &optional other
+
+Преобразует любое некомплексное число в число с плавающей точкой.
+При отсутствии необязательного параметра, если \emph{number} уже
+является числом с плавающей точкой, то оно и будет возвращено, иначе число будет
+преобразовано в \cdf{single-float}.
+Если аргумент \emph{other} указан, тогда он должен быть числом с плавающей
+точкой, и \emph{number} будет конвертирован в такой же формат как у
+\emph{other}.
+
+Смотрите также \cdf{coerce}.
+\end{defun}
+
+\begin{defun}[Функция]
+rational number \\
+rationalize number
+
+Каждая из этих функций преобразует любое некомплексное число в рациональное.
+Если аргумент уже является рациональным, он возвращается как есть.
+Две функции различаются в том, как они обрабатывают числа с плавающей точкой.
+
+\cdf{rational} предполагает, что число с плавающей точкой совершенно точно, и
+возвращает рациональное число математически эквивалентное значению числа с
+плавающей точкой.
+
+\cdf{rationalize} предполагает, что число с плавающей точкой приближенное, и
+может возвращать любое рациональное число, для которого исходное число является
+наилучшим приближением. Функция пытается сохранить числитель и знаменатель
+наименьшими насколько это возможно.
+
+Следующие тождества всегда справедливы
+\begin{lisp}
+(float (rational \emph{x}) \emph{x}) \EQ\ \emph{x}
+\end{lisp}
+и
+\begin{lisp}
+(float (rationalize \emph{x}) \emph{x}) \EQ\ \emph{x}
+\end{lisp}
+То есть, преобразование числа с плавающей точкой любым из методов туда и обратно
+даёт исходное число.
+Различие в том, что \cdf{rational} обычно имеет более простую недорогую
+реализацию, тогда как \cdf{rationalize} представляет более <<красивое>> число.
+\end{defun}
+
+\begin{defun}[Функция]
+numerator rational \\
+denominator rational
+
+Эти функции принимают рациональное число (целое или дробное)
+и возвращают в качестве целого числа числитель или знаменатель дроби,
+приведённое к каноническому виду. Числитель целого числа и является этим
+числом. Знаменатель целого числа \cd{1}. Следует отметить, что
+\begin{lisp}
+(gcd (numerator \emph{x}) (denominator \emph{x})) \EV\ 1
+\end{lisp}
+Знаменатель будет всегда строго положительным числом. Числитель может быть любым
+целым числом.
+Например:
+\begin{lisp}
+(numerator (/ 8 -6)) \EV\ -4 \\
+(denominator (/ 8 -6)) \EV\ 3
+\end{lisp}
+\end{defun}
+
+В Common Lisp'е нет функции \cdf{fix}, потому что есть несколько интересных
+способов преобразовать нецелое число к целому.
+Эти способы представлены функциями ниже, которые выполняются не только
+преобразование типа, но также некоторые нетривиальные вычисления.
+
+\begin{defun}[Функция]
+floor number &optional divisor \\
+ceiling number &optional divisor \\
+truncate number &optional divisor \\
+round number &optional divisor
+
+При вызове с одним аргументом, каждая из этих функций преобразует аргумент
+\emph{number} (который не может быть комплексным числом) в целое число.
+Если аргумент уже является целым числом, то он немедленно возвращается в
+качестве результата.
+Если аргумент дробь или число с плавающей точкой, для конвертации функции используют различные
+алгоритмы.
+
+\cdf{floor} преобразовывает аргумент путём отсечения к отрицательной
+бесконечности, то есть, результатом является наибольшее целое число, которое не
+больше чем аргумент.
+
+\cdf{ceiling} преобразовывает аргумент путём отсечения к положительной
+бесконечности, то есть, результатом является наименьшее целое число, которое не
+меньше чем аргумент.
+
+\cdf{ceiling} преобразовывает аргумент путём отсечения к нулю, то есть,
+результатом является целое число с таким же знаком, которое имеет наибольшую
+целую величину, но не большую чем аргумент.
+
+Следующая таблица содержит то, что возвращают четыре функции для разных
+аргументов.
+
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}ccccc@{}}
+\textrm{Аргумент}&floor&ceiling&truncate&round\\
+\hlinesp
+~2.6& ~2& ~3& ~2& ~3 \\
+~2.5& ~2& ~3& ~2& ~2 \\
+~2.4& ~2& ~3& ~2& ~2 \\
+~0.7& ~0& ~1& ~0& ~1 \\
+~0.3& ~0& ~1& ~0& ~0 \\
+-0.3& -1& ~0& ~0& ~0 \\
+-0.7& -1& ~0& ~0& -1 \\
+-2.4& -3& -2& -2& -2 \\
+-2.5& -3& -2& -2& -2 \\
+-2.6& -3& -2& -2& -3 \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+Если указан второй аргумент \emph{divisor}, тогда аргумент \emph{number} будет
+разделен на \emph{divisor}, а затем уже будут проведены вышеописанные действия.
+Например, \cd{(floor 5~2)}~\EQ~\cd{(values (floor (/~5~2)))}, но первый вариант
+потенциально эффективнее.
+\emph{divisor} может любым числом, кроме комплексного.
+\emph{divisor} не может равняться нулю.
+Случай вызова функции с одним аргументом эквивалентен вызову с двумя
+аргументами, последний из которых равен \cd{1}.
+
+Каждая из функций возвращает \emph{два} значения. Второе значение является
+остатком и может быть получено с помощью \cdf{multiple-value-bind} или другими
+подобными конструкциями.
+Если любая из этих функций получает два аргумента \emph{x} и \emph{y} и
+возвращает \emph{q} и \emph{r}, тогда  $\emph{q} \cdot
+\emph{y}+\emph{r}=\emph{x}$.
+Первое значение результата \emph{q} всегда целочисленное.
+Остаток \emph{r} целочисленный, если оба аргумента были целочисленными, и
+рациональное, если оба аргумента были рациональными,
+и с плавающей точкой, если один из аргументов был с плавающей точкой.
+Если при вызове был указан один аргумент, то тип данных остатка всегда такой же
+как и этот аргумент.
+
+Когда указывается только один аргумент, сумма двух значений результата точно
+равняется переданному в параметре значению.
+\end{defun}
+
+\begin{defun}[Функция]
+mod number divisor \\
+rem number divisor
+
+\cdf{mod} выполняет операцию \cdf{floor} для двух аргументов и возвращает
+\emph{второй} результат \cdf{floor}.
+Таким же образом, \cdf{rem} выполняет операцию \cdf{truncate} для двух аргументов и возвращает
+\emph{второй} результат \cdf{truncate}.
+
+Таким образом \cdf{mod} и \cdf{rem} являются обычными функциями вычисления
+остатка от деления двух чисел. Аргументы могут быть также числами с плавающей
+точкой.
+\begin{lisp}
+\hskip 0.5\textwidth\=\kill
+(mod 13 4) \EV\ 1\>(rem 13 4) \EV\ 1 \\
+(mod -13 4) \EV\ 3\>(rem -13 4) \EV\ -1 \\
+(mod 13 -4) \EV\ -3\>(rem 13 -4) \EV\ 1 \\
+(mod -13 -4) \EV\ -1\>(rem -13 -4) \EV\ -1 \\
+(mod 13.4 1) \EV\ 0.4\>(rem 13.4 1) \EV\ 0.4 \\
+(mod -13.4 1) \EV\ 0.6\>(rem -13.4 1) \EV\ -0.4
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+ffloor number &optional divisor \\
+fceiling number &optional divisor \\
+ftruncate number &optional divisor \\
+fround number &optional divisor
+
+Эти функции похожи на \cdf{floor}, \cdf{ceiling}, \cdf{truncate} и \cdf{round}
+за исключением того, что результат (первый из двух) всегда целое число, а не
+число с плавающей точкой. Это примерно, как если бы \cdf{ffloor} передала
+аргументы в \cdf{floor}, а затем применила к первому результату \cdf{float} и
+вернула полученную пару значений. Однако, на практике \cdf{ffloor} может быть
+реализована более эффективно. Такое же описание подходит к остальным трём
+функциям. Если первый аргумент является числом с плавающей точкой, и второй
+аргумент не точнее типа первого, тогда первый результат будет такого же типа как
+первый аргумент.
+Например:
+\begin{lisp}
+(ffloor -4.7) \EV\ -5.0 and 0.3 \\
+(ffloor 3.5d0) \EV\ 3.0d0 and 0.5d0
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+decode-float float \\
+scale-float float integer \\
+float-radix float \\
+float-sign float1 &optional float2 \\
+float-digits float \\
+float-precision float \\
+integer-decode-float float
+
+Функция \cdf{decode-float} принимает числа с плавающей точкой и возвращает три
+значения.
+
+Первое значение является мантиссой и числом того же типа, что и
+аргумент. Второе значение является целочисленной экспонентой.
+Третье значение отображает знак аргумента (-1.0 или 1.0) и является и числом
+того же типа, что и аргумент .
+Пусть \emph{b} есть система счисления для отображения чисел с плавающей точкой,
+тогда \cdf{decode-float} делит аргумент на \emph{b} в некоторой степени, чтобы
+привести значение в промежуток включая 1/\emph{b} и не включая 1 и возвращает
+частное в качестве первого значения FIXME. Однако, если аргумент равен нулю
+результат равен абсолютному значению аргумента (то есть, если существует
+отрицательный ноль, то для него возвращается положительный ноль).
+
+Второе значение \cdf{decode-float} является целочисленным экспонентой \emph{e},
+которая равняется степени, в которую было возведено \emph{b}.
+Если аргумент равен нулю, то может быть возвращено любое целое число, при
+условии, что тожество, описанное ниже для \cdf{scale-format}, имеет место быть.
+
+Третье значение \cdf{decode-float} является числом с плавающей точкой в том же
+формате, что и аргумент, абсолютное значение которого равно 1, и знак совпадает
+со знаком аргумента.
+
+Функция \cdf{scale-float} принимает число с плавающей точкой \emph{f} (не
+обязательно между 1/\emph{b} и 1) и целое число \emph{k}, и возвращает \cd{(*
+  \emph{f} (expt (float \emph{b} \emph{f}) \emph{k}))}.
+(Использование \cdf{scale-float} может быть более эффективным, чем использование
+возведения в степень или умножения и позволяет избежать переполнений).
+
+Следует отметить, что
+\begin{lisp}
+(multiple-value-bind (signif expon sign) \\*
+~~~~~~~~~~~~~~~~~~~~~(decode-float \emph{f}) \\*
+~~(scale-float signif expon)) \\*
+\EQ\ (abs \emph{f})
+\end{lisp}
+и
+\begin{lisp}
+(multiple-value-bind (signif expon sign) \\*
+~~~~~~~~~~~~~~~~~~~~~(decode-float \emph{f}) \\*
+~~(* (scale-float signif expon) sign)) \\*
+\EQ\ \emph{f}
+\end{lisp}
+
+Функция \cdf{float-radix} возвращает (в качестве целого числа)
+основание \emph{b} для числа с плавающей точкой.
+
+Функция \cdf{float-sign} возвращает такое число с плавающей точкой \emph{z}, что
+\emph{z} и \emph{float1} имеют одинаковый знак, и \emph{z} и \emph{float2} имеют
+равное абсолютное значение.
+Аргумент \emph{float2} по-умолчанию имеет значение \cd{(float 1 \emph{float1})}.
+Таким образом \cd{(float-sign x)} всегда возвращает \cd{1.0} или \cd{-1.0} в
+таком же формате и с тем же знаком, что и \emph{x}. (Следует отметить, что если
+реализация содержит различные представления для отрицательного и положительного
+нулей, тогда \cd{(float-sign -0.0)} \EV\ \cd{-1.0}.)
+
+Функция \cdf{float-digits} возвращает целочисленное количество
+цифр используемых в представлении аргумента. Функция \cdf{float-precision}
+возвращает целочисленное количество цифр в мантиссе аргумента. Если аргумент
+равен нулю, то результатом также будет ноль.
+Для нормализованных чисел с плавающей точкой, результаты \cdf{float-digits} и
+\cdf{float-precision} будут такими же. Но в случае с денормализованными числами
+или нулём точность будет меньше чем количество цифр в представлении.
+
+Функция \cdf{integer-decode-float} похожа на \cdf{decode-float}, но в качестве
+первого значение возвращает масштабированную целочисленную мантиссу.
+Для аргумента \emph{f}, это число будет строго меньше чем
+\begin{lisp}
+\cd{(expt \emph{b} (float-precision \emph{f}))}
+\end{lisp}
+на не менее чем 
+\begin{lisp}
+\cd{(expt \emph{b} (- (float-precision \emph{f}) 1))}
+\end{lisp}
+за исключением того, что если \emph{f} равно нулю, тогда целочисленное значение
+также будет равно нулю.
+
+Второе значение имеет такую же связь с первым значением, как и для
+\cdf{decode-float}: 
+\begin{lisp}
+(multiple-value-bind (signif expon sign) \\*
+~~~~~~~~~~~~~~~~~~~~~(integer-decode-float \emph{f}) \\*
+~~(scale-float (float signif \emph{f}) expon)) \\*
+\EQ\ (abs \emph{f})
+\end{lisp}
+
+Третье значение \cdf{integer-decode-float} будет \cd{1} или \cd{-1}.
+
+\beforenoterule
+\begin{rationale}
+Эти функции позволяют писать машиннонезависиммые или как минимум
+машиннопараметризированные приложения с вычислениями чисел с плавающими точками
+с необходимой эффективностью.
+\end{rationale}
+\afternoterule
+\end{defun}
+
+\begin{defun}[Функция]
+complex realpart &optional imagpart
+
+Аргументы должны быть некомплексными числами. Результатом является число,
+которое имеет действительную часть \emph{realpart} и мнимую \emph{imagpart},
+возможно конвертированные к одному типу.
+Если \emph{imagpart} не указаны, тогда используется \cd{(coerce 0 (type-of
+  \emph{realpart}))}.
+Необходимо отметить, что если обе части комплексного число рациональны, и мнимая
+часть равна нуля, то результатом будет только действительная часть
+\emph{realpart} так как в силу вступят правила канонизации.
+Таким образом результат \cdf{complex} не всегда является комплексным числом. Он
+может быть просто рациональным числом (\cdf{rational}).
+\end{defun}
+
+\begin{defun}[Функция]
+realpart number \\
+imagpart number
+
+Эти функции возвращают действительную и мнимую части комплексного числа. Если
+\emph{number} не является комплексным числом, тогда \cdf{realpart} возвращает
+это число, а \cdf{imagpart} возвращает \cd{(* 0 \emph{number})}, другими
+словами, \cd{0} того типа, каким был аргумент.
+\end{defun}
+
+\section{Логические операции над числами}
+
+Логические операции в данном разделе в качестве аргументов требуют целых
+чисел. Передача числа любого другого формата является ошибкой.
+Функции обрабатывают целые числа, как если бы они были представлены в двух
+системах счисления. FIXME
+
+\beforenoterule
+\begin{implementation}
+Внутренне, конечно, реализация Common Lisp'а может использовать и может и нет
+представление числа с дополнительным кодом. Все, что необходимо это чтобы
+логические операции выполняли вычисление так, как описано в разделе.
+\end{implementation}
+\afternoterule
+
+Логические операции предоставляют удобный способ для представления бесконечного
+вектора битов. Пусть такой концептуальный вектор будет индексироваться с помощью
+неотрицательного целого. Тогда биту $j$ присваивается <<вес (weight)>> $2^{j}$.
+Предположим, что лишь конечное число битов являются 1 или только конечное
+число битов являются 0.
+Вектор, у которого конечное число битов 1, представлен как сумма всех весов этих
+битов, и является положительным числом.
+Вектор, у которого конечное число битов 0, представлен как \cd{-1} минус сумма
+всех весов этих битов, и является отрицательным числом. FIXME
+
+Данный метод использования целых чисел для представления битовых векторов может
+в свою очередь использоваться для представления множеств. Предположим, что
+некоторая (возможно бесконечная) совокупность рассуждений для множеств отображается
+в неотрицательные целые числа. FIXME
+Тогда множество может быть представлено как битовый вектор. Элемент принадлежит
+множеству, если бит, индекс которого соответствует элементу, является 1.
+Таким образом все конечные множества могут быть представлены с помощью
+положительных целых, и множества, дополнения которых конечны, с помощью
+отрицательных чисел. Функции \cdf{logior}, \cdf{logand} и \cdf{logxor},
+определённые ниже, вычисляют объединение, пересечение и симметричную разность для
+таких множеств.
+
+\begin{defun}[Функция]
+logior &rest integers
+
+Функция возвращает побитовое логическое \emph{или} для аргументов.
+Если не задан ни один аргумент, возвращается ноль.
+\end{defun}
+
+\begin{defun}[Функция]
+logxor &rest integers
+
+Функция возвращает побитовое логическое \emph{исключающее или} для аргументов.
+Если не задан ни один аргумент, возвращается ноль.
+\end{defun}
+
+\begin{defun}[Функция]
+logand &rest integers
+
+Функция возвращает побитовое логическое \emph{и} для аргументов.
+Если ни один аргумент не задан, возвращается ноль.
+\end{defun}
+
+\begin{defun}[Функция]
+logeqv &rest integers
+
+Функция возвращает побитовую логическую \emph{эквивалентность} (также известную
+как \emph{исключающее отрицающее или} для аргументов.
+Если не задан ни один аргумент, возвращается ноль.
+\end{defun}
+
+\begin{defun}[Функция]
+lognand integer1 integer2 \\
+lognor integer1 integer2 \\
+logandc1 integer1 integer2 \\
+logandc2 integer1 integer2 \\
+logorc1 integer1 integer2 \\
+logorc2 integer1 integer2
+
+Данные функции служат для шести нетривиальные битовый логический операций для
+двух аргументов. Так как они не ассоциативны, они принимают только два
+аргумента.
+\begin{lisp}
+(lognand \emph{n1} \emph{n2}) \EQ\ (lognot (logand \emph{n1} \emph{n2})) \\[2pt]
+(lognor \emph{n1} \emph{n2}) \EQ\ (lognot (logior \emph{n1} \emph{n2})) \\[2pt]
+(logandc1 \emph{n1} \emph{n2}) \EQ\ (logand (lognot \emph{n1}) \emph{n2}) \\[2pt]
+(logandc2 \emph{n1} \emph{n2}) \EQ\ (logand \emph{n1} (lognot \emph{n2})) \\[2pt]
+(logorc1 \emph{n1} \emph{n2}) \EQ\ (logior (lognot \emph{n1}) \emph{n2}) \\[2pt]
+(logorc2 \emph{n1} \emph{n2}) \EQ\ (logior \emph{n1} (lognot \emph{n2}))
+\end{lisp}
+\end{defun}
+
+В следующей таблице перечислены десять битовых логических операций для двух
+целых чисел.
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}rlllll@{}}
+\emph{integer1}&0&0&1&1 \\
+\emph{integer2}&0&1&0&1&\textrm{Имя операции} \\
+\hlinesp
+logand~~&0&0&0&1&\textrm{и} \\
+logior~~&0&1&1&1&\textrm{или} \\
+logxor~~&0&1&1&0&\textrm{исключающее или} \\
+logeqv~~&1&0&0&1&\textrm{эквивалентность (исключающее отрицающее или)} \\
+lognand~&1&1&1&0&\textrm{не и} \\
+lognor~~&1&0&0&0&\textrm{не или} \\
+logandc1&0&1&0&0&\textrm{не \emph{integer1} и \emph{integer2}} \\
+logandc2&0&0&1&0&\textrm{\emph{integer1} и не \emph{integer2}} \\
+logorc1~&1&1&0&1&\textrm{не \emph{integer1} или \emph{integer2}} \\
+logorc2~&1&0&1&1&\textrm{\emph{integer1} или не \emph{integer2}} \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+\begin{defun}[Функция][Константа]
+boole op integer1 integer2 \\
+boole-clr \\
+boole-set \\
+boole-1 \\
+boole-2 \\
+boole-c1 \\
+boole-c2 \\
+boole-and \\
+boole-ior \\
+boole-xor \\
+boole-eqv \\
+boole-nand \\
+boole-nor \\
+boole-andc1 \\
+boole-andc2 \\
+boole-orc1 \\
+boole-orc2
+
+Функция \cdf{boole} принимает операцию \emph{op} и два целых числа, и возвращает
+целое число полученное применением операции \emph{op} к этим двум числам. Точные
+значения шестнадцати констант зависят от реализации, но они подходят для
+использования в качестве первого аргумента для \cdf{boole}:
+\begin{flushleft}
+\cf
+\begin{tabular}{@{}rlllll@{}}
+\emph{integer1}&0&0&1&1 \\
+\emph{integer2}&0&1&0&1&\textrm{Выполняемая операция} \\
+\hlinesp
+boole-clr~~&0&0&0&0&\textrm{всегда 0} \\
+boole-set~~&1&1&1&1&\textrm{всегда 1} \\
+boole-1~~~~&0&0&1&1&\emph{integer1} \\
+boole-2~~~~&0&1&0&1&\emph{integer2} \\
+boole-c1~~~&1&1&0&0&\textrm{дополнение \emph{integer1}} \\
+boole-c2~~~&1&0&1&0&\textrm{дополнение \emph{integer2}} \\
+boole-and~~&0&0&0&1&\textrm{и} \\
+boole-ior~~&0&1&1&1&\textrm{или} \\
+boole-xor~~&0&1&1&0&\textrm{исключающее или} \\
+boole-eqv~~&1&0&0&1&\textrm{эквивалентность (исключительное отрицающее или)} \\
+boole-nand~&1&1&1&0&\textrm{не и} \\
+boole-nor~~&1&0&0&0&\textrm{не или} \\
+boole-andc1&0&1&0&0&\textrm{не \emph{integer1} и \emph{integer2}} \\
+boole-andc2&0&0&1&0&\textrm{\emph{integer1} и не \emph{integer2}} \\
+boole-orc1~&1&1&0&1&\textrm{не \emph{integer1} или \emph{integer2}} \\
+boole-orc2~&1&0&1&1&\textrm{\emph{integer1} или не \emph{integer2}} \\
+\hline
+\end{tabular}
+\end{flushleft}
+
+Таким образом \cdf{boole} может вычислять все шестнадцать логических функций для
+двух аргументов. В целом,
+\begin{lisp}
+(boole boole-and x y) \EQ\ (logand x y)
+\end{lisp}
+и далее по аналогии. \cdf{boole} полезна, когда необходимо
+параметризировать процедуру так, что они может использовать одну из нескольких
+логических операций. 
+\end{defun}
+
+\begin{defun}[Функция]
+lognot integer
+
+Функция возвращает битовое логическое \emph{отрицание} аргумента.
+Каждый бит результата является дополнение соответствующего исходного бита
+аргумента.
+\begin{lisp}
+(logbitp \emph{j} (lognot \emph{x})) \EQ\ (not (logbitp \emph{j} \emph{x}))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+logtest integer1 integer2
+
+\cdf{logtest} является предикатом, который истинен, если любой бит определённый
+как 1 в \emph{integer1} также является соответствующим битом 1 в
+\emph{integer2}.
+\begin{lisp}
+(logtest \emph{x} \emph{y}) \EQ\ (not (zerop (logand \emph{x} \emph{y})))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+logbitp index integer
+
+Предикат \cdf{logbitp} является истиной, если бит в позиции \emph{index} в целом
+числе \emph{integer} (то есть, его вес $2^{index}$), является 1, иначе предикат
+ложен.
+Например:
+\begin{lisp}
+(logbitp 2 6) \textrm{is true} \\
+(logbitp 0 6) \textrm{is false} \\
+(logbitp \emph{k} \emph{n}) \EQ\ (ldb-test (byte 1 \emph{k}) \emph{n})
+\end{lisp}
+
+\emph{index} должен быть неотрицательным целым числом.
+\end{defun}
+
+\begin{defun}[Функция]
+ash integer count
+
+Если \emph{count} положительное число, данная функция арифметически сдвигает
+число \emph{integer} влево на количество бит \emph{count}. Если \emph{count}
+отрицательное число, функция сдвигает число \emph{integer} вправо.  
+Знак результата всегда такое же как и исходного числа \emph{integer}.
+
+Говоря математически, эта операция выполняет вычисления
+$\emph{floor}(\emph{integer}\cdot2^{count}$).
+
+Логически, функция перемещает все биты числа \emph{integer} влево, добавляя
+нулевые биты в конец, или вправо отбрасывая биты в конце числа. (В этом
+контексте вопрос о том, что сдвигается налево, не относится к делу. Целые
+числа, рассматриваемые как строки битов, являются <<полубесконечными>>,
+то есть концептуально расширяются бесконечно влево FIXME.)
+Например:
+\begin{lisp}
+(logbitp \emph{j} (ash \emph{n} \emph{k})) \EQ\ (and (>= \emph{j} \emph{k}) (logbitp (- \emph{j} \emph{k}) \emph{n}))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+logcount integer
+
+Функция возвращает количество бит в числе \emph{integer}.
+Если \emph{integer} положительное число, тогда подсчитаны будут биты
+\cd{1}. Если число \emph{integer} отрицательно, то в два раза дополненной
+(two's-complement) бинарной форме будут подсчитаны биты
+\cd{0}. FIXME 
+Результатом всегда является неотрицательное целое число.
+Например:
+\begin{lisp}
+(logcount 13) \EV\ 3~~~~~~;\textrm{Бинарное представление} ...0001101 \\
+(logcount -13) \EV\ 2~~~~~;\textrm{Бинарное представление} ...1110011 \\
+(logcount 30) \EV\ 4~~~~~~;\textrm{Бинарное представление} ...0011110 \\
+(logcount -30) \EV\ 4~~~~~;\textrm{Бинарное представление} ...1100010
+\end{lisp}
+Следующее тождество всегда верно:
+\begin{lisp}
+(logcount x) \EQ\ (logcount (- (+ x 1))) \\
+~~~~~~~~~~~~~\EQ\ (logcount (lognot x))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+integer-length integer
+
+Данная функция выполняет следующие вычисления
+\begin{tabbing}
+$ \emph{ceiling}(\log_2 ({\bf if}\; \emph{integer} < 0 \;{\bf then} \;
+    -\emph{integer} \;{\bf else}\; \emph{integer}+1)) $
+\end{tabbing}
+Эта функция полезна в двух случаях.
+Первое, если целое число \emph{integer} не отрицательно, тогда его значение
+может быть представлено в беззнаковой бинарной форме в поле, ширина которого в
+битах не меньше чем \cd{(integer-length \emph{integer})}.
+Второе, независимо от знака числа \emph{integer}, его значение может быть
+представлено как знаковая бинарная два раза дополненная (two's-complement) форма
+в поле, ширина которого в битах не меньше чем
+ \cd{(+ (integer-length \emph{integer}) 1)}. FIXME
+Например:
+\begin{lisp}
+(integer-length 0) \EV\ 0 \\
+(integer-length 1) \EV\ 1 \\
+(integer-length 3) \EV\ 2 \\
+(integer-length 4) \EV\ 3 \\
+(integer-length 7) \EV\ 3 \\
+(integer-length -1) \EV\ 0 \\
+(integer-length -4) \EV\ 2 \\
+(integer-length -7) \EV\ 3 \\
+(integer-length -8) \EV\ 3
+\end{lisp}
+\end{defun}
+
+
+\section{Функции для манипуляции с байтами}
+
+Common Lisp содержит несколько функций для работы с полями смежных битов
+произвольной длины, находящимися где-нибудь в целом числе.
+Такое множество смежных битов называется \emph{байт}.
+В Common Lisp'е термин \emph{байт} не означает некоторое определённое количество
+бит (как например восемь), а обозначает поле произвольной, определяемой
+пользователем длины.
+
+Функции обработки байтом используют объекты, называющиеся \emph{спецификаторы
+  байта} для определения заданной позиции байта в целом числе.
+Представление спецификатора байта зависит от реализации. В частности оно может
+быть или не быть числом.
+Достаточно знать, что функция \cdf{byte} будет создавать такой спецификатор, и
+что функция для обработки байта будет принимать его.
+Функция \cdf{byte} принимает два целых числа указывающих на \emph{позицию} и
+\emph{размер} байта и возвращает его спецификатор.
+Такой спецификатор определяет байт, у которого ширина равна \emph{размеру}, и
+биты которого имеют веса с $ 2^{position+size-1} $
+по $ 2^{position} $.
+
+\begin{defun}[Функция]
+byte size position
+
+\cdf{byte} принимает два целых числа, указывающих на размер и позицию байта и
+возвращает спецификатор, который может использоваться в функциях работы с
+байтами.
+\end{defun}
+
+\begin{defun}[Функция]
+byte-size bytespec \\
+byte-position bytespec
+
+Принимая спецификатор байта, \cdf{byte-size} возвращает размер указанного
+байта, а \cdf{byte-position} --- позицию этого байта.
+Например:
+\begin{lisp}
+(byte-size (byte \emph{j} \emph{k})) \EQ\ \emph{j} \\
+(byte-position (byte \emph{j} \emph{k})) \EQ\ \emph{k}
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+ldb bytespec integer
+
+Спецификатор байта \emph{bytespec} указывает на байт, который будет извлечён из
+целого числа \emph{integer}.
+Результат возвращается в качестве неотрицательного целого числа.
+Например:
+\begin{lisp}
+(logbitp \emph{j} (ldb (byte \emph{s} \emph{p}) \emph{n})) \EQ\ (and (< \emph{j} \emph{s}) (logbitp (+ \emph{j} \emph{p}) \emph{n}))
+\end{lisp}
+Имя функции \cdf{ldb} означает <<load byte (загрузить байт)>>.
+
+Если аргумент \emph{integer} задан формой, которая может использоваться в
+\cdf{setf}, тогда \cdf{setf} может использоваться вместе с \cdf{ldb} для
+изменения байта в целом числе указанном в форме \emph{integer}.
+Это действие выполняется с помощью операции \cdf{dpb}.
+\end{defun}
+
+\begin{defun}[Функция]
+ldb-test bytespec integer
+
+\cdf{ldb-test} является предикатом, который истинен, если любой из битов,
+указанных в спецификаторе байта \emph{bytespec}, в целом числе \emph{integer}
+имеет значение 1.
+Другими словами, предикат истинен, если указанное поле не равно нулю.
+\begin{lisp}
+(ldb-test \emph{bytespec} \emph{n}) \EQ\ (not (zerop (ldb \emph{bytespec} \emph{n})))
+\end{lisp}
+\end{defun}
+
+\begin{defun}[Функция]
+mask-field bytespec integer
+
+Функция похожа а \cdf{ldb}. Однако результат содержит указанный байт целого
+числа \emph{integer} в той же позиции, что указана в спецификаторе
+\emph{bytespec}, а не в нулевой позиции, как делает \cdf{ldb}.
+Таким образом результат в указанном байте совпадает с целым числом
+\emph{integer} , но в остальных местах имеет нулевые биты.
+Например:
+\begin{lisp}
+(ldb \emph{bs} (mask-field \emph{bs} \emph{n})) \EQ\ (ldb \emph{bs} \emph{n}) \\
+ \\
+(logbitp \emph{j} (mask-field (byte \emph{s} \emph{p}) \emph{n})) \\
+~~~\EQ\ (and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s})) (logbitp \emph{j} \emph{n})) \\
+ \\
+(mask-field \emph{bs} \emph{n}) \EQ\ (logand \emph{n} (dpb -1 \emph{bs} 0))
+\end{lisp}
+
+Если аргумент \emph{integer} задан формой, которая может использоваться в
+\cdf{setf}, тогда \cdf{setf} может использоваться вместе с \cdf{mask-field} для
+изменения байта в целом числе указанном в форме \emph{integer}.
+Это действие выполняется с помощью операции \cdf{deposit-field}.
+\end{defun}
+
+\begin{defun}[Функция]
+dpb newbyte bytespec integer
+
+Данная функция возвращает число, которое похоже на \emph{integer} за исключением
+ битов, указанных спецификатором \emph{bytespec.}. Пусть \emph{s} будет
+ размером, указанным в спецификаторе \emph{bytespec}.
+Тогда целое число \emph{newbyte} будет интерпретировано, будучи выровненным вправо,
+как если бы было результатом \cdf{ldb}.
+Например:
+\begin{lisp}
+(logbitp \emph{j} (dpb \emph{m} (byte \emph{s} \emph{p}) \emph{n})) \\
+~~\EQ\ (if \=(and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s}))) \\
+\>(logbitp (- \emph{j} \emph{p}) \emph{m}) \\
+\>(logbitp \emph{j} \emph{n}))
+\end{lisp}
+Имя функции \cdf{dpb} означает <<deposit byte (сохранить байт)>>.
+\end{defun}
+
+\begin{defun}[Функция]
+deposit-field newbyte bytespec integer
+
+Данная функция относится к \cdf{mask-field} так же, как \cdf{dpb} относится к
+\cdf{ldb}.
+Результатом является целое число, которое содержит биты \emph{newbyte} в том
+месте, куда указывает спецификатор \emph{bytespec}, и биты числа \emph{integer}
+во всех остальных местах.
+\begin{lisp}
+(logbitp \emph{j} (deposit-field \emph{m} (byte \emph{s} \emph{p}) \emph{n})) \\
+~~~\EQ\ (if \=(and (>= \emph{j} \emph{p}) (< \emph{j} (+ \emph{p} \emph{s}))) \\
+\>(logbitp \emph{j} \emph{m}) \\
+\>(logbitp \emph{j} \emph{n}))
+\end{lisp}
+\end{defun}
+
+\section{Случайные числа}
+\label{RANDOM}
+
+Функциональность Common Lisp'а для генерации псевдослучайных чисел была
+аккуратно проработана, чтобы быть переносимой. Тогда как две реализации могут
+создавать различные ряды псевдослучайных чисел, распределение значений должно
+быть независимо от таких характеристик компьютера как размер слова.
+
+\begin{defun}[Функция]
+random number &optional state
+
+\cd{(random \emph{n})} принимает положительное число \emph{n} и возвращает число
+такого же типа между нулём (включительно) и \emph{n} (невключительно).
+Число \emph{n} может быть целым или с плавающей точкой.
+При этом используется приблизительно равномерное распределения. FIXME
+Если \emph{n} целое число, каждый из возможных результатов встречается с
+(примерной) вероятностью 1/\emph{n}.
+(Слово <<примерно>> используется из-за различий реализаций. На практике отклонение
+от однородности должно быть весьма мало.)
+
+Аргумент \emph{state} должен быть объектом типа \cdf{random-state}.
+По-умолчанию он равен значению переменной \cdf{*random-state*}.
+Объект используется для сохранения состояния генератора псевдослучайных чисел и
+изменяется как побочное действие от операции \cdf{random}.
+\end{defun}
+
+\begin{defun}[Переменная]
+*random-state*
+
+Данная переменная содержит объект типа \cdf{random-state}, который хранит
+состояние для генератора случайных чисел, которое по-умолчанию используется 
+функцией \cdf{random}.
+Природа этой структуры данных зависит от реализации. Она может быть выведена на
+печать и прочитана обратно, но не обязательно это может быть сделано между
+реализациями.
+Вызов \cdf{random} изменяет этот объект.
+Связывание этой переменной с другим значением будет корректно сохраняться и
+восстанавливаться.
+\end{defun}
+
+\begin{defun}[Функция]
+make-random-state &optional state
+
+Данная функция возвращает новый объект типа \cdf{random-state}, подходящий для
+использования в качестве значения переменной \cdf{*random-state*}.
+Если \emph{state} не указано или равно {\false}, тогда \cdf{make-random-state}
+возвращает \emph{копию} текущего объекта состояния генератора псевдослучайных чисел
+(значение переменной \cdf{*random-state*}). Если \emph{state} является объектом
+состояния, то возвращается копия данного объекта.
+Если \emph{state} равен {\true}, тогда новый возвращается новый объект
+состояния, который в некотором смысле <<случайно>> инициализирован (текущим
+временем например).
+\end{defun}
+
+\begin{defun}[Функция]
+random-state-p object
+
+\cdf{random-state-p} истинен, если аргумент является объектом состояния
+генератора случайных чисел, иначе --- ложен.
+\begin{lisp}
+(random-state-p \emph{x}) \EQ\ (typep \emph{x} 'random-state)
+\end{lisp}
+\end{defun}
+
+\section{Параметры реализации}
+
+Значение констант, определённый в этом разделе, зависят от реализации. В
+некоторых случаях они могут быть полезны для параметризации кода.
+
+\begin{defun}[Константа]
+most-positive-fixnum \\
+most-negative-fixnum
+
+Значением \cdf{most-positive-fixnum} является такое число, которое ближе всего
+к положительной бесконечности.
+
+Значением \cdf{most-negative-fixnum} является такое число, которое ближе всего
+к отрицательной бесконечности.
+\end{defun}
+
+\begin{defun}[Константа]
+most-positive-short-float \\
+least-positive-short-float \\
+least-negative-short-float \\
+most-negative-short-float
+
+Значением \cdf{most-positive-short-float} является такое значение числа
+короткого формата с плавающей точкой, которое ближе всего к (но не равно)
+положительной бесконечности. 
+
+Значением \cdf{least-positive-short-float} является такое значение числа
+короткого формата с плавающей точкой, которое ближе всего к (но не равно) нулю. 
+
+Значением \cdf{least-negative-short-float} является такое значение числа
+короткого формата с плавающей точкой, которое ближе всего к (но не равно) нулю
+слева. (Следует отметить, что если разработчики поддерживают минус ноль, то
+значение данной константы не может ему равняться.) 
+
+Значением \cdf{most-negative-short-float} является такое значение числа
+короткого формата с плавающей точкой, которое ближе всего к (но не равно)
+отрицательной бесконечности. 
+\end{defun}
+
+\begin{defun}[Константа]
+most-positive-single-float \\
+least-positive-single-float \\
+least-negative-single-float \\
+most-negative-single-float \\
+most-positive-double-float \\
+least-positive-double-float \\
+least-negative-double-float \\
+most-negative-double-float \\
+most-positive-long-float \\
+least-positive-long-float \\
+least-negative-long-float \\
+most-negative-long-float
+
+Данные константы аналогичны предыдущим, но указывают на другие форматы чисел с
+плавающей точкой.
+\end{defun}
+
+\bigskip
+
+\begin{defun}[Константа]
+least-positive-normalized-short-float \\
+least-negative-normalized-short-float
+
+Значением \cdf{least-positive-normalized-short-float} является такое
+положительное нормализованное число в коротком формате с плавающей запятой,
+которое ближе всего к (но не равно) нулю. В реализации, которая не поддерживает
+денормализованные числа, может равняться тому же, что и
+\cdf{least-positive-short-float}. 
+
+Значением \cdf{least-positive-normalized-short-float} является такое
+отрицательное нормализованное число в коротком формате с плавающей запятой,
+которое ближе всего к (но не равно) нулю. 
+(Следует отметить, что если реализация поддерживает минус ноль, то данная
+константа должна ему равняться.)
+В реализации, которая не поддерживает
+денормализованные числа, может равняться тому же, что и
+\cdf{least-negative-short-float}. 
+\end{defun}
+
+\begin{defun}[Константа]
+least-positive-normalized-single-float \\
+least-negative-normalized-single-float \\
+least-positive-normalized-double-float \\
+least-negative-normalized-double-float \\
+least-positive-normalized-long-float \\
+least-negative-normalized-long-float
+
+Данные константы аналогичны предыдущим, но указывают на другие форматы чисел с
+плавающей точкой.
+\end{defun}
+
+\begin{defun}[Константа]
+short-float-epsilon \\
+single-float-epsilon \\
+double-float-epsilon \\
+long-float-epsilon
+
+Эти константы для каждого формата с плавающей точкой содержат наименьшее
+натуральное число с плавающей точкой \emph{e}, такое что при вычислении
+выражение
+\begin{lisp}
+(not (= (float 1 \emph{e}) (+ (float 1 \emph{e}) \emph{e})))
+\end{lisp}
+истинно.
+\end{defun}
+
+\begin{defun}[Константа]
+short-float-negative-epsilon \\
+single-float-negative-epsilon \\
+double-float-negative-epsilon \\
+long-float-negative-epsilon
 
 Эти константы для каждого формата с плавающей точкой содержат наименьшее
 натуральное число с плавающей точкой \emph{e}, такое что при вычислении выражение
@@ -5105,7 +5501,8 @@ is true when actually evaluated.
 (not (= (float 1 \emph{e}) (- (float 1 \emph{e}) \emph{e})))
 \end{lisp}
 истинно.
-
 \end{defun}
+
+\fi
 
 \endgroup
