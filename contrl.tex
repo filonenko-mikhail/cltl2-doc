@@ -2256,13 +2256,13 @@ dynamic variables.
 \begin{defspec}
 flet ({(name lambda-list
         <{declaration}* | doc-string> {\,form}*)}*)
-     {\,form}* \\
+     {declaration}* {\,form}* \\
 labels ({(name lambda-list
           <{declaration}* | doc-string> {\,form}*)}*)
-       {\,form}* \\
+       {declaration}* {\,form}* \\
 macrolet ({(name varlist
             <{declaration}* | doc-string> {\,form}*)}*)
-         {\,form}*
+         {declaration}* {\,form}*
 
 \cdf{flet} may be used to define locally named functions.  Within the
 body of the \cdf{flet} form, function names matching those defined
@@ -2395,45 +2395,9 @@ X3J13 voted in March 1988
 to change \cdf{flet}, \cdf{labels}, and \cdf{macrolet}
 to allow declarations to appear before the body.
 The new descriptions are therefore as follows:
-
-\begin{defmac}
-flet ({(name lambda-list
-        <{declaration}* | doc-string> {\,form}*)}*)
-     {declaration}* {\,form}* \\
-labels ({(name lambda-list
-          <{declaration}* | doc-string> {\,form}*)}*)
-       {declaration}* {\,form}* \\
-macrolet ({(name varlist
-            <{declaration}* | doc-string> {\,form}*)}*)
-         {declaration}* {\,form}*
-
-These are now syntactically more similar to such
-other binding forms as \cdf{let}.
-
-For \cdf{flet} and \cdf{labels}, the bodies of
-the locally defined functions are part of
-the scope of pervasive declarations appearing before the main body.
-(This is consistent with the treatment of initialization forms in \cdf{let}.)
-For \cdf{macrolet}, however, the bodies of
-the locally defined macro expander functions are \emph{not} included in
-the scope of pervasive declarations appearing before the main body.
-(This is consistent with the rule, stated below, that the bodies of
-macro expander functions are in the global environment, not the local
-lexical environment.)
-Here is an example:
-\begin{lisp}
-(flet ((stretch (x) (* x *stretch-factor*)) \\*
-~~~~~~~(chop (x) (- x *chop-margin*))) \\*
-~~(declare (inline stretch chop))~~~;\textrm{Illegal in original Common Lisp} \\
-~~(if (> x *chop-margin*) (stretch (chop x)) (chop (stretch x))))
-\end{lisp}
-X3J13 voted to permit declarations of the sort noted above.
-\end{defmac}
 \end{new}
 \end{defspec}
 
-
-\begin{new}
 \begin{defspec}
 symbol-macrolet ({(var expansion)}*)
                 {declaration}* {\,form}*
@@ -2512,7 +2476,13 @@ see section~\ref{DECLARE-SYNTAX-SECTION}.
 
 %??? See the related CLOS features \cdf{with-accessors} and \cdf{with-slots}.
 \end{defspec}
-\end{new}
+
+\begin{defmac}
+define-symbol-macro symbol {form}
+
+The \emph{symbol} will act as a macro call. A single form constitutes the body of the
+expansion. The \emph{symbol} cannot already be a special variable.
+\end{defmac}
 
 \section{Conditionals}
 
@@ -5571,7 +5541,6 @@ progv symbols values {\,form}*
 динамических переменных.
 \end{defspec}
 
-
 \begin{defmac}
 flet ({(name lambda-list
         <{declaration}* | doc-string> {\,form}*)}*)
@@ -5704,6 +5673,15 @@ X3J13 проголосовал в июне 1988
 Указанные декларации \emph{declarations} перед телом обрабатываются так как
 описано в разделе~\ref{DECLARE-SYNTAX-SECTION}.
 \end{defspec}
+
+
+\begin{defmac}
+define-symbol-macro symbol {form}
+
+Символ \emph{symbol} выступает в качестве макровызова. Одинарная форма содержит
+тело раскрытия. Символы не может являться определённой специальной переменной.
+\end{defmac}
+
 
 \section{Операторы условных переходов}
 
