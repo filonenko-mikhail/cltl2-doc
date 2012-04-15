@@ -3,7 +3,7 @@
 % 3/18/85 10:28:39  Created.
 % 3/18/85 10:29:39  Uses TMrep10.sty instead of rep10.sty, etc.
 % 3/18/85 11:12:44  New \maketitle puts in copyright notice and other text.
-% 3/19/85 12:38:40  Added \formattedindex and \indexentry.
+% 3/19/85 12:38:40  Added formattedindex and \indexentry.
 % 3/21/85 11:39:27  Make index be in \small font.  Adjust spacing.
 % 5/22/85 12:38:42  Need to make @ be alphabetic (catcode 11) when
 %		    reading in the index.  Things like \z@ show up.
@@ -90,10 +90,13 @@
 \newcounter{lispcounter}
 \newcounter{defuncounter}
 
-\newenvironment{lisp}{\stepcounter{lispcounter}\begin{tabbing}}{\end{tabbing}}
+\newenvironment{lisp}{\stepcounter{lispcounter}\begin{tabbing}}{\end{tabbing}\paragraph{}}
+
+\newenvironment{defunheader}{}{}
 
 \def\@defunstart{\noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
   \begingroup
+  \begin{defunheader}
   \catcode`&=11}
 
 % The addvspace used to be "plus 4pt" but that was not enough stretch relative to \parskip.
@@ -101,7 +104,7 @@
    \@ifnextchar[{\@defuntyped}{\@defununtyped}}}
 
 
-\def\@showdefuntype{\emph{[\@defuntype\/]}\relax
+\def\@showdefuntype{\emph{[\@defuntype]}\relax
   \let\@defuntype\@defunsecondtype}
 
 \def\@defununtyped{\let\@defunshow=\relax \@defun}
@@ -113,9 +116,9 @@
 
 \def\@defun{\@ifnextchar?{\@defunname}{\@defunname}}	% Skips spaces before name 
 
-\def\enddefun{\par
-  %%\message{end{defun} for \currentdefun}%For debugging
-  \@ifstar{}{}}    %Margin macros know this amount
+\def\enddefun{%\par
+  \@ifstar{}{}
+}    %Margin macros know this amount
 % Used to be "plus 2pt" but that was not enough stretch relative to \parskip.
 
 % 1: entry
@@ -123,7 +126,6 @@
 \def\@defunname#1 {\@defunshow
 %  \typeout{defunname}\typeout{ 1: #1}\typeout{ type: \lowercase{\@defuntype}}
   \@defunindex#1:\par{\@defuntype}\relax
-  %%\message{begin{defun} for #1}\global\def\defun@name{#1}%For debugging
   \textbf{ #1}
   \ifdim 1\wd0 < 1.3in\relax
      \def\@defunbreak{ }\relax
@@ -161,73 +163,72 @@
 
 
 \def\@defunreqmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenreqarg}{\@defunreqarg}}}}
-\def\@defunreqarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1\/}\@defunreqmode}}
-\def\@defunparenreqarg(#1 #2) {\@hairydefunbreak(\textit{#1\/}~#2)\@defunreqmode}  %CLOS methods
+\def\@defunreqarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1}\@defunreqmode}}
+\def\@defunparenreqarg(#1 #2) {\@hairydefunbreak(\textit{#1}~#2)\@defunreqmode}  %CLOS methods
 
 \def\@defunrestmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@defunrestarg}}}
-\def\@defunrestarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1\/}\@defunrestmode}}
+\def\@defunrestarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1}\@defunrestmode}}
 
 \def\@defunoptionalmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenoptionalarg}{\@defunoptionalarg}}}}
-\def\@defunoptionalarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1\/}\@defunoptionalmode}}
-\def\@defunparenoptionalarg(#1 #2) {\@hairydefunbreak(\textit{#1\/}~\@defuninitvalue#2)\@defunoptionalmode}
+\def\@defunoptionalarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1}\@defunoptionalmode}}
+\def\@defunparenoptionalarg(#1 #2) {\@hairydefunbreak(\textit{#1}~\@defuninitvalue#2)\@defunoptionalmode}
 
 \def\@defuninitvalue#1#2){{\ifcat#1A\def\@tempa{#1#2}\def\@tempb{nil}\ifx\@tempa\@tempb
-  \cf \else \it \fi \else \cf \fi #1#2})}
+  \relax \else \relax \fi \else \relax \fi #1#2})}
 
 \def\@defunkeymode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenkeyarg}{\@defunkeyarg}}}}
-\def\@defunkeyarg#1 {\@newlinecheck{#1}{\@defunkeywordbreak\textit{#1\/}\@defunkeymode}}
+\def\@defunkeyarg#1 {\@newlinecheck{#1}{\@defunkeywordbreak\textit{#1}\@defunkeymode}}
 \def\@defunparenkeyarg(#1 #2) {~(#1~\@defuninitvalue#2)\@defunkeymode}
 
 \def\@defunkeyword &#1 {\@defunkeywordbreak\&#1 \csname @defun#1mode\endcsname}
 
-\def\@defundone\par{\par\endgroup
-  \nobreak\noindent}
+\def\@defundone\par{\end{defunheader}\endgroup\paragraph{}}
 
-%% Macros, special forms
+\newenvironment{defmacheader}{\begin{tabbing}}{\end{tabbing}}
+
+%% Macros, special operators
 \begingroup
 %\catcode`\[=13 \catcode`\]=13
 %\catcode`$=13 \catcode`$=13
 \catcode`\<=13 \catcode`\>=13 %\catcode`\|=13
 \catcode`\?=13
-\global\def\@defmacstart#1{\relax
-%  \noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
+\global\def\@defmacstart#1{\relax%
+  % \noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
   \begingroup
-   \catcode`&=11
-   \def\@lbracehack{{\,\{}\@backslashsetup}\relax
-   \def\@rbracehack{\@ifnextchar*{\@rbracesuper}{\@ifnextchar+{\@rbracesuper}{\/\}\,\@backslashsetup}}}\relax
-  % %\def[{{$\,\lbrack$}\=\pushtabs\+\@backslashsetup}\relax
-  % %\def]{\-\poptabs$\/\rbrack\,$\@backslashsetup}\relax
-  \def<{\,[[\@backslashsetup}\relax
-  \def>{\/]]\,\@backslashsetup}\relax
-  % \def({{\cf \char40}\=\pushtabs\+\@backslashsetup}\relax
-  % \def){\-\poptabs{\cf \char41}\@backslashsetup}\relax
-  %\def|{{$\char124$}}\relax
-   \def?{{$\downarrow$}}\relax
-   \def\@finishdefmac{%\-
-     \end{tabbing}\endgroup%
-     \everypar{}\paragraph{}\noindent}\relax
-   \expandafter\def\@carret{\expandafter\@ifnextchar\@carret%
-     {\@finishdefmac\@gobblecr}{\@tabcr*\@backslashsetup}}\relax
-  \@defunhackbraces
-  \def\@backslashsetup{\def\\{\@tabcr*\@backslashsetup\@dodefmacname{#1}}}\relax
+  \catcode`&=11
+  \def\@lbracehack{{\{}\@backslashsetup}\relax
+  \def\@rbracehack{\@ifnextchar*{\@rbracesuper}{\@ifnextchar+{\@rbracesuper}{\}\@backslashsetup}}}\relax
+  \def<{[[\@backslashsetup}\relax
+  \def>{]]\@backslashsetup}\relax
+  \def?{{$\downarrow$}}\relax
+  \def\@finishdefmac{\end{defmacheader}\endgroup}\relax
+  \expandafter\def\@carret{\expandafter\@ifnextchar\@carret{\@finishdefmac
+      \@gobblecr
+    }
+    {\@tabcr* ~~
+      %\end{defmacheader}\begin{defmacheader}
+      \@backslashsetup}}\relax
+    \@defunhackbraces
+  \def\@backslashsetup{\def\\{\end{defmacheader}\begin{defmacheader}%
+      % \@tabcr*
+      \@backslashsetup\@dodefmacname{#1}}}\relax
   % \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
   \catcode`\<=13 \catcode`\>=13 %\catcode`\|=13 
   \catcode`\?=13 \catcode`\^^M=13
-  %\def\!##1!{\cd{##1}}\relax
-  \begin{tabbing}
-  \@backslashsetup\@margineveryparguts
-  \@dodefmacname{#1}}
+  \begin{defmacheader}
+   \@backslashsetup\@margineveryparguts
+   \@dodefmacname{#1}}
 \endgroup
-\def\@rbracesuper#1{{\/\}#1\,}\@backslashsetup}
+\def\@rbracesuper#1{{\}#1}\@backslashsetup}
 
 
-\def\Mopt#1{\,[\textit{#1\/}]\,}
-\def\Mchoice#1{\,[[\textit{#1\/}]]\,}
-\def\Mstar#1{\,\{\textit{#1\/}\}*\,}
-\def\Mplus#1{\,\{\textit{#1\/}\}+\,}
-\def\Mgroup#1{\,\{\textit{#1\/}\}\,}
+\def\Mopt#1{\,[\textit{#1}]\,}
+\def\Mchoice#1{\,[[\textit{#1}]]\,}
+\def\Mstar#1{\,\{\textit{#1}\}*\,}
+\def\Mplus#1{\,\{\textit{#1}\}+\,}
+\def\Mgroup#1{\,\{\textit{#1}\}\,}
 \def\Mor{|}
-\def\Mind#1{$\downarrow$\textit{#1\/}}
+\def\Mind#1{$\downarrow$\textit{#1}}
 
 \ifx \rulang\Undef
 \def\defmac{\@defmacbegin{Macro}}
