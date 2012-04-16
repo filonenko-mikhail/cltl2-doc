@@ -32,10 +32,8 @@ The \cdf{declare} construct is used for embedding declarations within
 executable code.  Global declarations and declarations that are computed
 by a program are established by the \cdf{proclaim} construct.
 
-\begin{newer}
-X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
-to introduce the new macro \cdf{declaim}, which is guaranteed
-to be recognized appropriately by the compiler and is often more convenient
+Macro \cdf{declaim}, which is guaranteed
+to be recognized appropriately by the compiler, is often more convenient
 than \cdf{proclaim} for establishing global declarations.
 \end{newer}
 
@@ -63,31 +61,10 @@ Declarations may occur in lambda-expressions and in the forms listed here.
 \cdf{do-symbols}\>\cdf{with-open-file} \\
 \cdf{dolist}\>\cdf{with-open-stream} \\*
 \cdf{dotimes}\>\cdf{with-output-to-string} \\*
-\cdf{flet} 
+\cdf{flet}\>\cdf{with-conditions-restarts} \\
+\cdf{print-unreadable-object}\>\cdf{with-standard-io-syntax}
 \end{lisp}
-\begin{new}%CORR
-\emph{Notice of correction.}
-In the first edition, the above list failed to mention the forms
-\cdf{define-setf-method}, \cdf{with-input-from-string}, \cdf{with-open-file},
-\cdf{with-open-stream}, and \cdf{with-output-to-string}, even though
-their individual descriptions in the first edition specified that declarations
-may appear in those forms.
-\end{new}
-
-X3J13 voted in June 1989 \issue{CONDITION-RESTARTS} to add \cdf{with-condition-restarts}
-and also \issue{DATA-IO} to add \cdf{print-unreadable-object}
-and \cdf{with-standard-io-syntax}.
-The X3J13 vote left it unclear whether these macros
-permit declarations to appear at the heads of their bodies.
-I believe that was the intent,
-but this is only my interpretation.
-
-\begin{new}
-X3J13 voted in June 1988
-\issue{CLOS}
-to adopt the Common Lisp Object System,
-which includes the following additional forms in which declarations
-may occur:
+ 
 \begin{lisp}
 \hskip 12pc\=\kill
 \cdf{defgeneric}\>\cdf{generic-function} \\*
@@ -95,68 +72,27 @@ may occur:
 \cdf{defmethod}\>\cdf{with-added-methods} \\*
 \cdf{generic-flet}
 \end{lisp}
-Furthermore X3J13 voted in January 1989
-\issue{SYMBOL-MACROLET-DECLARE}
-to allow declarations to
-occur before the bodies of these forms:
+
 \begin{lisp}
 \hskip 12pc\=\kill
 \cdf{symbol-macrolet}\>\cdf{with-slots} \\*
 \cdf{with-accessors}
 \end{lisp}
-There are certain aspects peculiar to \cdf{symbol-macrolet}
-(and therefore also to \cdf{with-accessors} and \cdf{with-slots},
-which expand into uses of \cdf{symbol-macrolet}).
-An error is signaled if a name defined by \cdf{symbol-macrolet}
-is declared \cdf{special}, and a type declaration of a name
-defined by \cdf{symbol-macrolet} is equivalent in effect
-to wrapping a \cdf{the} form mentioning that type around
-the expansion of the defined symbol.
-\end{new}
 
 It is an error to attempt to evaluate a declaration.
 Those special operators that permit declarations to appear
 perform explicit checks for their presence.
-
-\beforenoterule
-\begin{incompatibility}
-In MacLisp, \cdf{declare} is a special operator
-that does nothing but return the symbol \cdf{declare} as its
-result.  The MacLisp interpreter knows nothing about declarations
-but just blindly evaluates them, effectively ignoring them.
-The MacLisp compiler recognizes declarations but processes
-them simply by evaluating the subforms of the declaration in
-the compilation context.  In Common Lisp it is
-important that both the interpreter and compiler recognize
-declarations (especially \cdf{special} declarations) and treat them
-consistently,
-and so the rules about the structure and use of declarations
-have been made considerably more stringent.
-The odd tricks played in MacLisp by writing arbitrary forms
-to be evaluated within a \cdf{declare} form
-are better done in both MacLisp and Common Lisp by using \cdf{eval-when}.
-\end{incompatibility}
-\afternoterule
 
 It is permissible for a macro call to expand into a declaration
 and be recognized as such, provided that the macro call
 appears where a declaration may legitimately appear.
 (However, a macro call may not appear in place of a \emph{decl-spec}.)
 
-\begin{new}
-X3J13 voted in March 1988
-\issue{DECLARE-MACROS}
-to eliminate the recognition of
-a declaration resulting from the expansion of a macro call.
-This feature proved to be seldom used and
-awkward to implement in interpreters, compilers, and other code-analyzing programs.
-
-Under this change, a declaration is recognized only as such if
+A declaration is recognized only as such if
 it appears explicitly, as a list whose \emph{car} is the symbol \cdf{declare},
 in the body of a relevant special operator.  (Note, however, that it
 is still possible for a macro to expand into a call to the \cdf{proclaim}
 function.)
-\end{new}
 
 Each \emph{decl-spec} is a list whose \emph{car} is a symbol
 specifying the kind of declaration to be made.  Declarations may be
@@ -174,13 +110,6 @@ appear.  For example, in
 \end{lisp}
 the \cdf{type} declaration applies only to the outer binding of \cdf{x},
 and not to the binding made in the \cdf{let}.
-
-\beforenoterule
-\begin{incompatibility}
-This represents a difference from MacLisp, in which type
-declarations are pervasive.
-\end{incompatibility}
-\afternoterule
 
 Declarations that do not concern themselves with variable bindings are
 pervasive, affecting all code in the body of the special operator.
@@ -328,23 +257,15 @@ parameter of \cdf{nonsense}.
 \end{new}
 \end{defspec}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{RETURN-VALUES-UNSPECIFIED}
-to specify that \cdf{locally} executes the \emph{form\/}s as an implicit
+\cdf{locally} executes the \emph{form\/}s as an implicit
 \cdf{progn} and returns the value(s) of the last \emph{form}.
-\end{new}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{LOCALLY-TOP-LEVEL} to make \cdf{locally}
-be a special operator rather than a macro.  It still has the same syntax.
 
 \begin{defspec}
 locally {declaration}* {form}*
 
 This change was made to accommodate the new compilation model for top-level forms
 in a file (see section~\ref{COMPILER-SECTION}).
-When a \cdf{locally} form appears at top level, the forms in its body are
+When a \cdf{locally} operator appears at top level, the forms in its body are
 processed as top-level forms.  This means that one may, for example, meaningfully use
 \cdf{locally} to wrap declarations around a \cdf{defun} or \cdf{defmacro} form:
 \begin{lisp}
@@ -374,9 +295,6 @@ one must write something cumbersome such as
 ~~~~(bar x y z)))
 \end{lisp}
 \end{defspec}
-\end{newer}
-
-\newpage%manual
 
 \begin{defun}[Function]
 proclaim decl-spec
@@ -448,15 +366,6 @@ be used with caution.  The usual way to define a globally special
 variable is with \cdf{defvar} or \cdf{defparameter}.
 \end{defun}
 
-\begin{newer}
-X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
-to clarify that the compiler is not required to treat
-calls to \cdf{proclaim} any differently from the way it treats
-any other function call.  If a top-level call to \cdf{proclaim}
-is to take effect at compile time, it should be surrounded
-by an appropriate \cdf{eval-when} form.  Better yet,
-the new macro \cdf{declaim} may be used instead.
-
 \begin{defmac}
 declaim {decl-spec}*
 
@@ -466,13 +375,12 @@ anywhere \cdf{proclaim} may be called.  However, each \emph{decl-spec}
 is not evaluated.
 
 If a call to this macro appears at top level in a file
-  being processed by the file compiler, the proclamations are also
-  made at compile time.  As with other defining macros, it is 
-  unspecified whether or not the compile-time side effects of a 
-  \cdf{declaim} persist after the file has been compiled
-  (see section~\ref{COMPILER-SECTION}).
+being processed by the file compiler, the proclamations are also
+made at compile time.  As with other defining macros, it is 
+unspecified whether or not the compile-time side effects of a 
+\cdf{declaim} persist after the file has been compiled
+(see section~\ref{COMPILER-SECTION}).
 \end{defmac}
-\end{newer}
 
 \section{Declaration Specifiers}
 \label{DECLARATION-SPECIFIERS-SECTION}
@@ -925,32 +833,6 @@ that each \emph{namej} is a valid but non-standard declaration name.
 The purpose of this is to tell one compiler not to issue warnings
 for declarations meant for another compiler or other program processor.
 
-\begin{obsolete}
-This kind of declaration may be used only as a proclamation.
-For example:
-\begin{lisp}
-(proclaim '(declaration author \\*
-~~~~~~~~~~~~~~~~~~~~~~~~target-language \\*
-~~~~~~~~~~~~~~~~~~~~~~~~target-machine)) \\
- \\
-(proclaim '(target-language ada)) \\
- \\
-(proclaim '(target-machine IBM-650))
-\end{lisp}
-\newpage%manual
-\begin{lisp}
-(defun strangep (x) \\*
-~~(declare (author "Harry Tweeker")) \\*
-~~(member x '(strange weird odd peculiar)))
-\end{lisp}
-\end{obsolete}
-
-\begin{newer}
-X3J13 voted in June 1989 \issue{PROCLAIM-ETC-IN-COMPILE-FILE}
-to introduce the new macro \cdf{declaim}, which is guaranteed
-to be recognized appropriately by the compiler and is often more convenient
-than \cdf{proclaim} for establishing global declarations.
-
 The \cdf{declaration} declaration specifier may be used with \cdf{declaim}
 as well as \cdf{proclaim}.  The preceding examples would be better written
 using \cdf{declaim}, to ensure that the compiler will process them properly.
@@ -967,216 +849,164 @@ using \cdf{declaim}, to ensure that the compiler will process them properly.
 ~~(declare (author "Harry Tweeker")) \\*
 ~~(member x '(strange weird odd peculiar)))
 \end{lisp}
-\end{newer}
-\end{flushdesc}
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{DYNAMIC-EXTENT} to introduce a new
-declaration specifier \cdf{dynamic-extent} for variables,
-and voted in June 1989 \issue{DYNAMIC-EXTENT-FUNCTION}
-to extend it to handle function-names as well.
-\begin{flushdesc}
 \item[\cdf{dynamic-extent}]
 
-\cd{(dynamic-extent \emph{item1} \emph{item2} ... \emph{itemn})}
-declares that certain variables or function-names refer to data objects
-whose extents may be regarded as dynamic; that is, the declaration
-may be construed as a guarantee on the part of the programmer that
-the program will behave correctly even if the data objects have only
-dynamic extent rather than the usual indefinite extent.
+\cd{(dynamic-extent \emph{item1} \emph{item2} ... \emph{itemn})} declares that
+certain variables or function-names refer to data objects whose extents may be
+regarded as dynamic; that is, the declaration may be construed as a guarantee on
+the part of the programmer that the program will behave correctly even if the
+data objects have only dynamic extent rather than the usual indefinite extent.
 
 Each \emph{item} may be either a variable name or \cd{(function \emph{f\/})}
 where \emph{f} is a function-name (see section~\ref{FUNCTION-NAME-SECTION}).
-(Of course, \cd{(function \emph{f\/})} may be abbreviated in the usual way
-as \cd{\#'\emph{f}}.)
+(Of course, \cd{(function \emph{f\/})} may be abbreviated in the usual way as
+\cd{\#'\emph{f}}.)
 
-  It is permissible for an implementation simply to ignore this declaration.
-  In implementations that do not ignore it, the compiler (or interpreter)
-  is free to make whatever optimizations are appropriate given this
-  information; the most common optimization is to stack-allocate the
-  initial value of the object. The data types that can be optimized in this manner
-  may vary from implementation to implementation.
+  It is permissible for an implementation simply to ignore this declaration.  In
+implementations that do not ignore it, the compiler (or interpreter) is free to
+make whatever optimizations are appropriate given this information; the most
+common optimization is to stack-allocate the initial value of the object. The
+data types that can be optimized in this manner may vary from implementation to
+implementation.
 
-The meaning of this declaration can be stated more precisely.
-We say that
-object \emph{x} is an \emph{otherwise inaccessible part}
-    of \emph{y} if and only if making \emph{y} inaccessible would make \emph{x} inaccessible.
-    (Note that every object is an otherwise inaccessible part of itself.)
-  Now suppose that construct \emph{c} contains a \cdf{dynamic-extent} declaration for
-  variable (or function) \emph{v} (which need not be bound by \emph{c}).  Consider the values
-  $\emph{w}_1, \ldots, \emph{w}_{\hbox{\scriptsize\it n}}$ taken on by \emph{v} during the course of some execution of
-  \emph{c}.  The declaration asserts that if some object \emph{x}
-  is an otherwise inaccessible part of $\emph{w}_{\hbox{\scriptsize\it j}}$
-  whenever $\emph{w}_{\hbox{\scriptsize\it j}}$ becomes the value of \emph{v},
-  then just after execution of
-  $c$ terminates \emph{x} will be either inaccessible or
-  still an otherwise inaccessible part of the value of \emph{v}.
-  If this assertion is ever violated, the consequences are undefined.
+The meaning of this declaration can be stated more precisely.  We say that
+object \emph{x} is an \emph{otherwise inaccessible part} of \emph{y} if and only
+if making \emph{y} inaccessible would make \emph{x} inaccessible.  (Note that
+every object is an otherwise inaccessible part of itself.)  Now suppose that
+construct \emph{c} contains a \cdf{dynamic-extent} declaration for variable (or
+function) \emph{v} (which need not be bound by \emph{c}).  Consider the values
+$\emph{w}_1, \ldots, \emph{w}_{n}$ taken on by \emph{v}
+during the course of some execution of \emph{c}.  The declaration asserts that
+if some object \emph{x} is an otherwise inaccessible part of
+$\emph{w}_{j}$ whenever $\emph{w}_{j}$ becomes the value of \emph{v}, then just
+after execution of $c$ terminates \emph{x} will be either inaccessible or still
+an otherwise inaccessible part of the value of \emph{v}.  If this assertion is
+ever violated, the consequences are undefined.
 
-  In some implementations, it is
-  possible to allocate data structures in a way that will make them
-  easier to reclaim than by general-purpose garbage collection
-  (for example, on the stack or in some temporary area).  The \cdf{dynamic-extent}
-  declaration is designed to give the implementation the information
-  necessary to exploit such techniques.
+  In some implementations, it is possible to allocate data structures in a way
+that will make them easier to reclaim than by general-purpose garbage collection
+(for example, on the stack or in some temporary area).  The \cdf{dynamic-extent}
+declaration is designed to give the implementation the information necessary to
+exploit such techniques.
 
 For example, in the code fragment
-\begin{lisp}
-(let ((x (list 'a1 'b1 'c1)) \\*
-~~~~~~(y (cons 'a2 (cons 'b2 (cons 'c2 'd2))))) \\*
-~~(declare (dynamic-extent x y)) \\*
-~~...)
-\end{lisp}
-it is not difficult to prove that
-the otherwise inaccessible parts of \cdf{x} include the three conses constructed by \cdf{list},
-and that the otherwise inaccessible parts of \cdf{y} include three other
-conses manufactured by the three calls to \cdf{cons}.
-Given the presence of the \cdf{dynamic-extent} declaration, a compiler would be
-justified in stack-allocating these six conses and reclaiming their storage
-on exit from the \cdf{let} form.
+\begin{lisp} (let ((x (list 'a1 'b1 'c1)) \\* ~~~~~~(y (cons 'a2 (cons 'b2 (cons
+'c2 'd2))))) \\* ~~(declare (dynamic-extent x y)) \\* ~~...)
+\end{lisp} it is not difficult to prove that the otherwise inaccessible parts of
+\cdf{x} include the three conses constructed by \cdf{list}, and that the
+otherwise inaccessible parts of \cdf{y} include three other conses manufactured
+by the three calls to \cdf{cons}.  Given the presence of the
+\cdf{dynamic-extent} declaration, a compiler would be justified in
+stack-allocating these six conses and reclaiming their storage on exit from the
+\cdf{let} form.
 
-  Since stack allocation of the initial value entails knowing at the
-  object's creation time that the object can be stack-allocated, it is
-  not generally useful to declare \cdf{dynamic-extent} for variables
-  that have no lexically apparent initial value. For example,
-\begin{lisp}
-(defun f () \\*
-~~(let ((x (list 1 2 3))) \\*
-~~~~(declare (dynamic-extent x)) \\*
-~~~~...))
-\end{lisp}
-  would permit a compiler to stack-allocate the
-  list in \cdf{x}. However,
-\begin{lisp}
-(defun g (x) (declare (dynamic-extent x)) ...) \\*
-(defun f () (g (list 1 2 3)))
-\end{lisp}
-  could not typically permit a similar optimization in \cdf{f} because of the
-  possibility of later redefinition of \cdf{g}.
-  Only an implementation careful enough to recompile \cdf{f}
-  if the definition of \cdf{g} were to change incompatibly could stack-allocate
-  the list argument to \cdf{g} in \cdf{f}.
+  Since stack allocation of the initial value entails knowing at the object's
+creation time that the object can be stack-allocated, it is not generally useful
+to declare \cdf{dynamic-extent} for variables that have no lexically apparent
+initial value. For example,
+\begin{lisp} (defun f () \\* ~~(let ((x (list 1 2 3))) \\* ~~~~(declare
+(dynamic-extent x)) \\* ~~~~...))
+\end{lisp} would permit a compiler to stack-allocate the list in
+\cdf{x}. However,
+\begin{lisp} (defun g (x) (declare (dynamic-extent x)) ...) \\* (defun f () (g
+(list 1 2 3)))
+\end{lisp} could not typically permit a similar optimization in \cdf{f} because
+of the possibility of later redefinition of \cdf{g}.  Only an implementation
+careful enough to recompile \cdf{f} if the definition of \cdf{g} were to change
+incompatibly could stack-allocate the list argument to \cdf{g} in \cdf{f}.
 
   Other interesting cases are
-\begin{lisp}
-(declaim (inline g)) \\*
-(defun g (x) (declare (dynamic-extent x)) ...) \\*
-(defun f () (g (list 1 2 3)))
-\end{lisp}
-and
-\begin{lisp}
-(defun f () \\*
-~~(flet ((g (x) (declare (dynamic-extent x)) ...)) \\*
-~~~~(g (list 1 2 3))))
-\end{lisp}
-  In each case some compilers might realize the optimization is possible and others
-  might not.
+\begin{lisp} (declaim (inline g)) \\* (defun g (x) (declare (dynamic-extent x))
+...) \\* (defun f () (g (list 1 2 3)))
+\end{lisp} and
+\begin{lisp} (defun f () \\* ~~(flet ((g (x) (declare (dynamic-extent x)) ...))
+\\* ~~~~(g (list 1 2 3))))
+\end{lisp} In each case some compilers might realize the optimization is
+possible and others might not.
 
-  An interesting variant of this is the so-called \emph{stack-allocated rest list},
-  which can be achieved (in implementations supporting the optimization) by
-\begin{lisp}
-(defun f (\&rest x) \\*
-~~(declare (dynamic-extent x)) \\*
-~~...)
-\end{lisp}
-  Note here that although the initial value of \cdf{x} is not explicitly present,
-  nevertheless in the usual implementation strategy the
-  function \cdf{f} is responsible for assembling the list for \cdf{x} from the passed arguments,
-  so the \cdf{f} function can be optimized by a compiler to construct a 
-  stack-allocated list instead of a heap-allocated list.
+  An interesting variant of this is the so-called \emph{stack-allocated rest
+list}, which can be achieved (in implementations supporting the optimization) by
+\begin{lisp} (defun f (\&rest x) \\* ~~(declare (dynamic-extent x)) \\* ~~...)
+\end{lisp} Note here that although the initial value of \cdf{x} is not
+explicitly present, nevertheless in the usual implementation strategy the
+function \cdf{f} is responsible for assembling the list for \cdf{x} from the
+passed arguments, so the \cdf{f} function can be optimized by a compiler to
+construct a stack-allocated list instead of a heap-allocated list.
 
-Some Common Lisp functions take other functions as arguments; frequently
-the argument function is a so-called \emph{downward funarg}, that is, a functional
+Some Common Lisp functions take other functions as arguments; frequently the
+argument function is a so-called \emph{downward funarg}, that is, a functional
 argument that is passed only downward and whose extent may therefore be dynamic.
-\begin{lisp}
-(flet ((gd (x) (atan (sinh x)))) \\*
-~~(declare (dynamic-extent \#'gd))~~~~~;\textrm{\cdf{mapcar} won't hang on to \cdf{gd}}\\*
-~~(mapcar \#'gd my-list-of-numbers))
+\begin{lisp} (flet ((gd (x) (atan (sinh x)))) \\* ~~(declare (dynamic-extent
+\#'gd))~~~~~;\textrm{\cdf{mapcar} won't hang on to \cdf{gd}}\\* ~~(mapcar \#'gd
+my-list-of-numbers))
 \end{lisp}
 
 
-The following three examples are in error, since in each case
-the value of \cdf{x} is used outside of its
-extent.
-\begin{lisp}
-(length (let ((x (list 1 2 3))) \\*
-~~~~~~~~~~(declare (dynamic-extent x)) \\*
+The following three examples are in error, since in each case the value of
+\cdf{x} is used outside of its extent.
+\begin{lisp} (length (let ((x (list 1 2 3))) \\* ~~~~~~~~~~(declare
+(dynamic-extent x)) \\*
 ~~~~~~~~~~x))~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Wrong}
-\end{lisp}
-The preceding code is obviously incorrect, because the cons cells making
-up the list in \cdf{x} might be deallocated (thanks to the declaration)
+\end{lisp} The preceding code is obviously incorrect, because the cons cells
+making up the list in \cdf{x} might be deallocated (thanks to the declaration)
 before \cdf{length} is called.
-\begin{lisp}
-(length (list (let ((x (list 1 2 3))) \\*
-~~~~~~~~~~~~~~~~(declare (dynamic-extent x)) \\*
+\begin{lisp} (length (list (let ((x (list 1 2 3))) \\* ~~~~~~~~~~~~~~~~(declare
+(dynamic-extent x)) \\*
 ~~~~~~~~~~~~~~~~x)))~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Wrong}
-\end{lisp}
-In this second case it is less obvious that
-the code is incorrect, because one might argue that
-the cons cells making
-up the list in \cdf{x} have no effect on the result to be computed by \cdf{length}.
-Nevertheless the code briefly violates the assertion implied by the declaration
-and is therefore incorrect.  (It is not difficult to imagine a perfectly
-sensible implementation of a garbage collector that might become confused
-by a cons cell containing a dangling pointer to a list that was once stack-allocated
-but then deallocated.)
-\begin{lisp}
-(progn (let ((x (list 1 2 3))) \\*
-~~~~~~~~~(declare (dynamic-extent x)) \\*
+\end{lisp} In this second case it is less obvious that the code is incorrect,
+because one might argue that the cons cells making up the list in \cdf{x} have
+no effect on the result to be computed by \cdf{length}.  Nevertheless the code
+briefly violates the assertion implied by the declaration and is therefore
+incorrect.  (It is not difficult to imagine a perfectly sensible implementation
+of a garbage collector that might become confused by a cons cell containing a
+dangling pointer to a list that was once stack-allocated but then deallocated.)
+\begin{lisp} (progn (let ((x (list 1 2 3))) \\* ~~~~~~~~~(declare
+(dynamic-extent x)) \\*
 ~~~~~~~~~x)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Wrong} \\*
 ~~~~~~~(print "Six dollars is your change have a nice day NEXT!"))
-\end{lisp}
-In this third case it is even less obvious that
-the code is incorrect, because the value of \cdf{x}
-returned from the \cdf{let} construct is discarded right away by the \cdf{progn}.
-Indeed it is, but ``right away'' isn't fast enough.
-The code briefly violates the assertion implied by the declaration
-and is therefore incorrect.  (If the code is being interpreted,
-the interpreter might hang on to the value returned by the \cdf{let}
-for some time before it is eventually discarded.)
+\end{lisp} In this third case it is even less obvious that the code is
+incorrect, because the value of \cdf{x} returned from the \cdf{let} construct is
+discarded right away by the \cdf{progn}.  Indeed it is, but ``right away'' isn't
+fast enough.  The code briefly violates the assertion implied by the declaration
+and is therefore incorrect.  (If the code is being interpreted, the interpreter
+might hang on to the value returned by the \cdf{let} for some time before it is
+eventually discarded.)
 
-Here is one last example, one that has little practical import but
-is theoretically quite instructive.
-\begin{lisp}
-(dotimes (j 10) \\*
-~~(declare (dynamic-extent j)) \\*
-~~(setq foo 3)~~~~~~~~~~~~~~~~~~~~~;\textrm{Correct} \\*
-~~(setq foo j))~~~~~~~~~~~~~~~~~~~~;\textrm{Erroneous---but why? (see text)}
-\end{lisp}
-Since \cdf{j} is an integer by the
-definition of \cdf{dotimes}, but \cdf{eq} and \cdf{eql} are not necessarily equivalent for
-integers, what are the otherwise inaccessible parts of \cdf{j}, which this declaration
-requires the body of the \cdf{dotimes} not to ``save''?  If the value of \cdf{j} is \cd{3},
+Here is one last example, one that has little practical import but is
+theoretically quite instructive.
+\begin{lisp} (dotimes (j 10) \\* ~~(declare (dynamic-extent j)) \\* ~~(setq foo
+3)~~~~~~~~~~~~~~~~~~~~~;\textrm{Correct} \\* ~~(setq foo
+j))~~~~~~~~~~~~~~~~~~~~;\textrm{Erroneous---but why? (see text)}
+\end{lisp} Since \cdf{j} is an integer by the definition of \cdf{dotimes}, but
+\cdf{eq} and \cdf{eql} are not necessarily equivalent for integers, what are the
+otherwise inaccessible parts of \cdf{j}, which this declaration requires the
+body of the \cdf{dotimes} not to ``save''?  If the value of \cdf{j} is \cd{3},
 and the body does \cd{(setq foo~3)}, is that an error?  The answer is no, but
 the interesting thing is that it depends on the implementation-dependent
-behavior of \cdf{eq} on numbers.  In an implementation where \cdf{eq} and \cdf{eql} are
-equivalent for \cd{3}, then \cd{3} is not an otherwise inaccessible part because
-\cd{(eq~j (+~2~1))} is true,
-and therefore there is another way to access the object besides
-going through \cdf{j}.  On the other hand, in an implementation where \cdf{eq} and
-\cdf{eql} are not equivalent for \cd{3}, then the particular \cd{3} that is the value of
-\cdf{j} is an otherwise inaccessible part, but any other \cd{3} is not.
-Thus \cd{(setq foo~3)} is valid
-but \cd{(setq foo~j)} is erroneous.  Since \cd{(setq foo~j)} is erroneous in some
-implementations, it is erroneous in all portable programs, but some other
+behavior of \cdf{eq} on numbers.  In an implementation where \cdf{eq} and
+\cdf{eql} are equivalent for \cd{3}, then \cd{3} is not an otherwise
+inaccessible part because \cd{(eq~j (+~2~1))} is true, and therefore there is
+another way to access the object besides going through \cdf{j}.  On the other
+hand, in an implementation where \cdf{eq} and \cdf{eql} are not equivalent for
+\cd{3}, then the particular \cd{3} that is the value of \cdf{j} is an otherwise
+inaccessible part, but any other \cd{3} is not.  Thus \cd{(setq foo~3)} is valid
+but \cd{(setq foo~j)} is erroneous.  Since \cd{(setq foo~j)} is erroneous in
+some implementations, it is erroneous in all portable programs, but some other
 implementations may not be able to detect the error.  (If this conclusion seems
-strange, it may help to replace \cd{3} everywhere
-in the preceding argument with some obvious
-bignum such as \cd{375374638837424898243} and to replace
-\cd{10} with some even larger bignum.)
+strange, it may help to replace \cd{3} everywhere in the preceding argument with
+some obvious bignum such as \cd{375374638837424898243} and to replace \cd{10}
+with some even larger bignum.)
 
-  The \cdf{dynamic-extent} declaration should be used with great care.
-  It makes possible great performance improvements in some situations, but
-  if the user misdeclares
-  something and consequently the implementation
-  returns a pointer into the stack (or stores it in the heap),
-  an undefined situation may result and the integrity of the Lisp storage
-  mechanism may be compromised. Debugging these situations may be tricky.
-  Users who have asked for this feature have indicated a willingness
-  to deal with such problems; nevertheless, I do not encourage
-  casual users to use this declaration.
+  The \cdf{dynamic-extent} declaration should be used with great care.  It makes
+possible great performance improvements in some situations, but if the user
+misdeclares something and consequently the implementation returns a pointer into
+the stack (or stores it in the heap), an undefined situation may result and the
+integrity of the Lisp storage mechanism may be compromised. Debugging these
+situations may be tricky.  Users who have asked for this feature have indicated
+a willingness to deal with such problems; nevertheless, I do not encourage
+casual users to use this declaration.
 \end{flushdesc}
-\end{newer}
 
 An implementation is free to support other (implementation-dependent)
 declaration specifiers as well.
@@ -1229,9 +1059,7 @@ of multiple values:
 ~~~~~(gethash the-key the-string-table))
 \end{lisp}
 
-\begin{newer}
-X3J13 voted in June 1989 \issue{THE-AMBIGUITY}
-to clarify that \emph{value-type} may be any valid type specifier whatsoever.
+\emph{value-type} may be any valid type specifier whatsoever.
 The point is that a type specifier need not be one suitable for
 discrimination but only for declaration.
 
@@ -1243,17 +1071,6 @@ as being entirely equivalent to
 \end{lisp}
 A more elaborate expression could be written to describe the case where
 \emph{value-type} is a \cdf{values} type specifier.
-\end{newer}
-
-\beforenoterule
-\begin{incompatibility}
-This construct is borrowed from the Interlisp DECL
-package; Interlisp, however, allows an implicit \cdf{progn} after the type
-specifier rather than just a single form.  The MacLisp \cdf{fixnum-identity}
-and \cdf{flonum-identity} constructs can be expressed as \cd{(the fixnum \emph{x})}
-and \cd{(the single-float \emph{x})}.
-\end{incompatibility}
-\afternoterule
 \end{defspec}
 
 %RUSSIAN
@@ -1284,13 +1101,9 @@ and \cd{(the single-float \emph{x})}.
 выполняемого кода. Глобальные декларации и декларации, вычисленные программой,
 устанавливаются конструкцией \cdf{proclaim}.
 
-\begin{newer}
-X3J13 проголосовал в июне 1989
-\issue{PROCLAIM-ETC-IN-COMPILE-FILE}
-ввести новый макрос \cdf{declaim}, который гарантированно 
+Макрос \cdf{declaim}, который гарантированно 
 распознаётся компилятором, и часто более удобен, чем \cdf{proclaim} для
 установки глобальных деклараций. FIXME
-\end{newer}
 
 \begin{defspec}
 declare {decl-spec}*
@@ -1315,7 +1128,22 @@ declare {decl-spec}*
 \cdf{do-symbols}\>\cdf{with-open-file} \\
 \cdf{dolist}\>\cdf{with-open-stream} \\*
 \cdf{dotimes}\>\cdf{with-output-to-string} \\*
-\cdf{flet} 
+\cdf{flet}\>\cdf{with-conditions-restarts} \\
+\cdf{print-unreadable-object}\>\cdf{with-standard-io-syntax}
+\end{lisp}
+
+\begin{lisp}
+\hskip 12pc\=\kill
+\cdf{defgeneric}\>\cdf{generic-function} \\*
+\cdf{define-method-combination}\>\cdf{generic-labels} \\*
+\cdf{defmethod}\>\cdf{with-added-methods} \\*
+\cdf{generic-flet}
+\end{lisp}
+
+\begin{lisp}
+\hskip 12pc\=\kill
+\cdf{symbol-macrolet}\>\cdf{with-slots} \\*
+\cdf{with-accessors}
 \end{lisp}
 
 Вычисление декларации является ошибкой. Специальные формы, которые позволяют
@@ -1323,7 +1151,11 @@ declare {decl-spec}*
 
 Макровызовы могут раскрываться в декларации, при условии, что макровызов указан
 в том месте, где могут быть указаны декларации.
-(Однако, макровызов не может использоваться в форме declare на месте \emph{decl-spec}.)
+(Однако, макровызов не может использоваться в форме declare на месте
+\emph{decl-spec}.)
+
+Декларация может использовать только явно в теле соответсвтующего специального
+оператора в виде списка, \emph{car} которого равен символу \cdf{declare}.
 
 Каждая форма \emph{decl-spec} является списком, у которого \emph{car} элемент
 это символ, указывающий на тип декларации. Декларации могут быть разделены на
@@ -1388,6 +1220,135 @@ declare {decl-spec}*
 (Декларация \cdf{special} переменной \cd{z} указывается не в теле \cdf{defun}, а
 в теле внутренней конструкции \cdf{let}. Таким образом она не воздействует на
 связывание параметра функции.)
+\begin{new}
+X3J13 voted in January 1989
+\issue{DECLARATION-SCOPE}
+to replace the rules concerning the scope of
+declarations occurring at the head of a special operator or lambda-expression:
+\begin{itemize}
+\item The scope of a declaration always includes the body forms, as well as any
+``stepper'' or ``result'' forms (which are logically part of the body), of the
+special operator or lambda-expression.
+
+\item If the declaration applies to a name binding, then the scope of the
+declaration also includes the scope of the name binding.
+\end{itemize}
+Note that
+the distinction between pervasive and non-pervasive
+declarations is eliminated.  An important change
+from the first edition is that ``initialization''
+forms are specifically \emph{not} included as part of the body under the first
+rule; on the other hand, in many cases initialization forms may fall
+within the scope of certain declarations under the second rule.
+\end{new}
+
+\begin{new}
+X3J13 also voted in January 1989
+\issue{DECLARE-TYPE-FREE}
+to change the interpretation
+of \cdf{type} declarations (see section \ref{DECLARATION-SPECIFIERS-SECTION}).
+\end{new}
+
+\begin{new}
+These changes affect the interpretation of some of the examples from the
+first edition.
+\begin{lisp}
+(defun foo (x) \\*
+~~(declare (type float x)) ... \\*
+~~(let ((x 'a)) ...) \\*
+~~...)
+\end{lisp}
+Under the interpretation approved by X3J13, the type
+declaration applies to \emph{both} bindings of \cdf{x}.
+More accurately, the type declaration is considered to apply to
+variable references rather than bindings, and the type declaration refers
+to every reference in the body of \cdf{foo} to a variable named \cdf{x},
+no matter to what binding it may refer.
+\begin{lisp}
+(defun foo (x y) (declare (notinline floor)) ...)
+\end{lisp}
+This example of the use of \cdf{notinline} stands unchanged, but the following
+slight extension of it would change:
+\begin{lisp}
+(defun foo (x \&optional (y (floor x))) \\*
+~~(declare (notinline floor)) ...)
+\end{lisp}
+Under first edition rules, the \cdf{notinline} declaration would be
+considered to apply to the call to \cdf{floor} in the initialization
+form for \cdf{y}.  Under the interpretation approved by X3J13, the
+\cdf{notinline} would \emph{not} apply to that particular call to \cdf{floor}.
+Instead the user must write something like
+\begin{lisp}
+(defun foo (x \&optional (y (locally (declare (notinline floor)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(floor x)))) \\*
+~~(declare (notinline floor)) ...)
+\end{lisp}
+or perhaps
+\begin{lisp}
+(locally (declare (notinline floor)) \\*
+~~(defun foo (x \&optional (y (floor x))) ...))
+\end{lisp}
+Similarly, the \cdf{special} declaration in
+\begin{lisp}
+(defun few (x \cd{\&optional} (y *print-circle*)) \\*
+~~(declare (special *print-circle*)) \\*
+~~...)
+\end{lisp}
+is not considered to apply to the reference in the initialization form
+for \cdf{y} in \cdf{few}.  As for the \cdf{nonsense} example,
+\begin{lisp}
+(defun nonsense (k x z) \\*
+~~(foo z x)~~~~~~~~~~~~~~~;\textrm{First call to \cdf{foo}} \\*
+~~(let ((j (foo k x))~~~~~;\textrm{Second call to \cdf{foo}} \\*
+~~~~~~~~(x (* k k))) \\*
+~~~~(declare (inline foo) (special x z)) \\*
+~~~~(foo x j z)))~~~~~~~~~;\textrm{Third call to \cdf{foo}}
+\end{lisp}
+under the interpretation approved by X3J13, the \cdf{inline}
+declaration is no longer considered to apply to the second
+call to \cdf{foo}, because it is in an initialization form, which is
+no longer considered in the scope of the declaration.  Similarly,
+the reference to \cdf{x} in that second call to \cdf{foo} is no longer
+taken to be a special reference, but a local reference to the second
+parameter of \cdf{nonsense}.
+\end{new}
+\end{defspec}
+
+\cdf{locally} выполняет формы \emph{form} как неявный \cdf{progn} и возвращает
+одно или несколько значений последней формы.
+
+\begin{defspec}
+locally {declaration}* {form}*
+
+Когда оператор \cdf{locally} используется на верхнем уровне, тогда формы в его
+теле выполняются как формы верхнего уровня. Это означает что, например,
+\cdf{locally} можно использовать для оборачивания деклараций вокруг форм
+\cdf{defun} или \cdf{defmacro}.
+\begin{lisp}
+(locally \\*
+~~(declare (optimize (safety 3) (space 3) (debug 3) (speed 1))) \\*
+~~(defun foo (x \&optional (y (abs x)) (z (sqrt y))) \\*
+~~~~(bar x y z)))
+\end{lisp}
+Без уверенности, что это работает, можно записать что-то вроде этого:
+\begin{lisp}
+ \\*
+(defun foo (x \&optional (y (locally \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(declare (optimize (safety 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(space 3) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(debug 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(speed 1))) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(abs x))) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~(z (locally \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(declare (optimize (safety 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(space 3) \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(debug 3) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(speed 1))) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(sqrt y)))) \\
+~~(locally \\*
+~~~~(declare (optimize (safety 3) (space 3) (debug 3) (speed 1))) \\*
+~~~~(bar x y z)))
+\end{lisp}
 \end{defspec}
 
 \begin{defun}[Функция]
@@ -1423,6 +1384,17 @@ proclaim decl-spec
 \cdf{floor} будет вызываться как отдельная функция, так как локальная декларация
 скрыла прокламацию.
 
+\begin{newer}
+X3J13 voted in January 1989 \issue{SPECIAL-TYPE-SHADOWING}
+to clarify that such shadowing does not occur in the case of type declarations.
+If there is a local type declaration for a special variable and there is also a global
+proclamation for that same variable, then the value of the variable within the scope
+of the local declaration must be a member of the intersection of the two
+declared types.
+This is consistent with the treatment of nested local type declarations
+on which X3J13 also voted in January 1989 \issue{DECLARE-TYPE-FREE}.
+\end{newer}
+
 Специальный случай, когда \cdf{proclaim} обрабатывает \cdf{special}, то
 \emph{decl-spec} применяется ко всем связываниям и ссылкам на упомянутую 
 переменную.
@@ -1440,8 +1412,6 @@ proclaim decl-spec
 \cdf{defvar} или \cdf{defparameter}.
 \end{defun}
 
-\begin{newer}
-
 \begin{defmac}
 declaim {decl-spec}*
 
@@ -1451,12 +1421,11 @@ declaim {decl-spec}*
 
 Если вызов этого макроса произошёл на верхнем уровне в файле, обрабатываемом
 компилятором, то прокламации также будут выполнены во время компиляции. 
-  As with other defining macros, it is 
-  unspecified whether or not the compile-time side effects of a 
-  \cdf{declaim} persist after the file has been compiled
-  (see section~\ref{COMPILER-SECTION}). FIXME
+As with other defining macros, it is 
+unspecified whether or not the compile-time side effects of a 
+\cdf{declaim} persist after the file has been compiled
+(see section~\ref{COMPILER-SECTION}). FIXME
 \end{defmac}
-\end{newer}
 
 \section{Спецификаторы деклараций}
 \label{DECLARATION-SPECIFIERS-SECTION}
@@ -1465,7 +1434,6 @@ declaim {decl-spec}*
 \cdf{declare}.
 
 \begin{flushdesc}
-
 \item[\cdf{special}]
 \cd{(special \emph{var1} \emph{var2} ...)} указывает на то, что все указанные
 переменные должны рассматриваться как \emph{специальные}.
@@ -1523,10 +1491,154 @@ declaim {decl-spec}*
 В частности, значения присваиваемые переменным с помощью \cdf{setq}, как и
 первоначальные значения, должны быть заданного типа.
 
+\begin{new}
+X3J13 voted in January 1989
+\issue{DECLARE-TYPE-FREE}
+to alter the interpretation of type declarations.
+They are not to be construed to affect ``only variable bindings.''
+The new rule for a declaration of a variable to
+have a specified type is threefold:
+\begin{itemize}
+\item It is an error if, during the execution
+of any reference to that variable within the scope of the declaration,
+the value of the variable is not of the declared type.
+\item It is an error if, during the execution
+of a \cdf{setq} of that variable within the scope of the declaration,
+the new value for the variable is not of the declared type.
+\item It is an error if, at any moment that execution enters the scope
+of the declaration, the value of the variable is not of the
+declared type.
+\end{itemize}
+One may think of a type declaration \cd{(declare (type face bodoni))}
+as implicitly changing every reference to \cdf{bodoni} within the scope
+of the declaration to \cd{(the~face bodoni)}; changing every expression
+\emph{exp} assigned to \cdf{bodoni} within the scope of the declaration
+to \cd{(the~face \emph{exp})}; and implicitly executing \cd{(the~face bodoni)}
+every time execution enters the scope of the declaration.
+
+These new rules make type declarations much more useful.  Under first
+edition rules, a type declaration was useless if not associated with
+a variable binding; declarations such as in
+\begin{lisp}
+(locally \\*
+~~(declare (type (byte 8) x y)) \\*
+~~(+ x y))
+\end{lisp}
+at best had no effect and at worst were erroneous, depending on one's
+interpretation of the first edition.  Under the interpretation approved
+by X3J13, such declarations have ``the obvious natural interpretation.''
+
+X3J13 noted that if nested type declarations refer to the same variable,
+then all of them have effect; the value of the variable must be a member of the
+intersection of the declared types.
+
+Nested type declarations could occur as a result of either macro expansion
+or carefully crafted code.  There are three cases.  First,
+the inner type might be a subtype of the outer one:
+\begin{lisp}
+(defun compare (apples oranges) \\*
+~~(declare (type number apples oranges)) \\
+~~(cond ((typep apples 'fixnum) \\*
+~~~~~~~~~;; The programmer happens to know that, thanks to \\*
+~~~~~~~~~;; constraints imposed by the caller, if APPLES \\*
+~~~~~~~~~;; is a fixnum, then ORANGES will be also, and \\*
+~~~~~~~~~;; therefore wishes to avoid the unnecessary cost \\*
+~~~~~~~~~;; of checking ORANGES.~~Nevertheless the compiler \\*
+~~~~~~~~~;; should be informed to allow it to optimize code. \\
+~~~~~~~~~(locally (declare (type fixnum apples oranges))) \\*
+~~~~~~~~~~~~~~~~~~;; Maybe the compiler could have figured \\*
+~~~~~~~~~~~~~~~~~~;; out by flow analysis that APPLES must \\*
+~~~~~~~~~~~~~~~~~~;; be a fixnum here, but it doesn't hurt \\*
+~~~~~~~~~~~~~~~~~~;; to say it explicitly. \\*
+~~~~~~~~~~~(< apples oranges))) \\
+~~~~~~~~((or (complex apples) \\*
+~~~~~~~~~~~~~(complex oranges)) \\*
+~~~~~~~~~(error "Not yet implemented.~~Sorry.")) \\*
+~~~~~~~~...))
+\end{lisp}
+This is the case most likely to arise in code written completely by hand.
+
+Second, the outer type might be a subtype of the inner one.  In this
+case the inner declaration has no additional practical effect, but
+it is harmless.  This is
+likely to occur if code declares a variable to be of a very specific type
+and then passes it to a macro that then declares it to be of a less
+specific type.
+
+Third, the inner and outer declarations might be for types that
+overlap, neither being a subtype of the other.  This is likely to occur
+only as a result of macro expansion.  For example, user code might
+declare a variable to be of type \cdf{integer}, and a macro might
+later declare it to be of type \cd{(or fixnum package)}; in this case
+a compiler could intersect the two types to determine that in this
+instance the variable may hold only fixnums.
+
+The reader should note that the following code fragment is,
+perhaps astonishingly, \emph{not in error} under the interpretation approved by
+X3J13:
+\begin{lisp}
+(let ((james .007) \\*
+~~~~~~(maxwell 86)) \\*
+~~(flet ((spy-swap () \\*
+~~~~~~~~~~~(rotatef james maxwell))) \\*
+~~~~(locally (declare (integer maxwell)) \\*
+~~~~~~(spy-swap) \\*
+~~~~~~(view-movie "The Sound of Music") \\*
+~~~~~~(spy-swap) \\*
+~~~~~~maxwell))) \\*
+~\EV\ 86~~\textrm{(after a couple of hours of Julie Andrews)}
+\end{lisp}
+The variable \cdf{maxwell} is declared to be an integer over the \emph{scope}
+of the type declaration, not over its \emph{extent}.  Indeed \cdf{maxwell}
+takes on the non-integer value \cd{.007} while the Trapp family make their
+escape, but because no
+reference to \cdf{maxwell} within the scope of the declaration
+ever produces a non-integer value, the code
+is correct.
+
+Now the assignment to \cdf{maxwell} during the first call
+to \cdf{spy-swap}, and the reference to \cdf{maxwell} during the second call,
+\emph{do} involve non-integer values, but they occur within the body of
+\cdf{spy-swap}, which is \emph{not} in the scope of the type declaration!
+One could put the declaration in a different place so as to include
+\cdf{spy-swap} in the scope:
+\begin{lisp}
+(let ((james .007) \\*
+~~~~~~(maxwell 86)) \\*
+~~(locally (declare (integer maxwell)) \\*
+~~~~(flet ((spy-swap () \\*
+~~~~~~~~~~~~~(rotatef james maxwell))) \\*
+~~~~~~(spy-swap)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Bug!}\\*
+~~~~~~(view-movie "The Sound of Music") \\*
+~~~~~~(spy-swap) \\*
+~~~~~~maxwell)))
+\end{lisp}
+and then the code is indeed in error.
+\end{new}
+
+\begin{new}
+X3J13 also voted in January 1989
+\issue{FUNCTION-TYPE-ARGUMENT-TYPE-SEMANTICS}
+to alter the meaning of the
+\cdf{function} type specifier when used in \cdf{type} declarations
+(see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
+\end{new}
+
 \item[\emph{type}]
 \cd{(\emph{type} \emph{var1} \emph{var2} ...)}
 является аббревиатурой для \cd{(type \emph{type} \emph{var1} \emph{var2} ...)},
 при условии, что \emph{type} один из символов из таблицы~\ref{TYPE-SYMBOLS-TABLE}.
+
+\begin{new}
+Observe that this covers the particularly common case of declaring
+numeric variables:
+\begin{lisp}
+(declare (single-float mass dx dy dz) \\*
+~~~~~~~~~(double-float acceleration sum))
+\end{lisp}
+In many implementations there is also some advantage to declaring variables
+to have certain specialized vector types such as \cdf{base-string}.
+\end{new}
 
 \item[\cdf{ftype}]
 \cd{(ftype \emph{type} \emph{function-name-1} \emph{function-name-2} ...)}
@@ -1540,6 +1652,68 @@ declaim {decl-spec}*
 одна из указанных функций лексически ограничена (с помощью \cdf{flet} или
 \cdf{labels}), то декларация применится для локального определения, а не для глобального.
 
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cdf{ftype}
+declaration specifiers
+to accept any function-name (a symbol or a list
+whose \emph{car} is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write
+\begin{lisp}
+(declaim (ftype (function (list) t) (setf cadr)))
+\end{lisp}
+to indicate the type of the \cdf{setf} expansion function for \cdf{cadr}.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FUNCTION-TYPE-ARGUMENT-TYPE-SEMANTICS}
+to alter the meaning of the
+\cdf{function} type specifier when used in \cdf{ftype} declarations
+(see section~\ref{SPECIALIZED-TYPE-SPECIFIER-SECTION}).
+\end{new}
+
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DECLARE-FUNCTION-AMBIGUITY}
+to remove this interpretation
+of the \cdf{function} declaration specifier from the language.
+Instead, a declaration specifier
+\begin{lisp}
+(function \emph{var1} \emph{var2} ...)
+\end{lisp}
+is to be treated simply as an abbreviation for
+\begin{lisp}
+(type function \emph{var1} \emph{var2} ...)
+\end{lisp}
+just as for all other symbols appearing in table~\ref{TYPE-SYMBOLS-TABLE}.
+
+X3J13 noted that although \cdf{function} appears in
+table~\ref{TYPE-SYMBOLS-TABLE}, the first edition also discussed it
+explicitly, with a different meaning,
+without noting whether the differing
+interpretation was to replace or augment the
+interpretation regarding table~\ref{TYPE-SYMBOLS-TABLE}.  Unfortunately
+there is an ambiguous case: the declaration
+\begin{lisp}
+(declare (function foo nil string))
+\end{lisp}
+can be construed to abbreviate either
+\begin{lisp}
+(declare (ftype (function () string) foo))
+\end{lisp}
+or
+\begin{lisp}
+(declare (type function foo nil string))
+\end{lisp}
+The latter could perhaps be rejected on semantic grounds: it would be an
+error to declare \cdf{nil}, a constant, to be of type \cdf{function}.
+In any case, X3J13 determined that the ice was too thin here;
+the possibility of confusion is not worth the convenience of
+an abbreviation for \cdf{ftype} declarations.
+The change also makes the language more consistent.
+\end{new}
+
 \item[\cdf{inline}]
 \cd{(inline \emph{function1} \emph{function2} ...)}  указывает, что \emph{было бы
   неплохо} встроить код указанных функций непосредственно в место вызова.
@@ -1552,6 +1726,46 @@ declaim {decl-spec}*
 \cdf{labels}), то декларация применится для локального определения, а не для
 глобального.
 
+\begin{newer}
+X3J13 voted in October 1988 \issue{PROCLAIM-INLINE-WHERE}
+to clarify that during compilation the \cdf{inline} declaration specifier
+serves two distinct purposes: it indicates not only that affected calls
+to the specified functions should be expanded in-line, but also that
+affected definitions of the specified functions must be recorded for
+possible use in performing such expansions.
+
+Looking at it the other way,
+the compiler is not required to save function definitions against the
+possibility of future expansions unless the functions have already been
+proclaimed to be \cdf{inline}.  If a function is proclaimed (or declaimed)
+\cdf{inline}
+before some call to that function but the current definition of that
+function was established before the proclamation was processed,
+it is implementation-dependent whether that call will be expanded in-line.
+(Of course, it is implementation-dependent anyway, because a compiler
+is always free to ignore \cdf{inline} declaration specifiers.
+However, the intent of the committee is clear: for best results,
+the user is advised to put any \cdf{inline} proclamation of
+a function before any definition of or call to that function.)
+
+Consider these examples:
+\begin{lisp}
+(defun huey (x) (+ x 100))~~~~~~~~~;\textrm{Compiler need not remember this} \\*
+(declaim (inline huey dewey)) \\*
+(defun dewey (y) (huey (sqrt y)))~~;\textrm{Call to \cdf{huey} unlikely to be expanded} \\*
+(defun louie (z) (dewey (/ z)))~~~~;\textrm{Call to \cdf{dewey} likely to be expanded}
+\end{lisp}
+\goodbreak
+
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cdf{inline}
+declaration specifiers
+to accept any function-name (a symbol or a list
+whose \emph{car} is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(declare (inline (setf cadr)))} to indicate
+that the \cdf{setf}
+expansion function for \cdf{cadr} should be compiled in-line.
+\end{newer}
+
 \item[\cdf{notinline}]
 \cd{(notinline \emph{function1} \emph{function2} ...)} 
 указывает на то, что встраивать код указанных функций в место вызова \emph{не
@@ -1563,6 +1777,40 @@ declaim {decl-spec}*
 одна из указанных функций лексически ограничена (с помощью \cdf{flet} или
 \cdf{labels}), то декларация применится для локального определения, а не для
 глобального.
+\begin{newer}
+X3J13 voted in March 1989 \issue{FUNCTION-NAME} to extend \cdf{notinline}
+declaration specifiers
+to accept any function-name (a symbol or a list
+whose \emph{car} is \cdf{setf}---see section~\ref{FUNCTION-NAME-SECTION}).
+Thus one may write \cd{(declare (notinline (setf cadr)))} to indicate
+that the \cdf{setf}
+expansion function for \cdf{cadr} should not be compiled in-line.
+\end{newer}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ALLOW-LOCAL-INLINE}
+to clarify that the proper way to define a function \cdf{gnards}
+that is not \cdf{inline} by default, but for which a local
+declaration \cd{(declare (inline~gnards))} has half a chance of
+actually compiling \cdf{gnards} in-line, is as follows:
+\begin{lisp}
+(declaim (inline gnards)) \\*
+\\*
+(defun gnards ...) \\*
+\\*
+(declaim (notinline gnards))
+\end{lisp}
+The point is that the first declamation informs the compiler that
+the definition of \cdf{gnards} may be needed later for in-line expansion,
+and the second declamation prevents any expansions unless and until it is
+overridden.
+
+While an implementation is never required to perform in-line expansion,
+many implementations that do support such expansion will not
+process \cdf{inline} requests successfully unless definitions are
+written with these proclamations in the manner shown above.
+\end{new}
 
 \item[\cdf{ignore}]
 \cd{(ignore \emph{var1} \emph{var2} ... \emph{varn})} применяется только для
@@ -1578,6 +1826,11 @@ declaim {decl-spec}*
 \cdf{speed} (скомпилированного кода), \cdf{space} (и размер кода и run-time
 space), \cdf{safety} (проверка ошибок во время выполнения) и
 \cdf{compilation-speed} (скорость процесса компиляции).
+
+\begin{newer}
+X3J13 voted in October 1988 \issue{OPTIMIZE-DEBUG-INFO} to add
+the standard quality \cdf{debug} (ease of debugging).
+\end{newer}
 
 Также реализацией могут представляться другие свойства. \emph{value} должно быть
 неотрицательным целым числом, обычно на интервале \cd{0} и \cd{3}. Значение
@@ -1607,6 +1860,182 @@ space), \cdf{safety} (проверка ошибок во время выполн
 каждая \emph{namej} является нестандартным именем декларации.
 Целью является указать одному компилятор не создавать предупреждений для
 деклараций, которые используются для другого компилятора.
+
+
+The \cdf{declaration} declaration specifier may be used with \cdf{declaim}
+as well as \cdf{proclaim}.  The preceding examples would be better written
+using \cdf{declaim}, to ensure that the compiler will process them properly.
+
+\begin{lisp}
+(declaim (declaration author \\*
+~~~~~~~~~~~~~~~~~~~~~~target-language \\*
+~~~~~~~~~~~~~~~~~~~~~~target-machine)) \\
+ \\
+(declaim (target-language ada) \\*
+~~~~~~~~~(target-machine IBM-650)) \\
+ \\
+(defun strangep (x) \\*
+~~(declare (author "Harry Tweeker")) \\*
+~~(member x '(strange weird odd peculiar)))
+\end{lisp}
+
+\item[\cdf{dynamic-extent}]
+
+\cd{(dynamic-extent \emph{item1} \emph{item2} ... \emph{itemn})} declares that
+certain variables or function-names refer to data objects whose extents may be
+regarded as dynamic; that is, the declaration may be construed as a guarantee on
+the part of the programmer that the program will behave correctly even if the
+data objects have only dynamic extent rather than the usual indefinite extent.
+
+Each \emph{item} may be either a variable name or \cd{(function \emph{f\/})}
+where \emph{f} is a function-name (see section~\ref{FUNCTION-NAME-SECTION}).
+(Of course, \cd{(function \emph{f\/})} may be abbreviated in the usual way as
+\cd{\#'\emph{f}}.)
+
+  It is permissible for an implementation simply to ignore this declaration.  In
+implementations that do not ignore it, the compiler (or interpreter) is free to
+make whatever optimizations are appropriate given this information; the most
+common optimization is to stack-allocate the initial value of the object. The
+data types that can be optimized in this manner may vary from implementation to
+implementation.
+
+The meaning of this declaration can be stated more precisely.  We say that
+object \emph{x} is an \emph{otherwise inaccessible part} of \emph{y} if and only
+if making \emph{y} inaccessible would make \emph{x} inaccessible.  (Note that
+every object is an otherwise inaccessible part of itself.)  Now suppose that
+construct \emph{c} contains a \cdf{dynamic-extent} declaration for variable (or
+function) \emph{v} (which need not be bound by \emph{c}).  Consider the values
+$\emph{w}_1, \ldots, \emph{w}_{n}$ taken on by \emph{v}
+during the course of some execution of \emph{c}.  The declaration asserts that
+if some object \emph{x} is an otherwise inaccessible part of
+$\emph{w}_{j}$ whenever $\emph{w}_{j}$ becomes the value of \emph{v}, then just
+after execution of $c$ terminates 
+\emph{x} will be either inaccessible or still an otherwise inaccessible part of
+the value of \emph{v}.  If this assertion is ever violated, the consequences are
+undefined.
+
+  In some implementations, it is possible to allocate data structures in a way
+that will make them easier to reclaim than by general-purpose garbage collection
+(for example, on the stack or in some temporary area).  The \cdf{dynamic-extent}
+declaration is designed to give the implementation the information necessary to
+exploit such techniques.
+
+For example, in the code fragment
+\begin{lisp} (let ((x (list 'a1 'b1 'c1)) \\* ~~~~~~(y (cons 'a2 (cons 'b2 (cons
+'c2 'd2))))) \\* ~~(declare (dynamic-extent x y)) \\* ~~...)
+\end{lisp} it is not difficult to prove that the otherwise inaccessible parts of
+\cdf{x} include the three conses constructed by \cdf{list}, and that the
+otherwise inaccessible parts of \cdf{y} include three other conses manufactured
+by the three calls to \cdf{cons}.  Given the presence of the
+\cdf{dynamic-extent} declaration, a compiler would be justified in
+stack-allocating these six conses and reclaiming their storage on exit from the
+\cdf{let} form.
+
+  Since stack allocation of the initial value entails knowing at the object's
+creation time that the object can be stack-allocated, it is not generally useful
+to declare \cdf{dynamic-extent} for variables that have no lexically apparent
+initial value. For example,
+\begin{lisp} (defun f () \\* ~~(let ((x (list 1 2 3))) \\* ~~~~(declare
+(dynamic-extent x)) \\* ~~~~...))
+\end{lisp} would permit a compiler to stack-allocate the list in
+\cdf{x}. However,
+\begin{lisp} (defun g (x) (declare (dynamic-extent x)) ...) \\* (defun f () (g
+(list 1 2 3)))
+\end{lisp} could not typically permit a similar optimization in \cdf{f} because
+of the possibility of later redefinition of \cdf{g}.  Only an implementation
+careful enough to recompile \cdf{f} if the definition of \cdf{g} were to change
+incompatibly could stack-allocate the list argument to \cdf{g} in \cdf{f}.
+
+  Other interesting cases are
+\begin{lisp} (declaim (inline g)) \\* (defun g (x) (declare (dynamic-extent x))
+...) \\* (defun f () (g (list 1 2 3)))
+\end{lisp} and
+\begin{lisp} (defun f () \\* ~~(flet ((g (x) (declare (dynamic-extent x)) ...))
+\\* ~~~~(g (list 1 2 3))))
+\end{lisp} In each case some compilers might realize the optimization is
+possible and others might not.
+
+  An interesting variant of this is the so-called \emph{stack-allocated rest
+list}, which can be achieved (in implementations supporting the optimization) by
+\begin{lisp} (defun f (\&rest x) \\* ~~(declare (dynamic-extent x)) \\* ~~...)
+\end{lisp} Note here that although the initial value of \cdf{x} is not
+explicitly present, nevertheless in the usual implementation strategy the
+function \cdf{f} is responsible for assembling the list for \cdf{x} from the
+passed arguments, so the \cdf{f} function can be optimized by a compiler to
+construct a stack-allocated list instead of a heap-allocated list.
+
+Some Common Lisp functions take other functions as arguments; frequently the
+argument function is a so-called \emph{downward funarg}, that is, a functional
+argument that is passed only downward and whose extent may therefore be dynamic.
+\begin{lisp} (flet ((gd (x) (atan (sinh x)))) \\* ~~(declare (dynamic-extent
+\#'gd))~~~~~;\textrm{\cdf{mapcar} won't hang on to \cdf{gd}}\\* ~~(mapcar \#'gd
+my-list-of-numbers))
+\end{lisp}
+
+
+The following three examples are in error, since in each case the value of
+\cdf{x} is used outside of its extent.
+\begin{lisp} (length (let ((x (list 1 2 3))) \\* ~~~~~~~~~~(declare
+(dynamic-extent x)) \\*
+~~~~~~~~~~x))~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Wrong}
+\end{lisp} The preceding code is obviously incorrect, because the cons cells
+making up the list in \cdf{x} might be deallocated (thanks to the declaration)
+before \cdf{length} is called.
+\begin{lisp} (length (list (let ((x (list 1 2 3))) \\* ~~~~~~~~~~~~~~~~(declare
+(dynamic-extent x)) \\*
+~~~~~~~~~~~~~~~~x)))~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Wrong}
+\end{lisp} In this second case it is less obvious that the code is incorrect,
+because one might argue that the cons cells making up the list in \cdf{x} have
+no effect on the result to be computed by \cdf{length}.  Nevertheless the code
+briefly violates the assertion implied by the declaration and is therefore
+incorrect.  (It is not difficult to imagine a perfectly sensible implementation
+of a garbage collector that might become confused by a cons cell containing a
+dangling pointer to a list that was once stack-allocated but then deallocated.)
+\begin{lisp} (progn (let ((x (list 1 2 3))) \\* ~~~~~~~~~(declare
+(dynamic-extent x)) \\*
+~~~~~~~~~x)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Wrong} \\*
+~~~~~~~(print "Six dollars is your change have a nice day NEXT!"))
+\end{lisp} In this third case it is even less obvious that the code is
+incorrect, because the value of \cdf{x} returned from the \cdf{let} construct is
+discarded right away by the \cdf{progn}.  Indeed it is, but ``right away'' isn't
+fast enough.  The code briefly violates the assertion implied by the declaration
+and is therefore incorrect.  (If the code is being interpreted, the interpreter
+might hang on to the value returned by the \cdf{let} for some time before it is
+eventually discarded.)
+
+Here is one last example, one that has little practical import but is
+theoretically quite instructive.
+\begin{lisp} (dotimes (j 10) \\* ~~(declare (dynamic-extent j)) \\* ~~(setq foo
+3)~~~~~~~~~~~~~~~~~~~~~;\textrm{Correct} \\* ~~(setq foo
+j))~~~~~~~~~~~~~~~~~~~~;\textrm{Erroneous---but why? (see text)}
+\end{lisp} Since \cdf{j} is an integer by the definition of \cdf{dotimes}, but
+\cdf{eq} and \cdf{eql} are not necessarily equivalent for integers, what are the
+otherwise inaccessible parts of \cdf{j}, which this declaration requires the
+body of the \cdf{dotimes} not to ``save''?  If the value of \cdf{j} is \cd{3},
+and the body does \cd{(setq foo~3)}, is that an error?  The answer is no, but
+the interesting thing is that it depends on the implementation-dependent
+behavior of \cdf{eq} on numbers.  In an implementation where \cdf{eq} and
+\cdf{eql} are equivalent for \cd{3}, then \cd{3} is not an otherwise
+inaccessible part because \cd{(eq~j (+~2~1))} is true, and therefore there is
+another way to access the object besides going through \cdf{j}.  On the other
+hand, in an implementation where \cdf{eq} and \cdf{eql} are not equivalent for
+\cd{3}, then the particular \cd{3} that is the value of \cdf{j} is an otherwise
+inaccessible part, but any other \cd{3} is not.  Thus \cd{(setq foo~3)} is valid
+but \cd{(setq foo~j)} is erroneous.  Since \cd{(setq foo~j)} is erroneous in
+some implementations, it is erroneous in all portable programs, but some other
+implementations may not be able to detect the error.  (If this conclusion seems
+strange, it may help to replace \cd{3} everywhere in the preceding argument with
+some obvious bignum such as \cd{375374638837424898243} and to replace \cd{10}
+with some even larger bignum.)
+
+  The \cdf{dynamic-extent} declaration should be used with great care.  It makes
+possible great performance improvements in some situations, but if the user
+misdeclares something and consequently the implementation returns a pointer into
+the stack (or stores it in the heap), an undefined situation may result and the
+integrity of the Lisp storage mechanism may be compromised. Debugging these
+situations may be tricky.  Users who have asked for this feature have indicated
+a willingness to deal with such problems; nevertheless, I do not encourage
+casual users to use this declaration.
 \end{flushdesc}
 
 Реализация может поддерживать другие спецификаторы деклараций (специфичные для
@@ -1633,7 +2062,7 @@ the value-type form
 формы \emph{the}. Дополнительно будет осуществлена проверка на принадлежность
 возвращённого значения типу \emph{value-type} (его форма не выполняется) и в
 случае несовпадения выдана ошибка. (Реализация может и не осуществлять эту
-проверку. Однако поощряется такая проверка при работе в интерпретаторе.) В целом
+проверку. Однако такая проверка поощряется при работе в интерпретаторе.) В целом
 эта форма декларирует, что пользователь гарантирует, что значение формы всегда
 принадлежит заданному типу.
 Например:
@@ -1644,6 +2073,20 @@ the value-type form
 (the (complex rational) (* z 3)) \\
 (the (unsigned-byte 8) (logand x mask))
 \end{lisp}
+
+
+\emph{value-type} may be any valid type specifier whatsoever.
+The point is that a type specifier need not be one suitable for
+discrimination but only for declaration.
+
+In the case that the \emph{form} produces exactly one value and \emph{value-type}
+is not a \cdf{values} type specifier, one may describe a \cdf{the} form
+as being entirely equivalent to
+\begin{lisp}
+(let ((\#1=\#:temp \emph{form})) (declare (type \emph{value-type} \#1\#)) \#1\#)
+\end{lisp}
+A more elaborate expression could be written to describe the case where
+\emph{value-type} is a \cdf{values} type specifier.
 \end{defspec}
 
 \fi

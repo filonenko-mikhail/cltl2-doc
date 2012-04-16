@@ -63,10 +63,6 @@ The function \cdf{macro-function} determines whether a given symbol
 is the name of a macro.  The \cdf{defmacro} construct provides
 a convenient way to define new macros.
 
-\begin{newer}
-X3J13 voted in March 1988 \issue{MACRO-FUNCTION-ENVIRONMENT}
-to add an optional environment argument to \cdf{macro-function}.
-
 \begin{defun}[Function]
 macro-function symbol &optional env
 
@@ -106,7 +102,6 @@ It is an error to attempt to redefine the name of a special operator.
 
 See also \cdf{compiler-macro-function}.
 \end{defun}
-\end{newer}
 
 \begin{defmac}
 defmacro name lambda-list <{declaration}* | doc-string> {form}*
@@ -120,22 +115,16 @@ the \emph{form\/}s constitute the body of the expander function.
 The \cdf{defmacro} construct arranges to install this expander function,
 as the global macro definition of \emph{name}.
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
-to clarify that, while defining forms normally appear at top level,
+While defining forms normally appear at top level,
 it is meaningful to place them in non-top-level contexts.
 Furthermore, \cdf{defmacro} should define the expander function
 within the enclosing lexical environment, not within the global
 environment.
-\end{newer}
 
-\begin{newer}
-X3J13 voted in March 1988 \issue{FLET-IMPLICIT-BLOCK}
-to specify that the body of the expander function defined
+The body of the expander function defined
 by \cdf{defmacro} is implicitly enclosed in a \cdf{block} construct
 whose name is the same as the \emph{name} of the defined macro.
 Therefore \cdf{return-from} may be used to exit from the function.
-\end{newer}
 
 The \emph{name} is returned
 as the value of the \cdf{defmacro} form.
@@ -156,9 +145,7 @@ present only if at least one \emph{form} is also specified, as it is
 otherwise taken to be a \emph{form}), then it is attached to the \emph{name}
 as a documentation string of type \cdf{function}; see \cdf{documentation}.
 
-\begin{new}
 These three markers are now allowed in other constructs as well.
-\end{new}
 \begin{indentdesc}{6pc}
 \item[\cd{\&body}]
 This is identical in function to \cd{\&rest}, but it informs certain
@@ -185,12 +172,6 @@ in the rare cases where a macro definition must explicitly expand any macros
 in a subform of the macro call before computing its own expansion.
 \end{indentdesc}
 See \cdf{lambda-list-keywords}.
-
-\begin{new}%CORR
-\emph{Notice of correction.}
-In the first edition, the symbol \cd{\&environment} at the
-left margin above was inadvertently omitted.
-\end{new}
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
@@ -221,9 +202,9 @@ that lambda-list, even before an occurrence of \cd{\&whole}.
 \cdf{defmacro}, unlike any other Common Lisp construct that has a lambda-list
 as part of its syntax, provides an additional facility known as
 \emph{destructuring}.
-\begin{newer}
+
 See \cdf{destructuring-bind}, which provides the destructuring facility separately.
-\end{newer}
+
 Anywhere in the lambda-list where a parameter
 name may appear, and where ordinary lambda-list syntax (as described
 in section~\ref{LAMBDA-EXPRESSIONS-SECTION}) does not
@@ -1272,6 +1253,16 @@ defmacro name lambda-list <{declaration}* | doc-string> {form}*
 определение макроса для символа \emph{name}.
 FIXME
 
+Форма обычно используется на верхнем уровне, но её также можно
+использовать на неверхнем уровне.
+Таким образом, \cdf{defmacro} должна определять функцию раскрытия макроса в
+некотором лексическом, а не глобальном окружении.
+
+Тело функции раскрытия, определяемое с помощью \cdf{defmacro}, неявно
+оборачивается в конструкцию \cdf{block}, имя которой совпадает с именем
+\cdf{name}, определяемого макроса.
+Таким образом для выхода из функции может использоваться \cdf{return-from}.
+
 Форма \cdf{defmacro} возвращает в качестве значение \emph{name}.
 
 Если мы рассмотрим макровызов, как список содержащий имя функции и некоторые
@@ -1292,7 +1283,6 @@ FIXME
 Следующие три дополнительных маркера доступны в определении лямбда-списка.
 \begin{indentdesc}{6pc}
 \item[\cd{\&body}]
-
 Данный маркер эквивалентен \cd{\&rest} маркеру, но дополнительно сообщает для
 функций вывода-форматирования и редактирования, что оставшаяся часть формы
 рассматривается как тело и должна быть правильно отформатирована.
@@ -1306,7 +1296,6 @@ FIXME
 лямбда-списке, перед другими параметрами или маркерами.
 
 \item[\cd{\&environment}]
-
 За данным маркером указывается одна переменная, которая будет связана с
 окружением, отображающим лексическое окружение, в котором произошёл
 макровызов. Это окружение может не быть полным лексическим окружением. Оно
@@ -1316,8 +1305,33 @@ FIXME
 редко, когда определение макроса должно явно раскрыть другие макросы в процессе
 своего раскрытия.
 \end{indentdesc}
-
 Смотрите \cdf{lambda-list-keywords}.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+to specify that macro environment objects received with the \cd{\&environment}
+argument of a macro function
+have only dynamic extent.  The consequences are undefined if such objects are
+referred to outside the dynamic extent of that particular
+invocation of the macro function.
+This allows implementations to use somewhat more efficient techniques
+for representing environment objects. 
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFMACRO-LAMBDA-LIST} to clarify the permitted
+uses of \cd{\&body}, \cd{\&whole}, and \cd{\&environment}:
+\begin{itemize}
+\item \cd{\&body} may appear at any level of a \cdf{defmacro} lambda-list.
+\item \cd{\&whole} may appear at any level of a \cdf{defmacro} lambda-list.
+At inner levels a \cd{\&whole} variable is bound to that part of the argument
+that matches the sub-lambda-list in which \cd{\&whole} appears.  No matter where
+\cd{\&whole} is used, other parameters or lambda-list keywords may follow it.
+\item \cd{\&environment} may occur only at the outermost level of a \cdf{defmacro}
+lambda-list, and it may occur at most once, but it may occur anywhere within
+that lambda-list, even before an occurrence of \cd{\&whole}.
+\end{itemize}
+\end{newer}
 
 \cdf{defmacro}, в отличие от любых других конструкций Common Lisp'а, имеющих
 лямбда-списки в своём синтаксисе, предоставляет дополнительную функциональность
@@ -1618,6 +1632,65 @@ cons-ячейкой, у которой \emph{car} элемент являетс�
 Значение переменной \cdf{*macroexpand-hook*} по-умолчанию \cdf{funcall}, которая
 следовательно просто запускает функцию раскрытия с двумя параметрами: формой
 \emph{form} и окружением \emph{env}.
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to specify
+that the value of \cdf{*macroexpand-hook*} is first coerced to a
+function before being called as the expansion interface hook.
+Therefore its value may be a symbol, a lambda-expression, or any
+object of type \cdf{function}.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+to specify that macro environment objects received
+by a \cdf{*macroexpand-hook*} function
+have only dynamic extent.  The consequences are undefined if such objects are
+referred to outside the dynamic extent of that particular invocation of the hook
+function.  This allows implementations to use somewhat more efficient techniques
+for representing environment objects. 
+\end{newer}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{MACRO-CACHING} to clarify that, while
+\cdf{*macroexpand-hook*} may be useful for debugging purposes, despite
+the original design intent there is
+currently no correct portable way to use it for caching macro expansions.
+\begin{itemize}
+\item
+ Caching by displacement (performing a side effect on the
+ macro-call form) won't work because the same (\cdf{eq}) macro-call
+ form may appear in distinct lexical contexts.  In addition, the macro-call
+ form may be a read-only constant (see \cdf{quote} and also
+ section~\ref{COMPILER-SECTION}).
+\item
+ Caching by table lookup won't work because such a table would have to
+ be keyed by both the macro-call form and the environment,
+ but X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+ to permit macro environments to have only dynamic extent.
+\item
+ Caching by storing macro-call forms and expansions within the
+ environment object itself would work, but there are no portable
+ primitives that would allow users to do this.
+\end{itemize}
+X3J13 also noted that, although there seems to be no correct portable way to use
+\cdf{*macroexpand-hook*} to cache macro expansions, there is no
+requirement that an implementation call the macro expansion
+function more than once for a given form and lexical environment.
+\end{newer}
+
+\begin{new}
+X3J13 voted in March 1989
+\issue{SYMBOL-MACROLET-SEMANTICS}
+to specify that \cdf{macroexpand-1} will also expand symbol macros
+defined by \cdf{symbol-macrolet}; therefore a \emph{form} may also be
+a macro call if it is a symbol.  The vote did not address the interaction
+of this feature with the \cdf{*macroexpand-hook*} function.  An obvious
+implementation choice is that the hook function is indeed called
+and given a special expansion function that, when applied to the
+\emph{form} (a symbol) and \emph{env}, will produce the expansion,
+just as for an ordinary macro; but this is only my suggestion.
+\end{new}
 
 Вычислитель раскрывает макровызовы, как если бы использовал
 \cdf{macroexpand-1}. Таким образом \cdf{eval} также использует

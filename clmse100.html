@@ -1,124 +1,196 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Как использовать defstruct</title> 
+<head><title>Введение в структуры</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-04-16 00:55:00"> 
+<meta name="date" content="2012-04-16 23:44:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 <link rel="stylesheet" type="text/css" href="cltl2ed.css"></head><body 
 >
-<!--l. 1332--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
+<!--l. 1205--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
 href="clmse101.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse99.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse99.html#tailclmse99.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch19.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch19.html#tailclmch19.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="#tailclmse100.html">В-конец</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmch19.html#clmse100.html" >Наверх</a><tt>&#x003E;</tt></div><h3 class="sectionHead"><span class="titlemark">19.2   </span> <a 
-href="clm.html#QQ2-124-1581" id="x124-157200019.2">Как использовать
-defstruct</a></h3>
-<!--l. 1334--><p class="noindent" >Все структуры определяются с помощью конструкции <tt><a 
-href="#x124-1572002r579">defstruct</a></tt>. Вызов
-<tt><a 
-href="#x124-1572002r579">defstruct</a></tt> определяет новый тип данных, экземпляры которого содержат
-именованные слоты.
-<div class="defmac">
-<div class="defmacheader">
-<!--l. 1339--><p class="indent" >   <div class="tabbing">
- <i>[Макрос]</i><b> defstruct </b><a 
- id="dx124-1572001"></a><a 
- id="x124-1572002r579"></a> name-and-options [doc-string] {slot-description}+
+href="clmch19.html#clmse100.html" >Наверх</a><tt>&#x003E;</tt></div><h3 class="sectionHead"><span class="titlemark">19.1   </span> <a 
+href="clm.html#QQ2-124-1764" id="x124-173400019.1">Введение в
+структуры</a></h3>
+<!--l. 1208--><p class="noindent" >Функциональность структур воплощена в макросе <tt><a 
+href="clmli7.html#x196-3479318r318">defstruct</a></tt>, который
+позволяет пользователю создавать и использовать сгруппированные типы
+данных с именованными элементами. Она похожа на функциональность
+«структур (structures)» в PL/I или «записей (records)» в Pascal&#x2019;е.
+<!--l. 1213--><p class="indent" >   В качестве примера, предположим, что вы пишете программу на Lisp&#x2019;е,
+                                                                          
+
+                                                                          
+которая управляет космическими кораблями в двухмерном пространстве. В
+вашей программе, вам необходимо представить космический корабль как
+некоторого вида Lisp&#x2019;овый объект. Интересующие вашу программу
+свойства корабля являются: его позиция (представленная как <i>x</i> и <i>y</i>
+координаты), скорость (представленная как отрезки по осям <i>x</i> и <i>y</i>) и
+масса.
+<!--l. 1220--><p class="indent" >   Таким образом, корабль может быть представлен как запись структуры с
+пятью компонентами: позиция-<i>x</i>, позиция-<i>y</i>, скорость-<i>x</i>, скорость-<i>y</i> и масса.
+Эта структура может быть реализована как Lisp&#x2019;овый объект несколькими
+способами. Она может быть списком из пяти элементов; позиция-<i>x</i> будет <i>car</i>
+элементом, позиция-<i>y</i> будет <i>cadr</i>, и так далее. Подобным образом структура
+может быть вектором из пяти элементов: позиция-<i>x</i> будет 0-ым элементом,
+позиция-<i>y</i> будет 1-ым, и так далее. Проблема данных представлений состоит
+в том, что компоненты занимают совершенно случайные позиции и их
+сложно запомнить. Кто-нибудь увидев где-то в коде строки <tt>(cadddr ship1)</tt>
+или <tt>(aref ship1 3)</tt>, обнаружит сложность в определении того, что это
+производится доступ к компоненту скорости-<i>y</i> структуры <tt>ship1</tt>. Более того,
+если представление корабля должно быть изменено, то будет очень
+сложно найти все места в коде для изменения в соответствие с новым
+представлением (не все появления <tt><a 
+href="clmli7.html#x196-3479172r172">cadddr</a></tt> означают доступ к скорости-<i>y</i>
+корабля).
+<!--l. 1237--><p class="indent" >   Лучше было бы если бы записи структур имели имена. Можно было бы
+написать что-то вроде <tt>(ship-y-velocity ship1)</tt> вместо <tt>(cadddr ship1)</tt>.
+Кроме того было бы неплохо иметь более информативную запись для
+создания структур, чем эта: <div class="lisp"><div class="tabbing">
+(list 0 0 0 0 0)
    <br>
-<!--l. 1340--><p class="noindent" ></div>
-<!--l. 1340--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x124-157300019.2" id="x124-157300019.2"></a></span>
+<!--l. 1242--><p class="noindent" ></div>
+<!--l. 1242--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-173500019.1" id="x124-173500019.1"></a></span>
+<!--l. 1242--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-173600019.1" id="x124-173600019.1"></a></span>
 </div>
-<!--l. 1341--><p class="indent" >   Этот макрос определяет структурный тип данных. Обычно вызов
-<tt><a 
-href="#x124-1572002r579">defstruct</a></tt> выглядит как следующий пример. <div class="lisp"><div class="tabbing">
-(defstruct (<i>name</i> <i>option-1</i> <i>option-2</i> ... <i>option-m</i>)
-   <br>                                                                            <i>doc-string</i><br>
-           <i>slot-description-1</i><br>                         <i>slot-description-2</i><br>
-           ...<br>                                       <i>slot-description-n</i>)<br>
-<br>
-<!--l. 1350--><p class="noindent" ></div>
-<!--l. 1350--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x124-157400019.2" id="x124-157400019.2"></a></span>
                                                                           
 
                                                                           
-<!--l. 1350--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x124-157500019.2" id="x124-157500019.2"></a></span>
-</div>
-<!--l. 1351--><p class="indent" >   Имя структуры <i>name</i> должно быть символом. Он становиться именем
-нового типа данных, который включает в себя все экземпляры данной
-структуры. Соответственно функция <tt><a 
-href="clmse32.html#x43-316002r20">typep</a></tt> будет принимать и использовать
-это имя. Имя структуры <i>name</i> возвращается как значение формы
-<i>defstruct</i>.
-<!--l. 1356--><p class="indent" >   Обычно опции не нужны. Если они не заданы, то после слова <tt><a 
-href="#x124-1572002r579">defstruct</a></tt>
-вместо <tt>(<i>name</i>)</tt> можно записать просто <i>name</i> . Синтаксис опций и их смысл
-раскрываются в разделе <a 
-href="clmse103.html#x127-158600019.5">19.5<!--tex4ht:ref: DEFSTRUCT-OPTIONS --></a>.
-<!--l. 1360--><p class="indent" >   Если присутствует необязательная строка документации <i>doc-string</i>, тогда
-она присоединяется к символу <i>name</i>, как документация для типа <tt>structure</tt>.
-Смотрите <tt><a 
-href="clmse143.html#x175-2635017r871">documentation</a></tt>.
-<!--l. 1364--><p class="indent" >   Каждое описание слота <i>slot-description-j</i> выглядит так: <div class="lisp"><div class="tabbing">
-(<i>slot-name</i> <i>default-init</i>
-   <br>                                       <i>slot-option-name-1</i> <i>slot-option-value-1</i><br>
-     <i>slot-option-name-2</i> <i>slot-option-value-2</i><br>                            ...<br>
-     <i>slot-option-name-k<span class="math"><sub>j</sub></span></i> <i>slot-option-value-k<span class="math"><sub>j</sub></span></i>)<br>
-<!--l. 1371--><p class="noindent" ></div>
-<!--l. 1371--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x124-157600019.2" id="x124-157600019.2"></a></span>
-<!--l. 1371--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x124-157700019.2" id="x124-157700019.2"></a></span>
-</div>
-<!--l. 1372--><p class="indent" >   Каждое имя слота <i>slot-name</i> должно быть символом. Для каждого слота
-определяется функция доступа. Если опции и первоначальные значения не
-указаны, тогда в качестве описания слота вместо <tt>(slot-name)</tt> можно
-записать просто <i>slot-name</i>.
-<!--l. 1377--><p class="indent" >   Форма <i>default-init</i> вычисляется, только если соответствующий аргумент не
-указан при вызове функций-конструкторов. <i>default-init</i> вычисляется
-<i>каждый раз</i>, когда необходимо получить первоначальное значение для
-слота.
-                                                                          
-
-                                                                          
-<!--l. 1382--><p class="indent" >   Если <i>default-init</i> не указано, тогда первоначальное значение слота не
-определено и зависит от реализации. Доступные опции для слотов разобраны
-в разделе <a 
-href="clmse102.html#x126-158300019.4">19.4<!--tex4ht:ref: Defstruct-Slot-Options --></a>.
+<!--l. 1243--><p class="indent" >   Несомненно, хочется, чтобы <tt>ship</tt> был новым типом данных, как и любой
+другой тип Lisp&#x2019;овых данных, чтобы, например, осуществить проверку с
+помощью <tt><a 
+href="clmli7.html#x196-3479962r962">typep</a></tt>. Функциональность <tt><a 
+href="clmli7.html#x196-3479318r318">defstruct</a></tt> предоставляет все, что выше
+было необходимо.
 <tt>
-<!--l. 1386--><p class="indent" >   <a 
-href="#x124-1572002r579">defstruct</a></tt> не только определяет функции доступа к слотам, но
-также выполняет интеграцию с <tt><a 
-href="clmse36.html#x48-474002r64">setf</a></tt> для этих функций, определяет
-предикат с именем <tt><i>name</i>-p</tt>, определяет функцию-конструктор с именем
-<tt>make-<i>name</i></tt> и определяет функцию копирования с именем <tt>copy-<i>name</i></tt>. Все
-имена автоматически создаваемых функций интернируются в текущий
-пакет на время выполнения <tt><a 
-href="#x124-1572002r579">defstruct</a></tt> (смотрите <tt><a 
-href="clmse62.html#x78-904002r158">*package*</a></tt>). Кроме
-того, все эти функции могут быть задекларированы как <tt>inline</tt> на
-усмотрение реализации для повышения производительности. Если вы не
-хотите, чтобы функции были задекларированы как <tt>inline</tt>, укажите
-декларацию <tt>notinline</tt> после формы <tt><a 
-href="#x124-1572002r579">defstruct</a></tt> для перезаписи декларации
-<tt>inline</tt>.
+<!--l. 1248--><p class="indent" >   <a 
+href="clmli7.html#x196-3479318r318">defstruct</a></tt> является макросом, который определяет структуру.
+Например, для космического корабля, можно определить структуру так:
+<div class="lisp"><div class="tabbing">
+(defstruct ship
+   <br>                                 x-position<br>                                 y-position<br>
+  x-velocity<br>                                                     y-velocity<br>
+  mass)<br>
+<!--l. 1257--><p class="noindent" ></div>
+<!--l. 1257--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-173700019.1" id="x124-173700019.1"></a></span>
+<!--l. 1257--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-173800019.1" id="x124-173800019.1"></a></span>
 </div>
+<!--l. 1258--><p class="indent" >   Запись декларирует, что каждый объект <tt>ship</tt> является объектом с пятью
+именованными компонентами. Вычисление этой формы делает несколько
+вещей.
+      <ul class="itemize1">
+      <li class="itemize">Она определяет <tt>ship-x-position</tt> как функцию одного аргумента,
+      а  именно,  корабля,  которая  возвращает  позицию-<i>x</i>  корабля.
+      <tt>ship-y-position</tt>  и   другие   компоненты   получают   такие   же
+      определения  функций.  Эти  функции  называются  <i>функциями
+      доступа</i>,  так  как  используются  для  доступа  к  компонентам
+      структуры.
+      </li>
+      <li class="itemize">Символ   <tt>ship</tt>  становится   именем   типа   данных,   к   которому
+      принадлежат экземпляры объектом кораблей. Например, это имя
                                                                           
 
                                                                           
-<!--l. 1400--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
+      может  использоваться  в  <tt><a 
+href="clmli7.html#x196-3479962r962">typep</a></tt>.  <tt>(typep x &#x2019;ship)</tt> истинен,  если
+      <tt>x</tt> является  кораблём,  и  ложен,  если  <tt>x</tt> является  любым  другим
+      объектом.
+      </li>
+      <li class="itemize">Определяется функция одного аргумента с именем <tt>ship-p</tt>. Она
+      является предикатом, который истинен, если аргумент является
+      кораблём, и ложен в противных случаях.
+      </li>
+      <li class="itemize">Определяется функция с именем <tt>make-ship</tt>, при вызове которой
+      создаётся структура данных из пяти компонентов, готовая к
+      использованию в <i>функциях доступа</i>. Так, выполнение <div class="lisp"><div class="tabbing">
+      (setq ship2 (make-ship))
+      <br>
+      <!--l. 1289--><p class="noindent" ></div>
+      <!--l. 1289--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-173900019.1" id="x124-173900019.1"></a></span>
+      <!--l. 1289--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-174000019.1" id="x124-174000019.1"></a></span>
+</div>
+      <!--l. 1290--><p class="noindent" >устанавливает в ship2 свеже созданный объект <tt>ship</tt>. Можно указать
+      первоначальные значения для компонентов структуры используя
+      именованные параметры: <div class="lisp"><div class="tabbing">
+      (setq ship2 (make-ship <tt>:mass</tt> *default-ship-mass*
+      <br>                                                           <tt>:x-position</tt> 0<br>
+                                  <tt>:y-position</tt> 0))<br>
+      <!--l. 1297--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+      <!--l. 1297--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-174100019.1" id="x124-174100019.1"></a></span>
+      <!--l. 1297--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-174200019.1" id="x124-174200019.1"></a></span>
+</div>
+      <!--l. 1298--><p class="noindent" >Форма создаёт новый корабль и инициализирует три его компонента.
+      Эта функция называется <i>функцией-конструктором</i>, потому что создаёт
+      новую структуру.
+      </li>
+      <li class="itemize">Синтаксис <tt>#S</tt> может использоваться для чтения экземпляров структур
+      <tt>ship</tt>, и также предоставляется функция вывода для печати структур
+      кораблей. Например, значение ранее упомянутой переменной <tt>ship2</tt>
+      может быть выведено как <div class="lisp"><div class="tabbing">
+      #S(ship x-position 0 y-position 0 x-velocity nil
+      <br>                                                 y-velocity nil mass 170000.0)<br>
+      <!--l. 1310--><p class="noindent" ></div>
+      <!--l. 1310--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-174300019.1" id="x124-174300019.1"></a></span>
+      <!--l. 1310--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-174400019.1" id="x124-174400019.1"></a></span>
+</div>
+      </li>
+      <li class="itemize">Определяется функция одного аргумента с именем <tt>copy-ship</tt>, которая
+      получая объект <tt>ship</tt>, будет создавать новый объект <tt>ship</tt>, который
+      является копией исходного. Эта функция называется <i>функцией
+      копирования</i>.
+                                                                          
+
+                                                                          
+      </li>
+      <li class="itemize">Можно использовать <tt><a 
+href="clmli7.html#x196-3479840r840">setf</a></tt> для изменения компонентов объекта <tt>ship</tt>:
+      <div class="lisp"><div class="tabbing">
+      (setf (ship-x-position ship2) 100)
+      <br>
+      <!--l. 1322--><p class="noindent" ></div>
+      <!--l. 1322--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-174500019.1" id="x124-174500019.1"></a></span>
+      <!--l. 1322--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x124-174600019.1" id="x124-174600019.1"></a></span>
+</div>
+      <!--l. 1323--><p class="noindent" >Данная запись изменяет позицию-<i>x</i> переменной <i>ship2</i> в <tt>100</tt>. Она
+      работает, потому что <tt><a 
+href="clmli7.html#x196-3479318r318">defstruct</a></tt> ведёт себя так, будто создаёт
+      соответствующие <tt><a 
+href="clmli7.html#x196-3479317r317">defsetf</a></tt> формы для <i>функций доступа</i>.</li></ul>
+<!--l. 1328--><p class="indent" >   Этот простой пример отображает мощь и удобство <tt><a 
+href="clmli7.html#x196-3479318r318">defstruct</a></tt> для
+представления записей структур. <tt><a 
+href="clmli7.html#x196-3479318r318">defstruct</a></tt> имеет много других возможностей
+для специализированных целей.
+                                                                          
+
+                                                                          
+<!--l. 1332--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
 href="clmse101.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse99.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse99.html#tailclmse99.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch19.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmch19.html#tailclmch19.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmse100.html" >В-начало</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
 href="clmch19.html#clmse100.html" >Наверх</a><tt>&#x003E;</tt></div><a 
- id="tailclmse100.html"></a>  </div> </div> 
+ id="tailclmse100.html"></a>   </div> </div> 
 </body></html> 

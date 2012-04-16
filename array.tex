@@ -23,13 +23,6 @@ An array may be a \emph{general array}, meaning each element may be any Lisp
 object, or it may be a \emph{specialized array}, meaning that each element
 must be of a given restricted type.
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{CHARACTER-PROPOSAL}
-to eliminate the type \cdf{string-char} and to redefine the type
-\cdf{string} to be the union of one or more specialized vector
-types, the types of whose elements are subtypes of the type \cdf{character}.
-\end{newer}
-
 \section{Array Creation}
 
 Do not be daunted by the many options of the function \cdf{make-array}.
@@ -233,14 +226,6 @@ The last example depends on the fact that arrays are, in effect,
 stored in row-major order for purposes of sharing.  Put another way,
 the indices for the elements of an array are ordered
 lexicographically.
-
-\beforenoterule
-\begin{incompatibility}
-Both Lisp Machine Lisp, as described in reference \cite{BLUE-LISPM},
-and Fortran \cite{DRAFT-FORTRAN-77,ANSI-FORTRAN-77} store arrays in
-column-major order.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Constant]
@@ -324,12 +309,10 @@ without error any array element, whether active or not.  The generic
 sequence function \cdf{elt}, however, observes the fill pointer;
 accessing an element beyond the fill pointer with \cdf{elt} is an error.
 
-\begin{new}
 Note that this remark, predating the design of the Common Lisp Object System,
 uses the term ``generic'' in a generic sense and not necessarily
 in the technical sense used by CLOS
 (see chapter~\ref{DTYPES}).
-\end{new}
 
 \cdf{setf} may be used with \cdf{aref} to destructively replace
 an array element with a new value.
@@ -394,14 +377,6 @@ array-rank array
 This returns the number of dimensions (axes) of \emph{array}.
 This will be a non-negative integer.
 See \cdf{array-rank-limit}.
-
-\beforenoterule
-\begin{incompatibility}
-In Lisp Machine Lisp, this is called \cd{array-\#-dims}.
-This name causes problems in other Lisp dialects
-because of the \cd{\#} character.
-\end{incompatibility}
-\afternoterule
 \end{defun}
 
 \begin{defun}[Function]
@@ -766,12 +741,11 @@ big), it is unaffected and
 place and \cdf{vector-push} returns the \emph{former} value of the fill pointer
 (1 less than the one it leaves in the vector); thus the value of
 \cdf{vector-push} is the index of the new element pushed.
-\begin{new}
+
 It is instructive to compare \cdf{vector-push}, which is a function,
 with \cdf{push}, which is a macro that requires a \emph{place} suitable
 for \cdf{setf}.  A vector with a fill pointer effectively contains
 the place to be modified in its \cdf{fill-pointer} slot.
-\end{new}
 \end{defun}
 
 \begin{defun}[Function]
@@ -1049,6 +1023,26 @@ Lisp программа может использовать массивы с р
 Тип {\true} указывает на создание общего массива, элементы которого могут быть
 любыми объектами. {\true} является значением по-умолчанию.
 
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
+to change \cdf{typep} and \cdf{subtypep}
+so that the specialized \cdf{array} type specifier
+means the same thing for discrimination purposes
+as for declaration purposes: it encompasses those arrays
+that can result by specifying \emph{element-type} as the element type
+to the function \cdf{make-array}.  Therefore we may say
+that if \emph{type} is the \cd{:element-type} argument, then
+the result will be an array of type \cd{(array \emph{type})};
+put another way, for any type \emph{A},
+\begin{lisp}
+(typep (make-array ... :element-type '\emph{A} ...) \\*
+~~~~~~~'(array \emph{A\/})))
+\end{lisp}
+is always true.
+See \cdf{upgraded-array-element-type}.
+\end{new}
+
 \item[\cd{:initial-element}]
 Этот аргумент может использоваться для инициализации каждого элемента
 массива. Значение должно принадлежать типу указанному в аргументе
@@ -1086,6 +1080,19 @@ Lisp программа может использовать массивы с р
 \item[\cd{:adjustable}]
 Если данный аргумент указан и не является {\false}, тогда размер массива после
 создания может быть изменён. По-умолчанию параметр равен {\false}.
+
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that if this argument is non-{\false}
+then the predicate \cdf{adjustable-array-p} will necessarily be true when applied
+to the resulting array; but if this argument is \cdf{nil} (or omitted) then the
+resulting array may or may not be adjustable, depending on the implementation,
+and therefore \cdf{adjustable-array-p} may be correspondingly true or false of
+the resulting array.  Common Lisp provides no portable way to create a
+non-adjustable array, that is, an array for which \cdf{adjustable-array-p} is
+guaranteed to be false.
+\end{newer}
 
 \item[\cd{:fill-pointer}]
 Данный аргумент указывает, что массив должен иметь указатель заполнения.
@@ -1138,6 +1145,14 @@ Lisp программа может использовать массивы с р
 получаемый массив гарантированного будет \emph{простым} (смотрите
 раздел~\ref{ARRAY-TYPE-SECTION}). 
 
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that if one or more of the \cd{:adjustable}, \cd{:fill-pointer},
+and \cd{:displaced-to} arguments is true, then whether the resulting
+array is simple is unspecified.
+\end{newer}
+
 Вот несколько примеров использования \cdf{make-array}:
 \begin{lisp}
 ;;; Создание одномерного массива с пятью элементами. \\*
@@ -1163,6 +1178,9 @@ Lisp программа может использовать массивы с р
 ~~~~~~~~(aref b 6) \EQ\ (aref a 2 2) \\*
 ~~~~~~~~(aref b 7) \EQ\ (aref a 3 0)
 \end{lisp}
+Последний пример связи между массивами зависит от того факта, что элементы
+массивов хранятся построчно. Другими словами, индексы элментов массива
+упорядочены лексикографически.
 \end{defun}
 
 \begin{defun}[Константа]
@@ -1185,6 +1203,14 @@ array-dimension-limit
 Это значение зависит от реализации, но не может быть меньше 1024.
 (Разработчикам предлагается сделать это значение большим настолько, на сколько
 это возможно без ущерба в производительности.)
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FIXNUM-NON-PORTABLE}
+to specify that the value
+of \cd{array-dimension-limit} must be of type \cdf{fixnum}.
+This in turn implies that all valid array indices will be fixnums.
+\end{new}
 \end{defun}
 
 \begin{defun}[Константа]
@@ -1462,6 +1488,24 @@ adjustable-array-p array
 
 Если аргумент, который должен быть массивом, может быть расширен, данный
 предикат истинен, иначе ложен.
+
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that \cdf{adjustable-array-p} is true of an array
+if and only if \cdf{adjust-array}, when applied to that array,
+will return the same array, that is, an array \cdf{eq} to the original array.
+If the \cd{:adjustable} argument
+to \cdf{make-array} is non-\cdf{nil} when an array is created,
+then \cdf{adjustable-array-p} must be true of that array.
+If an array is created with the \cd{:adjustable} argument \cdf{nil}
+(or omitted), then \cdf{adjustable-array-p} may be true or false of that
+array, depending on the implementation.
+X3J13 further voted to \emph{define}
+the terminology ``adjustable array'' to mean precisely ``an array of
+which \cdf{adjustable-array-p} is true.''
+See \cdf{make-array} and \cdf{adjust-array}.
+\end{newer}
 \end{defun}
 
 \begin{defun}[Функция]
@@ -1589,6 +1633,13 @@ Common Lisp предоставляет несколько функций для 
 отметить, что элементы вектора из неактивной части тем не менее являются частью
 вектора.
 
+\beforenoterule
+\begin{implementation}
+An implication of this rule is that
+vector elements outside the active region may not be garbage-collected.
+\end{implementation}
+\afternoterule
+
 Указатели заполнения могут иметь только вектора (одномерные массивы).
 Многомерные массивы не могут иметь указатели заполнения. (Следует отметить,
 однако, что можно создать 
@@ -1644,6 +1695,14 @@ vector-push-extend new-element vector &optional extension
 Однако, если вектор не расширяемый, тогда \cdf{vector-push-extend} сигнализирует
 ошибку.
 
+\begin{newer}
+X3J13 voted in June 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to clarify that \cdf{vector-push-extend} regards an array as
+not adjustable if and only if \cdf{adjustable-array-p} is false
+of that array.
+\end{newer}
+
 Необязательный аргумент \emph{extension}, который должен быть положительным
 целым, является минимальным количеством элементов, добавляемых в вектор, если
 последний должен быть расширен. По-умолчанию содержит значение зависимое от
@@ -1698,10 +1757,63 @@ adjust-array array new-dimensions &key :element-type :initial-element :initial-c
 принимает указанное значение. Если массив \emph{array} не содержал указателя
 заполнения сигнализируется ошибка.
 
+\begin{new}
+X3J13 voted in June 1988
+\issue{ADJUST-ARRAY-FILL-POINTER}
+to clarify the treatment of the \cd{:fill-pointer}
+argument as follows.
+
+If the \cd{:fill-pointer} argument is not supplied, then the fill pointer
+of the \emph{array} is left alone.  It is an error
+to try to adjust the \emph{array} to a total size that is smaller
+than its fill pointer.
+
+If the \cd{:fill-pointer} argument is supplied, then its value
+must be either an integer, \true, or \false.  If it is an integer,
+then it is the new value for the fill pointer;
+it must be non-negative and no greater than the new size to which the
+\emph{array} is being adjusted.
+If it is \true, then the fill pointer is set equal to the new size
+for the \emph{array}.  If it is \false, then the fill pointer is
+left alone; it is as if the argument had not been supplied.
+Again, it is an error
+to try to adjust the \emph{array} to a total size that is smaller
+than its fill pointer.
+
+An error is signaled if a non-{\false} \cd{:fill-pointer} value
+is supplied and the \emph{array} to be adjusted does not already
+have a fill pointer.
+
+This extended treatment of the \cd{:fill-pointer}
+argument to \cdf{adjust-array} is consistent with the previously
+existing treatment of the \cd{:fill-pointer} argument to \cdf{make-array}.
+\end{new}
+
 \cdf{adjust-array} может, в зависимости от реализации и аргументов, просто
 изменить исходный массив или создать и вернуть новый.
 В последнем случае исходный массив изменяется, а именно \emph{соединяется} с
 новым массивом, и имеет новые измерения.
+
+\begin{newer}
+X3J13 voted in January 1989
+\issue{ADJUST-ARRAY-NOT-ADJUSTABLE}
+to allow \cdf{adjust-array} to be applied to any array.
+If \cdf{adjust-array} is applied to an array that was
+originally created with \cd{:adjustable} true,
+the array returned is \cdf{eq} to its first argument.  It is not specified
+whether \cdf{adjust-array} returns an array \cdf{eq} to its first argument for any
+other arrays.  If the array returned by \cdf{adjust-array} is not \cdf{eq} to its
+first argument, the original array is unchanged and does not share
+storage with the new array.
+
+Under this new definition, it is wise to treat \cdf{adjust-array}
+in the same manner as \cdf{delete} and \cdf{nconc}: one should carefully
+retain the returned value, for example by writing
+\begin{lisp}
+(setq my-array (adjust-array my-array ...))
+\end{lisp}
+rather than relying solely on a side effect.
+\end{newer}
 
 Если \cd{adjust-array} применяется к массиву \emph{array}, который соединён с
 другим массивом \emph{x}, тогда ни массив \emph{array}, ни возвращённый
@@ -1730,6 +1842,68 @@ adjust-array array new-dimensions &key :element-type :initial-element :initial-c
 все ещё будет \emph{соединён} с массивом \cd{b}. При этом должны быть приняты во
 внимание правила \emph{соединения} массивов и построчный порядок следования
 элементов.
+
+\begin{newer}
+X3J13 voted in June 1988 \issue{ADJUST-ARRAY-DISPLACEMENT}
+to clarify the interaction of \cdf{adjust-array} with array displacement.
+
+Suppose that an array \emph{A} is to be adjusted.  There are four cases
+according to whether or not \emph{A} was displaced before adjustment
+and whether or not the result is displaced after adjustment.
+\begin{itemize}
+\item
+Suppose \emph{A} is not displaced either before or after.
+The dimensions of \emph{A} are altered, and
+the contents are rearranged as appropriate.  Additional elements of \emph{A}
+are taken from the \cd{:initial-element} argument.
+However, the use of the \cd{:initial-contents} argument causes all old
+contents to be discarded.
+
+\item
+Suppose \emph{A} is not displaced before, but is displaced to array \emph{C} after.
+None of the original contents of \emph{A} appears in \emph{A} afterwards; \emph{A}
+now contains (some of) the contents of \emph{C}, without any rearrangement of
+\emph{C}.
+
+\item
+Suppose \emph{A} is displaced to {array \emph{B}} before the call,
+and is displaced to array \emph{C} after the call.
+(Note that \emph{B} and \emph{C} may be the same array.)
+The contents of \emph{B} do not appear in
+\emph{A} afterwards (unless such contents also happen to be in \emph{C},
+as when \emph{B} and \emph{C} are the same, for example).  If
+\cd{:displaced-index-offset} is not specified in the call to
+\cdf{adjust-array}, it defaults
+to zero; the old offset (into \emph{B}) is not retained.
+
+\item
+Suppose \emph{A} is displaced to array \emph{B} before the call,
+but is not displaced afterwards.  In this case \emph{A} gets
+a new ``data region'' and (some of) the
+contents of \emph{B} are copied into it as appropriate to
+maintain the existing old contents.  Additional elements of \emph{A}
+are taken from the \cd{:initial-element} argument.
+However, the use of the \cd{:initial-contents} argument causes all old
+contents to be discarded.
+\end{itemize}
+
+If array \emph{X} is displaced to array \emph{Y}, and array \emph{Y} is displaced
+to array \emph{Z}, and array \emph{Y} is altered by \cdf{adjust-array}, array
+\emph{X} must now refer to the adjusted contents of \emph{Y}.  This means that an
+implementation may not collapse the chain to make \emph{X} refer to \emph{Z}
+directly and forget that the chain of reference passes through array \emph{Y}. 
+(Caching techniques are of course permitted, as long as they preserve the
+semantics specified here.)
+
+If \emph{X} is displaced to \emph{Y}, it is an error to adjust \emph{Y} in such a
+way that it no longer has enough elements to satisfy \emph{X}.  This error may be
+signaled at the time of the adjustment, but this is not required.
+
+Note that omitting the \cd{:displaced-to} argument to \cdf{adjust-array} is
+equivalent to specifying \cd{:displaced-to~nil}; in either case, the array is
+not displaced after the call regardless of whether it was displaced before
+the call.
+\end{newer}
 \end{defun}
 
 \fi

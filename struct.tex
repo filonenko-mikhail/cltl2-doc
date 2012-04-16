@@ -1353,6 +1353,25 @@ defstruct name-and-options [doc-string] {slot-description}+
 Соответственно функция \cdf{typep} будет принимать и использовать это
 имя. Имя структуры \emph{name} возвращается как значение формы \emph{defstruct}.
 
+\begin{new}\noindent
+X3J13 voted in June 1988
+\issue{DEFSTRUCT-SLOTS-CONSTRAINTS-NUMBER}
+to allow a \cdf{defstruct} definition
+to have no \emph{slot-description} at all; in other words, the
+occurrence of \Mplus{\emph{slot-description}} in the preceding
+header line would be replaced by \Mstar{\emph{slot-description}}.
+
+Such structure definitions are particularly useful if the
+\cd{:include} option is used, perhaps with other options; for example,
+one can have two structures that are exactly alike except that they
+print differently (having different \cd{:print-function} options).
+
+Implementors are encouraged to permit this simple extension as soon as
+convenient.  Users, however, may wish to maximize portability of their
+code by avoiding the use of this extension unless and until it is
+adopted as part of the ANSI standard.
+\end{new}
+
 Обычно опции не нужны. Если они не заданы, то после слова \cdf{defstruct} вместо
 \cd{(\emph{name})} можно записать просто \emph{name} . Синтаксис опций и их
 смысл раскрываются в разделе~\ref{DEFSTRUCT-OPTIONS}.
@@ -1383,6 +1402,59 @@ defstruct name-and-options [doc-string] {slot-description}+
 определено и зависит от реализации. Доступные опции для слотов разобраны в
 разделе~\ref{Defstruct-Slot-Options}.
 
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFSTRUCT-SLOTS-CONSTRAINTS-NAME}
+to specify that it is an error for
+two slots to have the same name; more precisely, no two slots may
+have names for whose print names \cdf{string=} would be true.
+Under this interpretation
+\begin{lisp}
+(defstruct lotsa-slots slot slot)
+\end{lisp}
+obviously is incorrect
+but the following one is also in error, even assuming that the symbols
+\cd{coin:slot} and \cd{blot:slot} really are distinct (non-\cdf{eql}) symbols:
+\begin{lisp}
+(defstruct no-dice coin:slot blot:slot)
+\end{lisp}
+To illustrate another case, the first \cdf{defstruct} form below is
+correct, but the second one is in error.
+\begin{lisp}
+(defstruct one-slot slot) \\*
+(defstruct (two-slots (:include one-slot)) slot)
+\end{lisp}
+
+\beforenoterule
+\begin{rationale}
+Print names are the criterion for slot-names being the same, rather
+than the symbols themselves, because \cdf{defstruct} constructs names
+of accessor functions from the print names and interns the resulting
+new names in the current package.
+\end{rationale}
+\afternoterule
+
+X3J13 recommended that expanding
+a \cdf{defstruct} form violating this
+restriction should signal an error and noted, with an eye to the Common Lisp
+Object System
+\issue{CLOS}, that the restriction applies only to the operation of the
+\cdf{defstruct} macro as such and not to the \cdf{structure-class} or
+structures defined with \cdf{defclass}.
+\end{new}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
+to clarify that, while defining forms normally appear at top level,
+it is meaningful to place them in non-top-level contexts;
+\cdf{defstruct} must treat slot \emph{default-init} forms
+and any\vadjust{\penalty-10000}
+initialization forms within the specification of a by-position
+constructor function as occurring
+within the enclosing lexical environment, not within the global
+environment.
+\end{newer}
+
 \cdf{defstruct} не только определяет функции доступа к слотам, но также
 выполняет интеграцию с \cdf{setf} для этих функций, определяет предикат с
 именем \cd{\emph{name}-p}, определяет функцию-конструктор с именем
@@ -1395,6 +1467,35 @@ defstruct name-and-options [doc-string] {slot-description}+
 Если вы не хотите, чтобы функции были задекларированы как \cdf{inline}, укажите
 декларацию \cdf{notinline} после формы \cdf{defstruct} для перезаписи декларации
 \cdf{inline}.
+
+\begin{newer}
+X3J13 voted in January 1989 \issue{DEFSTRUCT-REDEFINITION}
+to specify that the results of redefining a \cdf{defstruct} structure
+(that is, evaluating more than one \cdf{defstruct} structure
+for the same name) are undefined.
+
+The problem is that if instances have been created under the old definition
+and then remain accessible after the new definition has been evaluated,
+the accessors and other functions for the new definition may be incompatible
+with the old instances.  Conversely, functions associated with the
+old definition may have been declared \cdf{inline} and compiled
+into code that remains accessible after the new definition has been
+evaluated; such code may be incompatible with the new instances.
+
+In practice this restriction affects the development
+and debugging process rather than production runs of fully developed code.
+The \cdf{defstruct} feature is intended to provide
+``the most efficient'' structure class.
+CLOS classes defined by \cdf{defclass}
+allow much more flexible structures to be defined and redefined.
+
+Programming environments are allowed and encouraged to permit \cdf{defstruct}
+redefinition, perhaps with warning messages about possible interactions
+with other parts of the programming environment or memory state.
+It is beyond the scope of the Common Lisp
+language standard to define those interactions except to note that they
+are not portable.
+\end{newer}
 \end{defmac}
 
 \section{Использование автоматически определяемого конструктора}
@@ -1456,6 +1557,25 @@ defstruct name-and-options [doc-string] {slot-description}+
 \cdf{defstruct}, тогда каждый вызов функции-конструктора вызывал бы \cdf{gensym}
 для создания нового символа.
 
+\begin{newer}
+X3J13 voted in October 1988 \issue{DEFSTRUCT-DEFAULT-VALUE-EVALUATION}
+to clarify that the default value in a defstruct slot is not evaluated 
+        unless it is needed in the creation of a particular structure
+        instance.  If it is never needed, there can be no type-mismatch
+        error, even if the type of the slot is specified, and no warning
+        should be issued.
+
+
+For example, in the following sequence only the last form is in error.
+\begin{lisp}
+(defstruct person (name .007 :type string)) \\*
+\\*
+(make-person :name "James") \\*
+\\*
+(make-person)~~~~~;\textrm{Error to give \cdf{name} the value \cd{.007}}
+\end{lisp}
+\end{newer}
+
 \section{Опции слотов для defstruct}
 \label{Defstruct-Slot-Options}
 
@@ -1515,7 +1635,6 @@ defstruct name-and-options [doc-string] {slot-description}+
 вычисляется.)
 
 \begin{flushdesc}
-
 \item[\cd{:conc-name}]
 Данная опция предоставляет префикс для имён функций доступа.
 По соглашению, имена всех функций доступа к слотам структура начинаются с
@@ -1673,6 +1792,22 @@ defstruct name-and-options [doc-string] {slot-description}+
 ~~~(favorite-beverage 'tang))
 \end{lisp}
 
+\begin{new}
+X3J13 voted in June 1988
+\issue{DATA-TYPES-HIERARCHY-UNDERSPECIFIED}
+to require any structure type created by \cdf{defstruct}
+(or \cdf{defclass}) to be disjoint from any of the types
+\cdf{cons}, \cdf{symbol}, \cdf{array}, \cdf{number}, \cdf{character},
+\cdf{hash-table}, \cdf{readtable}, \cdf{package}, \cdf{pathname},
+\cdf{stream}, and \cdf{random-state}.  A consequence of this requirement
+is that it is an error to specify any of these types, or any of their
+subtypes, to the \cdf{defstruct} \cd{:include} option.
+(The first edition said nothing explicitly about this.
+Inasmuch as using such a type with the \cd{:include} option was
+not defined to work, one might argue that such use was an error
+in Common Lisp as defined by the first edition.)
+\end{new}
+
 \item[\cd{:print-function}]
 Эта опция может использоваться, только если не опция \cd{:type} не была указана.
 Аргумент для опции \cd{:print-function} должен быть функцией трёх аргументов, в
@@ -1690,6 +1825,61 @@ defstruct name-and-options [doc-string] {slot-description}+
 Если опции \cd{:print-function} и \cd{:type} не указаны, тогда функция вывода
 по-умолчанию выводит все слоты используя синтаксис \cd{\#S} (смотрите
 раздел~\ref{SHARP-SIGN-MACRO-CHARACTER-SECTION}).
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PRINT-CIRCLE-STRUCTURE}
+to specify that user-defined printing functions for the \cdf{defstruct}
+\cd{:print-function} option may print objects to the
+supplied stream using \cdf{write}, \cd{print1}, \cdf{princ}, \cdf{format},
+or \cdf{print-object} and expect circularities to be detected and printed
+using \cd{\#\emph{n\/}\#} syntax (when \cdf{*print-circle*} is non-\cdf{nil}, of course).
+See \cdf{*print-circle*}.
+\end{new}
+
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFSTRUCT-PRINT-FUNCTION-INHERITANCE}
+to clarify that if the \cd{:print-function}
+option is not specified but the \cd{:include} option \emph{is} specified,
+then the print function is inherited from the included structure type.
+Thus, for example, an \cdf{astronaut} will be printed by the same
+printing function that is used for \cdf{person}.
+
+X3J13 in the same vote extended the \cdf{print-function} option
+as follows: If the \cdf{print-function} option is specified but with
+no argument, then the standard default printing function (that uses
+\cd{\#S} syntax) will be used.  This provides a means of overriding the
+inheritance rule.  For example, if \cdf{person} and \cdf{astronaut}
+had been defined as
+\begin{lisp}
+(defstruct (person \\*
+~~~~~~~~~~~~~(:print-function~~~~~;\textrm{Special print function}\\*
+~~~~~~~~~~~~~(lambda (p s k) \\*
+~~~~~~~~~~~~~~~(format s "<{\Xtilde}A, age {\Xtilde}D>" \\*
+~~~~~~~~~~~~~~~~~~~~~~~(person-name p) \\*
+~~~~~~~~~~~~~~~~~~~~~~~(person-age p))))) \\*
+~~name age sex) \\
+\\
+(defstruct (astronaut \\*
+~~~~~~~~~~~~~(:include person) \\*
+~~~~~~~~~~~~~(:conc-name astro-) \\*
+~~~~~~~~~~~~~(:print-function))~~~~~;\textrm{Use default print function} \\*
+~~~helmet-size \\*
+~~~(favorite-beverage 'tang))
+\end{lisp}
+then an ordinary person would be printed as ``\cd{<Joe Schmoe, age 27>}''
+but an astronaut would be printed as, for example,
+\begin{lisp}
+\#S(ASTRONAUT NAME BUZZ AGE 45 SEX T \\*
+~~~HELMET-SIZE 17.5 FAVORITE-BEVERAGE TANG)
+\end{lisp}
+using the default \cd{\#S} syntax (yuk).
+
+These changes make the behavior of \cdf{defstruct} with respect to the
+\cd{:include} option a bit more like the behavior of classes in CLOS.
+\end{new}
 
 \item[\cd{:type}]
 Опция \cd{:type} явно задаёт представление используемое для структуры. Она
@@ -1796,6 +1986,128 @@ defstruct name-and-options [doc-string] {slot-description}+
 
 Использовать \cd{:constructor} можно более одного раза. Таким образом вы можете
 определить несколько различных функций-конструкторов с различными аргументами.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{DEFSTRUCT-CONSTRUCTOR-KEY-MIXTURE}
+to allow \cd{\&key} and \cd{\&allow-other-keys}
+in the
+parameter list of a ``positional'' constructor.  The initialization of slots
+corresponding to keyword parameters
+is performed in the same manner as for \cd{\&optional} parameters.
+A variant of the example shown above illustrates this:
+\begin{lisp}
+(\cd{:constructor} create-foo \\*
+~~~~~~~~(a \&optional b (c 'sea) \\*
+~~~~~~~~~\&key p (q 'cue) ((:why y)) ((:you u) 'ewe) \\*
+~~~~~~~~~\&aux e (f 'eff)))
+\end{lisp}
+The treatment of slots \cdf{a}, \cdf{b}, \cdf{c}, \cdf{e}, and \cdf{f}
+is the same as in the original example.  In addition,
+if there is a \cd{:p} keyword argument, it is
+used to initialize the \cdf{p} slot;  if there isn't any
+\cd{:p} keyword argument, then the default value given in the body of the
+\cdf{defstruct} (if given) is used instead.  Similarly,
+if there is a \cd{:q} keyword argument, it is
+used to initialize the \cdf{q} slot;  if there isn't any
+\cd{:q} keyword argument, then
+the symbol \cdf{cue} is used instead.
+
+In order thoroughly to flog this presumably already dead horse,
+we further observe that if there is a \cd{:why} keyword argument, it is
+used to initialize the \cdf{y} slot; otherwise
+the default value for slot \cdf{y} is used instead.  Similarly,
+if there is a \cd{:you} keyword argument, it is
+used to initialize the \cdf{u} slot;  otherwise
+the symbol \cdf{ewe} is used instead.
+
+If memory serves me correctly, \cdf{defstruct} was included in the original
+design for Common Lisp some time before keyword arguments were approved.
+The failure of positional constructors to accept keyword arguments may well
+have been an oversight on my part; there is no logical reason to exclude
+them.  I am grateful to X3J13 for rectifying this.
+
+A remaining difficulty is that the possibility of keyword arguments
+renders the term ``positional constructor'' a misnomer.  Worse yet,
+it ruins the term ``BOA constructor.''  I suggest that
+they continue to be called BOA constructors, as I refuse to abandon
+a good pun.  (I regret appearing to have more compassion for puns than
+for horses.)
+
+As part of the same vote X3J13 also changed \cdf{defstruct}
+to allow BOA constructors to have
+parameters (including supplied-p parameters)
+that do not correspond to any
+slot.  Such parameters may be used in subsequent initialization forms in the
+parameter list. Consider this example:
+\begin{lisp}
+(defstruct (ice-cream-factory \\*
+~~~~~~~~~~~~~(:constructor fabricate-factory \\*
+~~~~~~~~~~~~~~~(\&key (capacity 5) \\*
+~~~~~~~~~~~~~~~~~~~~~~location \\
+~~~~~~~~~~~~~~~~~~~~~~(local-flavors \\*
+~~~~~~~~~~~~~~~~~~~~~~~~(case location \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((hawaii) '(pineapple macadamia guava)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((massachusetts) '(lobster baked-bean)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((california) '(ginger lotus avocado \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~bean-sprout garlic)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~((texas) '(jalapeno barbecue)))) \\
+~~~~~~~~~~~~~~~~~~~~~~(flavors (subseq (append local-flavors \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'(vanilla \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~chocolate \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~strawberry \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~pistachio \\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~maple-walnut \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~peppermint)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~0 capacity))))) \\*
+~~(capacity 3) \\*
+~~(flavors '(vanilla chocolate strawberry mango)))
+\end{lisp}
+
+The structure type \cdf{ice-cream-factory} has two constructors.
+The standard constructor, \cdf{make-ice-cream-factory},
+takes two keyword arguments named \cd{:capacity} and \cd{:flavors}.
+For this constructor, the default for the \cdf{capacity} slot is \cd{3}
+and the default list of \cdf{flavors} is America's favorite threesome
+and a dark horse (not a dead one).
+The BOA constructor \cdf{fabricate-factory}
+accepts four different keyword arguments.  The \cd{:capacity}
+argument defaults to \cd{5}, and the \cd{:flavors} argument
+defaults in a complicated manner based on the other three.
+The \cd{:local-flavors} argument may be specified directly,
+or may be allowed to default based on the \cd{:location} of the factory.
+Here are examples of various factories:
+
+\vskip0pt plus 2pt%manual
+\begin{lisp}
+(setq houston (fabricate-factory :capacity 4 :location 'texas)) \\*
+(setq cambridge (fabricate-factory :location 'massachusetts)) \\
+(setq seattle (fabricate-factory :local-flavors '(salmon))) \\
+(setq wheaton (fabricate-factory :capacity 4 :location 'illinois)) \\*
+(setq pittsburgh (fabricate-factory :capacity 4)) \\*
+(setq cleveland (make-factory :capacity 4)) \\
+ \\
+(ice-cream-factory-flavors houston) \\*
+~\EV~(jalapeno barbecue vanilla chocolate)
+\end{lisp}
+\newpage%manual
+\begin{lisp}
+(ice-cream-factory-flavors cambridge) \\*
+~\EV~(lobster baked-bean vanilla chocolate strawberry) \\
+\\
+(ice-cream-factory-flavors seattle) \\*
+~\EV~(salmon vanilla chocolate strawberry pistachio) \\
+\\
+(ice-cream-factory-flavors wheaton) \\*
+~\EV~(vanilla chocolate strawberry pistachio) \\
+\\
+(ice-cream-factory-flavors pittsburgh) \\*
+~\EV~(vanilla chocolate strawberry pistachio) \\
+\\
+(ice-cream-factory-flavors cleveland) \\*
+~\EV~(vanilla chocolate strawberry mango)
+\end{lisp}
+\end{new}
 
 \section{Структуры с явно заданным типом представления}
 \label{EXPLICIT-TYPE-STRUCTURES}
@@ -1973,6 +2285,5 @@ defstruct name-and-options [doc-string] {slot-description}+
 \cd{:initial-offset} за значением \cd{3} в определении структуры
 \cdf{annotated-binop}. Последние три элемента содержат три слота, определённых в
 структуре \cdf{annotated-binop}.
-
 
 \fi

@@ -399,11 +399,9 @@ to refer to an internal symbol, the user must either make that symbol's home
 package current, use a qualifier, or import that symbol into the current
 package.
 
-\begin{newer}
 The distinction between
 external and internal symbols is a primary means of hiding names
 so that one program does not tread on the namespace of another.
-\end{newer}
 
 When \cdf{intern} or some other function wants to look up a symbol in a
 given package, it first looks for the symbol among the external and
@@ -636,10 +634,8 @@ This package uses the \cdf{common-lisp} package
 and has the nickname \cdf{cl-user}.
 It may contain other implementation-dependent symbols
 and may use other implementation-specific packages.
-\end{flushdesc}
 
-\begin{flushdesc}
-\item[\cd{keyword}]
+\item[\cdf{keyword}]
 This package contains all of the keywords used by built-in
 or user-defined Lisp functions.  Printed symbol representations
 that start with a colon are interpreted as referring to symbols
@@ -1475,11 +1471,6 @@ to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
 \end{new}
 \end{defmac}
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{HASH-TABLE-PACKAGE-GENERATORS}
-to add a new macro \cdf{with-package-iterator} to the language.
-
 \begin{defmac}
 with-package-iterator (mname package-list {symbol-type}+)
                       {form}*
@@ -1563,462 +1554,6 @@ and efficient (see chapter~\ref{LOOP}).
 \end{rationale}
 \afternoterule
 \end{defmac}
-\end{new}
-
-\section{An Example}
-\label{PACKAGE-EXAMPLE-SECTION}
-
-\begin{newer}
-X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
-the forthcoming ANSI Common Lisp will use the package name \cdf{common-lisp-user}
-instead of \cdf{user}.
-\end{newer}
-
-\begin{table}[t]
-\caption{An Initialization File}
-\label{INIT-FILE-TABLE}
-\begin{lisp}
-;;;; Lisp init file for I. Newton. \\
- \\
-;;; Set up the USER package the way I like it. \\
- \\
-(require 'calculus)~~~~~~~~~~~~~;I use CALCULUS a lot; load it. \\
-(use-package 'calculus)~~~~~~~~~;Get easy access to its \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~; exported symbols. \\
- \\
-(require 'newtonian-mechanics)~~;Same thing for NEWTONIAN-MECHANICS \\
-(use-package 'newtonian-mechanics) \\
- \\
-;;; I just want a few things from RELATIVITY, \\
-;;; and other things conflict. \\
-;;; Import only what I need into the USER package. \\
- \\
-(require 'relativity) \\
-(import '(relativity:speed-of-light \\
-~~~~~~~~~~relativity:ignore-small-errors)) \\
- \\
-;;; These are worth loading, but I will use qualified names, \\
-;;; such as PHLOGISTON:MAKE-FIRE-BOTTLE, to get at any symbols \\
-;;; I might need from these packages. \\
- \\
-(require 'phlogiston) \\
-(require 'alchemy) \\
- \\
-;;; End of Lisp init file for I. Newton.
-\end{lisp}
-\end{table}
-
-When each of two files uses some symbols from the other, the author
-of those files must be
-careful to arrange the contents of the file in the proper order.
-Typically each file contains a single package that is a complete module.
-The contents of such a file should include the following items, in
-order:
-
-\begin{enumerate}
-\item
-A call to \cdf{provide} that announces the module name.
-
-\item
-A call to \cdf{in-package} that establishes the package.
-
-\item
-A call to \cdf{shadow} that establishes any local symbols that will shadow
-symbols that would otherwise be inherited from packages that this
-package will use.
-
-\item
-A call to \cdf{export} that establishes all of this package's external
-symbols.
-
-\item
-Any number of calls to \cdf{require} to load other modules that the
-contents of this file might want to use or refer to.  (Because the
-calls to \cdf{require} follow the calls to \cdf{in-package},
-\cdf{shadow}, and \cdf{export}, it is possible for the packages that may
-be loaded to refer to external symbols in this package.)
-
-\item
-Any number of calls to \cdf{use-package}, to make external
-symbols from other packages accessible in this package.
-
-\item
-Any number of calls to \cdf{import}, to make
-symbols from other packages present in this package.
-
-\item
-Finally, the definitions making up the contents of this package/module.
-\end{enumerate}
-
-The following mnemonic sentence may be helpful in remembering
-the proper order of these calls:
-\begin{center}
-\textbf{Put in seven extremely random user interface commands.}
-\end{center}
-Each word of the sentence corresponds to one item in the above ordering:
-\begin{tabbing}
-\hskip 6pc\=\hskip 8pc\=\kill
-\>Put\>\cdf{Provide} \\*
-\>IN\>\cdf{IN-package} \\*
-\>Seven\>\cdf{Shadow} \\*
-\>EXtremely\>\cdf{EXport} \\*
-\>Random\>\cdf{Require} \\*
-\>USEr\>\cdf{USE-package} \\*
-\>Interface\>\cdf{Import} \\*
-\>COmmands\>COntents of package/module
-\end{tabbing}
-
-
-\begin{table}
-\caption{File \protect\cdf{alchemy}}
-\label{ALCHEMY-FILE-TABLE}
-\begin{lisp}
-;;;; Alchemy functions, written and maintained by Merlin, Inc. \\
- \\[4pt]
-(provide 'alchemy)~~~~~~~~~~~~~~~~~~;The module is named ALCHEMY. \\
-(in-package 'alchemy)~~~~~~~~~~~~~~~;So is the package. \\
- \\[4pt]
-;;; There is nothing to shadow. \\
- \\[4pt]
-;;; Here is the external interface. \\
- \\[4pt]
-(export '(lead-to-gold gold-to-lead  \\
-~~~~~~~~~~antimony-to-zinc elixir-of-life)) \\
- \\[4pt]
-;;; This package/module needs a function from \\
-;;; the PHLOGISTON package/module. \\
- \\[4pt]
-(require 'phlogiston) \\
- \\[4pt]
-;;; We don't frequently need most of the external symbols from \\
-;;; PHLOGISTON, so it's not worth doing a USE-PACKAGE on it. \\
-;;; We'll just use qualified names as needed.~~But we use \\
-;;; one function, MAKE-FIRE-BOTTLE, a lot, so import it. \\
-;;; It's external in PHLOGISTON and so can be referred to \\
-;;; here using ":" qualified-name syntax. \\
- \\[4pt]
-(import '(phlogiston:make-fire-bottle)) \\
- \\[4pt]
-;;; Now for the real contents of this file. \\
- \\[4pt]
-(defun lead-to-gold (x) \\
-~~"Takes a quantity of lead and returns gold." \\
-~~(when (> (phlogiston:heat-flow 5 x x)~~;Using a qualified symbol \\
-~~~~~~~~~~~3) \\
-~~~~(make-fire-bottle x))~~~~~~~~~~~~~~~~;Using an imported symbol \\
-~~(gild x)) \\
- \\[4pt]
-;;; And so on ...
-\end{lisp}
-\vfill
-\end{table}
-
-\begin{table}
-\caption{File \protect\cdf{phlogiston}}
-\label{PHLOGISTON-FILE-TABLE}
-\begin{lisp}
-;;;; Phlogiston functions, by Thermofluidics, Ltd. \\
- \\[4pt]
-(provide 'phlogiston)~~~~~~~~~~~~~;The module is named PHLOGISTON. \\
-(in-package 'phlogiston)~~~~~~~~~~;So is the package. \\
- \\[4pt]
-;;; There is nothing to shadow. \\
- \\[4pt]
-;;; Here is the external interface. \\
- \\[4pt]
-(export '(heat-flow cold-flow mix-fluids separate-fluids \\
-~~~~~~~~~~burn make-fire-bottle)) \\
- \\[4pt]
-;;; This file uses functions from the ALCHEMY package/module. \\
- \\[4pt]
-(require 'alchemy) \\
- \\[4pt]
-;;; We use alchemy functions a lot, so use the package. \\
-;;; This will allow symbols exported from the ALCHEMY package \\
-;;; to be referred to here without the need for qualified names. \\
- \\[4pt]
-(use-package 'alchemy) \\
- \\[4pt]
-;;; No calls to IMPORT are needed here. \\
- \\[4pt]
-;;; The real contents of this package/module. \\
-\\[4pt]
-(defvar *feeling-weak* nil) \\
- \\[4pt]
-(defun heat-flow (amount x y) \\
-~~"Make some amount of heat flow from x to y." \\
-~~(when *feeling-weak* \\
-~~~~(quaff (elixir-of-life)))~~~~~;No qualifier is needed. \\
-~~(push-heat amount x y)) \\
- \\[4pt]
-;;; And so on ...
-\end{lisp}
-\vfill
-\end{table}
-
-The sentence says what it helps you to do.
-
-\begin{new}
-The most distressing aspect of the X3J13 vote to eliminate
-\cdf{provide} and \cdf{require}
-\issue{REQUIRE-PATHNAME-DEFAULTS}
-is of course that it completely ruins the mnemonic sentence.
-\end{new}
-
-
-Now, suppose for the sake of example
-that the \cdf{phlogiston} and \cdf{alchemy} packages are
-single-file, single-package modules as described above.  The \cdf{phlogiston}
-package needs to use the \cdf{alchemy} package, and the \cdf{alchemy} package
-needs to use several
-external symbols from the \cdf{phlogiston} package.
-The definitions in the \cdf{alchemy} and \cdf{phlogiston} files
-(see tables~\ref{ALCHEMY-FILE-TABLE} and~\ref{PHLOGISTON-FILE-TABLE})
-allow a
-user to specify \cdf{require} statements for either of these modules, or for
-both of them in either order, and all relevant information will be
-loaded automatically and in the correct order.
-
-\begin{new}
-Indeed, the \cdf{defpackage} macro
-approved by X3J13 in January 1989
-\issue{DEFPACKAGE}
-encourages the use of such a separate file.
-(By the way,
-X3J13 voted in March 1989 \issue{LISP-PACKAGE-NAME} to specify that
-the forthcoming ANSI Common Lisp will use the package name \cdf{common-lisp}
-instead of \cdf{lisp}.)
-Let's take a look at a revision
-of I.~Newton's files using \cdf{defpackage}.
-\end{new}
-
-\begin{table}[t]
-\caption{An Initialization File When \protect\cdf{defpackage} Is Used}
-\label{DEFPACKAGE-INIT-FILE-TABLE}
-\begin{lisp}
-;;;; Lisp init file for I. Newton. \\
- \\
-;;; Set up the USER package the way I like it. \\
- \\
-(load "calculus")~~~~~~~~~~~~~~~;I use CALCULUS a lot; load it. \\
-(use-package 'calculus)~~~~~~~~~;Get easy access to its \\
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~; exported symbols. \\
- \\
-(load "newtonian-mechanics")~~~~;Ditto for NEWTONIAN-MECHANICS \\
-(use-package 'newtonian-mechanics) \\
- \\
-;;; I just want a few things from RELATIVITY, \\
-;;; and other things conflict. \\
-;;; Import only what I need into the USER package. \\
- \\
-(load "relativity") \\
-(import '(relativity:speed-of-light \\
-~~~~~~~~~~relativity:ignore-small-errors)) \\
- \\
-;;; These are worth loading, but I will use qualified names, \\
-;;; such as PHLOGISTON:MAKE-FIRE-BOTTLE, to get at any symbols \\
-;;; I might need from these packages. \\
- \\
-(load "phlogiston") \\
-(load "alchemy") \\
- \\
-;;; End of Lisp init file for I. Newton.
-\end{lisp}
-\end{table}
-\begin{new}
-The new version of the initialization file avoids using \cdf{require};
-instead, we assume that \cdf{load} will do the job
-(see table~\ref{DEFPACKAGE-INIT-FILE-TABLE}).
-
-The other files have each been split into two parts, one that
-establishes the package and one that defines the contents.
-This example uses a simple convention that for any file
-named, say, ``\cdf{foo}'' the file named ``\cdf{foo-package}''
-contains the necessary \cdf{defpackage} and/or other package-establishing
-code.  The idiom
-\begin{lisp}
-(unless (find-package "FOO") \\
-~~(load "foo-package"))
-\end{lisp}
-is conventionally used to load a package definition but only if the package
-has not already been defined.  (This is a bit clumsy, and there are other
-ways to arrange things so that a package is defined no more than once.)
-
-The file \cdf{alchemy-package} is shown in
-table~\ref{DEFPACKAGE-ALCHEMY-PACKAGE-TABLE}.
-The tricky point here is that the \cdf{alchemy} and \cdf{phlogiston}
-packages contain mutual references (each imports from the other),
-and so \cdf{defpackage} alone cannot do the job.  Therefore
-the \cdf{phlogiston} package is not mentioned in a \cd{:use} option
-in the \cdf{defpackage} for the \cdf{alchemy} package.  Instead,
-the function \cdf{use-package} is called explicitly, after the package definition
-for \cdf{phlogiston} has been loaded.  Note that this file has
-been coded with excruciating care so as to operate correctly even if
-the package current when the file is loaded does not inherit from
-the \cdf{common-lisp} package. In particular, the standard load-package-definition
-idiom has been peppered with package qualifiers:
-\begin{lisp}
-(cl:unless (cl:find-package "PHLOGISTON") \\
-~~(cl:load "phlogiston-package"))
-\end{lisp}
-Note the use of the nickname \cdf{cl} for the \cdf{common-lisp} package.
-
-The \cdf{alchemy} file, shown in table~\ref{DEFPACKAGE-ALCHEMY-FILE-TABLE},
-simply loads the \cdf{alchemy} package definition,
-makes that package current, and then defines the ``real contents''
-of the package.
-\end{new}
-\begin{table}[t]
-\caption{File \protect\cdf{alchemy-package} Using \protect\cdf{defpackage}}
-\label{DEFPACKAGE-ALCHEMY-PACKAGE-TABLE}
-\begin{lisp}
-;;;; Alchemy package, written and maintained by Merlin, Inc. \\
- \\
-(cl:defpackage "ALCHEMY" \\
-~~(:export "LEAD-TO-GOLD" "GOLD-TO-LEAD" \\
-~~~~~~~~~~~"ANTIMONY-TO-ZINC" "ELIXIR-OF-LIFE") \\
-~~) \\
- \\
-;;; This package needs a function from the PHLOGISTON package. \\
-;;; Load the definition of the PHLOGISTON package if necessary. \\
- \\
-(cl:unless (cl:find-package "PHLOGISTON") \\
-~~(cl:load "phlogiston-package")) \\
- \\
-;;; We don't frequently need most of the external symbols from \\
-;;; PHLOGISTON, so it's not worth doing a USE-PACKAGE on it. \\
-;;; We'll just use qualified names as needed.  But we use \\
-;;; one function, MAKE-FIRE-BOTTLE, a lot, so import it. \\
-;;; It's external in PHLOGISTON and so can be referred to \\
-;;; here using ":" qualified-name syntax. \\
- \\
-(cl:import '(phlogiston:make-fire-bottle))
-\end{lisp}
-\vskip\ruletonoteskip
-\hrule
-\vskip\ruletonoteskip\null
-\caption{File \protect\cdf{alchemy} Using \protect\cdf{defpackage}}
-\label{DEFPACKAGE-ALCHEMY-FILE-TABLE}
-\begin{lisp}
-;;;; Alchemy functions, written and maintained by Merlin, Inc. \\
- \\
-(unless (find-package "ALCHEMY") \\
-~~(load "alchemy-package")) \\
- \\
-(in-package 'alchemy) \\
- \\
-(defun lead-to-gold (x) \\
-~~"Takes a quantity of lead and returns gold." \\
-~~(when (> (phlogiston:heat-flow 5 x x)~~;Using a qualified symbol \\
-~~~~~~~~~~~3) \\
-~~~~(make-fire-bottle x))~~~~~~~~~~~~~~~~;Using an imported symbol \\
-~~(gild x)) \\
- \\
-;;; And so on ...
-\end{lisp}
-\end{table}
-
-
-
-\begin{table}[t]
-\caption{File \protect\cdf{phlogiston-package} Using \protect\cdf{defpackage}}
-\label{DEFPACKAGE-PHLOGISTON-PACKAGE-TABLE}
-\begin{lisp}
-;;;; Phlogiston package definition, by Thermofluidics, Ltd. \\
- \\
-;;; This package uses functions from the ALCHEMY package. \\
- \\
-(cl:unless (cl:find-package "ALCHEMY") \\
-~~(cl:load "alchemy-package")) \\
- \\
-(cl:defpackage "PHLOGISTON" \\
-~~(:use "COMMON-LISP" "ALCHEMY") \\
-~~(:export "HEAT-FLOW" \\
-~~~~~~~~~~~"COLD-FLOW" \\
-~~~~~~~~~~~"MIX-FLUIDS" \\
-~~~~~~~~~~~"SEPARATE-FLUIDS" \\
-~~~~~~~~~~~"BURN" \\
-~~~~~~~~~~~"MAKE-FIRE-BOTTLE") \\
-~~)
-\end{lisp}
-\end{table}
-
-\begin{table}[b]
-\caption{File \protect\cdf{phlogiston} Using \protect\cdf{defpackage}}
-\label{DEFPACKAGE-PHLOGISTON-FILE-TABLE}
-\begin{lisp}
-;;;; Phlogiston functions, by Thermofluidics, Ltd. \\
- \\
-(unless (find-package "PHLOGISTON") \\
-~~(load "phlogiston-package")) \\
- \\
-(in-package 'phlogiston) \\
-\\
-(defvar *feeling-weak* nil) \\
-\\
-(defun heat-flow (amount x y) \\
-~~"Make some amount of heat flow from x to y." \\
-~~(when *feeling-weak* \\
-~~~~(quaff (elixir-of-life)))~~~~~;No qualifier is needed. \\
-~~(push-heat amount x y)) \\
- \\
-;;; And so on ...
-\end{lisp}
-\end{table}
-\begin{new}
-
-The file \cdf{phlogiston-package} is shown in
-table~\ref{DEFPACKAGE-PHLOGISTON-PACKAGE-TABLE}.
-This one is a little more straightforward than the file \cdf{alchemy-package},
-because the latter bears the responsibility for breaking the
-circular package references.
-This file simply makes sure that the \cdf{alchemy} package is defined
-and then performs a \cdf{defpackage} for the \cdf{phlogiston} package.
-
-The \cdf{phlogiston} file, shown in table~\ref{DEFPACKAGE-PHLOGISTON-FILE-TABLE},
-simply loads the \cdf{phlogiston} package definition,
-makes that package current, and then defines the ``real contents''
-of the package.
-
-
-
-Let's look at the question of package circularity in
-this example a little more closely.
-Suppose that the file \cdf{alchemy-package} is loaded first.
-It defines the \cdf{alchemy} package and then loads
-file \cdf{phlogiston-package}.  That file in turn finds that the
-package \cdf{alchemy} has already been defined and therefore does
-not attempt to load file \cdf{alchemy-package} again; it merely
-defines package \cdf{phlogiston}.  The file \cdf{alchemy-package}
-then has a chance to import \cd{phlogiston:make-fire-bottle} and everything
-is fine.
-
-On the other hand, suppose that the file \cdf{phlogiston-package} is
-loaded first.  It finds that the
-package \cdf{alchemy} has \emph{not} already been defined, and therefore
-it immediately loads file \cdf{alchemy-package}.
-That file in turn defines the \cdf{alchemy} package; then it
-finds that package \cdf{phlogiston} is not yet defined and so
-loads file \cdf{phlogiston-package} \emph{again} (indeed, in nested fashion).
-This time file \cdf{phlogiston-package} \emph{does} find that the
-package \cdf{alchemy} has already been defined, so it simply defines
-package \cdf{phlogiston} and terminates.
-The file \cdf{alchemy-package} then imports \cd{phlogiston:make-fire-bottle}
-and terminates.
-Finally, the outer loading of file \cdf{phlogiston-package}
-\emph{re-defines} package \cdf{phlogiston}.  Oh, dear.  Fortunately the
-two definitions of package \cdf{phlogiston} agree in every detail, so
-everything ought to be all right.  Still, it looks a bit dicey; \emph{I}
-certainly don't have the same warm, fuzzy feeling that I would if
-no package were defined more than once.
-
-\clearpage%manual
-
-Conclusion: \cdf{defpackage} goes a long way, but it certainly doesn't
-solve all the possible problems of package and file management.
-Neither did \cdf{require} and \cdf{provide}.  Perhaps further experimentation
-will yield facilities appropriate for future standardization.
-\end{new}
 
 %RUSSIAN
 \else
@@ -2177,6 +1712,35 @@ Machine \cite{BLUE-LISPM}.
 или строку. Если указан символ, то используется его выводимое имя, которое
 подвергается обычным преобразованиям в верхний регистр. Если указана строка, то она
 должна быть преобразована для полного совпадения с именем пакета. 
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{PACKAGE-FUNCTION-CONSISTENCY}
+to clarify that one may use either a package object or
+a package name (symbol or string) in any of the following
+situations:
+\begin{itemize}
+\item the \cd{:use} argument to \cdf{make-package}
+\item the first argument to \cdf{package-use-list}, \cdf{package-used-by-list},
+\cdf{package-name}, \cdf{package-nicknames},
+\cdf{in-package}, \cdf{find-package},
+\cdf{rename-package}, or \cdf{delete-package},
+
+\item the second argument to \cdf{intern}, \cdf{find-symbol},
+\cdf{unintern}, \cdf{export}, \cdf{unexport}, \cdf{import}, \cdf{shadowing-import},
+or \cdf{shadow}
+\item the first argument, or a member of the list that is the first argument,
+to \cdf{use-package} or \cdf{unuse-package}
+\item the value of the \emph{package} given to \cdf{do-symbols},
+\cdf{do-external-symbols}, or \cdf{do-all-symbols}
+\item a member of the \emph{package-list} given to \cdf{with-package-iterator}
+\end{itemize}
+Note that the first argument to \cdf{make-package} must still be a package
+name and not an actual package; it makes no sense to create an already
+existing package.  Similarly, package nicknames must always be expressed
+as package names and not as package objects.  If \cdf{find-package} is
+given a package object instead of a name, it simply returns that package.
+\end{new}
 
 \section{Преобразование строк в символы}
 \label{STRING-TO-SYMBOL-SECTION}
@@ -2553,9 +2117,7 @@ Lisp. Его внешние символы включают все видимы�
 Этот пакет использует пакет \cdf{common-lisp} и имеет псевдоним \cdf{cl-user}.
 В зависимости от реализации он также может содержать другие символы и
 использовать платформоспецифичные пакеты.
-\end{flushdesc}
 
-\begin{flushdesc}
 \item[\cdf{keyword}]
 Этот пакет содержит все ключевые символы, используемые встроенными или
 пользовательскими Lisp'овыми функциями. Имя символа, начинающегося с двоеточия,
@@ -2564,9 +2126,7 @@ Lisp. Его внешние символы включают все видимы�
 сами в себя, поэтому пользователь может записывать \cd{:foo} вместо \cd{':foo}.
 \end{flushdesc}
 
-\begin{newer}
-X3J13 проголосовал в марте 1989 \issue{LISP-SYMBOL-REDEFINITION}
-запретить пользовательским программам выполнение следующих действий, которые
+Пользовательским программам не могут выполнять следующие действия, которые
 могут противоречить базовому функционалу или негативно с ним взаимодействовать.
 Если над символом в пакете \cdf{common-lisp} совершается одно из действий ниже,
 за исключением явных указаний в книге, последствия не определены.
@@ -2615,10 +2175,21 @@ X3J13 проголосовал в марте 1989 \issue{LISP-SYMBOL-REDEFINITIO
 Следует отметить, что <<изменение списка свойств>> не входит в список упомянутых
 действий, таким образом пользовательская программа может добавлять или удалять
 свойства для символов в \cdf{common-lisp} пакете.
-\end{newer}
 
 \section{Функции и переменные для системы пакетов}
 \label{PACKAGE-FUNCTIONS-SECTION}
+
+\beforenoterule
+\begin{implementation}
+In the past, some Lisp compilers have read
+the entire file into Lisp before processing any of the forms.  
+Other compilers have arranged for
+the loader to do all of its intern operations before evaluating any of the
+top-level forms.  Neither of these techniques will work in a
+straightforward way in Common Lisp because of the presence of multiple
+packages.
+\end{implementation}
+\afternoterule
 
 Для описанных здесь функций, все необязательные аргументы с именем
 \emph{package} имеют значение по-умолчанию \cdf{*package*}. Там, где функция
@@ -2983,7 +2554,6 @@ defpackage defined-package-name {option}*
 \cdf{defpackage}.
 
 \begin{flushdesc}
-
 \item[\cd{(:size \emph{integer})}]
 Запись указывает примерное количество символов ожидаемых быть в пакете. 
 Это просто подсказка для менеджера памяти так, что реализация используя
@@ -3098,6 +2668,21 @@ defpackage defined-package-name {option}*
 пакете. А также для последующего удобства для строк использованы буквы в верхнем
 регистре.
 
+\beforenoterule
+\begin{implementation}
+An implementation of \cdf{defpackage} might choose to transform
+all the \emph{package-name} and \emph{symbol-name} arguments
+into strings at macro expansion time, rather than at the time
+the resulting expansion is executed, so that even if source code
+is expressed in terms of strange symbols in the \cdf{defpackage} form,
+the binary file resulting from compiling the source code would
+contain only strings.  The purpose of this is simply to minimize
+the creation of useless symbols in production code.  This technique
+is permitted as an implementation strategy but is not a
+behavior required by the specification of \cdf{defpackage}.
+\end{implementation}
+\afternoterule
+
 А вот для контраста пример \cdf{defpackage}, который <<играет по крупному (plays
 the whale)>> с использованием всех типов допустимого синтаксиса.
 \begin{lisp}
@@ -3171,6 +2756,32 @@ do-symbols (var [package [result-form]])
 
 Аргумент \emph{package} может быть как объектом пакета, так и его
 именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+
+\begin{new}
+X3J13 voted in March 1988
+\issue{DO-SYMBOLS-DUPLICATES}
+to specify that the body of a \cdf{do-symbols}
+form may be executed more than once for the same accessible symbol, and users
+should take care to allow for this possibility.
+
+The point is that the same symbol might be accessible via more than one
+chain of inheritance, and it is implementationally costly to eliminate
+such duplicates.  Here is an example:
+\begin{lisp}
+(setq *a* (make-package 'a))~~~~~~;\textrm{Implicitly uses package \cdf{common-lisp}} \\*
+(setq *b* (make-package 'b))~~~~~~;\textrm{Implicitly uses package \cdf{common-lisp}} \\*
+(setq *c* (make-package 'c :use '(a b))) \\
+\\
+(do-symbols (x *c*) (print x))~~~~;\textrm{Symbols in package \cdf{common-lisp}} \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;~\textrm{might be printed once or twice here}
+\end{lisp}
+
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+Следует отметить, что конструкция \cdf{loop} предоставляет тип выражения
+\cdf{for}, которое может проходить в цикле по символам пакета (смотрите главу~\ref{LOOP}).
 \end{defmac}
 
 \begin{defmac}
@@ -3180,8 +2791,22 @@ do-external-symbols (var [package [result]])
 \cdf{do-external-symbols} похожа на \cdf{do-symbols} за исключением того, что
 сканируются только внешние символы пакета.
 
+\begin{new}
+The clarification voted by X3J13
+in March 1988 for \cdf{do-symbols}
+\issue{DO-SYMBOLS-DUPLICATES},
+regarding redundant executions of the body for the same symbol,
+applies also to \cdf{do-external-symbols}.
+\end{new}
+
 Аргумент \emph{package} может быть как объектом пакета, так и его
 именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
 \end{defmac}
 
 \begin{defmac}
@@ -3195,8 +2820,105 @@ do-all-symbols (var [result-form])
 В общем случае тело может выполняться для одно символа несколько раз, так как
 этот символ может встречаться в нескольких пакетах.
 
+\begin{new}
+The clarification voted by X3J13
+in March 1988 for \cdf{do-symbols}
+\issue{DO-SYMBOLS-DUPLICATES},
+regarding redundant executions of the body for the same symbol,
+applies also to \cdf{do-all-symbols}.
+\end{new}
+
 Аргумент \emph{package} может быть как объектом пакета, так и его
 именем. Смотрите раздел~\ref{PACKAGE-NAMES-SECTION}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
 \end{defmac}
 
+\begin{defmac}
+with-package-iterator (mname package-list {symbol-type}+)
+                      {form}*
+
+The name \emph{mname} is bound and defined as if by \cdf{macrolet},
+with the body \emph{form\/}s as its lexical scope, to be a ``generator macro''
+such that each invocation of \cd{(\emph{mname})} will
+return a symbol and that successive invocations
+will eventually deliver, one by one, all the symbols
+from the packages that are elements of the list that is the value of the
+expression \emph{package-list} (which is evaluated exactly once).
+
+Each element of the \emph{package-list} value
+may be either a package or the name of a package.
+As a further convenience, if the \emph{package-list} value
+is itself a package or the name of a package, it is treated
+as if a singleton list containing that value had been provided.
+If the \emph{package-list} value is \cdf{nil}, it is considered
+to be an empty list of packages.
+
+At each invocation of the generator macro, there are two possibilities.
+If there is yet another unprocessed symbol, then
+four values are returned: \cdf{t}, the symbol,
+a keyword
+indicating the accessibility of the symbol within the package (see below), and
+the package from which the symbol was accessed.
+If there are no more unprocessed symbols in the
+list of packages, then one value is returned: \cdf{nil}.
+
+When the generator macro returns a symbol as its second value, the
+fourth value is always one of the packages present or named in the
+\emph{package-list} value, and the third value is a keyword indicating
+accessibility:
+\cd{:internal} means present in the package and not exported;
+\cd{:external} means present and exported;
+and \cd{:inherited} means not present (thus not shadowed) but inherited
+from some package used by the package that is the fourth value.
+
+Each \emph{symbol-type} in an invocation of \cdf{with-package-iterator}
+is not evaluated.  More than one may be present; their order does not
+matter.  They indicate the accessibility types of interest.
+A symbol is not returned by the generator macro unless its actual
+accessibility matches one of the \emph{symbol-type} indicators.
+The standard \emph{symbol-type} indicators are \cd{:internal},
+\cd{:external}, and \cd{:inherited}, but implementations are permitted
+to extend the syntax of \cdf{with-package-iterator} by recognizing
+additional symbol accessibility types.  An error is signaled
+if no \emph{symbol-type} is supplied, or if any supplied \emph{symbol-type}
+is not recognized by the implementation.
+
+The order in which symbols are produced by successive invocations
+of the generator macro is not necessarily correlated in any way
+with the order of the packages in the \emph{package-list}.
+When more than one package is in the \emph{package-list},
+symbols accessible from more than one package may be produced
+once or more than once.  Even when only one package is specified,
+symbols inherited in multiple ways via used packages may be
+produced once or more than once.
+
+The implicit interior state of the iteration over the list of packages
+and the symbols within them has dynamic extent.
+It is an error to invoke the generator macro
+once the \cdf{with-package-iterator} form has been exited.
+
+Any number of invocations of \cdf{with-package-iterator}
+and related macros may be nested, and the generator macro of an
+outer invocation may be called from within an inner invocation
+(provided, of course, that its name is visible or otherwise made available).
+
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+
+\beforenoterule
+\begin{rationale}
+This facility is a bit more flexible in some ways than \cdf{do-symbols}
+and friends.
+In particular, it makes it possible to implement \cdf{loop}
+clauses for iterating over packages in a way that is both portable
+and efficient (see chapter~\ref{LOOP}).
+\end{rationale}
+\afternoterule
+\end{defmac}
 \fi
