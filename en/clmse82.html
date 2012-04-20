@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Sorting and Merging</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-04-20 14:21:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+<!--l. 1150--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
+href="list.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse81.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse81.html#tailclmse81.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse82.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="kseque.html#clmse82.html" >Up</a><tt>&#x003E;</tt>&lt;<a href="../index.html">Main Page</a>&gt;</div><h3 class="sectionHead"><span class="titlemark">14.5   </span> <a 
+href="clm.html#QQ2-101-1269" id="x101-123900014.5">Sorting and Merging</a></h3>
+<!--l. 1152--><p class="noindent" >These functions may destructively modify argument sequences in order to put a
+sequence into sorted order or to merge two already sorted sequences.
+<div class="defun">
+<!--l. 1156--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx101-1239001"></a><a 
+ id="x101-1239002r412"></a> <b>sort</b>  <i>sequence</i> <i>predicate</i> <b>&#x0026;key</b>  <i>:key</i><br />
+<i>
+[Function]</i><a 
+ id="dx101-1239003"></a><a 
+ id="x101-1239004r413"></a> <b>stable-sort</b>  <i>sequence</i> <i>predicate</i> <b>&#x0026;key</b>  <i>:key</i>
+</div>
+<a 
+ id="dx101-1239005"></a>
+<!--l. 1161--><p class="indent" >   The <i>sequence</i> is destructively sorted according to an order determined
+by the <i>predicate</i>. The <i>predicate</i> should take two arguments, and return
+non-<tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> if and only if the ﬁrst argument is strictly less than the second (in
+some appropriate sense). If the ﬁrst argument is greater than or equal to
+the second (in the appropriate sense), then the <i>predicate</i> should return
+<tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt>.
+<!--l. 1168--><p class="indent" >   The <tt><a 
+href="symbols.html#x185-2637814r814">sort</a></tt> function determines the relationship between two elements by giving
+keys extracted from the elements to the <i>predicate</i>. The <tt>:key</tt> argument, when
+applied to an element, should return the key for that element. The <tt>:key</tt> argument
+defaults to the identity function, thereby making the element itself be the
+key.
+<!--l. 1174--><p class="indent" >   The <tt>:key</tt> function should not have any side eﬀects. A useful example of a <tt>:key</tt>
+function would be a component selector function for a <tt><a 
+href="symbols.html#x185-2637289r289">defstruct</a></tt> structure, used
+in sorting a sequence of structures. <div class="lisp"><div class="tabbing">
+(sort <i>a</i> <i>p</i> <tt>:key</tt> <i>s</i>) <span class="math"> ≡</span> (sort <i>a</i> #&#x2019;(lambda (x y) (<i>p</i> (<i>s</i> x) (<i>s</i> y))))
+   <br>
+<!--l. 1181--><p class="noindent" ></div>
+<!--l. 1181--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124000014.5" id="x101-124000014.5"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 1181--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124100014.5" id="x101-124100014.5"></a></span>
+</div>
+<!--l. 1182--><p class="indent" >   While the above two expressions are equivalent, the ﬁrst may be more eﬃcient
+in some implementations for certain types of arguments. For example, an
+implementation may choose to apply <i>s</i> to each item just once, putting the
+resulting keys into a separate table, and then sort the parallel tables, as
+opposed to applying <i>s</i> to an item every time just before applying the
+<i>predicate</i>.
+<!--l. 1189--><p class="indent" >   If the <tt>:key</tt> and <i>predicate</i> functions always return, then the sorting operation
+will always terminate, producing a sequence containing the same elements as the
+original sequence (that is, the result is a permutation of <i>sequence</i>). This is
+guaranteed even if the <i>predicate</i> does not really consistently represent a total
+order (in which case the elements will be scrambled in some unpredictable way,
+but no element will be lost). If the <tt>:key</tt> function consistently returns meaningful
+keys, and the <i>predicate</i> does reﬂect some total ordering criterion on those keys,
+then the elements of the result sequence will be properly sorted according to that
+ordering.
+<!--l. 1202--><p class="indent" >   The sorting operation performed by <tt><a 
+href="symbols.html#x185-2637814r814">sort</a></tt> is not guaranteed <i>stable</i>. Elements
+considered equal by the <i>predicate</i> may or may not stay in their original order.
+(The <i>predicate</i> is assumed to consider two elements <i>x</i> and <i>y</i> to be equal if
+<tt>(funcall <i>predicate</i> <i>x</i> <i>y</i>)</tt> and <tt>(funcall <i>predicate</i> <i>y</i> <i>x</i>)</tt> are both false.)
+The function <tt><a 
+href="symbols.html#x185-2637818r818">stable-sort</a></tt> guarantees stability but may be slower than <tt><a 
+href="symbols.html#x185-2637814r814">sort</a></tt> in
+some situations.
+<!--l. 1211--><p class="indent" >   The sorting operation may be destructive in all cases. In the case of an array
+argument, this is accomplished by permuting the elements in place. In the case of
+a list, the list is destructively reordered in the same manner as for <tt><a 
+href="symbols.html#x185-2637619r619">nreverse</a></tt>.
+Thus if the argument should not be destroyed, the user must sort a copy of the
+argument.
+<!--l. 1218--><p class="indent" >   Should execution of the <tt>:key</tt> function or the <i>predicate</i> cause an error, the
+state of the list or array being sorted is undeﬁned. However, if the error is
+corrected, the sort will, of course, proceed correctly.
+<!--l. 1223--><p class="indent" >   Note that since sorting requires many comparisons, and thus many calls to the
+<i>predicate</i>, sorting will be much faster if the <i>predicate</i> is a compiled function rather
+than interpreted.
+<!--l. 1227--><p class="indent" >   An example: <div class="lisp"><div class="tabbing">
+                                                                          
+
+                                                                          
+(setq foovector (sort foovector #&#x2019;string-lessp <tt>:key</tt> #&#x2019;car))
+   <br>
+<!--l. 1230--><p class="noindent" ></div>
+<!--l. 1230--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124200014.5" id="x101-124200014.5"></a></span>
+<!--l. 1230--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124300014.5" id="x101-124300014.5"></a></span>
+</div>
+<!--l. 1231--><p class="indent" >   If <tt>foovector</tt> contained these items before the sort <div class="lisp"><div class="tabbing">
+(&#x0022;Tokens&#x0022; &#x0022;The Lion Sleeps Tonight&#x0022;)
+   <br>                                                       (&#x0022;Carpenters&#x0022; &#x0022;Close to You&#x0022;)<br>
+(&#x0022;Rolling Stones&#x0022; &#x0022;Brown Sugar&#x0022;)<br>         (&#x0022;Beach Boys&#x0022; &#x0022;I Get Around&#x0022;)<br>
+(&#x0022;Mozart&#x0022; &#x0022;Eine Kleine Nachtmusik&#x0022; (K 525))<br>
+(&#x0022;Beatles&#x0022; &#x0022;I Want to Hold Your Hand&#x0022;)<br>
+<!--l. 1239--><p class="noindent" ></div>
+<!--l. 1239--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124400014.5" id="x101-124400014.5"></a></span>
+<!--l. 1239--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124500014.5" id="x101-124500014.5"></a></span>
+</div>
+<!--l. 1240--><p class="indent" >   then after the sort <tt>foovector</tt> would contain <div class="lisp"><div class="tabbing">
+(&#x0022;Beach Boys&#x0022; &#x0022;I Get Around&#x0022;)
+   <br>(&#x0022;Beatles&#x0022; &#x0022;I Want to Hold Your Hand&#x0022;)<br>(&#x0022;Carpenters&#x0022; &#x0022;Close to You&#x0022;)<br>
+(&#x0022;Mozart&#x0022; &#x0022;Eine Kleine Nachtmusik&#x0022; (K 525))<br>
+(&#x0022;Rolling Stones&#x0022; &#x0022;Brown Sugar&#x0022;)<br>   (&#x0022;Tokens&#x0022; &#x0022;The Lion Sleeps Tonight&#x0022;)<br>
+<!--l. 1248--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 1248--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124600014.5" id="x101-124600014.5"></a></span>
+<!--l. 1248--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124700014.5" id="x101-124700014.5"></a></span>
+</div>
+<div class="new">
+<!--l. 1251--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx101-1247001"></a>to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-6760007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>
+</div>
+<div class="defun">
+<!--l. 1257--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx101-1247002"></a><a 
+ id="x101-1247003r414"></a> <b>merge</b>  <i>result-type</i> <i>sequence1</i> <i>sequence2</i> <i>predicate</i> <b>&#x0026;key</b>
+<i>:key</i>
+</div>
+<!--l. 1260--><p class="indent" >   The sequences <i>sequence1</i> and <i>sequence2</i> are destructively merged according to
+an order determined by the <i>predicate</i>. The result is a sequence of type <i>result-type</i>,
+which must be a subtype of <tt>sequence</tt>, as for the function <tt><a 
+href="symbols.html#x185-2637227r227">coerce</a></tt>. The <i>predicate</i>
+should take two arguments and return non-<tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> if and only if the ﬁrst argument is
+strictly less than the second (in some appropriate sense). If the ﬁrst argument is
+greater than or equal to the second (in the appropriate sense), then the <i>predicate</i>
+should return <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt>.
+<!--l. 1270--><p class="indent" >   The <tt><a 
+href="symbols.html#x185-2637573r573">merge</a></tt> function determines the relationship between two elements by
+giving keys extracted from the elements to the <i>predicate</i>. The <tt>:key</tt> function, when
+applied to an element, should return the key for that element; the <tt>:key</tt> function
+defaults to the identity function, thereby making the element itself be the
+key.
+<!--l. 1276--><p class="indent" >   The <tt>:key</tt> function should not have any side eﬀects. A useful example of a <tt>:key</tt>
+function would be a component selector function for a <tt><a 
+href="symbols.html#x185-2637289r289">defstruct</a></tt> structure, used
+to merge a sequence of structures.
+<!--l. 1281--><p class="indent" >   If the <tt>:key</tt> and <i>predicate</i> functions always return, then the merging operation
+will always terminate. The result of merging two sequences <i>x</i> and <i>y</i> is a
+new sequence <i>z</i>, such that the length of <i>z</i> is the sum of the lengths of
+<i>x</i> and <i>y</i>, and <i>z</i> contains all the elements of <i>x</i> and <i>y</i>. If <i>x1</i> and <i>x2</i> are
+two elements of <i>x</i>, and <i>x1</i> precedes <i>x2</i> in <i>x</i>, then <i>x1</i> precedes <i>x2</i> in <i>z</i>,
+and similarly for elements of <i>y</i>. In short, <i>z</i> is an <i>interleaving</i> of <i>x</i> and
+<i>y</i>.
+                                                                          
+
+                                                                          
+<!--l. 1291--><p class="indent" >   Moreover, if <i>x</i> and <i>y</i> were correctly sorted according to the <i>predicate</i>, then <i>z</i>
+will also be correctly sorted, as shown in this example. <div class="lisp"><div class="tabbing">
+(merge &#x2019;list &#x2019;(1 3 4 6 7) &#x2019;(2 5 8) #&#x2019;&#x003C;) <span class="math"> ⇒</span> (1 2 3 4 5 6 7 8)
+   <br>
+<!--l. 1296--><p class="noindent" ></div>
+<!--l. 1296--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124800014.5" id="x101-124800014.5"></a></span>
+<!--l. 1296--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-124900014.5" id="x101-124900014.5"></a></span>
+</div>
+<!--l. 1297--><p class="indent" >   If <i>x</i> or <i>y</i> is not so sorted then <i>z</i> will not be sorted, but will nevertheless be an
+interleaving of <i>x</i> and <i>y</i>.
+<!--l. 1300--><p class="indent" >   The merging operation is guaranteed <i>stable</i>; if two or more elements are
+considered equal by the <i>predicate</i>, then the elements from <i>sequence1</i> will
+precede those from <i>sequence2</i> in the result. (The <i>predicate</i> is assumed
+to consider two elements <i>x</i> and <i>y</i> to be equal if <tt>(funcall <i>predicate</i>
+<i>x</i> <i>y</i>)</tt> and <tt>(funcall <i>predicate</i> <i>y</i> <i>x</i>)</tt> are both false.) For example:
+<div class="lisp"><div class="tabbing">
+(merge &#x2019;string &#x0022;BOY&#x0022; &#x0022;nosy&#x0022; #&#x2019;char-lessp) <span class="math"> ⇒</span> &#x0022;BnOosYy&#x0022;
+   <br>
+<!--l. 1311--><p class="noindent" ></div>
+<!--l. 1311--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-125000014.5" id="x101-125000014.5"></a></span>
+<!--l. 1311--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x101-125100014.5" id="x101-125100014.5"></a></span>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 1312--><p class="indent" >   The result can <i>not</i> be <tt>&#x0022;BnoOsYy&#x0022;</tt>, <tt>&#x0022;BnOosyY&#x0022;</tt>, or <tt>&#x0022;BnoOsyY&#x0022;</tt>. The function
+<tt><a 
+href="symbols.html#x185-2637202r202">char-lessp</a></tt> ignores case, and so considers the characters <tt>Y</tt> and <tt>y</tt> to be equal, for
+example; the stability property then guarantees that the character from
+the ﬁrst argument (<tt>Y</tt>) must precede the one from the second argument
+(<tt>y</tt>).
+<div class="newer">
+<!--l. 1320--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx101-1251001"></a>to specify that <tt><a 
+href="symbols.html#x185-2637573r573">merge</a></tt> should signal an error if the
+sequence type speciﬁes the number of elements and the sum of the lengths of the
+two sequence arguments is diﬀerent.
+</div>
+<div class="new">
+<!--l. 1327--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx101-1251002"></a>to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-6760007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>
+</div>
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+<!--l. 8--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
+href="list.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse81.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse81.html#tailclmse81.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse82.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="kseque.html#clmse82.html" >Up</a><tt>&#x003E;</tt></div><a 
+ id="tailclmse82.html"></a>   </div> </div> 
+</body></html> 

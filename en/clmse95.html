@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Fill Pointers</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-04-20 14:21:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+<!--l. 674--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
+href="clmse96.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse94.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse94.html#tailclmse94.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse95.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="array.html#clmse95.html" >Up</a><tt>&#x003E;</tt>&lt;<a href="../index.html">Main Page</a>&gt;</div><h3 class="sectionHead"><span class="titlemark">17.5   </span> <a 
+href="clm.html#QQ2-117-1461" id="x117-143100017.5">Fill Pointers</a></h3>
+<!--l. 677--><p class="noindent" >Several functions for manipulating a <i>ﬁll pointer</i> are provided in Common Lisp to
+make it easy to incrementally ﬁll in the contents of a vector and, more
+generally, to allow eﬃcient varying of the length of a vector. For example, a
+string with a ﬁll pointer has most of the characteristics of a PL/I varying
+string.
+<!--l. 684--><p class="indent" >   The ﬁll pointer is a non-negative integer no larger than the total number of
+elements in the vector (as returned by <tt><a 
+href="symbols.html#x185-2637090r90">array-dimension</a></tt>); it is the number of
+“active” or “ﬁlled-in” elements in the vector. The ﬁll pointer constitutes the “active
+length” of the vector; all vector elements whose index is less than the ﬁll pointer
+are active, and the others are inactive. Nearly all functions that operate on the
+contents of a vector will operate only on the active elements. An important
+exception is <tt><a 
+href="symbols.html#x185-2637085r85">aref</a></tt>, which can be used to access any vector element whether
+in the active region of the vector or not. It is important to note that
+vector elements not in the active region are still considered part of the
+vector.____________________________________________________________________<div class="implementation">
+<!--l. 698--><p class="noindent" ><b>Implementation note:</b> An implication of this rule is that vector elements outside the
+active region may not be garbage-collected.
+</div>___________________________________________________________________________________________________________
+<!--l. 704--><p class="indent" >     Only vectors (one-dimensional arrays) may have ﬁll pointers; multidimensional
+arrays may not. (Note, however, that one can create a multidimensional array
+that is <i>displaced</i> to a vector that has a ﬁll pointer.)
+<div class="defun">
+<!--l. 709--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx117-1431001"></a><a 
+ id="x117-1431002r554"></a> <b>array-has-ﬁll-pointer-p</b>  <i>array</i>
+</div>
+<!--l. 712--><p class="indent" >    The argument must be an array. <tt><a 
+href="symbols.html#x185-2637095r95">array-has-fill-pointer-p</a></tt> returns
+<tt><a 
+href="symbols.html#x185-2637871r871">t</a></tt> if the array has a ﬁll pointer, and otherwise returns <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt>. Note that
+<tt><a 
+href="symbols.html#x185-2637095r95">array-has-fill-pointer-p</a></tt> always returns <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> if the <i>array</i> is not
+one-dimensional.
+</div>
+<div class="defun">
+                                                                          
+
+                                                                          
+<!--l. 720--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx117-1431003"></a><a 
+ id="x117-1431004r555"></a> <b>ﬁll-pointer</b>  <i>vector</i>
+</div>
+<!--l. 723--><p class="indent" >   The ﬁll pointer of <i>vector</i> is returned. It is an error if the <i>vector</i> does not have
+a ﬁll pointer.
+<tt>
+<!--l. 726--><p class="indent" >   <a 
+href="symbols.html#x185-2637778r778">setf</a></tt> may be used with <tt><a 
+href="symbols.html#x185-2637366r366">fill-pointer</a></tt> to change the ﬁll pointer of a vector.
+The ﬁll pointer of a vector must always be an integer between zero and the size of
+the vector (inclusive).
+</div>
+<div class="defun">
+<!--l. 731--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx117-1431005"></a><a 
+ id="x117-1431006r556"></a> <b>vector-push</b>  <i>new-element</i> <i>vector</i>
+</div>
+<i>
+<!--l. 734--><p class="indent" >   vector</i> must be a one-dimensional array that has a ﬁll pointer, and
+<i>new-element</i> may be any object. <tt><a 
+href="symbols.html#x185-2637922r922">vector-push</a></tt> attempts to store <i>new-element</i> in
+the element of the vector designated by the ﬁll pointer, and to increase the ﬁll
+pointer by 1. If the ﬁll pointer does not designate an element of the vector
+(speciﬁcally, when it gets too big), it is unaﬀected and <tt><a 
+href="symbols.html#x185-2637922r922">vector-push</a></tt> returns <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt>.
+Otherwise, the store and increment take place and <tt><a 
+href="symbols.html#x185-2637922r922">vector-push</a></tt> returns
+the <i>former</i> value of the ﬁll pointer (1 less than the one it leaves in the
+vector); thus the value of <tt><a 
+href="symbols.html#x185-2637922r922">vector-push</a></tt> is the index of the new element
+pushed.
+<!--l. 745--><p class="indent" >   It is instructive to compare <tt><a 
+href="symbols.html#x185-2637922r922">vector-push</a></tt>, which is a function, with <tt><a 
+href="symbols.html#x185-2637705r705">push</a></tt>,
+which is a macro that requires a <i>place</i> suitable for <tt><a 
+href="symbols.html#x185-2637778r778">setf</a></tt>. A vector with a ﬁll
+pointer eﬀectively contains the place to be modiﬁed in its <tt><a 
+href="symbols.html#x185-2637366r366">fill-pointer</a></tt>
+slot.
+</div>
+<div class="defun">
+<!--l. 751--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx117-1431007"></a><a 
+ id="x117-1431008r557"></a> <b>vector-push-extend</b>  <i>new-element</i> <i>vector</i> <b>&#x0026;optional</b>  <i>extension</i>
+</div>
+<tt>
+<!--l. 754--><p class="indent" >   <a 
+href="symbols.html#x185-2637923r923">vector-push-extend</a></tt> is just like <tt><a 
+href="symbols.html#x185-2637922r922">vector-push</a></tt> except that if the ﬁll pointer
+gets too large, the vector is extended (using <tt><a 
+href="symbols.html#x185-2637073r73">adjust-array</a></tt>) so that it can
+contain more elements. If, however, the vector is not adjustable, then
+                                                                          
+
+                                                                          
+<tt><a 
+href="symbols.html#x185-2637923r923">vector-push-extend</a></tt> signals an error.
+<div class="newer">
+<!--l. 761--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx117-1431009"></a>to clarify that <tt><a 
+href="symbols.html#x185-2637923r923">vector-push-extend</a></tt> regards an
+array as not adjustable if and only if <tt><a 
+href="symbols.html#x185-2637074r74">adjustable-array-p</a></tt> is false of that
+array.
+</div>
+<!--l. 768--><p class="indent" >   The optional argument <i>extension</i>, which must be a positive integer, is the
+minimum number of elements to be added to the vector if it must be extended; it
+defaults to a “reasonable” implementation-dependent value.
+</div>
+<div class="defun">
+<!--l. 774--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx117-1431010"></a><a 
+ id="x117-1431011r558"></a> <b>vector-pop</b>  <i>vector</i>
+</div>
+<i>
+<!--l. 777--><p class="indent" >   vector</i> must be a one-dimensional array that has a ﬁll pointer. If the ﬁll
+pointer is zero, <tt><a 
+href="symbols.html#x185-2637921r921">vector-pop</a></tt> signals an error. Otherwise the ﬁll pointer is
+decreased by 1, and the vector element designated by the new value of the ﬁll
+pointer is returned.
+</div>
+                                                                          
+
+                                                                          
+<!--l. 783--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
+href="clmse96.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse94.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse94.html#tailclmse94.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse95.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="array.html#clmse95.html" >Up</a><tt>&#x003E;</tt></div><a 
+ id="tailclmse95.html"></a>  </div> </div> 
+</body></html> 

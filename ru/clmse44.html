@@ -1,0 +1,557 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Возврат и обработка нескольких значений</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-04-20 14:55:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+<!--l. 7754--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
+href="clmse45.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html#tailclmse43.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse44.html">В-конец</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="contrl.html#clmse44.html" >Наверх</a><tt>&#x003E;</tt>&lt;<a href="../index.html">Main Page</a>&gt;</div><h3 class="sectionHead"><span class="titlemark">7.10   </span> <a 
+href="clm.html#QQ2-56-670" id="x56-6610007.10">Возврат и
+обработка нескольких значений</a></h3>
+<a 
+ id="dx56-661001"></a>
+<!--l. 7757--><p class="noindent" >Обычно результатом вызова Lisp&#x2019;овой функции является один Lisp&#x2019;овый
+объект. Однако, иногда для функции удобно вычислить несколько объектов и
+вернуть их. Common Lisp представляет механизм для прямой обработки
+нескольких значений. Механизм удобнее и эффективнее, чем исполнение
+трюков со списками или глобальными переменными.
+<!--l. 7763--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.10.1   </span> <a 
+href="frontmatter.html#QQ2-56-671" id="x56-6620007.10.1">Конструкции для обработки нескольких значений</a></h4>
+<!--l. 7765--><p class="noindent" >Обычно не используется несколько значений. Для возврата и обработки
+нескольких значений требуются специальные формы. Если вызывающий
+функцию код не требует нескольких значений, однако вызываемая
+функция их несколько, то для кода берётся только первое значение.
+Все оставшиеся значения игнорируются. Если вызываемая функция
+возвращает ноль значений, вызывающий код в качестве значения получает
+<tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt>.
+<tt>
+<!--l. 7773--><p class="indent" >   <a 
+href="symbols.html#x185-2605917r917">values</a></tt> — это главный примитив для возврата нескольких значений. Он
+принимает любое количество аргументов и возвращает столько же значений.
+Если последняя форма тела функции является <tt><a 
+href="symbols.html#x185-2605917r917">values</a></tt> с тремя аргументами,
+то вызов такой функции вернёт три значения. Другие специальные формы
+также возвращают несколько значения, но они могут быть описаны в
+терминах <tt><a 
+href="symbols.html#x185-2605917r917">values</a></tt>. Некоторые встроенные Common Lisp функции, такая как
+<tt><a 
+href="symbols.html#x185-2605388r388">floor</a></tt>, возвращают несколько значений.
+<!--l. 7781--><p class="indent" >   Специальные формы обрабатывающие несколько значений представлены
+ниже: <div class="lisp"><div class="tabbing">
+multiple-value-list
+                                                                          
+
+                                                                          
+   <br>                                                                       multiple-value-call<br>
+multiple-value-prog1<br>                                   multiple-value-bind<br>
+multiple-value-setq<br>
+<!--l. 7788--><p class="noindent" ></div>
+<!--l. 7788--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6630007.10.1" id="x56-6630007.10.1"></a></span>
+<!--l. 7788--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6640007.10.1" id="x56-6640007.10.1"></a></span>
+</div>
+<!--l. 7789--><p class="indent" >   Они задают форму для вычисления и указывают куда поместить
+значения возвращаемые данной формой.
+<div class="defun">
+<!--l. 7792--><p class="noindent" ><div class="defunheader"> <i>[Функция]</i><a 
+ id="dx56-664001"></a><a 
+ id="x56-664002r111"></a> <b>values</b>  <b>&#x0026;rest</b>  <i>args</i>
+</div>
+<!--l. 7795--><p class="indent" >   Все аргументы в таком же порядке возвращаются, как значения.
+Например, <div class="lisp"><div class="tabbing">
+(defun polar (x y)
+   <br>                  (values (sqrt (+ (* x x) (* y y))) (atan y x)))<br>                <br>
+(multiple-value-bind (r theta) (polar 3.0 4.0)<br>              (vector r theta))<br>
+   <span class="math"> ⇒</span> #(5.0 0.9272952)<br>
+<!--l. 7804--><p class="noindent" ></div>
+<!--l. 7804--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6650007.10.1" id="x56-6650007.10.1"></a></span>
+<!--l. 7804--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6660007.10.1" id="x56-6660007.10.1"></a></span>
+</div>
+<!--l. 7806--><p class="indent" >   Выражение <tt>(values)</tt> возвращает ноль значений. Это стандартная идиома
+для возврата из функции нулевого количества значений.
+<!--l. 7809--><p class="indent" >   Иногда необходимо указать явно, что функция будет возвращать только
+одно значение. Например, функция <div class="lisp"><div class="tabbing">
+                                                                          
+
+                                                                          
+(defun foo (x y)
+   <br>                                                                       (ﬂoor (+ x y) y))<br>
+<!--l. 7814--><p class="noindent" ></div>
+<!--l. 7814--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6670007.10.1" id="x56-6670007.10.1"></a></span>
+<!--l. 7814--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6680007.10.1" id="x56-6680007.10.1"></a></span>
+</div>
+<!--l. 7815--><p class="indent" >   будет возвращать два значения, потому что <tt><a 
+href="symbols.html#x185-2605388r388">floor</a></tt> возвращает два
+значения. Может быть второе значение не имеет смысла в данном контексте,
+или есть причины не тратить время на вычисления второго значения.
+Функция <tt><a 
+href="symbols.html#x185-2605917r917">values</a></tt> является стандартной идиомой для указания того, что будет
+возвращено только одно значение, как показано в следующем примере.
+<div class="lisp"><div class="tabbing">
+(defun foo (x y)
+   <br>                                                            (values (ﬂoor (+ x y) y)))<br>
+<!--l. 7823--><p class="noindent" ></div>
+<!--l. 7823--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6690007.10.1" id="x56-6690007.10.1"></a></span>
+<!--l. 7823--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6700007.10.1" id="x56-6700007.10.1"></a></span>
+</div>
+<!--l. 7824--><p class="indent" >   Это работает, потому что <tt><a 
+href="symbols.html#x185-2605917r917">values</a></tt> возвращает только <i>одно</i> значения для
+каждой формы аргумента. Если форма аргумента возвращает несколько
+значений, то используется только первое, а остальные игнорируются.
+<!--l. 7828--><p class="indent" >   В Common Lisp&#x2019;е для вызывающего кода нет возможности различить,
+было ли возвращено просто одно значение или было возвращено только одно
+значение в с помощью <tt><a 
+href="symbols.html#x185-2605917r917">values</a></tt>. Например значения, возвращённые
+выражением <tt>(+ 1 2)</tt> и <tt>(values (+ 1 2))</tt>, идентичны во всех отношениях:
+                                                                          
+
+                                                                          
+они оба просто равны <tt>3</tt>.
+</div>
+<div class="defun">
+<!--l. 7834--><p class="noindent" ><div class="defunheader"> <i>[Константа]</i><a 
+ id="dx56-670001"></a><a 
+ id="x56-670002r112"></a> <b>multiple-values-limit</b>
+</div>
+<!--l. 7837--><p class="indent" >   Значение <tt><a 
+href="symbols.html#x185-2605600r600">multiple-values-limit</a></tt> является положительным целым
+числом, которое невключительно указывает наибольшее возможное
+количество возвращаемых значений. Это значение зависит от реализации, но
+не может быть менее 20. (Разработчики рекомендуется делать это
+ограничение как можно большим без потери в производительности.)
+Смотрите <tt><a 
+href="symbols.html#x185-2605465r465">lambda-parameters-limit</a></tt> и <tt><a 
+href="symbols.html#x185-2605168r168">call-arguments-limit</a></tt>.
+</div>
+<div class="defun">
+<!--l. 7845--><p class="noindent" ><div class="defunheader"> <i>[Функция]</i><a 
+ id="dx56-670003"></a><a 
+ id="x56-670004r113"></a> <b>values-list</b>  <i>list</i>
+</div>
+<!--l. 7848--><p class="indent" >   Все элементы списка <i>list</i> будут возвращены как несколько значений.
+Например: <div class="lisp"><div class="tabbing">
+(values-list (list a b c)) <span class="math"> ≡</span> (values a b c)
+   <br>
+<!--l. 7852--><p class="noindent" ></div>
+<!--l. 7852--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6710007.10.1" id="x56-6710007.10.1"></a></span>
+<!--l. 7852--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6720007.10.1" id="x56-6720007.10.1"></a></span>
+</div>
+<!--l. 7853--><p class="indent" >   Можно обозначить так, <div class="lisp"><div class="tabbing">
+(values-list <i>list</i>) <span class="math"> ≡</span> (apply #&#x2019;values <i>list</i>)
+   <br>
+<!--l. 7856--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 7856--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6730007.10.1" id="x56-6730007.10.1"></a></span>
+<!--l. 7856--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6740007.10.1" id="x56-6740007.10.1"></a></span>
+</div>
+<!--l. 7857--><p class="indent" >   но <tt><a 
+href="symbols.html#x185-2605918r918">values-list</a></tt> может быть более ясным или эффективным.
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 7861--><p class="indent" >   <div class="tabbing">
+ <i>[Макрос]</i> <b>multiple-value-list</b> <a 
+ id="dx56-674001"></a><a 
+ id="x56-674002r114"></a> form
+   <br>
+<!--l. 7862--><p class="noindent" ></div>
+<!--l. 7862--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6750007.10.1" id="x56-6750007.10.1"></a></span>
+</div>
+<tt>
+<!--l. 7863--><p class="indent" >   <a 
+href="symbols.html#x185-2605597r597">multiple-value-list</a></tt> вычисляет форму <i>form</i> и возвращает список из того
+количества значений, которое было возвращено формой. Например,
+<div class="lisp"><div class="tabbing">
+(multiple-value-list (ﬂoor -3 4)) <span class="math"> ⇒</span> (-1 1)
+   <br>
+<!--l. 7868--><p class="noindent" ></div>
+<!--l. 7868--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6760007.10.1" id="x56-6760007.10.1"></a></span>
+<!--l. 7868--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6770007.10.1" id="x56-6770007.10.1"></a></span>
+</div>
+<!--l. 7869--><p class="indent" >   Таким образом, <tt><a 
+href="symbols.html#x185-2605597r597">multiple-value-list</a></tt> и <tt><a 
+href="symbols.html#x185-2605918r918">values-list</a></tt> являются
+антиподами. FIXME
+</div>
+                                                                          
+
+                                                                          
+<div class="defspec">
+<div class="defmacheader">
+<!--l. 7874--><p class="indent" >   <div class="tabbing">
+ <i>[Специальный оператор]</i> <b>multiple-value-call</b> <a 
+ id="dx56-677001"></a><a 
+ id="x56-677002r115"></a> function {form}*
+   <br>
+<!--l. 7875--><p class="noindent" ></div>
+<!--l. 7875--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6780007.10.1" id="x56-6780007.10.1"></a></span>
+</div>
+<tt>
+<!--l. 7876--><p class="indent" >   <a 
+href="symbols.html#x185-2605596r596">multiple-value-call</a></tt> сначала вычисляет <i>function</i> для получения функции
+и затем вычисляет все формы <i>forms</i>. Все значения форм <i>forms</i> собираются
+вместе (все, а не только первые) и передаются как аргументы функции.
+Результат <tt><a 
+href="symbols.html#x185-2605596r596">multiple-value-call</a></tt> является тем, что вернула функция.
+Например: <div class="lisp"><div class="tabbing">
+(+ (ﬂoor 5 3) (ﬂoor 19 4))
+   <br>                                                                       <span class="math"> ≡</span> (+ 1 4) <span class="math"> ⇒</span> 5<br>
+(multiple-value-call #&#x2019;+ (ﬂoor 5 3) (ﬂoor 19 4))<br>     <span class="math"> ≡</span> (+ 1 2 4 3) <span class="math"> ⇒</span> 10<br>
+(multiple-value-list <i>form</i>) <span class="math"> ≡</span> (multiple-value-call #&#x2019;list <i>form</i>)<br>
+<!--l. 7887--><p class="noindent" ></div>
+<!--l. 7887--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6790007.10.1" id="x56-6790007.10.1"></a></span>
+<!--l. 7887--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6800007.10.1" id="x56-6800007.10.1"></a></span>
+</div>
+</div>
+<div class="defspec">
+<div class="defmacheader">
+<!--l. 7891--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+ <i>[Специальный оператор]</i> <b>multiple-value-prog1</b> <a 
+ id="dx56-680001"></a><a 
+ id="x56-680002r116"></a> form {form}*
+   <br>
+<!--l. 7892--><p class="noindent" ></div>
+<!--l. 7892--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6810007.10.1" id="x56-6810007.10.1"></a></span>
+</div>
+<tt>
+<!--l. 7893--><p class="indent" >   <a 
+href="symbols.html#x185-2605598r598">multiple-value-prog1</a></tt> вычисляет первую форму <i>form</i> и сохраняет все
+значения, возвращённые данной формой. Затем она слева направо
+вычисляет оставшиеся <i>формы</i>, игнорируя их значения. Значения,
+возвращённые первой формой, становятся результатом всей формы
+<tt><a 
+href="symbols.html#x185-2605598r598">multiple-value-prog1</a></tt>. Смотрите <tt><a 
+href="symbols.html#x185-2605698r698">prog1</a></tt>, которая всегда возвращает одно
+значение.
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 7901--><p class="indent" >   <div class="tabbing">
+ <i>[Макрос]</i> <b>multiple-value-bind</b> <a 
+ id="dx56-681001"></a><a 
+ id="x56-681002r117"></a> ({var}*) values-form
+   <br>                                                               {declaration}* {form}*<br>
+<!--l. 7903--><p class="noindent" ></div>
+<!--l. 7903--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6820007.10.1" id="x56-6820007.10.1"></a></span>
+</div>
+<!--l. 7904--><p class="indent" >   Вычисляется <i>values-form</i> и каждое значение результата связывается
+соответственно с переменными указанными в первом параметре. Если
+переменных больше, чем возвращаемых значений, для оставшихся
+переменных используется значение <tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt>. Если значений больше, чем
+переменных, лишние значения игнорируются. Переменные связываются со
+значениями только на время выполнения форм тела, которое является
+неявным <tt><a 
+href="symbols.html#x185-2605700r700">progn</a></tt>. Например: <div class="lisp"><div class="tabbing">
+(multiple-value-bind (x) (ﬂoor 5 3) (list x)) <span class="math"> ⇒</span> (1)
+   <br>                    (multiple-value-bind (x y) (ﬂoor 5 3) (list x y)) <span class="math"> ⇒</span> (1 2)<br>
+(multiple-value-bind (x y z) (ﬂoor 5 3) (list x y z))<br>           <span class="math"> ⇒</span> (1 2 <tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt>)<br>
+                                                                          
+
+                                                                          
+<!--l. 7916--><p class="noindent" ></div>
+<!--l. 7916--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6830007.10.1" id="x56-6830007.10.1"></a></span>
+<!--l. 7916--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6840007.10.1" id="x56-6840007.10.1"></a></span>
+</div>
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 7920--><p class="indent" >   <div class="tabbing">
+ <i>[Макрос]</i> <b>multiple-value-setq</b> <a 
+ id="dx56-684001"></a><a 
+ id="x56-684002r118"></a> variables form
+   <br>
+<!--l. 7921--><p class="noindent" ></div>
+<!--l. 7921--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6850007.10.1" id="x56-6850007.10.1"></a></span>
+</div>
+<!--l. 7922--><p class="indent" >   Аргумент <i>variables</i> должен быть списком переменных. Вычисляется
+форма <i>form</i> и переменным <i>присваиваются</i> (не связываются) значения,
+возвращённые этой формой. Если переменных больше, чем значений,
+оставшимся переменным присваивается <tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt>. Если значений больше, чем
+переменных, лишние значения игнорируются.
+<tt>
+<!--l. 7928--><p class="indent" >   <a 
+href="symbols.html#x185-2605599r599">multiple-value-setq</a></tt> всегда возвращает одно значение, которое является
+первым из возвращённых значений формы <i>form</i>, или <tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt>, если форма <i>form</i>
+вернула ноль значений.
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 7933--><p class="indent" >   <div class="tabbing">
+ <i>[Макрос]</i> <b>nth-value</b> <a 
+ id="dx56-685001"></a><a 
+ id="x56-685002r119"></a> n form
+   <br>
+                                                                          
+
+                                                                          
+<!--l. 7935--><p class="noindent" ></div>
+<!--l. 7935--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6860007.10.1" id="x56-6860007.10.1"></a></span>
+</div>
+<!--l. 7936--><p class="indent" >   Формы аргументов <i>n</i> и <i>form</i> вычисляются. Значение <i>n</i> должно быть
+неотрицательным целым, и форма <i>form</i> должна возвращать любое
+количество значение. Целое число <i>n</i> используется, как индекс (начиная с
+нуля), для доступа к списку значений. Форма возвращает элемент в позиции
+<i>n</i> из списка результатов вычисления формы <i>form</i>. Если позиции не
+существует, возвращается <tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt>.
+<!--l. 7944--><p class="indent" >   В качестве примера, <tt><a 
+href="symbols.html#x185-2605582r582">mod</a></tt> мог бы быть определён так: <div class="lisp"><div class="tabbing">
+(defun mod (number divisor)
+   <br>                                              (nth-value 1 (ﬂoor number divisor)))<br>
+<!--l. 7948--><p class="noindent" ></div>
+<!--l. 7948--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6870007.10.1" id="x56-6870007.10.1"></a></span>
+<!--l. 7948--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6880007.10.1" id="x56-6880007.10.1"></a></span>
+</div>
+</div>
+<!--l. 7951--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.10.2   </span> <a 
+href="frontmatter.html#QQ2-56-698" id="x56-6890007.10.2">Правила управления возвратом нескольких значений</a></h4>
+<!--l. 7953--><p class="noindent" >Часто случается так, что значение специальной формы или макроса
+определено как значение одного из подвыражений. Например, значение
+<tt><a 
+href="symbols.html#x185-2605245r245">cond</a></tt> является значением последнего подвыражения в исполняемой
+ветке.
+<!--l. 7958--><p class="indent" >   В большинстве таких случаев, если подвыражение возвращает несколько
+значений, тогда и оригинальная форма возвращает все эти значения.
+Эта <i>передача значений</i>, конечно, не будет иметь место, если не была
+выполнена специальная форма для обработки возврата нескольких
+значений.
+                                                                          
+
+                                                                          
+<!--l. 7963--><p class="indent" >   Неявно несколько значений может быть возвращены из специальных
+форм в соответствие со следующими правилами:
+<div class="flushdesc">
+      <ul><li><b>
+<i>                       </i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605343r343">eval</a></tt> возвращает  несколько  значений,  если  переданная  ему
+           форму при вычислении вернула несколько значений.
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605081r81">apply</a></tt>,
+           <tt><a 
+href="symbols.html#x185-2605398r398">funcall</a></tt> и <tt><a 
+href="symbols.html#x185-2605596r596">multiple-value-call</a></tt> передают обратно несколько
+           значений из применяемой или вызываемой функции.</li></ul>
+      <li><b>
+<i>                     <tt><a 
+href="symbols.html#x185-2605700r700">progn</a></tt></i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize">Специальная   форма   <tt><a 
+href="symbols.html#x185-2605700r700">progn</a></tt>  передаёт   обратно   несколько
+           значений полученных при вычислении последней подформы.
+           В другие ситуациях, называемых «неявный <tt><a 
+href="symbols.html#x185-2605700r700">progn</a></tt>», в которых
+           вычисляется  несколько  форм  и  результаты  всех,  кроме
+           последней формы, игнорируются, также передаётся обратно
+           несколько значений от формы. Такие ситуации включают тело
+           лямбда-выражения, в частности в <tt><a 
+href="symbols.html#x185-2605291r291">defun</a></tt>, <tt><a 
+href="symbols.html#x185-2605284r284">defmacro</a></tt> и <tt><a 
+href="symbols.html#x185-2605290r290">deftype</a></tt>.
+           Также включаются тела конструкций <tt><a 
+href="symbols.html#x185-2605344r344">eval-when</a></tt>, <tt><a 
+href="symbols.html#x185-2605702r702">progv</a></tt>, <tt><a 
+href="symbols.html#x185-2605488r488">let</a></tt>,
+           <tt><a 
+href="symbols.html#x185-2605489r489">let*</a></tt>,  <tt><a 
+href="symbols.html#x185-2605927r927">when</a></tt>,  <tt><a 
+href="symbols.html#x185-2605902r902">unless</a></tt>,  <tt><a 
+href="symbols.html#x185-2605128r128">block</a></tt>,  <tt><a 
+href="symbols.html#x185-2605595r595">multiple-value-bind</a></tt> и  <tt>catch</tt>.
+           И также включаются подвыражения условных конструкций
+           <tt><a 
+href="symbols.html#x185-2605172r172">case</a></tt>, <tt><a 
+href="symbols.html#x185-2605895r895">typecase</a></tt>, <tt><a 
+href="symbols.html#x185-2605324r324">ecase</a></tt>, <tt><a 
+href="symbols.html#x185-2605342r342">etypecase</a></tt>, <tt><a 
+href="symbols.html#x185-2605174r174">ccase</a></tt> и <tt><a 
+href="symbols.html#x185-2605267r267">ctypecase</a></tt>.</li></ul>
+      </ul>
+</div>
+<div class="flushdesc">
+      <ul><li><b>
+<i>                    </i> </b></li>
+                                                                          
+
+                                                                          
+           <ul class="itemize1">
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605435r435">if</a></tt> передаёт обратно несколько значений из любой выбранной
+           подформы (ветки <i>then</i> или <i>else</i>).
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605078r78">and</a></tt> и <tt><a 
+href="symbols.html#x185-2605642r642">or</a></tt> передают обратно несколько значений из последней
+           подформы, но ни из какой другой непоследней подформы.
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605245r245">cond</a></tt>         передаёт              обратно              несколько
+           значений из последней подформы неявного <tt><a 
+href="symbols.html#x185-2605700r700">progn</a></tt> выделенного
+           подвыражения.   Однако,   если   выделенное   подвыражение
+           является   «синглтоном»,   будет   возвращено   только   одно
+           значение (не-<tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt> значение предиката). Это верно, даже если
+           выражение «синглтон» является последним подвыражением
+           <tt><a 
+href="symbols.html#x185-2605245r245">cond</a></tt>. Нельзя рассматривать последнее подвыражение <tt>(x)</tt>, как
+           будто оно <tt>(t x)</tt>. Последнее подвыражение передаёт обратно
+           несколько значений из формы <tt>x</tt>.</li></ul>
+      <li><b>
+<i>                </i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize">При  нормальном  завершении  конструкция  <tt><a 
+href="symbols.html#x185-2605128r128">block</a></tt> передаёт
+           обратно несколько значений из её последней подформы. Если
+           для  завершения  использовалась  <tt><a 
+href="symbols.html#x185-2605752r752">return-from</a></tt> (или  <tt><a 
+href="symbols.html#x185-2605751r751">return</a></tt>),
+           тогда <tt><a 
+href="symbols.html#x185-2605752r752">return-from</a></tt> передаёт обратно несколько значений из
+           своей  подформы,  как  значения  всей  конструкции  <tt><a 
+href="symbols.html#x185-2605128r128">block</a></tt>.
+           Другие  конструкции,  создающие  неявные  блоки,  такие  как
+           <tt><a 
+href="symbols.html#x185-2605310r310">do</a></tt>, <tt><a 
+href="symbols.html#x185-2605317r317">dolist</a></tt>, <tt><a 
+href="symbols.html#x185-2605318r318">dotimes</a></tt>, <tt><a 
+href="symbols.html#x185-2605696r696">prog</a></tt> и <tt><a 
+href="symbols.html#x185-2605697r697">prog*</a></tt>, также передают обратно
+           несколько значений, заданных с помощью <tt><a 
+href="symbols.html#x185-2605752r752">return-from</a></tt> (или
+           <tt><a 
+href="symbols.html#x185-2605751r751">return</a></tt>).
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605310r310">do</a></tt>  передаёт   обратно   несколько   значений   из   последней
+           формы  подвыражения  выхода,  точно  также,  как  если  бы
+           подвыражение выхода было подвыражение <tt><a 
+href="symbols.html#x185-2605245r245">cond</a></tt>. Подобным
+           образом  действуют  <tt><a 
+href="symbols.html#x185-2605317r317">dolist</a></tt>  и  <tt><a 
+href="symbols.html#x185-2605318r318">dotimes</a></tt>.  Они  возвращают
+           несколько  значений  из  формы  <i>resultform</i>,  если  она  была
+           выполнена. Эти ситуации также являются примерами явного
+           использования <tt><a 
+href="symbols.html#x185-2605752r752">return-from</a></tt>.</li></ul>
+                                                                          
+
+                                                                          
+      <li><b>
+<i>                           </i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize">Конструкция  <tt>catch</tt> возвращает  несколько  значений,  если
+           результат  формы  в  <tt>throw</tt>,  которая  осуществляет  выход  из
+           этого catch, возвращает несколько значений.</li></ul>
+      <li><b>
+<i>                  </i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605598r598">multiple-value-prog1</a></tt> передаёт обратно несколько значений
+           из его первой подформы. Однако, <tt><a 
+href="symbols.html#x185-2605698r698">prog1</a></tt> всегда возвращает
+           одно значение.
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605908r908">unwind-protect</a></tt> возвращает несколько значений, если форма,
+           которую он защищает, вернула несколько значений.
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2605878r878">the</a></tt> возвращает несколько значений, если в нем содержащаяся
+           форма возвращает несколько значений.</li></ul>
+      </ul>
+</div>
+<tt>
+<!--l. 8074--><p class="indent" >   <a 
+href="symbols.html#x185-2605698r698">prog1</a></tt>, <tt><a 
+href="symbols.html#x185-2605699r699">prog2</a></tt>, <tt><a 
+href="symbols.html#x185-2605779r779">setq</a></tt> и <tt><a 
+href="symbols.html#x185-2605599r599">multiple-value-setq</a></tt> — это формы, которые <i>никогда</i>
+не передают обратно несколько значений. Стандартный метод для явного
+указания возврата одного значения из формы <tt>x</tt> является запись <tt>(values
+x)</tt>.
+<!--l. 8080--><p class="indent" >   Наиболее важное правило насчёт нескольких значений: <b>Не важно
+сколько значений возвращает форма, если форма является
+аргументом в вызове функции, то будет использовано только одно
+значение (первое).</b>
+<!--l. 8085--><p class="indent" >   Например, если вы записали <tt>(cons (floor x))</tt>, тогда <tt>cons</tt> всегда
+получить <i>только</i> один аргумент (что, конечно, является ошибкой), хотя и
+<tt><a 
+href="symbols.html#x185-2605388r388">floor</a></tt> возвращает два значения. Для того, чтобы поместить оба значения
+<tt><a 
+href="symbols.html#x185-2605388r388">floor</a></tt> в <tt>cons</tt>, можно записать что-то вроде этого: <tt>(multiple-value-call
+#&#x2019;cons (floor x))</tt>. В обычном вызове функции, каждый форма аргумента
+                                                                          
+
+                                                                          
+предоставляется только <i>один</i> аргумент. Если такая форма возвращает ноль
+значение, в качестве аргумента используется <tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt>. А если возвращает более
+одного значения, все они, кроме первого, игнорируются. Также и условные
+конструкции, например <tt><a 
+href="symbols.html#x185-2605435r435">if</a></tt>, которые проверяют значения формы,
+используют только одно первое значение, остальные игнорируются.
+Такие конструкции будут использовать <tt><a 
+href="symbols.html#x185-2605609r609">nil</a></tt> если форма вернула ноль
+значений.
+                                                                          
+
+                                                                          
+<!--l. 8098--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
+href="clmse45.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html#tailclmse43.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse44.html" >В-начало</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="contrl.html#clmse44.html" >Наверх</a><tt>&#x003E;</tt></div><a 
+ id="tailclmse44.html"></a>  </div> </div> 
+</body></html> 

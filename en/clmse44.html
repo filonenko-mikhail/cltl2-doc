@@ -1,0 +1,582 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Multiple Values</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-04-20 14:21:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+<!--l. 3653--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
+href="clmse45.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html#tailclmse43.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse44.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="contrl.html#clmse44.html" >Up</a><tt>&#x003E;</tt>&lt;<a href="../index.html">Main Page</a>&gt;</div><h3 class="sectionHead"><span class="titlemark">7.10   </span> <a 
+href="clm.html#QQ2-56-696" id="x56-6870007.10">Multiple Values</a></h3>
+<a 
+ id="dx56-687001"></a>
+<!--l. 3656--><p class="noindent" >Ordinarily the result of calling a Lisp function is a single Lisp object. Sometimes,
+however, it is convenient for a function to compute several objects and return
+them. Common Lisp provides a mechanism for handling multiple values
+directly. This mechanism is cleaner and more eﬃcient than the usual
+tricks involving returning a list of results or stashing results in global
+variables.
+<!--l. 3664--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.10.1   </span> <a 
+href="frontmatter.html#QQ2-56-697" id="x56-6880007.10.1">Constructs for Handling Multiple Values</a></h4>
+<!--l. 3666--><p class="noindent" >Normally multiple values are not used. Special forms are required both to <i>produce</i>
+multiple values and to <i>receive</i> them. If the caller of a function does not
+request multiple values, but the called function produces multiple values,
+then the ﬁrst value is given to the caller and all others are discarded; if
+the called function produces zero values, then the caller gets <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> as a
+value.
+<!--l. 3674--><p class="indent" >   The primary primitive for producing multiple values is <tt><a 
+href="symbols.html#x185-2637917r917">values</a></tt>, which takes
+any number of arguments and returns that many values. If the last form in the
+body of a function is a <tt><a 
+href="symbols.html#x185-2637917r917">values</a></tt> with three arguments, then a call to that function
+will return three values. Other special forms also produce multiple values, but
+they can be described in terms of <tt><a 
+href="symbols.html#x185-2637917r917">values</a></tt>. Some built-in Common Lisp
+functions, such as <tt><a 
+href="symbols.html#x185-2637388r388">floor</a></tt>, return multiple values; those that do are so
+documented.
+<!--l. 3682--><p class="indent" >   The special operators and macros for receiving multiple values are as follows:
+<div class="lisp"><div class="tabbing">
+multiple-value-list
+   <br>                                                                       multiple-value-call<br>
+multiple-value-prog1<br>                                   multiple-value-bind<br>
+                                                                          
+
+                                                                          
+multiple-value-setq<br>
+<!--l. 3689--><p class="noindent" ></div>
+<!--l. 3689--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6890007.10.1" id="x56-6890007.10.1"></a></span>
+<!--l. 3689--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6900007.10.1" id="x56-6900007.10.1"></a></span>
+</div>
+<!--l. 3690--><p class="indent" >   These specify a form to evaluate and an indication of where to put the values
+returned by that form.
+<div class="defun">
+<!--l. 3693--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx56-690001"></a><a 
+ id="x56-690002r113"></a> <b>values</b>  <b>&#x0026;rest</b>  <i>args</i>
+</div>
+<!--l. 3696--><p class="indent" >   All of the arguments are returned, in order, as values. For example:
+<div class="lisp"><div class="tabbing">
+(defun polar (x y)
+   <br>                  (values (sqrt (+ (* x x) (* y y))) (atan y x)))<br>                <br>
+(multiple-value-bind (r theta) (polar 3.0 4.0)<br>              (vector r theta))<br>
+   <span class="math"> ⇒</span> #(5.0 0.9272952)<br>
+<!--l. 3705--><p class="noindent" ></div>
+<!--l. 3705--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6910007.10.1" id="x56-6910007.10.1"></a></span>
+<!--l. 3705--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6920007.10.1" id="x56-6920007.10.1"></a></span>
+</div>
+<!--l. 3707--><p class="indent" >   The expression <tt>(values)</tt> returns zero values. This is the standard idiom for
+returning no values from a function.
+<!--l. 3710--><p class="indent" >   Sometimes it is desirable to indicate explicitly that a function will return
+exactly one value. For example, the function <div class="lisp"><div class="tabbing">
+                                                                          
+
+                                                                          
+(defun foo (x y)
+   <br>                                                                       (ﬂoor (+ x y) y))<br>
+<!--l. 3715--><p class="noindent" ></div>
+<!--l. 3715--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6930007.10.1" id="x56-6930007.10.1"></a></span>
+<!--l. 3715--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6940007.10.1" id="x56-6940007.10.1"></a></span>
+</div>
+<!--l. 3716--><p class="indent" >   will return two values because <tt><a 
+href="symbols.html#x185-2637388r388">floor</a></tt> returns two values. It may be that the
+second value makes no sense, or that for eﬃciency reasons it is desired not to
+compute the second value. The <tt><a 
+href="symbols.html#x185-2637917r917">values</a></tt> function is the standard idiom for
+indicating that only one value is to be returned, as shown in the following
+example. <div class="lisp"><div class="tabbing">
+(defun foo (x y)
+   <br>                                                            (values (ﬂoor (+ x y) y)))<br>
+<!--l. 3725--><p class="noindent" ></div>
+<!--l. 3725--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6950007.10.1" id="x56-6950007.10.1"></a></span>
+<!--l. 3725--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6960007.10.1" id="x56-6960007.10.1"></a></span>
+</div>
+<!--l. 3726--><p class="indent" >   This works because <tt><a 
+href="symbols.html#x185-2637917r917">values</a></tt> returns exactly <i>one</i> value for each of its argument
+forms; as for any function call, if any argument form to <tt><a 
+href="symbols.html#x185-2637917r917">values</a></tt> produces more
+than one value, all but the ﬁrst are discarded.
+<!--l. 3731--><p class="indent" >   There is absolutely no way in Common Lisp for a caller to distinguish between
+returning a single value in the ordinary manner and returning exactly one
+“multiple value.” For example, the values returned by the expressions <tt>(+ 1 2)</tt>
+and <tt>(values (+ 1 2))</tt> are identical in every respect: the single value
+<tt>3</tt>.
+</div>
+                                                                          
+
+                                                                          
+<div class="defun">
+<!--l. 3738--><p class="noindent" ><div class="defunheader"> <i>[Constant]</i><a 
+ id="dx56-696001"></a><a 
+ id="x56-696002r114"></a> <b>multiple-values-limit</b>
+</div>
+<!--l. 3741--><p class="indent" >   The value of <tt><a 
+href="symbols.html#x185-2637600r600">multiple-values-limit</a></tt> is a positive integer that is the upper
+exclusive bound on the number of values that may be returned from a function.
+This bound depends on the implementation but will not be smaller than 20.
+(Implementors are encouraged to make this limit as large as practicable
+without sacriﬁcing performance.) See <tt><a 
+href="symbols.html#x185-2637465r465">lambda-parameters-limit</a></tt> and
+<tt><a 
+href="symbols.html#x185-2637168r168">call-arguments-limit</a></tt>.
+</div>
+<div class="defun">
+<!--l. 3750--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
+ id="dx56-696003"></a><a 
+ id="x56-696004r115"></a> <b>values-list</b>  <i>list</i>
+</div>
+<!--l. 3753--><p class="indent" >   All of the elements of <i>list</i> are returned as multiple values. For example:
+<div class="lisp"><div class="tabbing">
+(values-list (list a b c)) <span class="math"> ≡</span> (values a b c)
+   <br>
+<!--l. 3757--><p class="noindent" ></div>
+<!--l. 3757--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6970007.10.1" id="x56-6970007.10.1"></a></span>
+<!--l. 3757--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6980007.10.1" id="x56-6980007.10.1"></a></span>
+</div>
+<!--l. 3758--><p class="indent" >   In general, <div class="lisp"><div class="tabbing">
+(values-list <i>list</i>) <span class="math"> ≡</span> (apply #&#x2019;values <i>list</i>)
+   <br>
+<!--l. 3761--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 3761--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-6990007.10.1" id="x56-6990007.10.1"></a></span>
+<!--l. 3761--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7000007.10.1" id="x56-7000007.10.1"></a></span>
+</div>
+<!--l. 3762--><p class="indent" >   but <tt><a 
+href="symbols.html#x185-2637918r918">values-list</a></tt> may be clearer or more eﬃcient.
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 3766--><p class="indent" >   <div class="tabbing">
+ <i>[Macro]</i> <b>multiple-value-list</b> <a 
+ id="dx56-700001"></a><a 
+ id="x56-700002r116"></a> form
+   <br>
+<!--l. 3767--><p class="noindent" ></div>
+<!--l. 3767--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7010007.10.1" id="x56-7010007.10.1"></a></span>
+</div>
+<tt>
+<!--l. 3768--><p class="indent" >   <a 
+href="symbols.html#x185-2637597r597">multiple-value-list</a></tt> evaluates <i>form</i> and returns a list of the multiple values
+it returned. For example: <div class="lisp"><div class="tabbing">
+(multiple-value-list (ﬂoor -3 4)) <span class="math"> ⇒</span> (-1 1)
+   <br>
+<!--l. 3773--><p class="noindent" ></div>
+<!--l. 3773--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7020007.10.1" id="x56-7020007.10.1"></a></span>
+<!--l. 3773--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7030007.10.1" id="x56-7030007.10.1"></a></span>
+</div>
+<tt>
+<!--l. 3774--><p class="indent" >   <a 
+href="symbols.html#x185-2637597r597">multiple-value-list</a></tt> and <tt><a 
+href="symbols.html#x185-2637918r918">values-list</a></tt> are therefore inverses of each
+other.
+</div>
+                                                                          
+
+                                                                          
+<div class="defspec">
+<div class="defmacheader">
+<!--l. 3779--><p class="indent" >   <div class="tabbing">
+ <i>[Special operator]</i> <b>multiple-value-call</b> <a 
+ id="dx56-703001"></a><a 
+ id="x56-703002r117"></a> function {form}*
+   <br>
+<!--l. 3780--><p class="noindent" ></div>
+<!--l. 3780--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7040007.10.1" id="x56-7040007.10.1"></a></span>
+</div>
+<tt>
+<!--l. 3781--><p class="indent" >   <a 
+href="symbols.html#x185-2637596r596">multiple-value-call</a></tt> ﬁrst evaluates <i>function</i> to obtain a function and then
+evaluates all of the <i>form</i>s. All the values of the <i>form</i>s are gathered together (not
+just one value from each) and are all given as arguments to the function. The
+result of <tt><a 
+href="symbols.html#x185-2637596r596">multiple-value-call</a></tt> is whatever is returned by the function. For
+example: <div class="lisp"><div class="tabbing">
+(+ (ﬂoor 5 3) (ﬂoor 19 4))
+   <br>                                                                       <span class="math"> ≡</span> (+ 1 4) <span class="math"> ⇒</span> 5<br>
+(multiple-value-call #&#x2019;+ (ﬂoor 5 3) (ﬂoor 19 4))<br>     <span class="math"> ≡</span> (+ 1 2 4 3) <span class="math"> ⇒</span> 10<br>
+(multiple-value-list <i>form</i>) <span class="math"> ≡</span> (multiple-value-call #&#x2019;list <i>form</i>)<br>
+<!--l. 3793--><p class="noindent" ></div>
+<!--l. 3793--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7050007.10.1" id="x56-7050007.10.1"></a></span>
+<!--l. 3793--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7060007.10.1" id="x56-7060007.10.1"></a></span>
+</div>
+</div>
+<div class="defspec">
+<div class="defmacheader">
+<!--l. 3797--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+ <i>[Special operator]</i> <b>multiple-value-prog1</b> <a 
+ id="dx56-706001"></a><a 
+ id="x56-706002r118"></a> form {form}*
+   <br>
+<!--l. 3798--><p class="noindent" ></div>
+<!--l. 3798--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7070007.10.1" id="x56-7070007.10.1"></a></span>
+</div>
+<tt>
+<!--l. 3799--><p class="indent" >   <a 
+href="symbols.html#x185-2637598r598">multiple-value-prog1</a></tt> evaluates the ﬁrst <i>form</i> and saves all the values
+produced by that form. It then evaluates the other <i>form</i>s from left to right,
+discarding their values. The values produced by the ﬁrst <i>form</i> are returned
+by <tt><a 
+href="symbols.html#x185-2637598r598">multiple-value-prog1</a></tt>. See <tt><a 
+href="symbols.html#x185-2637698r698">prog1</a></tt>, which always returns a single
+value.
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 3807--><p class="indent" >   <div class="tabbing">
+ <i>[Macro]</i> <b>multiple-value-bind</b> <a 
+ id="dx56-707001"></a><a 
+ id="x56-707002r119"></a> ({var}*) values-form
+   <br>                                                               {declaration}* {form}*<br>
+<!--l. 3809--><p class="noindent" ></div>
+<!--l. 3809--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7080007.10.1" id="x56-7080007.10.1"></a></span>
+</div>
+<!--l. 3810--><p class="indent" >   The <i>values-form</i> is evaluated, and each of the variables <i>var</i> is bound to the
+respective value returned by that form. If there are more variables than values
+returned, extra values of <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> are given to the remaining variables. If there are
+more values than variables, the excess values are simply discarded. The variables
+are bound to the values over the execution of the forms, which make up an
+implicit <tt><a 
+href="symbols.html#x185-2637700r700">progn</a></tt>. For example: <div class="lisp"><div class="tabbing">
+(multiple-value-bind (x) (ﬂoor 5 3) (list x)) <span class="math"> ⇒</span> (1)
+   <br>                    (multiple-value-bind (x y) (ﬂoor 5 3) (list x y)) <span class="math"> ⇒</span> (1 2)<br>
+(multiple-value-bind (x y z) (ﬂoor 5 3) (list x y z))<br>           <span class="math"> ⇒</span> (1 2 <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt>)<br>
+<!--l. 3822--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 3822--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7090007.10.1" id="x56-7090007.10.1"></a></span>
+<!--l. 3822--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7100007.10.1" id="x56-7100007.10.1"></a></span>
+</div>
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 3826--><p class="indent" >   <div class="tabbing">
+ <i>[Macro]</i> <b>multiple-value-setq</b> <a 
+ id="dx56-710001"></a><a 
+ id="x56-710002r120"></a> variables form
+   <br>
+<!--l. 3827--><p class="noindent" ></div>
+<!--l. 3827--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7110007.10.1" id="x56-7110007.10.1"></a></span>
+</div>
+<!--l. 3828--><p class="indent" >   The <i>variables</i> must be a list of variables. The <i>form</i> is evaluated, and the
+variables are <i>set</i> (not bound) to the values returned by that form. If there are
+more variables than values returned, extra values of <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> are assigned to the
+remaining variables. If there are more values than variables, the excess values are
+simply discarded.
+<tt>
+<!--l. 3834--><p class="indent" >   <a 
+href="symbols.html#x185-2637599r599">multiple-value-setq</a></tt> always returns a single value, which is the ﬁrst value
+returned by <i>form</i>, or <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> if <i>form</i> produces zero values.
+<div class="newer">
+<!--l. 3838--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx56-711001"></a>to specify that if any <i>var</i> refers not to an
+ordinary variable but to a binding made by <tt><a 
+href="symbols.html#x185-2637864r864">symbol-macrolet</a></tt>, then that
+<i>var</i> is handled as if <tt><a 
+href="symbols.html#x185-2637779r779">setq</a></tt> were used to assign the appropriate value to
+it.
+</div>
+</div>
+<div class="new">
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 3848--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+ <i>[Macro]</i> <b>nth-value</b> <a 
+ id="dx56-711002"></a><a 
+ id="x56-711003r121"></a> n form
+   <br>
+<!--l. 3850--><p class="noindent" ></div>
+<!--l. 3850--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7120007.10.1" id="x56-7120007.10.1"></a></span>
+</div>
+<!--l. 3851--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx56-712001"></a>to add a new macro named <tt><a 
+href="symbols.html#x185-2637633r633">nth-value</a></tt>. The
+argument forms <i>n</i> and <i>form</i> are both evaluated. The value of <i>n</i> must be a
+non-negative integer, and the <i>form</i> may produce any number of values. The
+integer <i>n</i> is used as a zero-based index into the list of values. Value <i>n</i> of the <i>form</i>
+is returned as the single value of the <tt><a 
+href="symbols.html#x185-2637633r633">nth-value</a></tt> form; <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> is returned if the <i>form</i>
+produces no more than <i>n</i> values.
+<!--l. 3863--><p class="indent" >   As an example, <tt><a 
+href="symbols.html#x185-2637582r582">mod</a></tt> could be deﬁned as <div class="lisp"><div class="tabbing">
+(defun mod (number divisor)
+   <br>                                              (nth-value 1 (ﬂoor number divisor)))<br>
+<!--l. 3867--><p class="noindent" ></div>
+<!--l. 3867--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7130007.10.1" id="x56-7130007.10.1"></a></span>
+<!--l. 3867--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7140007.10.1" id="x56-7140007.10.1"></a></span>
+</div>
+<!--l. 3868--><p class="indent" >   Value number 1 is the <i>second</i> value returned by <tt><a 
+href="symbols.html#x185-2637388r388">floor</a></tt>, the ﬁrst value being
+value number 0.
+<!--l. 3871--><p class="indent" >   One could deﬁne <tt><a 
+href="symbols.html#x185-2637633r633">nth-value</a></tt> simply as <div class="lisp"><div class="tabbing">
+(defmacro nth-value (n form)
+   <br>                                                ‘(nth ,n (multiple-value-list form)))<br>
+<!--l. 3875--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 3875--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7150007.10.1" id="x56-7150007.10.1"></a></span>
+<!--l. 3875--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x56-7160007.10.1" id="x56-7160007.10.1"></a></span>
+</div>
+<!--l. 3876--><p class="indent" >   but the clever implementor will doubtless ﬁnd an implementation technique for
+<tt><a 
+href="symbols.html#x185-2637633r633">nth-value</a></tt> that avoids constructing an intermediate list of all the values of the
+<i>form</i>.
+</div>
+</div>
+<!--l. 3882--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">7.10.2   </span> <a 
+href="frontmatter.html#QQ2-56-726" id="x56-7170007.10.2">Rules Governing the Passing of Multiple Values</a></h4>
+<!--l. 3884--><p class="noindent" >It is often the case that the value of a special operator or macro call is deﬁned to
+be the value of one of its subforms. For example, the value of a <tt><a 
+href="symbols.html#x185-2637245r245">cond</a></tt> is the value
+of the last form in the selected clause.
+<!--l. 3890--><p class="indent" >   In most such cases, if the subform produces multiple values, then the original
+form will also produce all of those values. This <i>passing back</i> of multiple values of
+course has no eﬀect unless eventually one of the special operators for receiving
+multiple values is reached.
+<!--l. 3896--><p class="indent" >   To be explicit, multiple values can result from a special operator under
+precisely these circumstances: <div class="flushdesc">
+      <ul><li><b>
+<i>Evaluation and application</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637343r343">eval</a></tt> returns  multiple  values  if  the  form  given  it  to  evaluate
+           produces multiple values.
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637081r81">apply</a></tt>, <tt><a 
+href="symbols.html#x185-2637398r398">funcall</a></tt>, and <tt><a 
+href="symbols.html#x185-2637596r596">multiple-value-call</a></tt> pass back multiple
+           values from the function applied or called.</li></ul>
+      <li><b>
+<i>Implicit <tt><a 
+href="symbols.html#x185-2637700r700">progn</a></tt> contexts</i> </b></li>
+                                                                          
+
+                                                                          
+           <ul class="itemize1">
+           <li class="itemize">The special operator <tt><a 
+href="symbols.html#x185-2637700r700">progn</a></tt> passes back multiple values resulting
+           from  evaluation  of  the  last  subform.  Other  situations  referred
+           to  as  “implicit  <tt><a 
+href="symbols.html#x185-2637700r700">progn</a></tt>,”  where  several  forms  are  evaluated  and
+           the results of all but the last form are discarded, also pass back
+           multiple values from the last form. These situations include the
+           body of a lambda-expression, in particular those constructed by
+           <tt><a 
+href="symbols.html#x185-2637291r291">defun</a></tt>, <tt><a 
+href="symbols.html#x185-2637284r284">defmacro</a></tt>, and <tt><a 
+href="symbols.html#x185-2637290r290">deftype</a></tt>. Also included are bodies of the
+           constructs <tt><a 
+href="symbols.html#x185-2637344r344">eval-when</a></tt>, <tt><a 
+href="symbols.html#x185-2637702r702">progv</a></tt>, <tt><a 
+href="symbols.html#x185-2637488r488">let</a></tt>, <tt><a 
+href="symbols.html#x185-2637489r489">let*</a></tt>, <tt><a 
+href="symbols.html#x185-2637927r927">when</a></tt>, <tt><a 
+href="symbols.html#x185-2637902r902">unless</a></tt>, <tt><a 
+href="symbols.html#x185-2637128r128">block</a></tt>,
+           <tt><a 
+href="symbols.html#x185-2637595r595">multiple-value-bind</a></tt>,  and  <tt>catch</tt>,  as  well  as  clauses  in  such
+           conditional  constructs  as  <tt><a 
+href="symbols.html#x185-2637172r172">case</a></tt>,  <tt><a 
+href="symbols.html#x185-2637895r895">typecase</a></tt>,  <tt><a 
+href="symbols.html#x185-2637324r324">ecase</a></tt>,  <tt><a 
+href="symbols.html#x185-2637342r342">etypecase</a></tt>,
+           <tt><a 
+href="symbols.html#x185-2637174r174">ccase</a></tt>, and <tt><a 
+href="symbols.html#x185-2637267r267">ctypecase</a></tt>.</li></ul>
+      </ul>
+</div>
+<div class="new">
+<!--l. 3935--><p class="indent" >   X3J13 has voted to add many new constructs to the language that contain
+implicit <tt><a 
+href="symbols.html#x185-2637700r700">progn</a></tt> contexts. I won&#x2019;t attempt to list them all here. Of particular
+interest, however, is <tt><a 
+href="symbols.html#x185-2637501r501">locally</a></tt>, which may be regarded as simply a version of
+<tt><a 
+href="symbols.html#x185-2637700r700">progn</a></tt> that permits declarations before its body. This provides a useful
+building block for constructing macros that permit declarations (but not
+documentation strings) before their bodies and pass back any multiple
+values produced by the last sub-form of a body. (If a body can contain a
+documentation string, most likely <tt><a 
+href="symbols.html#x185-2637462r462">lambda</a></tt> is the correct building block to
+use.)
+</div>
+<div class="flushdesc">
+      <ul><li><b>
+<i>Conditional constructs</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637435r435">if</a></tt> passes back multiple values from whichever subform is selected
+           (the <i>then</i> form or the <i>else</i> form).
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637078r78">and</a></tt> and <tt><a 
+href="symbols.html#x185-2637642r642">or</a></tt> pass back multiple values from the last subform but
+           not from subforms other than the last.
+                                                                          
+
+                                                                          
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637245r245">cond</a></tt> passes back multiple values from the last subform of the
+           implicit  <tt><a 
+href="symbols.html#x185-2637700r700">progn</a></tt> of  the  selected  clause.  If,  however,  the  clause
+           selected is a singleton clause, then only a single value (the non-<tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt>
+           predicate value) is returned. This is true even if the singleton
+           clause is the last clause of the <tt><a 
+href="symbols.html#x185-2637245r245">cond</a></tt>. It is <i>not</i> permitted to treat
+           a ﬁnal clause <tt>(x)</tt> as being the same as <tt>(t x)</tt> for this reason; the
+           latter passes back multiple values from the form <tt>x</tt>.</li></ul>
+      <li><b>
+<i>Returning from a block</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize">The  <tt><a 
+href="symbols.html#x185-2637128r128">block</a></tt> construct  passes  back  multiple  values  from  its  last
+           subform  when  it  exits  normally.  If  <tt><a 
+href="symbols.html#x185-2637752r752">return-from</a></tt> (or  <tt><a 
+href="symbols.html#x185-2637751r751">return</a></tt>)
+           is used to terminate the <tt><a 
+href="symbols.html#x185-2637128r128">block</a></tt> prematurely, then <tt><a 
+href="symbols.html#x185-2637752r752">return-from</a></tt>
+           passes back multiple values from its subform as the values of the
+           terminated <tt><a 
+href="symbols.html#x185-2637128r128">block</a></tt>. Other constructs that create implicit blocks,
+           such as <tt><a 
+href="symbols.html#x185-2637310r310">do</a></tt>, <tt><a 
+href="symbols.html#x185-2637317r317">dolist</a></tt>, <tt><a 
+href="symbols.html#x185-2637318r318">dotimes</a></tt>, <tt><a 
+href="symbols.html#x185-2637696r696">prog</a></tt>, and <tt><a 
+href="symbols.html#x185-2637697r697">prog*</a></tt>, also pass back
+           multiple values speciﬁed by <tt><a 
+href="symbols.html#x185-2637752r752">return-from</a></tt> (or <tt><a 
+href="symbols.html#x185-2637751r751">return</a></tt>).
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637310r310">do</a></tt> passes back multiple values from the last form of the exit clause,
+           exactly as if the exit clause were a <tt><a 
+href="symbols.html#x185-2637245r245">cond</a></tt> clause. Similarly, <tt><a 
+href="symbols.html#x185-2637317r317">dolist</a></tt>
+           and <tt><a 
+href="symbols.html#x185-2637318r318">dotimes</a></tt> pass back multiple values from the <i>resultform</i> if that
+           is executed. These situations are all examples of implicit uses of
+           <tt><a 
+href="symbols.html#x185-2637752r752">return-from</a></tt>.</li></ul>
+      <li><b>
+<i>Throwing out of a catch</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize">The <tt>catch</tt> construct returns multiple values if the result form in
+           a <tt>throw</tt> exiting from such a catch produces multiple values.</li></ul>
+      <li><b>
+<i>Miscellaneous situations</i> </b></li>
+           <ul class="itemize1">
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637598r598">multiple-value-prog1</a></tt> passes back multiple values from its ﬁrst
+           subform. However, <tt><a 
+href="symbols.html#x185-2637698r698">prog1</a></tt> always returns a single value.
+                                                                          
+
+                                                                          
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637908r908">unwind-protect</a></tt> returns multiple values if the form it protects
+           returns multiple values.
+           </li>
+           <li class="itemize"><tt><a 
+href="symbols.html#x185-2637878r878">the</a></tt> returns multiple values if the form it contains returns multiple
+           values.</li></ul>
+      </ul>
+</div>
+<!--l. 4013--><p class="indent" >   Among special operators that <i>never</i> pass back multiple values are
+<tt><a 
+href="symbols.html#x185-2637698r698">prog1</a></tt>, <tt><a 
+href="symbols.html#x185-2637699r699">prog2</a></tt>, <tt><a 
+href="symbols.html#x185-2637779r779">setq</a></tt>, and <tt><a 
+href="symbols.html#x185-2637599r599">multiple-value-setq</a></tt>. The conventional way to
+force only one value to be returned from a form <tt>x</tt> is to write <tt>(values
+x)</tt>.
+<!--l. 4019--><p class="indent" >   The most important rule about multiple values is: <b>No matter how many
+values a form produces, if the form is an argument form in a function
+call, then exactly one value (the ﬁrst one) is used.</b>
+<!--l. 4024--><p class="indent" >   For example, if you write <tt>(cons (floor x))</tt>, then <tt>cons</tt> will always receive
+<i>exactly</i> one argument (which is of course an error), even though <tt><a 
+href="symbols.html#x185-2637388r388">floor</a></tt> returns two
+values. To pass both values from <tt><a 
+href="symbols.html#x185-2637388r388">floor</a></tt> to <tt>cons</tt>, one must write something like
+<tt>(multiple-value-call #&#x2019;cons (floor x))</tt>. In an ordinary function call, each
+argument form produces exactly <i>one</i> argument; if such a form returns zero values,
+<tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> is used for the argument, and if more than one value, all but the ﬁrst are
+discarded. Similarly, conditional constructs such as <tt><a 
+href="symbols.html#x185-2637435r435">if</a></tt> that test the value of a
+form will use exactly one value, the ﬁrst one, from that form and discard
+the rest; such constructs will use <tt><a 
+href="symbols.html#x185-2637609r609">nil</a></tt> as the test value if zero values are
+returned.
+                                                                          
+
+                                                                          
+<!--l. 4037--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
+href="clmse45.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html#tailclmse43.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse44.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="contrl.html#clmse44.html" >Up</a><tt>&#x003E;</tt></div><a 
+ id="tailclmse44.html"></a>  </div> </div> 
+</body></html> 

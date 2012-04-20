@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Structure Traversal and Side Eﬀects</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-04-20 14:21:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+<!--l. 3516--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
+href="clmse44.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse42.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse42.html#tailclmse42.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailclmse43.html">Tail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="contrl.html#clmse43.html" >Up</a><tt>&#x003E;</tt>&lt;<a href="../index.html">Main Page</a>&gt;</div><h3 class="sectionHead"><span class="titlemark">7.9   </span> <a 
+href="clm.html#QQ2-55-684" id="x55-6760007.9">Structure Traversal and Side
+Eﬀects</a></h3>
+<!--l. 3519--><p class="noindent" >X3J13 voted in January 1989 <a 
+ id="dx55-676001"></a>to restrict side eﬀects during the course of a built-in
+operation that can execute user-supplied code while traversing a data
+structure.
+<!--l. 3524--><p class="indent" >   Consider the following example: <div class="lisp"><div class="tabbing">
+(let ((x &#x2019;(apples peaches pumpkin pie)))
+   <br>                                                                              (dolist (z x)<br>
+    (when (eq z &#x2019;peaches)<br>             (setf (cddr x) &#x2019;(mango kumquat)))<br>
+    (format t &#x0022; S &#x0022; (car z))))<br>
+<!--l. 3531--><p class="noindent" ></div>
+<!--l. 3531--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6770007.9" id="x55-6770007.9"></a></span>
+<!--l. 3531--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6780007.9" id="x55-6780007.9"></a></span>
+</div>
+<!--l. 3532--><p class="indent" >   Depending on the details of the implementation of <tt><a 
+href="symbols.html#x185-2637317r317">dolist</a></tt>, this bit of code
+could easily print <div class="lisp"><div class="tabbing">
+apples peaches mango kumquat
+   <br>
+<!--l. 3536--><p class="noindent" ></div>
+<!--l. 3536--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6790007.9" id="x55-6790007.9"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 3536--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6800007.9" id="x55-6800007.9"></a></span>
+</div>
+<!--l. 3537--><p class="indent" >   (which is perhaps what was intended), but it might as easily print
+<div class="lisp"><div class="tabbing">
+apples peaches pumpkin pie
+   <br>
+<!--l. 3540--><p class="noindent" ></div>
+<!--l. 3540--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6810007.9" id="x55-6810007.9"></a></span>
+<!--l. 3540--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6820007.9" id="x55-6820007.9"></a></span>
+</div>
+<!--l. 3541--><p class="indent" >   Here is a plausible implementation of <tt><a 
+href="symbols.html#x185-2637317r317">dolist</a></tt> that produces the ﬁrst result:
+<div class="lisp"><div class="tabbing">
+(defmacro dolist ((var listform &#x0026;optional (resultform ”nil))
+   <br>
+                  &#x0026;body body)<br>    (let ((tailvar (gensym &#x0022;DOLIST&#x0022;)))<br>
+    ‘(do ((,tailvar ,listform (cdr ,tailvar)))<br>
+         ((null ,tailvar) ,resultform)<br>
+       (let ((,var (car ,tailvar))) ,@body))<br>
+<!--l. 3550--><p class="noindent" ></div>
+<!--l. 3550--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6830007.9" id="x55-6830007.9"></a></span>
+<!--l. 3550--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6840007.9" id="x55-6840007.9"></a></span>
+</div>
+<!--l. 3551--><p class="indent" >   But here is a plausible implementation of <tt><a 
+href="symbols.html#x185-2637317r317">dolist</a></tt> that produces the second
+result: <div class="lisp"><div class="tabbing">
+                                                                          
+
+                                                                          
+(defmacro dolist ((var listform &#x0026;optional (resultform ”nil))
+   <br>
+                  &#x0026;body body)<br>    (let ((tailvar (gensym &#x0022;DOLIST&#x0022;)))<br>
+    ‘(do ((,tailvar ,listform))<br>                  ((null ,tailvar) ,resultform)<br>
+       (let ((,var (pop ,tailvar))) ,@body))<br>
+<!--l. 3560--><p class="noindent" ></div>
+<!--l. 3560--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6850007.9" id="x55-6850007.9"></a></span>
+<!--l. 3560--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x55-6860007.9" id="x55-6860007.9"></a></span>
+</div>
+<!--l. 3562--><p class="indent" >   The X3J13 recognizes and legitimizes varying implementation practices: in
+general it is an error for code executed during a “structure-traversing” operation
+to destructively modify the structure in a way that might aﬀect the ongoing
+traversal operation. The committee identiﬁed in particular the following special
+cases.
+<!--l. 3568--><p class="indent" >   For list traversal operations, the <i>cdr</i> chain may not be destructively
+modiﬁed.
+<!--l. 3571--><p class="indent" >   For array traversal operations, the array may not be adjusted (see
+<tt><a 
+href="symbols.html#x185-2637073r73">adjust-array</a></tt>) and its ﬁll pointer, if any, may not be modiﬁed.
+<!--l. 3574--><p class="indent" >   For hash table operations (such as <tt><a 
+href="symbols.html#x185-2637935r935">with-hash-table-iterator</a></tt> and <tt><a 
+href="symbols.html#x185-2637562r562">maphash</a></tt>),
+new entries may not be added or deleted, <i>except</i> that the very entry being
+processed by user code may be changed or deleted.
+<!--l. 3579--><p class="indent" >   For package symbol operations (for example, <tt><a 
+href="symbols.html#x185-2637940r940">with-package-iterator</a></tt> and
+<tt><a 
+href="symbols.html#x185-2637314r314">do-symbols</a></tt>), new symbols may not be interned in, nor symbols uninterned from,
+the packages being traversed or any packages they use, <i>except</i> that the very
+symbol being processed by user code may be uninterned.
+<!--l. 3585--><p class="indent" >   X3J13 noted that this vote is intended to clarify restrictions on the use of
+structure traversal operations that are not themselves inherently destructive; for
+example, it applies to <tt><a 
+href="symbols.html#x185-2637556r556">map</a></tt> and <tt><a 
+href="symbols.html#x185-2637317r317">dolist</a></tt>. Destructive operators such as <tt><a 
+href="symbols.html#x185-2637293r293">delete</a></tt>
+require even more complicated restrictions and are addressed by a separate
+proposal.
+<!--l. 3591--><p class="indent" >   The X3J13 vote did not specify a complete list of the operations to
+which these restrictions apply. Table <a 
+href="#x55-6860011">7.1<!--tex4ht:ref: TRAVERSAL-OPERATIONS-TABLE --></a> shows what I believe to be a
+                                                                          
+
+                                                                          
+complete list of operations that traverse structures and take user code as a
+body (in the case of macros) or as a functional argument (in the case of
+functions).
+<!--l. 3597--><p class="indent" >   In addition, note that user code should not modify list structure that might be
+undergoing interpretation by the evaluator, whether explicitly invoked via <tt><a 
+href="symbols.html#x185-2637343r343">eval</a></tt> or
+implicitly invoked, for example as in the case of a hook function (a <tt><a 
+href="symbols.html#x185-2637289r289">defstruct</a></tt>
+print function, the value of <tt><a 
+href="symbols.html#x185-2637015r15">*evalhook*</a></tt> or <tt><a 
+href="symbols.html#x185-2637005r5">*applyhook*</a></tt>, etc.) that happens to be
+a closure of interpreted code. Similarly, <tt><a 
+href="symbols.html#x185-2637289r289">defstruct</a></tt> print functions and other
+hooks should not perform side eﬀects on data structures being printed or being
+processed by <tt><a 
+href="symbols.html#x185-2637392r392">format</a></tt>, or on a string given to <tt><a 
+href="symbols.html#x185-2637550r550">make-string-input-stream</a></tt>. You
+get the idea; be sensible.
+<!--l. 3608--><p class="indent" >   Note that an operation such as <tt><a 
+href="symbols.html#x185-2637560r560">mapcar</a></tt> or <tt><a 
+href="symbols.html#x185-2637317r317">dolist</a></tt> traverses not only <i>cdr</i>
+pointers (in order to chase down the list) but also <i>car</i> pointers (in order to obtain
+the elements themselves). The restriction against modiﬁcation appears to apply to
+all these pointers.
+   <div class="table">
+                                                                          
+
+                                                                          
+<!--l. 3613--><p class="indent" >   <a 
+ id="x55-6860011"></a><hr class="float"><div class="float" 
+>
+                                                                          
+
+                                                                          
+<br /> <div class="caption" 
+><span class="id">Table 7.1: </span><span  
+class="content">Structure Traversal Operations Subject to Side Eﬀect Restrictions</span></div><!--tex4ht:label?: x55-6860011 -->
+<div class="tabular"><table width="100%" class="tabular"><tr><td align="left" >adjoin                   </td><td align="left" >maphash           </td><td align="left" >reduce                       </td>
+</tr><tr><td align="left" >assoc                    </td><td align="left" >mapl                </td><td align="left" >remove                      </td>
+</tr><tr><td align="left" >assoc-if                  </td><td align="left" >maplist             </td><td align="left" >remove-duplicates        </td>
+</tr><tr><td align="left" >assoc-if-not            </td><td align="left" >member            </td><td align="left" >remove-if                   </td></tr><tr><td align="left" >count  </td><td align="left" >member-if </td><td align="left" >remove-if-not</td>
+</tr><tr><td align="left" >count-if                 </td><td align="left" >member-if-not    </td><td align="left" >search                       </td></tr><tr><td align="left" >count-if-not  </td><td align="left" >merge </td><td align="left" >set-diﬀerence</td>
+</tr><tr><td align="left" >delete                    </td><td align="left" >mismatch          </td><td align="left" >set-exclusive-or           </td></tr><tr><td align="left" >delete-duplicates  </td><td align="left" >nintersection </td><td align="left" >some</td>
+</tr><tr><td align="left" >delete-if                 </td><td align="left" >notany              </td><td align="left" >sort                          </td>
+</tr><tr><td align="left" >delete-if-not           </td><td align="left" >notevery            </td><td align="left" >stable-sort                 </td>
+</tr><tr><td align="left" >do-all-symbols        </td><td align="left" >nset-diﬀerence    </td><td align="left" >sublis                        </td>
+</tr><tr><td align="left" >do-external-symbols </td><td align="left" >nset-exclusive-or </td><td align="left" >subsetp                     </td>
+</tr><tr><td align="left" >do-symbols             </td><td align="left" >nsublis              </td><td align="left" >subst                        </td>
+</tr><tr><td align="left" >dolist                    </td><td align="left" >nsubst              </td><td align="left" >subst-if                      </td>
+</tr><tr><td align="left" >eval                      </td><td align="left" >nsubst-if            </td><td align="left" >subst-if-not                </td>
+</tr><tr><td align="left" >every                    </td><td align="left" >nsubst-if-not      </td><td align="left" >substitute                  </td>
+</tr><tr><td align="left" >ﬁnd                      </td><td align="left" >nsubstitute        </td><td align="left" >substitute-if               </td>
+</tr><tr><td align="left" >ﬁnd-if                   </td><td align="left" >nsubstitute-if     </td><td align="left" >substitute-if-not          </td>
+</tr><tr><td align="left" >ﬁnd-if-not              </td><td align="left" >nsubstitute-if-not</td><td align="left" >tree-equal                  </td>
+</tr><tr><td align="left" >intersection            </td><td align="left" >nunion              </td><td align="left" >union                        </td>
+</tr><tr><td align="left" >certain loop clauses  </td><td align="left" >position            </td><td align="left" >with-hash-table-iterator</td>
+</tr><tr><td align="left" >map                      </td><td align="left" >position-if          </td><td align="left" >with-input-from-string  </td>
+</tr><tr><td align="left" >mapc                    </td><td align="left" >position-if-not    </td><td align="left" >with-output-to-string   </td>
+</tr><tr><td align="left" >mapcan                 </td><td align="left" >rassoc               </td><td align="left" >with-package-iterator   </td>
+</tr><tr><td align="left" >mapcar                 </td><td align="left" >rassoc-if            </td>
+</tr><tr><td align="left" >mapcon                 </td><td align="left" >rassoc-if-not       </td></tr></table></div>
+                                                                          
+
+                                                                          
+   </div><hr class="endfloat" />
+   </div>
+                                                                          
+
+                                                                          
+<!--l. 3653--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
+href="clmse44.html" >Next</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse42.html" >Prev</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse42.html#tailclmse42.html" >PrevTail</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse43.html" >Front</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="contrl.html#clmse43.html" >Up</a><tt>&#x003E;</tt></div><a 
+ id="tailclmse43.html"></a>   </div> </div> 
+</body></html> 

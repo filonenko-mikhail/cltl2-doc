@@ -16,6 +16,13 @@
 % 6/28/88 23:40:11  Add stuff to reset the \jobname for TeXtures.  Yuk.
 % 8/27/88 17:17:17  Add flushdesc environment.
 
+
+\ifx \HCode\Undef
+\newcommand{\logo}[1]{\includegraphics{#1}}
+\else
+\newcommand{\logo}[1]{\href{../index.html}{\includegraphics{#1.png}}}
+\fi
+
 \def\PostScriptFile#1{\special{psfile=#1}}
 
 \newif\ifchiron \chironfalse
@@ -26,7 +33,7 @@
 %\newif\if@externaldocument \@externaldocumentfalse
 \newif\if@draft \@draftfalse
 \newif\if@permutemonospace   \@permutemonospacefalse
-\typeout{Document Style 'TMreport'. Version 0.91a - released 18 March 1985}
+%\typeout{Document Style 'TMreport'. Version 0.91a - released 18 March 1985}
 \def\@ptsize{0} \@namedef{ds@11pt}{\def\@ptsize{1}}
 \@namedef{ds@12pt}{\def\@ptsize{2}} 
 \def\ds@twoside{\@twosidetrue \@mparswitchtrue}
@@ -40,368 +47,378 @@
 \newskip\ruletotextskip \ruletotextskip=10pt plus 12pt minus 2pt
 \newdimen\thinrule   \thinrule=0.4pt
 
-\clubpenalty=1000
-\widowpenalty=1000
+%\clubpenalty=1000
+%\widowpenalty=1000
 
-\input defun.tex
+%%% defun.tex
 
-\input marginal.tex
+% defun library.
+% Guy L. Steele Jr.
+% Copyright 1985, 1986 , 1988, 1989 Guy L. Steele Jr.
+
+%  3/18/85 12:48  Now \@defunname generates index entries.
+%  5/22/85 14:16  Use \noexpand before \tt and \rm in index entries.
+%		  This will delay their processing until the point
+%		  when the index is read back in again.
+%  5/23/85 17:01  Add special check for nil as an init value for an
+%		  &optional or &key argument; make it be \tt, not \it.
+% 12/17/85 12:56  Add "lisp" environment.
+%  1/02/86 14:15  Base "lisp" environment on tabbing instead of raggedright.
+%  1/02/86 17:00  Make \endlisp use \ignorespaces.
+%  1/03/86 17:00  Put a space into the index key to make sorting work better.
+%  1/31/86 12:32  Simplify "lisp" environment to let the tabbing environment
+%		  take care of interparagraph spacing.
+%  1/31/86 13:27  Add \smallcaps stuff.
+%  1/31/86 13:38  In \@defunkeymode et al., assume the user provides a :.
+%  1/31/86 16:03  Flush \smallcaps stuff.
+%  1/31/86 17:03  Use \addvspace in \defun et al.
+%  2/04/86 17:15  Add feature so that the syntax \begin{defun}[Frob] causes "[Frob]"
+%		  to appear at the right margin, as in the Common Lisp book, and causes
+%		  the index entry for function baz to be "baz frob".  If no square
+%		  brackets ae used, then nothing appears at the right margin, and the
+%		  index entry looks like "baz \lowercase{default}" where "default" is
+%		  the definition of \defaultdefuntype, which is initialized by this file
+%		  to {Function} but can be redefined by the user.
+%  2/07/86 17:08  Make lisp environment use \frenchspacing.
+%  3/11/86 11:42  Improve some of the breaking places in the defun headers:
+%		  Introduce \hbox around every name, and make better pseudo-hyphens.
+%		  Also fix a bug in \@defuninitvalue.
+%  3/12/86 11:47  Hair up the defunbreak stuff some more.  Now we have different
+%		  behavior depending on whether the function name is long or short.
+%  3/12/86 16:09  Fix a possible bug in \@showdefuntype.
+%  3/13/86 14:16  More fixes to hairy defunbreak stuff.
+%  5/29/86 01:47  Add \internalroutine.
+%  6/04/86 14:47  Correct spacing in \@showdefuntype.
+%  6/29/88 00:31  Remove priority-box macros.
+
+\catcode`@=11	% Make it possible to refer to some LaTeX utility macros.
+\catcode`&=11
+
+\newcounter{defuncounter}
+
+\newenvironment{lisp}{\begin{tabbing}}{\end{tabbing}\paragraph{}}
+
+\newenvironment{defunheader}{}{}
+
+\def\@defunstart{\noindent\leavevmode
+  \begingroup
+  \samepage  \raggedright \cf \catcode`&=11
+  %\hyphenpenalty=-5  \exhyphenpenalty=\@M  \brokenpenalty=\@M
+  \begin{defunheader}
+  \catcode`&=11}
+
+\def\defun{\@ifstar{\@defunstart{}\@ifnextchar[{\@defuntyped}{\@defununtyped}}{\relax
+    \addvspace{18pt plus 12pt minus 6pt}\@defunstart
+   \@ifnextchar[{\@defuntyped}{\@defununtyped}}}
+
+
+\def\@showdefuntype{\emph{[\@defuntype]}\relax
+  \leavevmode
+  \let\@defuntype\@defunsecondtype}
+
+\def\@defununtyped{\let\@defunshow=\relax \@defun}
+\def\@defuntyped[#1]{\def\@defuntype{#1}\let\@defunsecondtype\@defuntype
+                     \let\@defunshow=\@showdefuntype
+                     \@ifnextchar[{\@defuntypedtwice}{\@defun}}
+\def\@defuntypedtwice[#1]{\def\@defunsecondtype{#1}\let\@defunshow=\@showdefuntype
+                          \@defun}
+
+\def\@defun{\@ifnextchar?{\@defunname}{\@defunname}}	% Skips spaces before name 
+
+\def\enddefun{%\par
+  \@ifstar{}{}
+}    %Margin macros know this amount
+% Used to be "plus 2pt" but that was not enough stretch relative to \parskip.
+
+% 1: entry
+% \@defuntype: \lowercase{category}
+\def\@defunname#1 {\@defunshow
+%  \typeout{defunname}\typeout{ 1: #1}\typeout{ type: \lowercase{\@defuntype}}
+  \@defunindex#1:\par{\@defuntype}\relax
+  \ \textbf{#1}
+  \ifdim 1\wd0 < 1.3in\relax
+     \def\@defunbreak{ }\relax
+     \let\@firstdefunbreak=~\relax
+  \else
+     \def\@defunbreak{ }\relax
+     \let\@firstdefunbreak=\@defunbreak
+  \fi
+  \def\@defunkeywordbreak{\@firstdefunbreak\let\@defunkeywordbreak=\@defunbreak}\relax
+  \def\@hairydefunbreak{\@firstdefunbreak
+		        \let\@defunkeywordbreak=\@defunbreak
+		        \let\@hairydefunbreak\@defunbreak}\relax
+  \@defunreqmode}
+
+% 1: entry
+% 2: empty
+% 3: \lowercase{category}
+\def\@defunindex#1:#2\par#3{%
+  \typeout{defunindex}\typeout{ 1: #1}\typeout{ 2: #2}\typeout{ 3: #3}%
+  \def\@tempa{}\def\thing{#2}\ifx\thing\@tempa
+  \@idefunindex{}#1:\par{#3}\else \@idefunindex{#1:}#2\par{#3}\fi}
+% 1: empty
+% 2: entry
+% 3: \lowercase{category}
+\def\@idefunindex#1#2:\par#3{%
+%  \typeout{idefunindex}\typeout{ 1: #1}\typeout{ 2: #2}\typeout{ 3: #3}%
+  \index{symbols}{#2!#3}\refstepcounter{defuncounter}\label{#2}}
+
+
+\def\@newlinecheck#1#2{\def\@tempa{#1}\def\@tempb{\\}\ifx\@tempa\@tempb \\*\let\@tempd\@defunname
+  \else \def\@tempd{#2}\fi \@tempd}
+
+\def\@ifparnext#1#2{\def\@tempa{#1}\def\@tempb{#2}\futurelet\@tempc\@ifparnx}
+\def\@ifparnx{\ifx\@tempc\@@par \let\@tempd\@tempa \else \let\@tempd\@tempb \fi \@tempd}
+
+
+\def\@defunreqmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenreqarg}{\@defunreqarg}}}}
+\def\@defunreqarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1}\@defunreqmode}}
+\def\@defunparenreqarg(#1 #2) {\@hairydefunbreak(\textit{#1}~#2)\@defunreqmode}  %CLOS methods
+
+\def\@defunrestmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@defunrestarg}}}
+\def\@defunrestarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1}\@defunrestmode}}
+
+\def\@defunoptionalmode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenoptionalarg}{\@defunoptionalarg}}}}
+\def\@defunoptionalarg#1 {\@newlinecheck{#1}{\@hairydefunbreak\textit{#1}\@defunoptionalmode}}
+\def\@defunparenoptionalarg(#1 #2) {\@hairydefunbreak(\textit{#1}~\@defuninitvalue#2)\@defunoptionalmode}
+
+\def\@defuninitvalue#1#2){{\ifcat#1A\def\@tempa{#1#2}\def\@tempb{nil}\ifx\@tempa\@tempb
+  \relax \else \relax \fi \else \relax \fi #1#2})}
+
+\def\@defunkeymode{\@ifparnext{\@defundone}{\@ifnextchar &{\@defunkeyword}{\@ifnextchar({\@defunparenkeyarg}{\@defunkeyarg}}}}
+\def\@defunkeyarg#1 {\@newlinecheck{#1}{\@defunkeywordbreak\textit{#1}\@defunkeymode}}
+\def\@defunparenkeyarg(#1 #2) {~(#1~\@defuninitvalue#2)\@defunkeymode}
+
+\def\@defunkeyword &#1 {\@defunkeywordbreak\textbf{\&#1} \csname @defun#1mode\endcsname}
+
+\def\@defundone\par{\end{defunheader}\par\endgroup
+\nobreak\addvspace{6pt}}
+
+\newenvironment{defmacheader}{\begin{tabbing}}{\end{tabbing}}
+
+%% Macros, special operators
+\begingroup
+%\catcode`\[=13 \catcode`\]=13
+%\catcode`$=13 \catcode`$=13
+\catcode`\<=13 \catcode`\>=13 %\catcode`\|=13
+\catcode`\?=13
+\global\def\@defmacstart#1{\relax%
+  % \noindent\leavevmode     % Need this to trigger the \everypar for margin rules.
+  \begingroup \samepage  \topsep 0pt
+  \catcode`&=11
+  \def\@lbracehack{\{\@backslashsetup}\relax
+  %\def\@rbracehack{\@ifnextchar*{\@rbracesuper}{\@ifnextchar+{\@rbracesuper}{\}\@backslashsetup}}}\relax
+  \def\@rbracehack{\}\@backslashsetup}\relax
+  \def<{[[\@backslashsetup}\relax
+  \def>{]]\@backslashsetup}\relax
+  \def?{{$\downarrow$}}\relax
+  \def\@finishdefmac{\end{defmacheader}\endgroup}\relax
+  \expandafter\def\@carret{\expandafter\@ifnextchar\@carret{\@finishdefmac
+      \@gobblecr
+    }
+    {\@tabcr* ~~
+      \@backslashsetup}}\relax
+    \@defunhackbraces
+  \def\@backslashsetup{\def\\{\end{defmacheader}\begin{defmacheader}%
+      % \@tabcr*
+      \@backslashsetup\@dodefmacname{#1}}}\relax
+  % \catcode`\[=13 \catcode`\]=13 \catcode`$=13 \catcode`$=13
+  \catcode`\<=13 \catcode`\>=13 %\catcode`\|=13 
+  \catcode`\?=13 \catcode`\^^M=13
+  \def\!##1!{\cd{##1}}\relax
+  \begin{defmacheader}
+   \@backslashsetup\@margineveryparguts
+   \@dodefmacname{#1}}
+\endgroup
+
+\def\Mopt#1{\,[\textit{#1}]\,}
+\def\Mchoice#1{\,[[\textit{#1}]]\,}
+\def\Mstar#1{\,\{\textit{#1}\}*\,}
+\def\Mplus#1{\,\{\textit{#1}\}+\,}
+\def\Mgroup#1{\,\{\textit{#1}\}\,}
+\def\Mor{|}
+\def\Mind#1{$\downarrow$\textit{#1}}
+
+\ifx \rulang\Undef
+\def\defmac{\@defmacbegin{Macro}}
+\else %RUSSIAN
+\def\defmac{\@defmacbegin{Макрос}}
+\fi
+\let\enddefmac\enddefun
+
+\ifx \rulang\Undef%
+\def\defspec{\@defmacbegin{Special operator}} %
+\else %
+\def\defspec{\@defmacbegin{Специальный оператор}}% 
+\fi
+\let\enddefspec\enddefun
+
+\ifx \rulang\Undef%
+\def\defloop{\@defmacbegin{Loop clause}} %
+\else %
+\def\defloop{\@defmacbegin{Выражение цикла}}% 
+\fi
+\let\enddefloop\enddefun
+
+\def\@defmacbegin#1{\@ifstar{\@defmacstart{#1}}{\@defmacstart{#1}}}
+
+{\catcode`\^^M=13\global\def\@carret{
+}\global\def\@defmacnamecrgobble#1
+{\@defmacname{#1}}}
+
+\def\@dodefmacname#1{
+  \expandafter\@ifnextchar\@carret
+  {\@defmacnamecrgobble{#1}}{\@defmacname{#1}}}
+
+\def\@defmacname#1#2 {
+  \emph{[#1]}\relax
+  \leavevmode
+  \ \textbf{#2}
+  \@backslashsetup
+  \@defunindex#2:\par{#1}
+  }
+
+\bgroup
+\catcode`\<=1 \catcode`\>=2 \catcode`\{=13 \catcode`\}=13
+\global\def\@defunhackbraces<\catcode`\{=13\catcode`\}=13\let{\@lbracehack\let}\@rbracehack>
+\egroup
+
+\catcode`@=12		% Restore character codes
+\catcode`&=4
+
+
+%[End]
+
+%%%
+
+%%% marginal.tex
+
 \makeatletter
+\let\@margineverypar\relax
+\let\@margineveryparguts\relax
+\makeatother
 
+\newenvironment{new}{%
+}{%
+}
+\newenvironment{newer}{%
+}{%
+}
+\newenvironment{obsolete}{%
+}{%
+}
+
+%%% 
+
+\makeatletter
 
 % The \null in the following is intended to suppress hyphenation
 % in code words not already containing hyphens.  The \leavevmode
 % is needed to prevent vertical mode from swallowing the \null.
 %%%\def\cd#1{\leavevmode{\cf \null#1}}
-\def\cd{\leavevmode\begingroup\cf\@cd} 
-\def\@cd#1{\null#1\endgroup}
+%\def\cd{\leavevmode\begingroup\cf\@cd} 
+%\def\cd{\leavevmode\begingroup\@cd}
+%\def\@cd#1{\texttt{#1}\endgroup}
+%\def\@cd#1{\textit{\null #1}}
+\newcommand{\cd}[1]{\texttt{#1}}
 
-\def\cd{\leavevmode\begingroup\cf\@cdf} 
-\def\@cdf#1{\null#1\endgroup}
+% if label exists, then automatically make hyperref
+% else insert plain text
+\newcommand{\cdf}[1]{\texttt{\testlabel{#1}}}
 
-\if@permutemonospace
-  \def\undo@permute{\catcode"2D=12  %hyphen
-                    \catcode"27=12  %quote
-                    \catcode"3D=12  %equals
-                   }
-  \ifchiron
-    \def\Xhyphen{{\tt\char"2D}}
-  \else
-    \def\Xhyphen{{\tt\char"2D}}       % use endash for hyphen
-  \fi
-  % use acute of next larger size for quote
-  \def\Xquote{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"27\else\char"27\fi}\hss}\dp0=0pt\box0}}
-  % use grave of next larger size for backquote
-  \def\Xbq{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"60\else\char"60\fi}\hss}\dp0=0pt\box0}}
-  % use tilde of next larger size for asciitilde
-  \def\Xtilde{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"7E\else\char"7E\fi}\hss}\dp0=0pt\box0}}
-  % use circumflex of next larger size for asciicircumflex
-  \def\Xcircumflex{{\tt\@tempdima=-1.36ex\setbox0\hbox to 1em{\hss\biggersize\tt
-         \advance\@tempdima by 1.36ex
-         \lower\@tempdima\hbox{\ifchiron\char"5E\else\char"5E\fi}\hss}\dp0=0pt\box0}}
-  \def\Xsharp{\hbox{\tt\hbox to 0pt{\char35\hss}\hbox to 0pt
-                       {\raise0.189ex\hbox{\char45}\hss}\lower0.189ex\hbox{\char45}}}
-  % Make equals sign from two em dashes
-  \def\Xequal{\hbox{\tt\hbox to 0pt
-                       {\raise0.189ex\hbox{\ifchiron\char"A3\else\char"55\fi}\hss}\relax
-                        \lower0.189ex\hbox{\ifchiron\char"A3\else\char"55\fi}}}
-  \def\index@hyphen{-}
-  \def\index@quote{'}
-  \def\index@equal{=}
-  {\catcode"2D=13  %hyphen
-   \catcode"27=13  %quote
-   \catcode"3D=13  %equals
-   \global\def\index@permute{\let-\index@hyphen
-                             \let'\index@quote
-                             \let=\index@equal}
-   \global\def\@permute{\catcode"2D 13  %hyphen
-                        \catcode"27 13  %quote
-                        \catcode"3D 13  %equals
-                        \let-\Xhyphen
-                        \let'\Xquote
-                        \let=\Xequal
-                        \let\#\Xsharp
-                        \def\rm{\undo@permute\protect\prm}\relax
-                        \def\it{\undo@permute\protect\pit}\relax
-                        \def\bf{\undo@permute\protect\pbf}\relax
-                       }
-  }
-  \def\cf{\@permute\tt\frenchspacing}
-\else
-  \def\Xtilde{{\tt\char"7E}}
-  \def\Xbq{{\tt\char"60}}
-  \def\Xquote{{\tt\char"27}}
-  \def\Xequal{{\tt\char"3D}}
-  \def\Xcircumflex{{\tt\char"5E}}
-  \def\cf{\tt\frenchspacing}
-\fi
+\newcommand{\testlabel}[1]{%
+  \@ifundefined{r@idx:#1}%
+     {#1}%
+     {\hyperref[idx:#1]{#1}}}%
+
+
+\def\Xtilde{\char"7E}
+\def\Xbq{\char"60}
+\def\Xquote{\char"27}
+\def\Xequal{\char"3D}
+\def\Xcircumflex{\char"5E}
+\def\cf{} %\frenchspacing}
+
 \ifchiron
-  \def\Xarrowright{{\tt\char"A2}}
-  \def\Xarrowdown{{\tt\char"A4}}
+  \def\Xarrowright{\char"A2}
+  \def\Xarrowdown{\char"A4}
 \else
-   \def\Xarrowright{\begin{math} \Rightarrow \end{math}}
-   \def\Xarrowdown{\begin{math} \Downarrow \end{math}}
+   \def\Xarrowright{$ \Rightarrow $}
+   \def\Xarrowdown{$ \Downarrow $}
 \fi
-\def\Xatsign{{\tt\char"40}}
-\def\Xbackslash{{\tt\char"5C}}
-\def\Xunderscore{{\tt\char"5F}}
-\def\Xlbracket{{\tt\char"5B}}
-\def\Xrbracket{{\tt\char"5D}}
-\def\Xlbrace{{\tt\char"7B}}
-\def\Xrbrace{{\tt\char"7D}}
-\def\dlbrack{\lbrack\mskip-\thinmuskip\lbrack\mskip\thinmuskip}
-\def\drbrack{\mskip\thinmuskip\rbrack\mskip-\thinmuskip\rbrack}
-\def\Xdquote{{\tt\char"22}}
+\def\Xatsign{\char"40}
+\def\Xbackslash{\char"5C}
+\def\Xunderscore{\char"5F}
+\def\Xlbracket{\char"5B}
+\def\Xrbracket{\char"5D}
+\def\Xlbrace{\char"7B}
+\def\Xrbrace{\char"7D}
+\def\dlbrack{\lbrack\lbrack}
+\def\drbrack{\rbrack\rbrack}
+\def\Xdquote{\char"22}
 
-\def\EV{\hbox{$\Rightarrow$}}
-\def\EX{\hbox{$\rightarrow$}}
-\def\EQ{\hbox{$\equiv$}}
-\newcommand{\indexterm}[1]{\index{#1}}
+\def\EV{$\Rightarrow$}
+\def\EX{$\rightarrow$}
+\def\EQ{$\equiv$}
 
-%\def\empty{\cd{(}\cd{)}}
-\def\emptylist{\cd{(}\cd{)}}
+\newcommand{\indexterm}[1]{\index{symbols}{#1}}
+
+\def\emptylist{()}
 \def\false{\cdf{nil}}
 \def\true{\cdf{t}}
 \def\nil{\cdf{nil}}
 
-\def\implementation{\par\small\noindent{\bf Implementation note:}}
-\def\endimplementation{\par}
-\def\rationale{\par\small\noindent{\bf Rationale:}}
-\def\endrationale{\par}
-\def\sideremark{\par\small\noindent{\bf Remark:}}
-\def\endsideremark{\par}
-\def\incompatibility{\par\small\noindent{\bf Compatibility note:}}
-\def\endincompatibility{\par}
+\ifx \rulang\Undef
+\newenvironment{implementation}{\small\noindent\textbf{Implementation note:}}{}
+\else %RUSSIAN
+\newenvironment{implementation}{\small\noindent\textbf{Заметка для реализации:}}{}
+\fi 
 
-\def\beforenoterule{\par\@tempskipb\lastskip \@tempdima\prevdepth
-  \ifdim 0pt>\@tempdima \@tempdima=0pt\fi
-  \ifdim 14pt>\@tempskipb \vskip-\@tempskipb \vskip 14pt \fi
-  \kern-\@tempdima\nointerlineskip
-       \hrule height \thinrule width 12pc
-  \nobreak\vskip 16pt\vskip-\baselineskip\hbox{}\nobreak}
+\ifx \rulang\Undef
+\newenvironment{rationale}{\small\noindent\textbf{Rationale:}}{}
+\else %RUSSIAN
+\newenvironment{rationale}{\small\noindent\textbf{Обоснование:}}{}
+\fi
 
-\def\betweennoterule{\par\@tempskipb\lastskip \@tempdima\prevdepth
-  \ifdim 0pt>\@tempdima \@tempdima=0pt\fi
+\ifx \rulang\Undef
+\newenvironment{sideremark}{\small\noindent\textbf{Remark:}}{}
+\else %RUSSIAN
+\newenvironment{sideremark}{\small\noindent\textbf{Примечание:}}{}
+\fi
+
+\ifx \rulang\Undex
+\newenvironment{incompatibility}{\small\noindent\textbf{Compatibility note:}}{}
+\else %RUSSIAN
+\newenvironment{incompatibility}{\small\noindent\textbf{Несовместимость:}}{}
+\fi
+
+\def\beforenoterule{%
+  \par\nobreak
+  \hrule
   \nobreak
-  \vskip-\@tempskipb \vskip 11pt
-  \kern-\@tempdima\nointerlineskip
-		     \hrule height \thinrule width 12pc\penalty-500\vskip -\thinrule
-       % The game here is to have *two* rules that normally coincide exactly,
-       % but if a page break occurs between them then you get one at the
-       % bottom of the first page and one at the top of the second page.
-       \hrule height \thinrule width 12pc
-		\nobreak\vskip 16pt\vskip-\baselineskip\hbox{}\nobreak}
+}
 
-\def\afternoterule{\par\@tempskipb\lastskip \@tempdima \prevdepth
-  \ifdim 0pt>\@tempdima \@tempdima=0pt\fi
+\def\betweennoterule{%
+  \par\nobreak
+  \hrule
   \nobreak
-  \vskip-\@tempskipb \vskip 11pt
-  \nobreak\kern-\@tempdima\nointerlineskip
-       \hrule height \thinrule width 12pc
-  \vskip 16pt}
+}
 
-\def\afternoterule{\par\nobreak\vskip\ruletonoteskip
-		   \hrule height \thinrule width 12pc
-		   \vskip\ruletotextskip}
+\def\afternoterule{%
+  \par\nobreak\vskip\ruletonoteskip
+  \hrule
+  \vskip\ruletotextskip}
 
 
-\def\issue#1{{$\langle$}\@ifundefined{i@#1}{{\bf ?}\@warning
-   {Issue `#1' on page \thepage \space undefined}}{\csname
-       i@#1\endcsname}{$\rangle$}\if@draft
-  \actualmarginfrob{\setbox0=\hbox{\parbox[t]{12pc}{\raggedright\rm
-         Issue \cf #1}}\ht0=0pt\dp0=0pt\box0}\fi}
+\def\issue#1{\index{issues}{#1}}
 
-\def\issueitem#1{\@ifnextchar[{\@issueitem{#1}{:}}{\@issueitem{#1}{}[]}}
-
-\def\@issueitem#1#2[#3]{\item\if@filesw \immediate\write\@auxout
-       {\string\issuecite{#1}{\the\c@enumi}}\fi
-       \cd{#1#2#3~~}\unskip}
-\def\issuecite#1#2{\global\@namedef{i@#1}{#2}}
-
-\def\prefaceword{\noindent{\sc p{\kern1pt}r{\kern1pt}e{\kern1pt}f{\kern1pt}a{\kern1pt}c{\kern1pt}e{\kern1pt}:} }
+\def\prefaceword{\noindent preface:}
 
 %%% For use in "little tables"; leaves some space after the rule (16pt b/b).
-\def\hlinesp{\noalign{{\@tempdima \prevdepth
-                       \hrule \@height \arrayrulewidth
-                       \vskip-\arrayrulewidth
-                        \ifdim 0pt<\prevdepth \vskip-\prevdepth\fi
-                       % Instead of undoing a baselineskip and then skipping 16pt,
-                       % we note that a baselineskip is 12.5pt, and 16 is 1.28 times that.
-                       % This makes it work in \small size as well.
-                       \vskip 0.28\normalbaselineskip \hbox{}}}}
-
-\def\quotation{\list{}{\listparindent 1.5em
-\itemindent\z@
-\labelwidth\z@ \labelsep\z@
-%\rightmargin\leftmargin
-\parsep 0pt plus 1pt}\item[]}
-\let\endquotation=\endlist
-%\def\quote{\list{}{\rightmargin\leftmargin}\item[]}
-%\let\endquote=\endlist
-%\def\descriptionlabel#1{\hspace\labelsep \bf #1}
-%\def\description{\relax
-%  \list{}{\labelwidth\z@ \itemindent-\leftmargin
-%  \let\makelabel\descriptionlabel}}
-%\let\enddescription\endlist
-%\newdimen\descriptionmargin
-%\descriptionmargin=3em
-\def\indentdesc#1{\@ifstar{\list{}{\leftmargin=#1\relax \topsep\z@ \labelwidth\z@
-                                   \itemindent-\leftmargin \labelsep\z@
-                                   \def\makelabel####1{\hbox to #1{####1\hss}}}}{\list
-        {}{\leftmargin=#1\relax \labelwidth\z@
-           \itemindent-\leftmargin \labelsep\z@
-           \def\makelabel####1{\hbox to #1{####1\hss}}}}}
-\let\endindentdesc\endlist
-
-% Add 3.5 pt depth to yield 16pt baseline-to-baseline.
-\def\flushdesclabel#1{{\setbox0\hbox to \linewidth{\rm\strut#1\hfill}\relax
-                       \@tempdima\dp0 \advance\@tempdima by 3.5pt \dp0\@tempdima \box0}}
-\def\flushdesc{\@ifstar{\list{}{\topsep\z@
-                       \itemsep=\topsep  \parsep 0pt plus 0.25pt
-                       \labelwidth\z@ \labelsep\z@
-                       \leftmargin\z@ \itemindent\z@
-                       \listparindent 1em
-                       \let\makelabel\flushdesclabel}}{\list
-                       {}{\topsep=12pt plus 2pt minus 2pt
-                       \itemsep=\topsep  \parsep 0pt plus 0.25pt
-                       \labelwidth\z@ \labelsep\z@
-                       \leftmargin\z@ \itemindent\z@
-                       \listparindent 1em
-                       \let\makelabel\flushdesclabel}}}
-\let\endflushdesc\endlist
-
-%? \def\@begintheorem#1#2{\it \trivlist \item[\hskip \labelsep{\bf #1\ #2}]}
-%? \def\@endtheorem{\endtrivlist}
-%? \@addtoreset{equation}{chapter} 
-%? \def\theequation{\thechapter.\arabic{equation}}
-
-\def\titlepage{%\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\else
- \newpage 
-%\fi
-\thispagestyle{empty}\c@page\z@}
-\def\endtitlepage{%\if@restonecol\twocolumn \else
-\newpage
-% \fi
+\def\hlinesp{%
 }
-%\arraycolsep 5pt \tabcolsep 6pt \arrayrulewidth \thinrule \doublerulesep 2pt 
-%\tabbingsep \labelsep 
-%\skip\@mpfootins = \skip\footins
-%\fboxsep = 3pt \fboxrule = \thinrule 
-
-\def\@pnumwidth{1.55em}
-\def\@tocrmarg {2.55em}
-\def\@dotsep{4.5}
-\setcounter{tocdepth}{3}
 
-\def\numberline#1{\setbox0=\hbox{#1. }\ifdim \wd0 < \@tempdima
-    \hbox to \@tempdima{\box0\hfil}\else \box0 \fi}
-
-\def\tableofcontents{\begingroup\columnseprule \z@
-   \columnsep 1.5pc\twocolumn[\@makeschapterhead{Contents}]\relax
-   \markboth{CONTENTS}{CONTENTS}\thispagestyle{plain}\raggedright\small
-   \parskip\z@ plus .4pt\@starttoc{toc}
-   \l@chapter{References}{\pageref{REFERENCES}}
-   \l@chapter{Index of X3J13 Votes}{\pageref{ISSUES}}
-   \l@chapter{Other Indexes}{\pageref{INDEX}}
-   \endgroup
-   \vfill    % remove this if within 2 lines of bottom of page?
-   \onecolumn}
-
-\newdimen\tocindent   \tocindent=2.5pc
-\def\l@chapter#1#2{\vskip 12pt plus 1fil
-{\samepage \hangindent 1.5pc \noindent
- \@tempdima 0pt{\normalsize\bf \ignorespaces#1}\nobreak\hskip 1em{#2}\par}
- \nobreak\vskip 4pt}
-\def\l@section#1#2{{\samepage \noindent \hangindent\tocindent
-                   \@tempdima\tocindent
-                   #1\nobreak\hskip 1em\relax #2\par}}
-\let\l@subsection=\l@section
-\let\l@subsubsection\l@subsection
-%? \def\l@paragraph{\@dottedtocline{4}{10em}{5em}}
-%? \def\l@subparagraph{\@dottedtocline{5}{12em}{6em}}
-%? \def\listoftables{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn
-%? \fi\chapter*{List of Tables}\markright
-%? {List of Tables}\@starttoc{lot}\if@restonecol\twocolumn
-%? \fi}
-%? \def\l@table{\@dottedtocline{1}{1.5em}{2.3em}}
-%? \def\listoffigures{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn
-%? \fi\chapter*{List of Figures}\markright
-%? {List of Figures}\@starttoc{lof}\if@restonecol\twocolumn
-%? \fi}
-%? \let\l@figure\l@table
-
-\def\thebibliography#1{\chapter*{References}\markboth
-{REFERENCES}{REFERENCES}\label{REFERENCES}\small\list
-{[\arabic{enumi}]}{\settowidth\labelwidth{[#1] }\leftmargin\labelwidth
-\advance\leftmargin\labelsep \parsep 0pt\itemsep 0pt plus 2pt\usecounter{enumi}}}
-\let\endthebibliography=\endlist
-
-
-%\defformattedindex{\openin1 \jobname.fdx \ifeof1
-%  \typeout{No file \jobname.fdx.}\else
-%  \closein1\newpage\begin{theindex}\catcode`@=11\@@input \jobname.fdx\end{theindex}\fi}
-%\def\indexentry#1#2{\@indexentry#1{#2}}
-%\let\@indexlastinitial=\relax
-%\def\@indexsetinitial#1#2\par{\let\@indexlastinitial=#1}
-%\def\@indexentry#1#2#3{\if\@indexlastinitial\relax
-%		          \@indexsetinitial#1\par
-%                       \else
-%			  \let\@indexoldinitial=\@indexlastinitial
-%			  \@indexsetinitial#1\par
-%			  \if\@indexlastinitial\@indexoldinitial
-%			  \else
-%			     \indexspace
-%			  \fi
-%		       \fi
-%		       \item {#2}\ \ \relax#3}
-
-%? \def\footnoterule{\kern-1\p@ 
-%? \hrule width .4\columnwidth 
-%? \kern .6\p@} 
-%? \@addtoreset{footnote}{chapter} 
-%? \long\def\@makefntext#1{\@setpar{\@@par\@tempdima \hsize 
-%? \advance\@tempdima-10pt\parshape \@ne 10pt \@tempdima}\par
-%? \parindent 1em\noindent \hbox to \z@{\hss$^{\@thefnmark}$}#1}
-
-\setcounter{topnumber}{2}
-\def\topfraction{.9}
-\setcounter{bottomnumber}{1}
-\def\bottomfraction{.3}
-\setcounter{totalnumber}{3}
-\def\textfraction{.1}
-\def\floatpagefraction{.1}
-\setcounter{dbltopnumber}{2}
-\def\dbltopfraction{.7}
-\def\dblfloatpagefraction{.5}
-\long\def\@makecaption#1#2{
-\noindent {\small {\bf #1:} #2}\par\addvspace{12pt}
-%   \setbox\@tempboxa\hbox{#1: #2}
-%   \ifdim \wd\@tempboxa >\hsize \unhbox\@tempboxa\par \else \hbox
-%   to\hsize{\hfil\box\@tempboxa\hfil} 
-%   \fi
-}
-\def\@qfloat#1[#2]{\@xfloat{#1}[#2]\bgroup \hrule height \thinrule \small
-       \vskip 20pt\vskip-\baselineskip\hbox{}}
-\def\@qpagefloat#1[#2]{\@xfloat{#1}[#2]\vbox to \textheight
-                                   \bgroup \hrule height \thinrule \small
-       \vskip 20pt\vskip-\baselineskip\hbox{}}
-
-\def\headrule{\hbox to 0pt{\vbox to 0pt{\vskip-13pt\hrule height 0pt depth \thinrule width 12pc
-                                        \vskip-5pc\hbox to 0pt{\hskip-3pc\small\rm\tagline\hss}\vss}\hss}}
-
-\def\runningtitle#1{\markboth{#1}{}}
-\markboth{}{}
-\mark{{}{}} 
-
-%%%%%% Corrections to some internal LaTeX macros.
-
-%%%%%%%%%%% End of internal LaTeX corrections.
-
-%%%%%%%%%%% Corrections to lplain.tex
-
-\def\neq{\not\,=} \let\ne=\neq
-
-%%%%%%%%%%% End of corrections to lplain.tex
-
-%\def\makeindex{\if@filesw \newwrite\@indexfile
-%  \immediate\openout\@indexfile=\jobname.idx
-%  \def\index{\@bsphack\begingroup\@sanitize\@wrindex\@indexfile}\typeout
-%  {Writing index file \jobname.idx }\fi}
-
-%\def\@wrindex#1#2{\let\thepage\relax \index@permute
-%   \xdef\@gtempa{\write#1{\string
-%      \indexentry{#2}{\thepage}}}\endgroup\@gtempa
-%   \if@nobreak \ifvmode\nobreak\fi\fi\@esphack}
-
-%\def\index{\@bsphack\begingroup\@sanitize\@index}
-
-%\def\@index#1{\endgroup\@esphack}
-
+\newenvironment{indentdesc}[1]{\begin{itemize}}{\end{itemize}}
+\newenvironment{flushdesc}{\begin{description}}{\end{description}}
 
 \makeatother
