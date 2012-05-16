@@ -1,1233 +1,489 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Компилятор</title> 
+<head><title>Debugging Tools</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
-<!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-04-20 16:17:00"> 
+<meta name="date" content="2012-05-16 17:02:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 <link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
 >
-<!--l. 22--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
-href="clmse123.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse121.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse121.html#tailclmse121.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="#tailclmse122.html">В-конец</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="misc.html#clmse122.html" >Наверх</a><tt>&#x003E;</tt>&lt;<a href="../index.html">Main Page</a>&gt;</div><h3 class="sectionHead"><span class="titlemark">24.2   </span> <a 
-href="clm.html#QQ2-151-1989" id="x151-195000024.2">Компилятор</a></h3>
-<!--l. 25--><p class="noindent" >The compiler is a program that may make code run faster by translating
-programs into an implementation-dependent form that can be executed more
-eﬃciently by the computer. Most of the time you can write programs without
-worrying about the compiler; compiling a ﬁle of code should produce an
-equivalent but more eﬃcient program. When doing more esoteric things, you may
-need to think carefully about what happens at “compile time” and what
-happens at “load time.” Then the <tt><a 
-href="symbols.html#x187-2604344r344">eval-when</a></tt> construct becomes particularly
-useful.
-<!--l. 43--><p class="indent" >   Most declarations are not used by the Common Lisp interpreter; they may be
-used to give advice to the compiler. The compiler may attempt to check your
-advice and warn you if it is inconsistent.
-<!--l. 51--><p class="indent" >   Unlike most other Lisp dialects, Common Lisp recognizes <tt>special</tt> declarations
-in interpreted code as well as compiled code.
-<!--l. 57--><p class="indent" >   The internal workings of a compiler will of course be highly
-implementation-dependent. The following functions provide a standard interface
-to the compiler, however.
-<div class="defun">
-<!--l. 65--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
- id="dx151-1950001"></a><a 
- id="x151-1950002r742"></a> <b>compile</b>  <i>name</i> <b>&#x0026;optional</b>  <i>deﬁnition</i>
-</div>
-<div class="obsolete">
-<!--l. 68--><p class="noindent" >If <i>deﬁnition</i> is supplied, it should be a lambda-expression, the interpreted function
-to be compiled. If it is not supplied, then <i>name</i> should be a symbol with a
-deﬁnition that is a lambda-expression; that deﬁnition is compiled and
-the resulting compiled code is put back into the symbol as its function
-deﬁnition.
-</div>
-<i>
-<!--l. 77--><p class="indent" >   name</i> may be any function-name (a symbol or a list whose car is <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt>—see
-section <a 
-href="clmse35.html#x47-3850007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>). One may write <tt>(compile &#x2019;(setf cadr))</tt> to compile the <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt>
-expansion function for <tt><a 
-href="symbols.html#x187-2604167r167">cadr</a></tt>.
-                                                                          
-
-                                                                          
-<!--l. 82--><p class="indent" >   If the optional <i>deﬁnition</i> argument is supplied, it may be either a
-lambda-expression (which is coerced to a function) or a function to be
-compiled; if no <i>deﬁnition</i> is supplied, the <tt><a 
-href="symbols.html#x187-2604860r860">symbol-function</a></tt> of the symbol is
-extracted and compiled. It is permissible for the symbol to have a macro
-deﬁnition rather than a function deﬁnition; both macros and functions may be
-compiled.
-<!--l. 89--><p class="indent" >   It is an error if the function to be compiled was deﬁned interpretively in a
-non-null lexical environment. (An implementation is free to extend the behavior of
-<tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> to compile such functions properly, but portable programs may not
-depend on this capability.) The consequences of calling <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> on a function
-that is already compiled are unspeciﬁed.
-<div class="obsolete">
-<!--l. 97--><p class="indent" >   The deﬁnition is compiled and a compiled-function object produced. If <i>name</i> is
-a non-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> symbol, then the compiled-function object is installed as the global
-function deﬁnition of the symbol and the symbol is returned. If <i>name</i> is
-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt>, then the compiled-function object itself is returned. For example:
-<div class="lisp"><div class="tabbing">
-   <br>                          (defun foo ...) <span class="math"> ⇒</span> foo        ;A function deﬁnition<br>
-(compile &#x2019;foo) <span class="math"> ⇒</span> foo             ;Compile it<br>
-                               ;Now <tt>foo</tt> runs faster (maybe)<br>
-(compile <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt>
-   <br>                            &#x2019;(lambda (a b c) (- (* b b) (* 4 a c))))<br>
-   <span class="math"> ⇒</span> a compiled function of three arguments that computes <span class="math">b<sup>2</sup> − 4ac</span><br>
-<!--l. 111--><p class="noindent" ></div>
-<!--l. 111--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195100024.2" id="x151-195100024.2"></a></span>
-<!--l. 111--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195200024.2" id="x151-195200024.2"></a></span>
-</div>
-</div>
-<div class="newer">
-                                                                          
-
-                                                                          
-<!--l. 115--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx151-1952001"></a>to specify that <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> returns two additional
-values indicating whether the compiler issued any diagnostics (see
-section <a 
-href="#x151-195900024.2.1">24.2.1<!--tex4ht:ref: COMPILER-DIAGNOSTICS-SECTION --></a>).
-</div>
-</div>
-<!--l. 122--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx151-1952002"></a>to add two new keyword arguments <tt>:verbose</tt> and
-<tt>:print</tt> to <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> by analogy with <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt>. The new function deﬁnition is as
-follows.
-<div class="defun">
-<!--l. 127--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
- id="dx151-1952003"></a><a 
- id="x151-1952004r743"></a> <b>compile-ﬁle</b>  <i>input-pathname</i> <b>&#x0026;key</b>  <i>:output-ﬁle</i> <i>:verbose</i>
-<i>:print</i>
-</div>
-<!--l. 130--><p class="indent" >   The <i>input-pathname</i> must be a valid ﬁle speciﬁer, such as a pathname. The defaults
-for <i>input-ﬁlename</i> are taken from the variable <tt>*default-pathname-defaults*</tt>.
-The ﬁle should be a Lisp source ﬁle; its contents are compiled and written as a
-binary object ﬁle.
-<!--l. 136--><p class="indent" >   The <tt>:verbose</tt> argument (which defaults to the value of <tt>*compile-verbose*</tt>),
-if true, permits <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> to print a message in the form of a comment to
-<tt><a 
-href="symbols.html#x187-2604048r48">*standard-output*</a></tt> indicating what ﬁle is being compiled and other useful
-information.
-<!--l. 141--><p class="indent" >   The <tt>:print</tt> argument (which defaults to the value of <tt>*compile-print*</tt>), if true,
-causes information about top-level forms in the ﬁle being compiled to be printed
-to <tt><a 
-href="symbols.html#x187-2604048r48">*standard-output*</a></tt>. Exactly what is printed is implementation-dependent;
-nevertheless something will be printed.
-</div>
-<div class="new">
-<!--l. 148--><p class="indent" >   X3J13 voted in March 1988 <a 
- id="dx151-1952005"></a>to specify exactly which streams may be used as
-pathnames (see section <a 
-href="clmse116.html#x144-191200023.1.6">23.1.6<!--tex4ht:ref: PATHNAME-FUNCTIONS --></a>).
-</div> <div class="newer"> X3J13 voted in June 1989 <a 
- id="dx151-1952006"></a>to clarify that supplying a wild pathname as the
-<i>input-pathname</i> argument to <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> has implementation-dependent
-consequences; <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> might signal an error, for example, or might compile
-all ﬁles that match the wild pathname.
-</div>
-<div class="newer">
-<!--l. 162--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx151-1952007"></a>to require <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> to accept logical
-pathnames (see section <a 
-href="clmse116.html#x144-189000023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
-                                                                          
-
-                                                                          
-</div>
-<!--l. 166--><p class="indent" >   The <tt>:output-file</tt> argument may be used to specify an output pathname; it
-defaults in a manner appropriate to the implementation&#x2019;s ﬁle system
-conventions.
-<div class="newer">
-<!--l. 172--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx151-1952008"></a>to specify that <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> returns three values:
-the <tt><a 
-href="symbols.html#x187-2604884r884">truename</a></tt> of the output ﬁle (or <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> if the ﬁle could not be created) and
-two values indicating whether the compiler issued any diagnostics (see
-section <a 
-href="#x151-195900024.2.1">24.2.1<!--tex4ht:ref: COMPILER-DIAGNOSTICS-SECTION --></a>).
-</div>
-<div class="newer">
-<!--l. 180--><p class="indent" >   X3J13 voted in October 1988 <a 
- id="dx151-1952009"></a>to specify that <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>, like <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt>,
-rebinds <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> to its current value. If some form in the ﬁle changes the
-value of <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt>, the old value will be restored when compilation is
-completed.
-</div>
-<div class="newer">
-<!--l. 188--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx151-1952010"></a>to specify restrictions on conforming programs to
-ensure consistent handling of symbols and packages.
-<!--l. 192--><p class="indent" >   In order to guarantee that compiled ﬁles can be loaded correctly, the user must
-ensure that the packages referenced in the ﬁle are deﬁned consistently at compile
-and load time. Conforming Common Lisp programs must satisfy the following
-requirements.
-      <ul class="itemize1">
-      <li class="itemize">The value of <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> when a top-level form in the ﬁle is processed
-      by <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> must be the same as the value of <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> when
-      the code corresponding to that top-level form in the compiled ﬁle is
-      executed by the loader. In particular, any top-level form in a ﬁle that
-      alters the value of <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> must change it to a package of the same
-      name at both compile and load time; moreover, if the ﬁrst non-atomic
-      top-level form in the ﬁle is not a call to <tt><a 
-href="symbols.html#x187-2604440r440">in-package</a></tt>, then the value
-      of <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> at the time <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt> is called must be a package with the
-      same name as the package that was the value of <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> at the time
-      <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> was called.
-      </li>
-      <li class="itemize">For every symbol appearing lexically within a top-level form that was
-                                                                          
-
-                                                                          
-      accessible  in  the  package  that  was  the  value  of  <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> during
-      processing of that top-level form at compile time, but whose home
-      package was another package, at load time there must be a symbol with
-      the same name that is accessible in both the load-time <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> and
-      in the package with the same name as the compile-time home package.
-      </li>
-      <li class="itemize">For every symbol in the compiled ﬁle that was an external symbol in
-      its home package at compile time, there must be a symbol with the
-      same name that is an external symbol in the package with the same
-      name at load time.</li></ul>
-<!--l. 222--><p class="noindent" >If any of these conditions do not hold, the package in which <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt> looks for the
-aﬀected symbols is unspeciﬁed. Implementations are permitted to signal an error
-or otherwise deﬁne this behavior.
-<!--l. 226--><p class="indent" >   These requirements are merely an explicit statement of the status quo,
-namely that users cannot depend on any particular behavior if the package
-environment at load time is inconsistent with what existed at compile
-time.
-</div>
-<div class="newer">
-<!--l. 234--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx151-1952011"></a>to specify that <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> must bind
-<tt>*readtable*</tt> to its current value at the time <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> is called; the dynamic
-extent of the binding should encompass all of the ﬁle-loading activity. This allows
-a portable program to include forms such as <div class="lisp"><div class="tabbing">
-(in-package &#x0022;FOO&#x0022;)
-   <br>             <br>             (eval-when (:execute :load-toplevel :compile-toplevel)<br>
-  (setq *readtable* foo:my-readtable))<br>
-<!--l. 244--><p class="noindent" ></div>
-<!--l. 244--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195300024.2" id="x151-195300024.2"></a></span>
-                                                                          
-
-                                                                          
-<!--l. 244--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195400024.2" id="x151-195400024.2"></a></span>
-</div>
-<!--l. 245--><p class="indent" >   without performing a net global side eﬀect on the loading environment.
-Such statements allow the remainder of such a ﬁle to be read either as
-interpreted code or by <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> in a syntax determined by an alternative
-readtable.
-</div>
-<div class="newer">
-<!--l. 252--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx151-1954001"></a>to require that <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> bind two new
-variables <tt>*compile-file-pathname*</tt> and <tt>*compile-file-truename*</tt>; the
-dynamic extent of the bindings should encompass all of the ﬁle-compiling
-activity.
-</div>
-<div class="defun">
-<!--l. 258--><p class="noindent" ><div class="defunheader"> <i>[Variable]</i><a 
- id="dx151-1954002"></a><a 
- id="x151-1954003r744"></a> <b>*compile-verbose*</b>
-</div>
-<!--l. 261--><p class="indent" >   This variable provides the default for the <tt>:verbose</tt> argument to <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>.
-Its initial value is implementation-dependent.
-</div>
-<div class="defun">
-<!--l. 265--><p class="noindent" ><div class="defunheader"> <i>[Variable]</i><a 
- id="dx151-1954004"></a><a 
- id="x151-1954005r745"></a> <b>*compile-print*</b>
-</div>
-<!--l. 268--><p class="indent" >   This variable provides the default for the <tt>:print</tt> argument to <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>.
-Its initial value is implementation-dependent.
-</div>
-<div class="defun">
-<!--l. 272--><p class="noindent" ><div class="defunheader"> <i>[Variable]</i><a 
- id="dx151-1954006"></a><a 
- id="x151-1954007r746"></a> <b>*compile-ﬁle-pathname*</b>
-</div>
-<!--l. 275--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx151-1954008"></a>to introduce <tt>*compile-file-pathname*</tt>; it is
-initially <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> but <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> binds it to a pathname that represents the ﬁle
-name given as the ﬁrst argument to <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> merged with the defaults (see
-<tt>merge-pathname</tt>).
-</div>
-                                                                          
-
-                                                                          
-<div class="defun">
-<!--l. 281--><p class="noindent" ><div class="defunheader"> <i>[Variable]</i><a 
- id="dx151-1954009"></a><a 
- id="x151-1954010r747"></a> <b>*compile-ﬁle-truename*</b>
-</div>
-<!--l. 284--><p class="indent" >   Variable is initially <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> but <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> binds it to the “true name” of the
-pathname of the ﬁle being compiled. See <tt><a 
-href="symbols.html#x187-2604884r884">truename</a></tt>.
-</div>
-<div class="defspec">
-<div class="defmacheader">
-<!--l. 289--><p class="indent" >   <div class="tabbing">
- <i>[Специальный оператор]</i> <b>load-time-value</b> <a 
- id="dx151-1954011"></a><a 
- id="x151-1954012r748"></a> form [read-only-p]
-   <br>
-<!--l. 290--><p class="noindent" ></div>
-<!--l. 290--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195500024.2" id="x151-195500024.2"></a></span>
-</div>
-<!--l. 291--><p class="indent" >   This is a mechanism for delaying evaluation of a <i>form</i> until it can be done in
-the run-time environment.
-<!--l. 294--><p class="indent" >   If a <tt><a 
-href="symbols.html#x187-2604499r499">load-time-value</a></tt> expression is seen by <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>, the compiler
-performs its normal semantic processing (such as macro expansion and translation
-into machine code) on the form, but arranges for the execution of the <i>form</i> to
-occur at load time in a null lexical environment, with the result of this
-evaluation then being treated as an immediate quantity (that is, as if
-originally quoted) at run time. It is guaranteed that the evaluation of the
-<i>form</i> will take place only once when the ﬁle is loaded, but the order of
-evaluation with respect to the execution of top-level forms in the ﬁle is
-unspeciﬁed.
-<!--l. 305--><p class="indent" >   If a <tt><a 
-href="symbols.html#x187-2604499r499">load-time-value</a></tt> expression appears within a function compiled with
-<tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt>, the <i>form</i> is evaluated at compile time in a null lexical environment. The
-result of this compile-time evaluation is treated as an immediate quantity in the
-compiled code.
-<!--l. 310--><p class="indent" >   In interpreted code, <i>form</i> is evaluated (by <tt><a 
-href="symbols.html#x187-2604343r343">eval</a></tt>) in a null lexical environment
-and one value is returned. Implementations that implicitly compile (or partially
-compile) expressions passed to <tt><a 
-href="symbols.html#x187-2604343r343">eval</a></tt> may evaluate the <i>form</i> only once, at the time
-this compilation is performed. This is intentionally similar to the freedom that
-                                                                          
-
-                                                                          
-implementations are given for the time of expanding macros in interpreted
-code.
-<!--l. 318--><p class="indent" >   If the same (as determined by <tt><a 
-href="symbols.html#x187-2604337r337">eq</a></tt>) list <tt>(load-time-value <i>form</i>)</tt> is evaluated
-or compiled more than once, it is unspeciﬁed whether the <i>form</i> is evaluated only
-once or is evaluated more than once. This can happen both when an
-expression being evaluated or compiled shares substructure and when the
-same expression is passed to <tt><a 
-href="symbols.html#x187-2604343r343">eval</a></tt> or to <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> multiple times. Since a
-<tt><a 
-href="symbols.html#x187-2604499r499">load-time-value</a></tt> expression may be referenced in more than one place and may
-be evaluated multiple times by the interpreter, it is unspeciﬁed whether each
-execution returns a “fresh” object or returns the same object as some other
-execution. Users must use caution when destructively modifying the resulting
-object.
-<!--l. 330--><p class="indent" >   If two lists <tt>(load-time-value <i>form</i>)</tt> are <tt><a 
-href="symbols.html#x187-2604339r339">equal</a></tt> but not <tt><a 
-href="symbols.html#x187-2604337r337">eq</a></tt>, their values
-always come from distinct evaluations of <i>form</i>. Coalescing of these forms is not
-permitted.
-<!--l. 334--><p class="indent" >   The optional <i>read-only-p</i> argument designates whether the result may be
-considered a read-only constant. If <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> (the default), the result must
-be considered ordinary, modiﬁable data. If <tt><a 
-href="symbols.html#x187-2604868r868">t</a></tt>, the result is a read-only
-quantity that may, as appropriate, be copied into read-only space and
-may, as appropriate, be shared with other programs. The <i>read-only-p</i>
-argument is not evaluated and only the literal symbols <tt><a 
-href="symbols.html#x187-2604868r868">t</a></tt> and <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> are
-permitted.
-<!--l. 343--><p class="indent" >   This new feature addresses the same set of needs as the now-defunct <tt>#,</tt> reader
-syntax but in a cleaner and more general manner. Note that <tt>#,</tt> syntax was
-reliably useful only inside quoted structure (though this was not explicitly
-mentioned in the ﬁrst edition), whereas a <tt><a 
-href="symbols.html#x187-2604499r499">load-time-value</a></tt> form must appear
-outside quoted structure in a for-evaluation position.
-<!--l. 350--><p class="indent" >   See <tt><a 
-href="symbols.html#x187-2604542r542">make-load-form</a></tt>.
-</div>
-<div class="defun">
-<!--l. 354--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
- id="dx151-1955001"></a><a 
- id="x151-1955002r749"></a> <b>disassemble</b>  <i>name-or-compiled-function</i>
-</div>
-<!--l. 357--><p class="indent" >   The argument should be a function object, a lambda-expression, or a symbol
-with a function deﬁnition. If the relevant function is not a compiled function, it is
-ﬁrst compiled. In any case, the compiled code is then “reverse-assembled” and
-printed out in a symbolic format. This is primarily useful for debugging the
-                                                                          
-
-                                                                          
-compiler, but also often of use to the novice who wishes to understand the
-workings of compiled code.________________________________________________<div class="implementation">
-<!--l. 365--><p class="noindent" ><b>Заметка для реализации:</b> Implementors are encouraged to make the output
-readable, preferably with helpful comments.
-</div>___________________________________________________________________________________________________________
-<!--l. 371--><p class="indent" >     When <tt><a 
-href="symbols.html#x187-2604308r308">disassemble</a></tt> compiles a function, it never installs the resulting
-compiled-function object in the <tt><a 
-href="symbols.html#x187-2604860r860">symbol-function</a></tt> of a symbol.
-<i>
-<!--l. 375--><p class="indent" >     name</i> may be any function-name (a symbol or a list whose car is <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt>—see
-section <a 
-href="clmse35.html#x47-3850007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>). Thus one may write <tt>(disassemble &#x2019;(setf cadr))</tt> to disassemble
-the <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt> expansion function for <tt><a 
-href="symbols.html#x187-2604167r167">cadr</a></tt>.
-</div>
-<div class="defun">
-<!--l. 381--><p class="noindent" ><div class="defunheader"> <i>[Function]</i><a 
- id="dx151-1955003"></a><a 
- id="x151-1955004r750"></a> <b>function-lambda-expression</b>  <i>fn</i>
-</div>
-<!--l. 384--><p class="indent" >    This function allows the source code for a deﬁned function to be recovered.
-(The committee noted that the ﬁrst edition provided no portable way to recover a
-lambda-expression once it had been compiled or evaluated to produce a
-function.)
-<!--l. 390--><p class="indent" >     This function takes one argument, which must be a function, and returns three
-values.
-<!--l. 393--><p class="indent" >     The ﬁrst value is the deﬁning lambda-expression for the function, or <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> if
-that information is not available. The lambda-expression may have been
-preprocessed in some ways but should nevertheless be of a form suitable as an
-argument to the function <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> or for use in the <tt><a 
-href="symbols.html#x187-2604399r399">function</a></tt> special
-operator.
-<!--l. 399--><p class="indent" >     The second value is <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> if the function was deﬁnitely produced by
-closing a lambda-expression in the null lexical environment; it is some
-non-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> value if the function might have been closed in some non-null lexical
-environment.
-<!--l. 405--><p class="indent" >     The third value is the “name” of the function; this is <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> if the name is not
-available or if the function had no name. The name is intended for debugging
-purposes only and may be any Lisp object (not necessarily one that would
-be valid for use as a name in a <tt><a 
-href="symbols.html#x187-2604291r291">defun</a></tt> or <tt><a 
-href="symbols.html#x187-2604399r399">function</a></tt> special operator, for
-example)._______________________________________________________________________________________<div class="implementation">
-                                                                          
-
-                                                                          
-<!--l. 412--><p class="noindent" ><b>Заметка для реализации:</b> An implementation is always free to return the values
-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt>, <tt><a 
-href="symbols.html#x187-2604868r868">t</a></tt>, <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> from this function but is encouraged to make more useful information
-available as appropriate. For example, it may not be desirable for ﬁles of compiled code
-to retain the source lambda-expressions for use after the ﬁle is loaded, but it is probably
-desirable for functions produced by “in-core” calls to <tt><a 
-href="symbols.html#x187-2604343r343">eval</a></tt>, <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt>, or <tt><a 
-href="symbols.html#x187-2604291r291">defun</a></tt> to
-retain the deﬁning lambda-expression for debugging purposes. The function
-<tt><a 
-href="symbols.html#x187-2604402r402">function-lambda-expression</a></tt> makes this information, if retained, accessible in a
-standard and portable manner.
-</div>
-____________________________________________________________________________
-</div>
+   <div id="toplinks"> &lt;<a href="../index.html">Главная</a>&gt; &lt;<a href="symbols.html">Символы</a>&gt; <br />&#x003C;<a 
+href="clmse123.html" >Далее</a>&#x003E;&#x003C;<a 
+href="clmse121.html" >Назад</a>&#x003E;&#x003C;<a 
+href="clmse121.html#tailclmse121.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
+href="#tailclmse122.html">В-конец</a>&#x003E;&#x003C;<a 
+href="misc.html#clmse122.html" >Наверх</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">24.2
+</span> <a 
+href="clm.html#QQ2-151-259" id="x151-22000024.2">Debugging Tools</a></h3>
+<!--l. 1087--><p class="noindent" >The utilities described in this section are suﬃciently complex and suﬃciently
+dependent on the host environment that their complete deﬁnition is beyond the
+scope of this book. However, they are also suﬃciently useful to warrant mention
+here. It is expected that every implementation will provide some version of these
+utilities, however clever or however simple.
+<!--l. 1095--><p class="indent" >   Коммунальные услуги, описанные в этом разделе достаточно сложны и
+достаточно зависит от внешней среды, что их полное описание выходит
+за рамки этой книги. Тем не менее, они также достаточно полезно,
+чтобы оправдать упомянуть здесь. Ожидается, что каждая реализация
+предоставить некоторые версии этих программ, однако умный или же
+просто.
+<!--l. 1103--><p class="indent" >   Описанные в этом разделе утилиты достаточно сложны и зависят
+от внешней среды ОС, что их полное описание выходит за рамки
+книги. Тем не менее их описание будет полезным. Предполагается,
+что каждая реализация будет представлять некоторую версию этих
+утилит.
 <div class="defmac">
 <div class="defmacheader">
-<!--l. 429--><p class="indent" >     <div class="tabbing">
-  <i>[Макрос]</i> <b>with-compilation-unit</b> <a 
- id="dx151-1955005"></a><a 
- id="x151-1955006r751"></a> ({option-name option-value}*) {form}*
-     <br>
-<!--l. 430--><p class="noindent" ></div>
-<!--l. 430--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195600024.2" id="x151-195600024.2"></a></span>
+<!--l. 1109--><p class="indent" >   <div class="tabbing">
+ <em>[Макрос]</em> <b>trace</b> <a 
+ id="dx151-220001"></a>{ function-name}*
+   <br>
+<!--l. 1109--><p class="noindent" ></div>
 </div>
-<tt>
-<!--l. 431--><p class="indent" >     <a 
-href="symbols.html#x187-2604930r930">with-compilation-unit</a></tt> executes the body forms as an implicit <tt><a 
-href="symbols.html#x187-2604698r698">progn</a></tt>.
-Within the dynamic context of this form, warnings deferred by the compiler until
-“the end of compilation” will be deferred until the end of the outermost call to
-<tt><a 
-href="symbols.html#x187-2604930r930">with-compilation-unit</a></tt>. The results are the same as those of the last of the
-forms (or <tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> if there is no <i>form</i>).
-<!--l. 437--><p class="indent" >     Each <i>option-name</i> is an unevaluated keyword; each <i>option-value</i> is evaluated.
-The set of keywords permitted may be extended by the implementation, but the
-only standard option keyword is <tt>:override</tt>; the default value for this option is
-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt>. If <tt><a 
-href="symbols.html#x187-2604930r930">with-compilation-unit</a></tt> forms are nested dynamically, only the outermost
-such call has any eﬀect unless the <tt>:override</tt> value of an inner call is
-true.
-<!--l. 445--><p class="indent" >     The function <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> should provide the eﬀect of <div class="lisp"><div class="tabbing">
-(with-compilation-unit (:override nil) ...)
+<div class="defmacheader">
+<!--l. 1109--><p class="indent" >   <div class="tabbing">
+ <em>[Макрос]</em> <b>untrace</b> <a 
+ id="dx151-220002"></a>{ function-name}*
                                                                           
 
                                                                           
    <br>
-<!--l. 449--><p class="noindent" ></div>
-<!--l. 449--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195700024.2" id="x151-195700024.2"></a></span>
-<!--l. 449--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-195800024.2" id="x151-195800024.2"></a></span>
+<!--l. 1111--><p class="noindent" ></div>
 </div>
-<!--l. 450--><p class="indent" >   around its code.
-<!--l. 452--><p class="indent" >   Any implementation-dependent extensions to this behavior may be
-provided only as the result of an explicit programmer request by use of an
-implementation-dependent keyword. It is forbidden for an implementation to
-attach additional meaning to a conforming use of this macro.
-<!--l. 458--><p class="indent" >   Note that not all compiler warnings are deferred. In some implementations, it
-may be that none are deferred. This macro only creates an interface to the
-capability where it exists, it does not require the creation of the capability. An
-implementation that does not defer any compiler warnings may correctly
-implement this macro as an expansion into a simple <tt><a 
-href="symbols.html#x187-2604698r698">progn</a></tt>.
+<!--l. 1112--><p class="indent" >   Invoking <b><a 
+href="symbols.html#x188-375953r953">trace</a></b> with one or more function-names (symbols or lists, whose
+<em>car</em> is <b><a 
+href="symbols.html#x188-375833r833">setf</a></b>—see section <a 
+href="clmse35.html#x47-750007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>), causes the functions named to be traced.
+Henceforth, whenever such a function is invoked, information about the call,
+the arguments passed, and the eventually returned values, if any, will be
+printed to the stream that is the value of <b><a 
+href="symbols.html#x188-375053r53">*trace-output*</a></b>. For example:
+<div class="lisp"><tt><div class="tabbing">
+(trace ﬀt gcd string-upcase)
+   <br>
+<!--l. 1122--><p class="noindent" ></div>
+</tt>
 </div>
-<!--l. 466--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">24.2.1   </span> <a 
-href="frontmatter.html#QQ2-151-1998" id="x151-195900024.2.1">Compiler Diagnostics</a></h4>
-<tt>
-<!--l. 469--><p class="noindent" ><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> and <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> may output warning messages; any such messages
-should go to the stream that is the value of <tt><a 
-href="symbols.html#x187-2604014r14">*error-output*</a></tt>.
-<!--l. 473--><p class="indent" >   First, note that <tt><a 
-href="symbols.html#x187-2604341r341">error</a></tt> and <tt><a 
-href="symbols.html#x187-2604923r923">warning</a></tt> conditions may be signaled either by the
-compiler itself or by code being processed by the compiler (for example, arbitrary
-errors may occur during compile-time macro expansion or processing of
-<tt><a 
-href="symbols.html#x187-2604344r344">eval-when</a></tt> forms). Considering only those conditions signaled <i>by the compiler</i> (as
-opposed to <i>during compilation</i>):
-      <ul class="itemize1">
-      <li class="itemize">Conditions of type <tt><a 
-href="symbols.html#x187-2604341r341">error</a></tt> may be signaled by the compiler in situations
-      where the compilation cannot proceed without intervention. Examples
-      of such situations may include errors when opening a ﬁle or syntax
-      errors.
+<!--l. 1123--><p class="indent" >   If a function call is open-coded (possibly as a result of an <b>inline</b> declaration),
+then such a call may not produce trace output.
+<!--l. 1126--><p class="indent" >   Invoking <b><a 
+href="symbols.html#x188-375975r975">untrace</a></b> with one or more function names will cause those functions
+not to be traced any more.
+<!--l. 1129--><p class="indent" >   Tracing an already traced function, or untracing a function not currently being
+traced, should produce no harmful eﬀects but may produce a warning
+message.
+<!--l. 1133--><p class="indent" >   Calling <b><a 
+href="symbols.html#x188-375953r953">trace</a></b> with no argument forms will return a list of functions currently
+being traced.
+<!--l. 1136--><p class="indent" >   Calling <b><a 
+href="symbols.html#x188-375975r975">untrace</a></b> with no argument forms will cause all currently traced
+functions to be no longer traced.
+<!--l. 1139--><p class="indent" >   The values returned by <b><a 
+href="symbols.html#x188-375953r953">trace</a></b> and <b><a 
+href="symbols.html#x188-375975r975">untrace</a></b> when given argument forms are
+implementation-dependent.
+<b>
+<!--l. 1142--><p class="indent" >   <a 
+href="symbols.html#x188-375953r953">trace</a></b> and <b><a 
+href="symbols.html#x188-375975r975">untrace</a></b> may also accept additional implementation-dependent
+argument formats. The format of the trace output is implementation-dependent.
+<hr></div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1148--><p class="indent" >   <div class="tabbing">
                                                                           
 
                                                                           
-      </li>
-      <li class="itemize">Conditions  of  type  <tt><a 
-href="symbols.html#x187-2604923r923">warning</a></tt> may  be  signaled  by  the  compiler  in
-      situations where the standard explicitly states that a warning must,
-      should,  or  may  be  signaled.  They  may  also  be  signaled  when  the
-      compiler  can  determine  that  a  situation  would  result  at  runtime
-      that  would  have  undeﬁned  consequences  or  would  cause  an  error
-      to  be  signaled.  Examples  of  such  situations  may  include  violations
-      of  type  declarations,  altering  or  rebinding  a  constant  deﬁned  with
-      <tt><a 
-href="symbols.html#x187-2604275r275">defconstant</a></tt>, calls to built-in Lisp functions with too few or too many
-      arguments or with malformed keyword argument lists, referring to a
-      variable declared <tt>ignore</tt>, or unrecognized declaration speciﬁers.
-      </li>
-      <li class="itemize">The  compiler  is  permitted  to  signal  diagnostics  about  matters  of
-      programming style as conditions of type <tt>style-warning</tt>, a subtype
-      of <tt><a 
-href="symbols.html#x187-2604923r923">warning</a></tt>. Although a <tt>style-warning</tt> condition <i>may</i> be signaled in
-      these situations, no implementation is <i>required</i> to do so. However, if
-      an implementation does choose to signal a condition, that condition
-      will be of type <tt>style-warning</tt> and will be signaled by a call to the
-      function <tt><a 
-href="symbols.html#x187-2604922r922">warn</a></tt>. Examples of such situations may include redeﬁnition
-      of a function with an incompatible argument list, calls to functions
-      (other than built-in functions) with too few or too many arguments or
-      with malformed keyword argument lists, unreferenced local variables
-      not declared <tt>ignore</tt>, or standard declaration speciﬁers that are ignored
-      by the particular compiler in question.</li></ul>
-<!--l. 520--><p class="indent" >   Both <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> and <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> are permitted (but not required) to establish
-a handler for conditions of type <tt><a 
-href="symbols.html#x187-2604341r341">error</a></tt>. Such a handler might, for example, issue a
-warning and restart compilation from some implementation-dependent point in
-order to let the compilation proceed without manual intervention.
-<!--l. 527--><p class="indent" >   The functions <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> and <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> each return three values. See the
-deﬁnitions of these functions for descriptions of the ﬁrst value. The second value is
-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> if no compiler diagnostics were issued, and true otherwise. The third value is
-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt> if no compiler diagnostics other than style warnings were issued; a non-<tt><a 
-href="symbols.html#x187-2604608r608">nil</a></tt>
-value indicates that there were “serious” compiler diagnostics issued or that other
-conditions of type <tt><a 
-href="symbols.html#x187-2604341r341">error</a></tt> or <tt><a 
-href="symbols.html#x187-2604923r923">warning</a></tt> (but not <tt>style-warning</tt>) were signaled
-during compilation.
-                                                                          
-
-                                                                          
-<!--l. 538--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">24.2.2   </span> <a 
-href="frontmatter.html#QQ2-151-1999" id="x151-196000024.2.2">Compiled Functions</a></h4>
-<!--l. 540--><p class="noindent" >Certain requirements are imposed on the functions produced by the compilation
-process.
-<!--l. 544--><p class="indent" >   If a function is of type <tt>compiled-function</tt>, then all macro calls appearing
-lexically within the function have already been expanded and will not be
-expanded again when the function is called. The process of compilation
-eﬀectively turns every <tt><a 
-href="symbols.html#x187-2604531r531">macrolet</a></tt> or <tt><a 
-href="symbols.html#x187-2604861r861">symbol-macrolet</a></tt> construct into a <tt><a 
-href="symbols.html#x187-2604698r698">progn</a></tt>
-(or a <tt><a 
-href="symbols.html#x187-2604500r500">locally</a></tt>) with all instances of the local macros in the body fully
-expanded.
-<!--l. 552--><p class="indent" >   If a function is of type <tt>compiled-function</tt>, then all <tt><a 
-href="symbols.html#x187-2604499r499">load-time-value</a></tt> forms
-appearing lexically within the function have already been pre-evaluated and will
-not be evaluated again when the function is called.
-<!--l. 557--><p class="indent" >   Implementations are free to classify every function as a <tt>compiled-function</tt>
-provided that all functions satisfy the preceding requirements. Conversely, it is
-permissible for a function that is not a <tt>compiled-function</tt> to satisfy the
-preceding requirements.
-<!--l. 563--><p class="indent" >   If one or more functions are deﬁned in a ﬁle that is compiled with
-<tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> and the compiled ﬁle is subsequently loaded by the function <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt>,
-the resulting loaded function deﬁnitions must be of type <tt>compiled-function</tt>.
-<!--l. 569--><p class="indent" >   The function <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> must produce an object of type <tt>compiled-function</tt> as
-the value that is either returned or stored into the <tt><a 
-href="symbols.html#x187-2604860r860">symbol-function</a></tt> of a symbol
-argument.
-<!--l. 573--><p class="indent" >   Note that none of these restrictions addresses questions of the compilation
-technology or target instruction set. For example, a compiled function does not
-necessarily consist of native machine instructions. These requirements merely
-specify the behavior of the type system with respect to certain actions taken by
-<tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt>, <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>, and <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt>.
-<!--l. 579--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">24.2.3   </span> <a 
-href="frontmatter.html#QQ2-151-2000" id="x151-196100024.2.3">Compilation Environment</a></h4>
-<!--l. 581--><p class="noindent" >Following information must be available at compile time for correct compilation
-and what need not be available until run time.
-<!--l. 585--><p class="indent" >   The following information must be present in the compile-time environment
-for a program to be compiled correctly. This information need not also be present
-in the run-time environment.
-                                                                          
-
-                                                                          
-      <ul class="itemize1">
-      <li class="itemize">In conforming code, macros referenced in the code being compiled must
-      have been previously deﬁned in the compile-time environment. The
-      compiler must treat as a function call any form that is a list whose
-      <i>car</i> is a symbol that does not name a macro or special operator. (This
-      implies that <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt> methods must also be available at compile time.)
-      </li>
-      <li class="itemize">In conforming code, proclamations for <tt>special</tt> variables must be made
-      in the compile-time environment before any bindings of those variables
-      are processed by the compiler. The compiler must treat any binding of
-      an undeclared variable as a lexical binding.</li></ul>
-<!--l. 604--><p class="indent" >   The compiler may incorporate the following kinds of information into the code
-it produces, if the information is present in the compile-time environment and is
-referenced within the code being compiled; however, the compiler is not
-required to do so. When compile-time and run-time deﬁnitions diﬀer, it
-is unspeciﬁed which will prevail within the compiled code (unless some
-other behavior is explicitly speciﬁed below). It is also permissible for an
-implementation to signal an error at run time on detecting such a discrepancy.
-In all cases, the absence of the information at compile time is not an
-error, but its presence may enable the compiler to generate more eﬃcient
-code.
-      <ul class="itemize1">
-      <li class="itemize">The compiler may assume that functions that are deﬁned and declared
-      <tt>inline</tt> in the compile-time environment will retain the same deﬁnitions
-      at run time.
-      </li>
-      <li class="itemize">The compiler may assume that, within a named function, a recursive
-      call to a function of the same name refers to the same function, unless
-      that function has been declared <tt>notinline</tt>. (This permits tail-recursive
-      calls of a function to itself to be compiled as jumps, for example, thereby
-      turning certain recursive schemas into eﬃcient loops.)
-      </li>
-      <li class="itemize">In   the   absence   of   <tt>notinline</tt>  declarations   to   the   contrary,
-      <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> may assume that a call within the ﬁle being compiled
-                                                                          
-
-                                                                          
-      to a named function that is deﬁned in that ﬁle refers to that function.
-      (This  rule  permits  <i>block  compilation</i>  of  ﬁles.)  The  behavior  of  the
-      program is unspeciﬁed if functions are redeﬁned individually at run
-      time.
-      </li>
-      <li class="itemize">The compiler may assume that the signature (or “interface contract”)
-      of all built-in Common Lisp functions will not change. In addition, the
-      compiler may treat all built-in Common Lisp functions as if they had
-      been proclaimed <tt>inline</tt>.
-      </li>
-      <li class="itemize">The compiler may assume that the signature (or “interface contract”)
-      of functions with <tt>ftype</tt> information available will not change.
-      </li>
-      <li class="itemize">The compiler may “wire in”  (that is, open-code or inline) the values
-      of symbolic constants that have been deﬁned with <tt><a 
-href="symbols.html#x187-2604275r275">defconstant</a></tt> in the
-      compile-time environment.
-      </li>
-      <li class="itemize">The  compiler  may  assume  that  any  type  deﬁnition  made  with
-      <tt><a 
-href="symbols.html#x187-2604289r289">defstruct</a></tt> or  <tt><a 
-href="symbols.html#x187-2604290r290">deftype</a></tt> in  the  compile-time  environment  will  retain
-      the same deﬁnition in the run-time environment. It may also assume
-      that a class deﬁned by <tt><a 
-href="symbols.html#x187-2604274r274">defclass</a></tt> in the compile-time environment will
-      be deﬁned in the run-time environment in such a way as to have the
-      same superclasses and metaclass. This implies that subtype/supertype
-      relationships of type speciﬁers will not change between compile time
-      and run time. (Note that it is not an error for an unknown type to
-      appear in a declaration at compile time, although it is reasonable for
-      the compiler to emit a warning in such a case.)
-      </li>
-      <li class="itemize">The compiler may assume that if type declarations are present in the
-      compile-time environment, the corresponding variables and functions
-      present in the run-time environment will actually be of those types. If
-      this assumption is violated, the run-time behavior of the program is
-      undeﬁned.</li></ul>
-                                                                          
-
-                                                                          
-<!--l. 667--><p class="indent" >   The compiler must not make any additional assumptions about consistency
-between the compile-time and run-time environments. In particular, the compiler
-may not assume that functions that are deﬁned in the compile-time environment
-will retain either the same deﬁnition or the same signature at run time, except as
-described above. Similarly, the compiler may not signal an error if it sees a call to
-a function that is not deﬁned at compile time, since that function may be
-provided at run time.
-<!--l. 678--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx151-1961001"></a>to specify the compile-time side eﬀects of
-processing various macro forms.
-<!--l. 681--><p class="indent" >   Calls to deﬁning macros such as <tt><a 
-href="symbols.html#x187-2604284r284">defmacro</a></tt> or <tt><a 
-href="symbols.html#x187-2604292r292">defvar</a></tt> appearing within a ﬁle
-being processed by <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> normally have compile-time side eﬀects that
-aﬀect how subsequent forms in the same ﬁle are compiled. A convenient model for
-explaining how these side eﬀects happen is that each deﬁning macro expands into
-one or more <tt><a 
-href="symbols.html#x187-2604344r344">eval-when</a></tt> forms and that compile-time side eﬀects are caused by
-calls occurring in the body of an <tt>(eval-when (:compile-toplevel) ...)</tt>
-form.
-<!--l. 690--><p class="indent" >   The aﬀected deﬁning macros and their speciﬁc side eﬀects are as follows. In
-each case, it is identiﬁed what a user must do to ensure that a program is
-conforming, and what a compiler must do in order to correctly process a
-conforming program.
-<div class="flushdesc">
-      <ul><li><b>
-<tt><a 
-href="symbols.html#x187-2604290r290">deftype</a></tt> </b></li>The user must ensure that the body of a <tt><a 
-href="symbols.html#x187-2604290r290">deftype</a></tt> form is evaluable
-      at compile time if the type is referenced in subsequent type declarations.
-      The compiler must ensure that a type speciﬁer deﬁned by <tt><a 
-href="symbols.html#x187-2604290r290">deftype</a></tt> is
-      recognized in subsequent type declarations. If the expansion of a type
-      speciﬁer is not deﬁned fully at compile time (perhaps because it expands
-      into an unknown type speciﬁer or a <tt>satisfies</tt> of a named function
-      that isn&#x2019;t deﬁned in the compile-time environment), an implementation
-      may ignore any references to this type in declarations and may signal
-      a warning.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604284r284">defmacro</a></tt> and <tt><a 
-href="symbols.html#x187-2604281r281">define-modify-macro</a></tt> </b></li>The   compiler   must   store   macro
-      deﬁnitions at compile time, so that occurrences of the macro later on
-      in the ﬁle can be expanded correctly. The user must ensure that the
-                                                                          
-
-                                                                          
-      body of the macro is evaluable at compile time if it is referenced within
-      the ﬁle being compiled.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604291r291">defun</a></tt> </b></li>No required compile-time side eﬀects are associated with <tt><a 
-href="symbols.html#x187-2604291r291">defun</a></tt> forms.
-      In particular, <tt><a 
-href="symbols.html#x187-2604291r291">defun</a></tt> does not make the function deﬁnition available
-      at compile time. An implementation may choose to store information
-      about the function for the purposes of compile-time error checking (such
-      as checking the number of arguments on calls) or to permit later <tt>inline</tt>
-      expansion of the function.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604292r292">defvar</a></tt> and <tt><a 
-href="symbols.html#x187-2604287r287">defparameter</a></tt> </b></li>The compiler must recognize that the variables
-      named by these forms have been proclaimed <tt>special</tt>. However, it must
-      not evaluate the <i>initial-value</i> form or <tt><a 
-href="symbols.html#x187-2604769r769">set</a></tt> the variable at compile time.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604275r275">defconstant</a></tt> </b></li>The  compiler  must  recognize  that  the  symbol  names  a
-      constant. An implementation may choose to evaluate the <i>value-form</i>
-      at compile time, load time, or both. Therefore the user must ensure
-      that the <i>value-form</i> is evaluable at compile time (regardless of whether
-      or not references to the constant appear in the ﬁle) and that it always
-      evaluates to the same value. (There has been considerable variance
-      among implementations on this point. The eﬀect of this speciﬁcation
-      is to legitimize all of the implementation variants by requiring care of
-      the user.)
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604288r288">defsetf</a></tt> and <tt><a 
-href="symbols.html#x187-2604282r282">define-setf-method</a></tt> </b></li>The compiler must make <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt> methods
-      available  so  that  they  may  be  used  to  expand  calls  to  <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt> later
-      on  in  the  ﬁle.  Users  must  ensure  that  the  body  of  a  call  to
-      <tt><a 
-href="symbols.html#x187-2604282r282">define-setf-method</a></tt> or  the  complex  form  of  <tt><a 
-href="symbols.html#x187-2604288r288">defsetf</a></tt> is  evaluable
-      at  compile  time  if  the  corresponding  place  is  referred  to  in  a
-      subsequent <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt> in the same ﬁle. The compiler must make these <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt>
-      methods  available  to  compile-time  calls  to  <tt><a 
-href="symbols.html#x187-2604418r418">get-setf-method</a></tt> when
-      its  environment  argument  is  a  value  received  as  the  <tt>&#x0026;environment</tt>
-      parameter of a macro.
-      <li><b>
-                                                                          
-
-                                                                          
-<tt><a 
-href="symbols.html#x187-2604289r289">defstruct</a></tt> </b></li>The compiler must make the structure type name recognized
-      as a valid type name in subsequent declarations (as described above
-      for <tt><a 
-href="symbols.html#x187-2604290r290">deftype</a></tt>) and make the structure slot accessors known to <tt><a 
-href="symbols.html#x187-2604776r776">setf</a></tt>.
-      In  addition,  the  compiler  must  save  enough  information  so  that
-      further <tt><a 
-href="symbols.html#x187-2604289r289">defstruct</a></tt> deﬁnitions can include (with the <tt>:include</tt> option)
-      a  structure  type  deﬁned  earlier  in  the  ﬁle  being  compiled.  The
-      functions that <tt><a 
-href="symbols.html#x187-2604289r289">defstruct</a></tt> generates are not deﬁned in the compile-time
-      environment,  although  the  compiler  may  save  enough  information
-      about the functions to allow <tt>inline</tt> expansion of subsequent calls to
-      these functions. The <tt>#S</tt> reader syntax may or may not be available for
-      that structure type at compile time.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604278r278">define-condition</a></tt> </b></li>The   rules   are   essentially   the   same   as   those   for
-      <tt><a 
-href="symbols.html#x187-2604289r289">defstruct</a></tt>. The compiler must make the condition type recognizable
-      as a valid type name, and it must be possible to reference the condition
-      type  as  the  <i>parent-type</i>  of  another  condition  type  in  a  subsequent
-      <tt><a 
-href="symbols.html#x187-2604278r278">define-condition</a></tt> form in the ﬁle being compiled.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604286r286">defpackage</a></tt> </b></li>All of the actions normally performed by the <tt><a 
-href="symbols.html#x187-2604286r286">defpackage</a></tt> macro
-      at load time must also be performed at compile time.</ul>
+ <em>[Макрос]</em> <b>step</b> <a 
+ id="dx151-220003"></a>form
+   <br>
+<!--l. 1149--><p class="noindent" ></div>
 </div>
-<!--l. 779--><p class="indent" >   Compile-time side eﬀects may cause information about a deﬁnition
-to be stored in a diﬀerent manner from information about deﬁnitions
-processed either interpretively or by loading a compiled ﬁle. In particular,
-the information stored by a deﬁning macro at compile time may or may
-not be available to the interpreter (either during or after compilation)
-or during subsequent calls to <tt><a 
-href="symbols.html#x187-2604231r231">compile</a></tt> or <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>. For example,
-the following code is not portable because it assumes that the compiler
-stores the macro deﬁnition of <tt>foo</tt> where it is available to the interpreter.
-<div class="lisp"><div class="tabbing">
-(defmacro foo (x) ‘(car ,x))
-   <br>             <br>             (eval-when (:execute :compile-toplevel :load-toplevel)<br>
-  (print (foo &#x2019;(a b c))))     ;Wrong<br>
-<!--l. 795--><p class="noindent" ></div>
-                                                                          
-
-                                                                          
-<!--l. 795--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-196200024.2.3" id="x151-196200024.2.3"></a></span>
-<!--l. 795--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-196300024.2.3" id="x151-196300024.2.3"></a></span>
+<!--l. 1150--><p class="indent" >   This evaluates <em>form</em> and returns what <em>form</em> returns. However, the user is
+allowed to interactively “single-step” through the evaluation of <em>form</em>, at least
+through those evaluation steps that are performed interpretively. The nature of
+the interaction is implementation-dependent. However, implementations are
+encouraged to respond to the typing of the character <b>?</b> by providing help,
+including a list of commands.
+<b>
+<!--l. 1159--><p class="indent" >   <a 
+href="symbols.html#x188-375890r890">step</a></b> evaluates its argument <em>form</em> in the current lexical environment (not
+simply a null environment), and that calls to <b><a 
+href="symbols.html#x188-375890r890">step</a></b> may be compiled, in which case
+an implementation may step through only those parts of the evaluation that are
+interpreted. (In other words, the <em>form</em> itself is unlikely to be stepped, but if
+executing it happens to invoke interpreted code, then that code may be
+stepped.)
+<hr></div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1169--><p class="indent" >   <div class="tabbing">
+ <em>[Макрос]</em> <b>time</b> <a 
+ id="dx151-220004"></a>form
+   <br>
+<!--l. 1170--><p class="noindent" ></div>
 </div>
-<!--l. 796--><p class="indent" >   The goal may be accomplished portably by including the macro deﬁnition
-within the <tt><a 
-href="symbols.html#x187-2604344r344">eval-when</a></tt> form: <div class="lisp"><div class="tabbing">
-(eval-when (eval compile load)
-   <br>                                                          (defmacro foo (x) ‘(car ,x))<br>
-  (print (foo &#x2019;(a b c))))     ;Right<br>
-<!--l. 802--><p class="noindent" ></div>
-<!--l. 802--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-196400024.2.3" id="x151-196400024.2.3"></a></span>
-<!--l. 802--><p class="noindent" ><span class="paragraphHead"><a 
-href="#x151-196500024.2.3" id="x151-196500024.2.3"></a></span>
+<!--l. 1171--><p class="indent" >   This evaluates <em>form</em> and returns what <em>form</em> returns. However, as a side eﬀect,
+various timing data and other information are printed to the stream that is the
+value of <b><a 
+href="symbols.html#x188-375053r53">*trace-output*</a></b>. The nature and format of the printed information is
+implementation-dependent. However, implementations are encouraged to provide
+such information as elapsed real time, machine run time, storage management
+statistics, and so on.
+<b>
+<!--l. 1178--><p class="indent" >   <a 
+href="symbols.html#x188-375952r952">time</a></b> evaluates its argument <em>form</em> in the current lexical environment (not
+simply a null environment), and that calls to <b><a 
+href="symbols.html#x188-375952r952">time</a></b> may be compiled.
+<hr></div>
+                                                                          
+
+                                                                          
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 1184--><p class="noindent" >[Function]</em><a 
+ id="dx151-220005"></a> <b>describe</b> <i>object</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>stream</i>
 </div>
-<div class="flushdesc">
-      <ul><li><b>
-<tt><a 
-href="symbols.html#x187-2604269r269">declaim</a></tt> </b></li>
-      <!--l. 807--><p class="noindent" >X3J13 voted in June 1989 <a 
- id="dx151-1965001"></a>to add a new macro <tt><a 
-href="symbols.html#x187-2604269r269">declaim</a></tt> for making
-      proclamations recognizable at compile time. The declaration speciﬁers
-      in the <tt><a 
-href="symbols.html#x187-2604269r269">declaim</a></tt> form are eﬀectively proclaimed at compile time so as to
-      aﬀect compilation of subsequent forms. (Note that compiler processing
-      of a call to <tt><a 
-href="symbols.html#x187-2604693r693">proclaim</a></tt> does not have any compile-time side eﬀects, for
-      <tt><a 
-href="symbols.html#x187-2604693r693">proclaim</a></tt> is a function.)</ul>
+<b>
+<!--l. 1186--><p class="indent" >   <a 
+href="symbols.html#x188-375325r325">describe</a></b> prints, to the stream information about the <em>object</em>. Sometimes it will
+describe something that it ﬁnds inside something else; such recursive descriptions
+are indented appropriately. For instance, <b><a 
+href="symbols.html#x188-375325r325">describe</a></b> of a symbol will exhibit the
+symbol&#x2019;s value, its deﬁnition, and each of its properties. <b><a 
+href="symbols.html#x188-375325r325">describe</a></b> of a
+ﬂoating-point number will exhibit its internal representation in a way that is
+useful for tracking down round-oﬀ errors and the like. The nature and format of
+the output is implementation-dependent.
+<b>
+<!--l. 1195--><p class="indent" >   <a 
+href="symbols.html#x188-375325r325">describe</a></b> returns no values (that is, it returns what the expression <b>(values)</b>
+returns: zero values).
+<!--l. 1198--><p class="indent" >   The output is sent to the speciﬁed <em>stream</em>, which defaults to the value of
+<b><a 
+href="symbols.html#x188-375051r51">*standard-output*</a></b>; the <em>stream</em> may also be <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> (meaning <b><a 
+href="symbols.html#x188-375051r51">*standard-output*</a></b>)
+or <b><a 
+href="symbols.html#x188-375941r941">t</a></b> (meaning <b><a 
+href="symbols.html#x188-375052r52">*terminal-io*</a></b>).
+<!--l. 1203--><p class="indent" >   The behavior of <b><a 
+href="symbols.html#x188-375325r325">describe</a></b> depends on the generic function <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b>
+(see below).
+<hr></div>
+<!--l. 1207--><p class="indent" >   That <b><a 
+href="symbols.html#x188-375325r325">describe</a></b> is forbidden to prompt for or require user input when given
+exactly one argument; It is permitted implementations to extend <b><a 
+href="symbols.html#x188-375325r325">describe</a></b> to
+accept keyword arguments that may cause it to prompt for or to require user
+input.
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 1214--><p class="noindent" >[Generic function]</em><a 
+ id="dx151-220006"></a> <b>describe-object</b> <i>object</i> <i>stream</i><br />
+<em>
+[Primary method]</em><a 
+ id="dx151-220007"></a> <b>describe-object</b> (<i>object</i> standard-object) <i>stream</i>
 </div>
-<div class="flushdesc">
+<!--l. 1217--><p class="indent" >   The generic function <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b> writes a description of an object to a
                                                                           
 
                                                                           
-      <ul><li><b>
-<tt><a 
-href="symbols.html#x187-2604440r440">in-package</a></tt> </b></li>
-      <!--l. 820--><p class="noindent" >X3J13 voted in March 1989 <a 
- id="dx151-1965002"></a>to specify that all of the actions normally
-      performed  by  the  <tt><a 
-href="symbols.html#x187-2604440r440">in-package</a></tt> macro  at  load  time  must  also  be
-      performed at compile time.</ul>
-</div>
-<!--l. 825--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx151-1965003"></a>to specify the compile-time side eﬀects of processing
-various CLOS-related macro forms. Top-level calls to the CLOS deﬁning macros
-have the following compile-time side eﬀects; any other compile-time behavior is
-explicitly left unspeciﬁed.
-<div class="flushdesc">
-      <ul><li><b>
-<tt><a 
-href="symbols.html#x187-2604274r274">defclass</a></tt> </b></li>The class name may appear in subsequent type declarations and
-      can be used as a specializer in subsequent <tt><a 
-href="symbols.html#x187-2604285r285">defmethod</a></tt> forms. Thus the
-      compile-time behavior of <tt><a 
-href="symbols.html#x187-2604274r274">defclass</a></tt> is similar to that of <tt><a 
-href="symbols.html#x187-2604290r290">deftype</a></tt> or
-      <tt><a 
-href="symbols.html#x187-2604289r289">defstruct</a></tt>.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604276r276">defgeneric</a></tt> </b></li>The generic function can be referenced in subsequent <tt><a 
-href="symbols.html#x187-2604285r285">defmethod</a></tt>
-      forms, but the compiler does not arrange for the generic function to be
-      callable at compile time.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604285r285">defmethod</a></tt> </b></li>The compiler does not arrange for the method to be callable at
-      compile time. If there is a generic function with the same name deﬁned
-      at compile time, compiling a <tt><a 
-href="symbols.html#x187-2604285r285">defmethod</a></tt> form does not add the method
-      to that generic function; the method is added to the generic function
-      only when the <tt><a 
-href="symbols.html#x187-2604285r285">defmethod</a></tt> form is actually executed.
-      <!--l. 850--><p class="noindent" >The   error-signaling   behavior   described   in   the   speciﬁcation   of
-      <tt><a 
-href="symbols.html#x187-2604285r285">defmethod</a></tt> in chapter <a 
-href="clos.html#x176-224600027">27<!--tex4ht:ref: CLOS --></a> (if the function isn&#x2019;t a generic function or if
-      the lambda-list is not congruent) occurs only when the deﬁning form
-      is executed, not at compile time.
-      <!--l. 855--><p class="noindent" >The  forms  in  <tt><a 
-href="symbols.html#x187-2604338r338">eql</a></tt> parameter  specializers  are  evaluated  when  the
-      <tt><a 
-href="symbols.html#x187-2604285r285">defmethod</a></tt> form is executed. The compiler is permitted to build in
-      knowledge about what the form in an <tt><a 
-href="symbols.html#x187-2604338r338">eql</a></tt> specializer will evaluate to
-                                                                          
-
-                                                                          
-      in cases where the ultimate result can be syntactically inferred without
-      actually evaluating it.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604280r280">define-method-combination</a></tt> </b></li>The  method  combination  can  be  used  in
-      subsequent <tt><a 
-href="symbols.html#x187-2604276r276">defgeneric</a></tt> forms.
-      <!--l. 864--><p class="noindent" >The  body  of  a  <tt><a 
-href="symbols.html#x187-2604280r280">define-method-combination</a></tt> form  is  evaluated  no
-      earlier than when the deﬁning macro is executed and possibly as late as
-      generic function invocation time. The compiler may attempt to evaluate
-      these forms at compile time but must not depend on being able to do
-      so.</ul>
-</div>
-<!--l. 871--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">24.2.4   </span> <a 
-href="frontmatter.html#QQ2-151-2005" id="x151-196600024.2.4">Similarity of Constants</a></h4>
-<!--l. 874--><p class="noindent" >Following paragraphs speciﬁes what objects can be in compiled constants
-and what relationship there must be between a constant passed to the
-compiler and the one that is established by compiling it and then loading its
-ﬁle.
-<!--l. 879--><p class="indent" >   The key is a deﬁnition of an equivalence relationship called “similarity as
-constants” between Lisp objects. Code passed through the ﬁle compiler and then
-loaded must behave as though quoted constants in it are similar in this sense to
-quoted constants in the corresponding source code. An object may be used as a
-quoted constant processed by <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> if and only if the compiler can
-guarantee that the resulting constant established by loading the compiled ﬁle is
-“similar as a constant” to the original. Speciﬁc requirements are spelled out
-below.
-<!--l. 890--><p class="indent" >   Some types of objects, such as streams, are not supported in constants
-processed by the ﬁle compiler. Such objects may not portably appear as constants
-in code processed with <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>. Conforming implementations are required
-to handle such objects either by having the compiler or loader reconstruct an
-equivalent copy of the object in some implementation-speciﬁc manner or by
-having the compiler signal an error.
-<!--l. 898--><p class="indent" >   Of the types supported in constants, some are treated as aggregate objects.
-For these types, being similar as constants is deﬁned recursively. We say that an
-object of such a type has certain “basic attributes”; to be similar as a constant to
-                                                                          
-
-                                                                          
-another object, the values of the corresponding attributes of the two objects must
-also be similar as constants.
-<!--l. 905--><p class="indent" >   A deﬁnition of this recursive form has problems with any circular or inﬁnitely
-recursive object such as a list that is an element of itself. We use the
-idea of depth-limited comparison and say that two objects are similar as
-constants if they are similar at all ﬁnite levels. This idea is implicit in
-the deﬁnitions below, and it applies in all the places where attributes
-of two objects are required to be similar as constants. The question of
-handling circular constants is the subject of a separate vote by X3J13 (see
-below).
-<!--l. 914--><p class="indent" >   The following terms are used throughout this section. The term <i>constant</i> refers
-to a quoted or self-evaluating constant, not a named constant deﬁned by
-<tt><a 
-href="symbols.html#x187-2604275r275">defconstant</a></tt>. The term <i>source code</i> is used to refer to the objects constructed
-when <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> calls <tt><a 
-href="symbols.html#x187-2604715r715">read</a></tt> (or the equivalent) and to additional objects
-constructed by macro expansion during ﬁle compilation. The term <i>compiled code</i>
-is used to refer to objects constructed by <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt>.
-<!--l. 924--><p class="indent" >   Two objects are <i>similar as a constant</i> if and only if they are both of one of the
-types listed below and satisfy the additional requirements listed for that
-type.
-<div class="flushdesc">
-      <ul><li><b>
-<tt>number</tt> </b></li>
-      <!--l. 931--><p class="noindent" >Two numbers are similar as constants if they are of the same type and
-      represent the same mathematical value.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604214r214">character</a></tt> </b></li>
-      <!--l. 936--><p class="noindent" >Two characters are similar as constants if they both represent the same
-      character. (The intent is that this be compatible with how <tt><a 
-href="symbols.html#x187-2604338r338">eql</a></tt> is deﬁned
-      on characters.)
-      <li><b>
-<tt>symbol</tt> </b></li>X3J13 voted in June 1989 <a 
- id="dx151-1966001"></a>to deﬁne similarity as a constant for
-      interned symbols. A symbol <span class="math"><i>S</i></span> appearing in the source code is similar
-      as a constant to a symbol <span class="math"><i>S</i>′</span> in the compiled code if their print
-      names are similar as constants and either of the following conditions
-      holds:
-                                                                          
-
-                                                                          
-           <ul class="itemize1">
-           <li class="itemize"><span class="math"><i>S</i></span> is accessible in <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> at compile time and <span class="math"><i>S</i>′</span> is accessible
-           in <tt><a 
-href="symbols.html#x187-2604023r23">*package*</a></tt> at load time.
-           </li>
-           <li class="itemize"><span class="math"><i>S</i>′</span> is accessible in the package that is similar as a constant to the
-           home package of symbol <i>S</i>.</li></ul>
-      <!--l. 952--><p class="noindent" >The “similar as constants” relationship for interned symbols has nothing to
-      do with <tt>*readtable*</tt> or how the function <tt><a 
-href="symbols.html#x187-2604715r715">read</a></tt> would parse the characters
-      in the print name of the symbol.
-      <!--l. 956--><p class="noindent" >An uninterned symbol in the source code is similar as a constant to an
-      uninterned symbol in the compiled code if their print names are similar as
-      constants.
-      <li><b>
-<tt>package</tt> </b></li>
-      <!--l. 962--><p class="noindent" >A package in the source code is similar as a constant to a package in the
-      compiled code if their names are similar as constants. Note that the loader
-      ﬁnds the corresponding package object as if by calling <tt><a 
-href="symbols.html#x187-2604374r374">find-package</a></tt> with
-      the package name as an argument. An error is signaled if no package of that
-      name exists at load time.
-      <li><b>
-<tt>random-state</tt> </b></li>
-      <!--l. 970--><p class="noindent" >We say that two <tt>random-state</tt> objects are <i>functionally equivalent</i>
-      if applying <tt><a 
-href="symbols.html#x187-2604706r706">random</a></tt> to them repeatedly always produces the same
-      pseudo-random numbers in the same order.
-      <!--l. 974--><p class="noindent" >Two random-states are similar as constants if and only if copies of them
-      made via <tt><a 
-href="symbols.html#x187-2604546r546">make-random-state</a></tt> are functionally equivalent. (Note that a
-      constant <tt>random-state</tt> object cannot be used as the <i>state</i> argument to
-      the function <tt><a 
-href="symbols.html#x187-2604706r706">random</a></tt> because <tt><a 
-href="symbols.html#x187-2604706r706">random</a></tt> performs a side eﬀect on that
-      argument.)
-      <li><b>
-<tt>cons</tt> </b></li>
-      <!--l. 982--><p class="noindent" >Two conses are similar as constants if the values of their respective <i>car</i> and
-      <i>cdr</i> attributes are similar as constants.
-                                                                          
-
-                                                                          
-      <li><b>
-<tt>array</tt> </b></li>
-      <!--l. 987--><p class="noindent" >Two arrays are similar as constants if the corresponding values of each of the
-      following attributes are similar as constants: for vectors (one-dimensional
-      arrays), the <tt><a 
-href="symbols.html#x187-2604486r486">length</a></tt> and <tt>element-type</tt> and the result of <tt><a 
-href="symbols.html#x187-2604329r329">elt</a></tt> for all valid
-      indices; for all other arrays, the <tt><a 
-href="symbols.html#x187-2604097r97">array-rank</a></tt>, the result of <tt><a 
-href="symbols.html#x187-2604090r90">array-dimension</a></tt>
-      for all valid axis numbers, the <tt><a 
-href="symbols.html#x187-2604094r94">array-element-type</a></tt>, and the result of <tt><a 
-href="symbols.html#x187-2604085r85">aref</a></tt>
-      for all valid indices. (The point of distinguishing vectors is to take any ﬁll
-      pointers into account.)
-      <!--l. 996--><p class="noindent" >If the array in the source code is a <tt>simple-array</tt>, then the corresponding
-      array in the compiled code must also be a <tt>simple-array</tt>, but if the array in
-      the source code is displaced, has a ﬁll pointer, or is adjustable, the
-      corresponding array in the compiled code is permitted to lack any or all of
-      these qualities.
-      <li><b>
-<tt>hash-table</tt> </b></li>
-      <!--l. 1004--><p class="noindent" >Two hash tables are similar as constants if they meet three requirements.
-      First, they must have the same test (for example, both are <tt><a 
-href="symbols.html#x187-2604338r338">eql</a></tt> hash tables
-      or both are <tt><a 
-href="symbols.html#x187-2604339r339">equal</a></tt> hash tables). Second, there must be a unique bijective
-      correspondence between the keys of the two tables, such that the
-      corresponding keys are similar as constants. Third, for all keys, the
-      values associated with two corresponding keys must be similar as
-      constants.
-      <!--l. 1014--><p class="noindent" >If there is more than one possible one-to-one correspondence between the
-      keys of the two tables, it is unspeciﬁed whether the two tables are similar
-      as constants. A conforming program cannot use such a table as a
-      constant.
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604656r656">pathname</a></tt> </b></li>
-      <!--l. 1021--><p class="noindent" >Two pathnames are similar as constants if all corresponding pathname
-      components are similar as constants.
-      <li><b>
-<tt>stream</tt>, <tt>readtable</tt>, and <tt>method</tt> </b></li>
-      <!--l. 1026--><p class="noindent" >Objects of these types are not supported in compiled constants.
-                                                                          
-
-                                                                          
-      <li><b>
-<tt><a 
-href="symbols.html#x187-2604399r399">function</a></tt> </b></li>
-      <!--l. 1031--><p class="noindent" >X3J13 voted in June 1989 <a 
- id="dx151-1966002"></a>to specify that objects of type <tt><a 
-href="symbols.html#x187-2604399r399">function</a></tt> are not
-      supported in compiled constants.
-      <li><b>
-<tt>structure</tt> and <tt>standard-object</tt> </b></li>
-      <!--l. 1037--><p class="noindent" >X3J13 voted in March 1989 <a 
- id="dx151-1966003"></a>to introduce a facility based on the Common
-      Lisp Object System whereby a user can specify how <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> and
-      <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt> must cooperate to reconstruct compile-time constant objects at load
-      time (see <tt><a 
-href="symbols.html#x187-2604542r542">make-load-form</a></tt>).</ul>
-</div>
-<!--l. 1044--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx151-1966004"></a>to specify the circumstances under which
-constants may be coalesced in compiled code.
-<!--l. 1047--><p class="indent" >   Suppose <span class="math"><i>A</i></span> and <span class="math"><i>B</i></span> are two objects used as quoted constants in the source code,
-and that <span class="math"><i>A</i>′</span> and <span class="math"><i>B</i>′</span> are the corresponding objects in the compiled code. If <span class="math"><i>A</i>′</span> and
-<span class="math"><i>B</i>′</span> are <tt><a 
-href="symbols.html#x187-2604338r338">eql</a></tt> but <span class="math"><i>A</i></span> and <span class="math"><i>B</i></span> were not <tt><a 
-href="symbols.html#x187-2604338r338">eql</a></tt>, then we say that <span class="math"><i>A</i></span> and <span class="math"><i>B</i></span> have been
-<i>coalesced</i> by the compiler.
-<!--l. 1053--><p class="indent" >   An implementation is permitted to coalesce constants appearing in code to be
-compiled if and only if they are similar as constants, except that objects of type
-<tt>symbol</tt>, <tt>package</tt>, <tt>structure</tt>, or <tt>standard-object</tt> obey their own rules and may
-not be coalesced by a separate mechanism.________________________________<div class="rationale">
-<!--l. 1060--><p class="noindent" ><b>Обоснование:</b> Objects of type <tt>symbol</tt> and <tt>package</tt> cannot be coalesced because the
-fact that they are named, interned objects means they are already as coalesced as it is
-useful for them to be. Uninterned symbols could perhaps be coalesced, but that was
-thought to be more dangerous than useful. Structures and objects could be
-coalesced if a “similar as a constant” predicate were deﬁned for them; it would be a
-generic function. However, at present there is no such predicate. Currently
-<tt><a 
-href="symbols.html#x187-2604542r542">make-load-form</a></tt> provides a protocol by which <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt> and <tt><a 
-href="symbols.html#x187-2604497r497">load</a></tt> work together
-to construct an object in the compiled code that is equivalent to the object
-in the source code; a diﬀerent mechanism would have to be added to permit
-coalescing.
+stream. The function <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b> is called by the <b><a 
+href="symbols.html#x188-375325r325">describe</a></b> function; it
+should not be called by the user.
+<!--l. 1221--><p class="indent" >   Each implementation must provide a method on the class <b>standard-object</b>
+and methods on enough other classes to ensure that there is always an applicable
+method. Implementations are free to add methods for other classes. Users can
+write methods for <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b> for their own classes if they do not wish to
+inherit an implementation-supplied method.
+<!--l. 1228--><p class="indent" >   The ﬁrst argument may be any Lisp object. The second argument is a
+stream; it cannot be <b><a 
+href="symbols.html#x188-375941r941">t</a></b> or <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>. The values returned by <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b> are
+unspeciﬁed.
+<!--l. 1232--><p class="indent" >   Methods on <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b> may recursively call <b><a 
+href="symbols.html#x188-375325r325">describe</a></b>. Indentation,
+depth limits, and circularity detection are all taken care of automatically, provided
+that each method handles exactly one level of structure and calls <b><a 
+href="symbols.html#x188-375325r325">describe</a></b>
+recursively if there are more structural levels. If this rule is not obeyed, the results
+are undeﬁned.
+<!--l. 1238--><p class="indent" >   In some implementations the <em>stream</em> argument passed to a <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b>
+method is not the original stream but is an intermediate stream that implements
+parts of <b><a 
+href="symbols.html#x188-375325r325">describe</a></b>. Methods should therefore not depend on the identity of this
+stream.___________________________________________________________________<div class="rationale">
+<!--l. 1244--><p class="noindent" ><b>Обоснование:</b> This proposal was closely modeled on the CLOS description of
+<b><a 
+href="symbols.html#x188-375741r741">print-object</a></b>, which was well thought out and provides a great deal of functionality and
+implementation freedom. Implementation techniques for <b><a 
+href="symbols.html#x188-375741r741">print-object</a></b> are applicable to
+<b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b>.
+<!--l. 1250--><p class="indent" >     The reason for making the return values for <b><a 
+href="symbols.html#x188-375326r326">describe-object</a></b> unspeciﬁed is to avoid
+forcing users to write <b>(values)</b> explicitly in all their methods; <b><a 
+href="symbols.html#x188-375325r325">describe</a></b> should take care
+of that.
 </div>___________________________________________________________________________________________________________
-<!--l. 1075--><p class="indent" >     Note that coalescing is possible only because it is forbidden to destructively
-modify constants <a 
- id="dx151-1966005"></a>(see <tt><a 
-href="symbols.html#x187-2604705r705">quote</a></tt>).
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 1258--><p class="noindent" >[Function]</em><a 
+ id="dx151-220008"></a> <b>inspect</b> <i>object</i>
+</div>
+<b>
                                                                           
 
                                                                           
-<!--l. 1078--><p class="indent" >   Objects containing circular or inﬁnitely recursive references may legitimately
-appear as constants to be compiled. The compiler is required to preserve <tt><a 
-href="symbols.html#x187-2604338r338">eql</a></tt>-ness
-of substructures within a ﬁle compiled by <tt><a 
-href="symbols.html#x187-2604232r232">compile-file</a></tt>.
+<!--l. 1260--><p class="indent" >   <a 
+href="symbols.html#x188-375486r486">inspect</a></b> is an interactive version of <b><a 
+href="symbols.html#x188-375325r325">describe</a></b>. The nature of the interaction is
+implementation-dependent, but the purpose of <b><a 
+href="symbols.html#x188-375486r486">inspect</a></b> is to make it easy to
+wander through a data structure, examining and modifying parts of it.
+Implementations are encouraged to respond to the typing of the character <b>?</b> by
+providing help, including a list of commands.
+<!--l. 1268--><p class="indent" >   The values returned by <b><a 
+href="symbols.html#x188-375486r486">inspect</a></b> are implementation-dependent.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 1273--><p class="noindent" >[Function]</em><a 
+ id="dx151-220009"></a> <b>room</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>x</i>
+</div>
+<b>
+<!--l. 1275--><p class="indent" >   <a 
+href="symbols.html#x188-375809r809">room</a></b> prints, to the stream in the variable <b><a 
+href="symbols.html#x188-375051r51">*standard-output*</a></b>, information
+about the state of internal storage and its management. This might include
+descriptions of the amount of memory in use and the degree of memory
+compaction, possibly broken down by internal data type if that is appropriate.
+The nature and format of the printed information is implementation-dependent.
+The intent is to provide information that may help a user to tune a program to a
+particular implementation.
+<b>
+<!--l. 1283--><p class="indent" >   (room nil)</b> prints out a minimal amount of information. <b>(room t)</b> prints out
+a maximal amount of information. Simply <b>(room)</b> prints out an intermediate
+amount of information that is likely to be useful.
+<!--l. 1288--><p class="indent" >   The argument <em>x</em> may also be the keyword <b>:default</b>, which has the same eﬀect
+as passing no argument at all.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 1293--><p class="noindent" >[Function]</em><a 
+ id="dx151-220010"></a> <b>ed</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>x</i>
+</div>
+<!--l. 1295--><p class="indent" >   If the implementation provides a resident editor, this function should invoke
+it.
                                                                           
 
                                                                           
-<!--l. 1083--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
-href="clmse123.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse121.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse121.html#tailclmse121.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="clmse122.html" >В-начало</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
-href="misc.html#clmse122.html" >Наверх</a><tt>&#x003E;</tt></div><a 
- id="tailclmse122.html"></a>  </div> </div> 
+<b>
+<!--l. 1298--><p class="indent" >   (ed)</b> or <b>(ed nil)</b> simply enters the editor, leaving you in the same state as the
+last time you were in the editor.
+<b>
+<!--l. 1301--><p class="indent" >   (ed <em>pathname</em>)</b> edits the contents of the ﬁle speciﬁed by <em>pathname</em>. The
+<em>pathname</em> may be an actual pathname or a string.
+<b>
+<!--l. 1305--><p class="indent" >   <a 
+href="symbols.html#x188-375352r352">ed</a></b> accepts logical pathnames (see section <a 
+href="clmse116.html#x144-20300023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
+<b>
+<!--l. 1308--><p class="indent" >   (ed <em>symbol</em>)</b> tries to let you edit the text for the function named <em>symbol</em>. The
+means by which the function text is obtained is implementation-dependent; it
+might involve searching the ﬁle system, or pretty printing resident interpreted
+code, for example.
+<!--l. 1313--><p class="indent" >   Function name may be any function-name (a symbol or a list whose <em>car</em> is
+<b><a 
+href="symbols.html#x188-375833r833">setf</a></b>—see section <a 
+href="clmse35.html#x47-750007.1">7.1<!--tex4ht:ref: FUNCTION-NAME-SECTION --></a>). Thus one may write <b>(ed &#x2019;(setf cadr))</b> to edit the <b><a 
+href="symbols.html#x188-375833r833">setf</a></b>
+expansion function for <b><a 
+href="symbols.html#x188-375175r175">cadr</a></b>.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 1321--><p class="noindent" >[Function]</em><a 
+ id="dx151-220011"></a> <b>dribble</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>pathname</i>
+</div>
+<b>
+<!--l. 1323--><p class="indent" >   (dribble <em>pathname</em>)</b> may rebind <b><a 
+href="symbols.html#x188-375050r50">*standard-input*</a></b> and <b><a 
+href="symbols.html#x188-375051r51">*standard-output*</a></b>,
+and may take other appropriate action, so as to send a record of the input/output
+interaction to a ﬁle named by <em>pathname</em>. The primary purpose of this is to create
+a readable record of an interactive session.
+<b>
+<!--l. 1330--><p class="indent" >   (dribble)</b> terminates the recording of input and output and closes the dribble
+ﬁle.
+<b>
+<!--l. 1333--><p class="indent" >   <a 
+href="symbols.html#x188-375347r347">dribble</a></b> also accepts logical pathnames (see section <a 
+href="clmse116.html#x144-20300023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
+<b>
+<!--l. 1336--><p class="indent" >   <a 
+href="symbols.html#x188-375347r347">dribble</a></b> is intended primarily for interactive debugging and that its eﬀect
+cannot be relied upon for use in portable programs.
+<!--l. 1341--><p class="indent" >   Diﬀerent implementations of Common Lisp have used radically diﬀerent
+                                                                          
+
+                                                                          
+techniques for implementing <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b>. All are reasonable interpretations of the
+original speciﬁcation, and all behave in approximately the same way if
+<b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> is called only from the interactive top level. However, they may
+have quite diﬀerent behaviors if <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> is called from within compound
+forms.
+<!--l. 1348--><p class="indent" >   Consider two models of the operation of <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b>. In the “redirecting” model, a
+call to <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> with a pathname argument alters certain global variables such as
+<b><a 
+href="symbols.html#x188-375051r51">*standard-output*</a></b>, perhaps by constructing a broadcast stream directed to
+both the original value of <b><a 
+href="symbols.html#x188-375051r51">*standard-output*</a></b> and to the dribble ﬁle; other
+streams may be aﬀected as well. A call to <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> with no arguments undoes
+these side eﬀects.
+<!--l. 1356--><p class="indent" >   In the “recursive” model, by contrast, a call to <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> with a pathname
+argument creates a new interactive command loop and calls it recursively. This
+new command loop is just like an ordinary read-eval-print loop except that it also
+echoes the interaction to the dribble ﬁle. A call to <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> with no arguments
+does a <b>throw</b> that exits the recursive command loop and returns to the original
+caller of <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> with an argument.
+<!--l. 1364--><p class="indent" >   The two models may be distinguished by this test case: <div class="lisp"><tt><div class="tabbing">
+(progn (dribble &#x0022;basketball&#x0022;)
+   <br>                            (print &#x0022;Larry&#x0022;)<br>                            (dribble)<br>
+       (princ &#x0022;Bird&#x0022;))<br>
+<!--l. 1370--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1371--><p class="indent" >   If this form is input to the Lisp top level, in either model a newline (provided
+by the function <b><a 
+href="symbols.html#x188-375740r740">print</a></b>) and the words <b>Larry Bird</b> will be printed to the standard
+output. The redirecting dribble model will additionally print all but the word
+<b>Bird</b> to a ﬁle named <b>basketball</b>.
+<!--l. 1377--><p class="indent" >   By contrast, the recursive dribble model will enter a recursive command loop
+and not print anything until <b>(dribble)</b> is executed from within the new
+interactive command loop. At that time the ﬁle named <b>basketball</b> will be closed,
+and then execution of the <b><a 
+href="symbols.html#x188-375750r750">progn</a></b> form will be resumed. A newline and “<b>Larry </b>”
+(note the trailing space) will be printed to the standard output, and then the
+call <b>(dribble)</b> may complain that there is no active dribble ﬁle. Once
+this error is resolved, the word <b>Bird</b> may be printed to the standard
+                                                                          
+
+                                                                          
+output.
+<!--l. 1387--><p class="indent" >   Here is a slightly diﬀerent test case: <div class="lisp"><tt><div class="tabbing">
+(dribble &#x0022;baby-food&#x0022;)
+   <br>
+<!--l. 1390--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 1391--><p class="indent" >   <div class="tabbing">
+(progn (print &#x0022;Mashed banana&#x0022;)
+   <br>                                                                                (dribble)<br>
+       (princ &#x0022;and cream of rice&#x0022;))<br>
+<!--l. 1395--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1396--><p class="indent" >   If this form is input to the Lisp top level, in the redirecting model a newline
+and the words <b>Mashed banana and cream of rice</b> will be printed to the
+standard output and all but the words <b>and cream of rice</b> will be sent to a ﬁle
+named <b>baby-food</b>.
+<!--l. 1402--><p class="indent" >   The recursive model will direct exactly the same output to the ﬁle named
+<b>baby-food</b> but will never print the words <b>and cream of rice</b> to the
+standard output because the call <b>(dribble)</b> does not return normally; it
+throws.
+<!--l. 1407--><p class="indent" >   The redirecting model may be intuitively more appealing to some. The
+recursive model, however, may be more robust; it carefully limits the extent
+of the dribble operation and disables dribbling if a throw of any kind
+occurs. The vote by X3J13 was an explicit decision not to decide which
+model to use. Users are advised to call <b><a 
+href="symbols.html#x188-375347r347">dribble</a></b> only interactively, at top
+level.
+<hr></div>
+                                                                          
+
+                                                                          
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 1417--><p class="noindent" >[Function]</em><a 
+ id="dx151-220012"></a> <b>apropos</b> <i>string</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>package</i><br />
+<em>
+[Function]</em><a 
+ id="dx151-220013"></a> <b>apropos-list</b> <i>string</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>package</i>
+</div>
+<b>
+<!--l. 1420--><p class="indent" >   (apropos <em>string</em>)</b> tries to ﬁnd all available symbols whose print names
+contain <em>string</em> as a substring. (A symbol may be supplied for the <em>string</em>, in which
+case the print name of the symbol is used.) Whenever <b><a 
+href="symbols.html#x188-375091r91">apropos</a></b> ﬁnds a symbol, it
+prints out the symbol&#x2019;s name; in addition, information about the function
+deﬁnition and dynamic value of the symbol, if any, is printed. If <em>package</em> is
+speciﬁed and not <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>, then only symbols available in that package are examined;
+otherwise “all” packages are searched, as if by <b><a 
+href="symbols.html#x188-375337r337">do-all-symbols</a></b>. Because a symbol
+may be available by way of more than one inheritance path, <b><a 
+href="symbols.html#x188-375091r91">apropos</a></b> may print
+information about the same symbol more than once. The information is printed to
+the stream that is the value of <b><a 
+href="symbols.html#x188-375051r51">*standard-output*</a></b>. <b><a 
+href="symbols.html#x188-375091r91">apropos</a></b> returns no
+values (that is, it returns what the expression <b>(values)</b> returns: zero
+values).
+<b>
+<!--l. 1437--><p class="indent" >   <a 
+href="symbols.html#x188-375092r92">apropos-list</a></b> performs the same search that <b><a 
+href="symbols.html#x188-375091r91">apropos</a></b> does but prints nothing.
+It returns a list of the symbols whose print names contain <em>string</em> as a
+substring.
+<hr></div>
+                                                                          
+
+                                                                          
+<!--l. 1442--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse123.html" >Далее</a>&#x003E;&#x003C;<a 
+href="clmse121.html" >Назад</a>&#x003E;&#x003C;<a 
+href="clmse121.html#tailclmse121.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
+href="clmse122.html" >В-начало</a>&#x003E;&#x003C;<a 
+href="misc.html#clmse122.html" >Наверх</a>&#x003E;<br> &lt;<a href="../index.html">Главная</a>&gt; &lt;<a href="symbols.html">Символы</a>&gt;</div><a 
+ id="tailclmse122.html"></a>
+ 
 </body></html> 

@@ -16,7 +16,7 @@ if [ -f issues.idx ]; then
 fi
 
 # make html
-htlatex clm.tex 'cltl,3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<' ' -cunihtf -utf8' '-d./en/' '-interaction=batchmode'
+htlatex clm.tex 'cltl,3,next,fn-in,charset=utf-8,sections+,minitoc<' ' -cunihtf -utf8' '-d./en/' #'-interaction=batchmode'
 
 # make index.html file
 htlatex index.tex 'index,0,charset=utf-8' ' -cunihtf -utf8' '' '-interaction=batchmode'
