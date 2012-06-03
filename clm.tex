@@ -1,24 +1,26 @@
 \documentclass[12pt]{book}
 
-\def\rulang{}
-
 % !!! Эту комбинацию не менять
 \usepackage[T2A]{fontenc} % включаем русские шрифты
 \usepackage[utf8]{inputenc} % включаем поддержку UTF8
 \usepackage[russian,english]{babel} % включаем пакет для поддержки русского языка
 
+\input commands.tex
+
 \ifx \HCode\Undef
-  \input commands_html.tex
+
 \else
-  \input commands_html.tex
+  % Specify html filenames
+  \let\oldinclude=\include
+  \def\include#1{\NextFile{#1.html}\oldinclude{#1}}
+\fi
 
 \ifx \rulang\Undef
-  \title{Common Lisp The Language Second Edition}
+  \title{Common Lisp The Language, Second Edition}
 \else %RUSSIAN
-  \title{Язык Common Lisp. Второе издание.}
+  \title{Язык Common Lisp, второе издание.}
 \fi
 
-\fi
 
 % !!!
 %%% Root file for Common Lisp Manual.  Copyright 1984, 1987 Guy L. Steele Jr.
@@ -46,38 +48,45 @@
 %% terms are stored using \indexterm; most of the rest use the defun
 %% environment.
 
+\usepackage{color,graphicx}
+\usepackage{hyperref}
+\usepackage{multicol}
+
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
 \makeindex{symbols}
 \makeindex{issues}
 
-%\ifx \HCode\Undef
-% not tex4ht ...
-%\typeout{Not tex4ht}
-%  \usepackage[pdftex]{color,graphicx}
-%  \usepackage[pdftex]{hyperref}
-%\else
-%... tex4ht ...
-   \usepackage{color,graphicx}
-   \usepackage{hyperref}
-%\fi
+\newcommand{\xjvotesname}{X3J13 Votes}
+\newcommand{\symbolsname}{Symbols}
 
-\ifx \rulang\Undef
-
+\ifdefined\rulang
 %RUSSIAN
-\else
 \AtBeginDocument{\renewcommand\contentsname{Содержание}
   \renewcommand{\chaptername}{Глава}
   \renewcommand{\appendixname}{Приложение}
   \renewcommand{\bibname}{Библиография}
+  \renewcommand{\tablename}{Таблица}
+  \renewcommand{\figurename}{Изображение}
+  %\renewcommand{\alsoname}{Смотрите также}
+  \renewcommand{\indexname}{Предментный указатель}
+  \renewcommand{\listfigurename}{Список изображений}
+  \renewcommand{\listtablename}{Список таблиц}
+  \renewcommand{\partname}{Часть}
+  %\renewcommand{\refname}{Ссылки}
+  %\renewcommand{\seename}{Смотрите}
+  \renewcommand{\xjvotesname}{Голосование X3J13}
+  \renewcommand{\symbolsname}{Символы}
 }
 \fi
 
 \begin{document}
 
-\input Title-page.tex
+\include{Title-page}
 
 \pagenumbering{roman}
 
-\include{frontmatter}   % Title page, toc, acknowledgements
+\include{frontmatter}   % toc, acknowledgements
 
 \pagenumbering{arabic}
 
@@ -110,34 +119,52 @@
 \include{pprint}      % Pretty-printing
 \include{clos}        % Common Lisp Object System
 \include{condition}   % Common Lisp Condition System
+\include{amop}        % Art of Common Lisp Metaobject Protocol
 
-\appendix
-\include{series}      % Series
-\include{generators}  % Generators
-\include{backq}
+%\appendix
+%\include{series}      % Series
+%\include{generators}  % Generators
+%\include{backq}
 
 \include{bib}         % Bibliography
 %% \include{issues}      % Index to ANSI issues
 
 % index
+% Add chpater for non-html
 
-\clearpage\def\pagestatus{FINAL PROOF}
-%\pdfbookmark{Index of X3J13 Votes}{ISSUES}
-%\label{ISSUES}
-\ifx \rulang\Undef
-\printindex{issues}{Index of X3J13 Votes}
-\else
-\printindex{issues}{Указатель голосования X3J13}
+\cleardoublepage
+\phantomsection
+
+\ifx \HCode\Undef
+    \addcontentsline{toc}{chapter}{\indexname}
 \fi
 
-\clearpage\def\pagestatus{FINAL PROOF}
-%\pdfbookmark{Symbols Index}{INDEX}
-%\label{INDEX}
-\ifx \rulang\Undef
-\printindex{symbols}{Symbols Index}
-\else
-\printindex{symbols}{Указатель символов}
+\cleardoublepage
+\phantomsection
+
+\printindex{issues}{\xjvotesname}
+
+\ifdefined\HCode
+  \NextFile{symbols.html}
 \fi
+
+
+\cleardoublepage
+\phantomsection
+
+\makeatletter
+\renewenvironment{theindex}{%
+  \parindent\z@
+  \parskip\z@ plus .3pt\relax
+  \newcounter{indexcc}
+  \def\@newidxitem ##1 {\@idxitem ##1\refstepcounter{indexcc}\label{idxcc:##1} }\relax
+  \let\item\@newidxitem\relax%
+  \def\indexspace{}
+  %\let\item\@idxitem
+}{\if@restonecol\onecolumn\else\clearpage\fi} 
+\makeatother
+
+\printindex{symbols}{\symbolsname}
 
 \include{colophon}
 

@@ -1,0 +1,308 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>14 Sequences</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:03:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
+href="clmse78.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse77.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse77.html#tailclmse77.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="#tailkseque.html">Tail</a>&#x003E;&#x003C;<a 
+href="clm.html#kseque.html" >Up</a>&#x003E;</div><h2 class="chapterHead"><span class="titlemark">Chapter 14</span><br /><a 
+href="clm.html#QQ2-96-166" id="x96-13600014">Sequences</a></h2><div class="chapterTOCS">
+    <span class="sectionToc" >14.1 <a 
+href="clmse78.html#x97-13700014.1">Simple Sequence Functions</a></span>
+<br />    <span class="sectionToc" >14.2 <a 
+href="clmse79.html#x98-13800014.2">Concatenating, Mapping, and Reducing Sequences</a></span>
+<br />    <span class="sectionToc" >14.3 <a 
+href="clmse80.html#x99-13900014.3">Modifying Sequences</a></span>
+<br />    <span class="sectionToc" >14.4 <a 
+href="clmse81.html#x100-14000014.4">Searching Sequences for Items</a></span>
+<br />    <span class="sectionToc" >14.5 <a 
+href="clmse82.html#x101-14100014.5">Sorting and Merging</a></span>
+   </div>
+<!--l. 11--><p class="indent" >   The type <b>sequence</b> encompasses both lists and vectors (one-dimensional
+arrays). While these are diﬀerent data structures with diﬀerent structural
+properties leading to diﬀerent algorithmic uses, they do have a common property:
+each contains an ordered set of elements. Note that <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> is considered to be a
+sequence of length zero.
+<!--l. 18--><p class="indent" >   Some operations are useful on both lists and arrays because they deal with
+ordered sets of elements. One may ask the number of elements, reverse the
+ordering, extract a subsequence, and so on. For such purposes Common Lisp
+provides a set of generic functions on sequences.
+<!--l. 23--><p class="indent" >   Note that this remark, predating the design of the Common Lisp Object
+System, uses the term “generic” in a generic sense, and not necessarily in the
+technical sense used by CLOS (see chapter <a 
+href="dtypes.html#x9-150002">2<!--tex4ht:ref: DTYPES --></a>).
+<div class="flushleft" 
+>
+<!--l. 28--><p class="noindent" >
+ <!--tex4ht:inline--><div class="tabular"><table width="100%" class="tabular"><tr><td align="left" >elt         </td><td align="left" >reverse      </td><td align="left" >map      </td><td align="left" >remove              </td>
+</tr><tr><td align="left" >length    </td><td align="left" >nreverse     </td><td align="left" >some     </td><td align="left" >remove-duplicates</td>
+</tr><tr><td align="left" >subseq   </td><td align="left" >concatenate</td><td align="left" >every    </td><td align="left" >delete                </td>
+</tr><tr><td align="left" >copy-seq </td><td align="left" >position     </td><td align="left" >notany  </td><td align="left" >delete-duplicates  </td>
+</tr><tr><td align="left" >ﬁll         </td><td align="left" >ﬁnd           </td><td align="left" >notevery</td><td align="left" >substitute          </td>
+</tr><tr><td align="left" >replace   </td><td align="left" >sort          </td><td align="left" >reduce   </td><td align="left" >nsubstitute         </td>
+</tr><tr><td align="left" >count     </td><td align="left" >merge        </td><td align="left" >search   </td><td align="left" >mismatch           </td></tr></table></div></div>
+<!--l. 40--><p class="noindent" >Some of these operations come in more than one version. Such versions are indicated
+by adding a suﬃx (or occasionally a preﬁx) to the basic name of the operation. In
+addition, many operations accept one or more optional keyword arguments that
+can modify the operation in various ways.
+<!--l. 46--><p class="indent" >   If the operation requires testing sequence elements according to some
+criterion, then the criterion may be speciﬁed in one of two ways. The basic
+operation accepts an item, and elements are tested for being <b><a 
+href="symbols.html#x188-375367r367">eql</a></b> to that
+item. (A test other than <b><a 
+href="symbols.html#x188-375367r367">eql</a></b> can be speciﬁed by the <b>:test</b> or <b>:test-not</b>
+keyword. It is an error to use both of these keywords in the same call.) The
+                                                                          
+
+                                                                          
+variants formed by adding <b>-if</b> and <b>-if-not</b> to the basic operation name do
+not take an item, but instead a one-argument predicate, and elements
+are tested for satisfying or not satisfying the predicate. As an example,
+<div class="lisp"><tt><div class="tabbing">
+(remove <em>item</em> <em>sequence</em>)
+   <br>
+<!--l. 60--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 61--><p class="indent" >   returns a copy of <em>sequence</em> from which all elements <b><a 
+href="symbols.html#x188-375367r367">eql</a></b> to <em>item</em> have been
+removed; <div class="lisp"><tt><div class="tabbing">
+(remove <em>item</em> <em>sequence</em> <b>:test</b> #&#x2019;equal)
+   <br>
+<!--l. 65--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 66--><p class="indent" >   returns a copy of <em>sequence</em> from which all elements <b><a 
+href="symbols.html#x188-375369r369">equal</a></b> to <em>item</em> have been
+removed; <div class="lisp"><tt><div class="tabbing">
+(remove-if #&#x2019;numberp <em>sequence</em>)
+   <br>
+<!--l. 70--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 71--><p class="indent" >   returns a copy of <em>sequence</em> from which all numbers have been removed.
+<!--l. 73--><p class="indent" >   If an operation tests elements of a sequence in any manner, the keyword
+argument <b>:key</b>, if not <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>, should be a function of one argument that will extract
+from an element the part to be tested in place of the whole element. For example,
+the eﬀect of the MacLisp expression <b>(assq item seq)</b> could be obtained by
+<div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+(ﬁnd <em>item</em> <em>sequence</em> <b>:test</b> #&#x2019;eq <b>:key</b> #&#x2019;car)
+   <br>
+<!--l. 81--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 82--><p class="indent" >   This searches for the ﬁrst element of <em>sequence</em> whose <em>car</em> is <b><a 
+href="symbols.html#x188-375366r366">eq</a></b> to <em>item</em>. <div class="newer">
+X3J13 voted in June 1988 <a 
+ id="dx96-136001"></a>to allow the <b>:key</b> function to be only of type
+<b>symbol</b> or <b><a 
+href="symbols.html#x188-375434r434">function</a></b>; a lambda-expression is no longer acceptable as a
+functional argument. One must use the <b><a 
+href="symbols.html#x188-375434r434">function</a></b> special operator or the
+abbreviation <b>#&#x2019;</b> before a lambda-expression that appears as an explicit argument
+form.
+</div>
+<!--l. 92--><p class="indent" >   For some operations it can be useful to specify the direction in which the
+sequence is conceptually processed. In this case the basic operation normally
+processes the sequence in the forward direction, and processing in the reverse
+direction is indicated by a non-<b><a 
+href="symbols.html#x188-375658r658">nil</a></b> value for the keyword argument <b>:from-end</b>.
+(The processing order speciﬁed by the <b>:from-end</b> is purely conceptual.
+Depending on the object to be processed and on the implementation, the actual
+processing order may be diﬀerent. For this reason a user-supplied <em>test</em> function
+should be free of side eﬀects.)
+<!--l. 102--><p class="indent" >   Many operations allow the speciﬁcation of a subsequence to be operated upon.
+Such operations have keyword arguments called <b>:start</b> and <b>:end</b>. These
+arguments should be integer indices into the sequence, with <span class="math"><em>start</em> ≤<em>end</em></span> (it is an
+error if <span class="math"><em>start</em> &#x003E; <em>end</em></span>). They indicate the subsequence starting with and <em>including</em>
+element <em>start</em> and up to but <em>excluding</em> element <em>end</em>. The length of the subsequence
+is therefore <span class="math"><em>end</em> −<em>start</em></span>. If <em>start</em> is omitted, it defaults to zero; and if <em>end</em> is
+omitted or <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>, it defaults to the length of the sequence. Therefore if both
+<em>start</em> and <em>end</em> are omitted, the entire sequence is processed by default.
+For the most part, subsequence speciﬁcation is permitted purely for the
+sake of eﬃciency; one could simply call <b><a 
+href="symbols.html#x188-375917r917">subseq</a></b> instead to extract the
+subsequence before operating on it. Note, however, that operations that calculate
+indices return indices into the original sequence, not into the subsequence:
+<div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+(position #\b &#x0022;foobar&#x0022; <b>:start</b> 2 <b>:end</b> 5) <span class="math"> ⇒</span> 3
+   <br>                                      (position #\b (subseq &#x0022;foobar&#x0022; 2 5)) <span class="math"> ⇒</span> 1<br>
+<!--l. 123--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 124--><p class="indent" >   If two sequences are involved, then the keyword arguments <b>:start1</b>, <b>:end1</b>,
+<b>:start2</b>, and <b>:end2</b> are used to specify separate subsequences for each
+sequence.
+<div class="newer">
+<!--l. 130--><p class="indent" >   X3J13 voted in June 1988 <a 
+ id="dx96-136002"></a>(and further clariﬁcation was voted in January
+1989 <a 
+ id="dx96-136003"></a>) to specify that these rules apply not only to all built-in functions
+that have keyword parameters named <b>:start</b>, <b>:start1</b>, <b>:start2</b>, <b>:end</b>,
+<b>:end1</b>, or <b>:end2</b> but also to functions such as <b><a 
+href="symbols.html#x188-375917r917">subseq</a></b> that take required
+or optional parameters that are documented as being named <em>start</em> or
+<em>end</em>.
+      <ul class="itemize1">
+      <li class="itemize">A “start” argument must always be a non-negative integer and defaults
+      to zero if not supplied; it is not permissible to pass <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> as a “start”
+      argument.
+      </li>
+      <li class="itemize">An “end” argument must be either a non-negative integer or <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> (which
+      indicates the end of the sequence) and defaults to <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> if not supplied;
+      therefore supplying <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> is equivalent to not supplying such an argument.
+      </li>
+      <li class="itemize">If the “end”  argument is an integer, it must be no greater than the
+      active length of the corresponding sequence (as returned by the function
+      <b><a 
+href="symbols.html#x188-375530r530">length</a></b>).
+      </li>
+      <li class="itemize">The default value for the “end”  argument is the active length of the
+      corresponding sequence.
+      </li>
+      <li class="itemize">The “start” value (after defaulting, if necessary) must not be greater
+      than the corresponding “end” value (after defaulting, if necessary).</li></ul>
+                                                                          
+
+                                                                          
+<!--l. 156--><p class="noindent" >This may be summarized as follows. Let <em>x</em> be the sequence within which indices are
+to be considered. Let <em>s</em> be the “start” argument for that sequence of any
+standard function, whether explicitly speciﬁed or defaulted, through omission,
+to zero. Let <em>e</em> be the “end” argument for that sequence of any standard
+function, whether explicitly speciﬁed or defaulted, through omission or
+an explicitly passed <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> value, to the active length of <em>x</em>, as returned by
+<b><a 
+href="symbols.html#x188-375530r530">length</a></b>. Then it is an error if the test <b>(&#x003C;= 0 <em>s</em> <em>e</em> (length <em>x</em>))</b> is not
+true.
+</div>
+<!--l. 168--><p class="indent" >   For some functions, notably <b><a 
+href="symbols.html#x188-375786r786">remove</a></b> and <b><a 
+href="symbols.html#x188-375317r317">delete</a></b>, the keyword argument
+<b>:count</b> is used to specify how many occurrences of the item should be aﬀected. If
+this is <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> or is not supplied, all matching items are aﬀected.
+<!--l. 173--><p class="indent" >   In the following function descriptions, an element <em>x</em> of a sequence “satisﬁes the
+test” if any of the following holds:
+      <ul class="itemize1">
+      <li class="itemize">A basic function was called, <em>testfn</em> was speciﬁed by the keyword <b>:test</b>,
+      and <b>(funcall <em>testfn</em> <em>item</em> (<em>keyfn</em> <em>x</em>))</b> is true.
+      </li>
+      <li class="itemize">A  basic  function  was  called,  <em>testfn</em>  was  speciﬁed  by  the  keyword
+      <b>:test-not</b>, and <b>(funcall <em>testfn</em> <em>item</em> (<em>keyfn</em> <em>x</em>))</b> is false.
+      </li>
+      <li class="itemize">An <b>-if</b> function was called, and <b>(funcall <em>predicate</em> (<em>keyfn</em> <em>x</em>))</b> is true.
+      </li>
+      <li class="itemize">An <b>-if-not</b> function was called, and <b>(funcall <em>predicate</em> (<em>keyfn</em> <em>x</em>))</b>
+      is false.</li></ul>
+<!--l. 194--><p class="noindent" >In each case <em>keyfn</em> is the value of the <b>:key</b> keyword argument (the default being the
+identity function). See, for example, <b><a 
+href="symbols.html#x188-375786r786">remove</a></b>.
+<!--l. 198--><p class="indent" >   In the following function descriptions, two elements <em>x</em> and <em>y</em> taken from
+sequences “match” if either of the following holds:
+      <ul class="itemize1">
+      <li class="itemize"><em>testfn</em> was speciﬁed by the keyword <b>:test</b>, and <b>(funcall <em>testfn</em> (<em>keyfn</em>
+      <em>x</em>) (<em>keyfn</em> <em>y</em>))</b> is true.
+      </li>
+      <li class="itemize"><em>testfn</em> was speciﬁed by the keyword <b>:test-not</b>, and <b>(funcall <em>testfn</em>
+      (<em>keyfn</em> <em>x</em>) (<em>keyfn</em> <em>y</em>))</b> is false.</li></ul>
+                                                                          
+
+                                                                          
+<!--l. 210--><p class="noindent" >See, for example, <b><a 
+href="symbols.html#x188-375821r821">search</a></b>.
+<div class="newer">
+<!--l. 213--><p class="indent" >   X3J13 voted in June 1988 <a 
+ id="dx96-136004"></a>to allow the <em>testfn</em> or <b>predicate</b> to be only of type
+<b>symbol</b> or <b><a 
+href="symbols.html#x188-375434r434">function</a></b>; a lambda-expression is no longer acceptable as a
+functional argument. One must use the <b><a 
+href="symbols.html#x188-375434r434">function</a></b> special operator or the
+abbreviation <b>#&#x2019;</b> before a lambda-expression that appears as an explicit argument
+form.
+</div>
+<!--l. 221--><p class="indent" >   You may depend on the order in which arguments are given to <em>testfn</em>; this
+permits the use of non-commutative test functions in a predictable manner. The
+order of the arguments to <em>testfn</em> corresponds to the order in which those
+arguments (or the sequences containing those arguments) were given to the
+sequence function in question. If a sequence function gives two elements from the
+same sequence argument to <em>testfn</em>, they are given in the same order in which they
+appear in the sequence.
+<!--l. 232--><p class="indent" >   Whenever a sequence function must construct and return a new vector, it
+always returns a <em>simple</em> vector (see section <a 
+href="clmse7.html#x14-270002.5">2.5<!--tex4ht:ref: ARRAY-TYPE-SECTION --></a>). Similarly, any strings constructed
+will be simple strings.
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 238--><p class="noindent" >[Function]</em><a 
+ id="dx96-136005"></a> <b>complement</b> <i>fn</i>
+</div>
+<!--l. 240--><p class="indent" >   Returns a function whose value is the same as that of <b><a 
+href="symbols.html#x188-375664r664">not</a></b> applied to the result
+of applying the function <em>fn</em> to the same arguments. One could deﬁne
+<b><a 
+href="symbols.html#x188-375255r255">complement</a></b> as follows: <div class="lisp"><tt><div class="tabbing">
+(defun complement (fn)
+   <br>                                                       #&#x2019;(lambda (&#x0026;rest arguments)<br>
+      (not (apply fn arguments))))<br>
+<!--l. 247--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 249--><p class="indent" >   One intended use of <b><a 
+href="symbols.html#x188-375255r255">complement</a></b> is to supplant the use of <b>:test-not</b>
+arguments and <b>-if-not</b> functions. <div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+(remove-if-not #&#x2019;virtuous senators) <span class="math"> ≡</span>
+   <br>                (remove-if (complement #&#x2019;virtuous) senators)<br>
+<br>                                        (remove-duplicates telephone-book<br>
+                   :test-not #&#x2019;mismatch) <span class="math"> ≡</span><br>
+   (remove-duplicates telephone-book<br>
+                      :test (complement #&#x2019;mismatch))<br>
+<!--l. 259--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+
+
+
+
+
+                                                                          
+
+                                                                          
+   <div id="bottomlinks">&#x003C;<a 
+href="clmse78.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse77.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse77.html#tailclmse77.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="kseque.html" >Front</a>&#x003E;&#x003C;<a 
+href="clm.html#kseque.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+ id="tailkseque.html"></a>  
+</body></html> 

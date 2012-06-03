@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Name Conﬂicts</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:03:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
+href="clmse62.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse60.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse60.html#tailclmse60.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="#tailclmse61.html">Tail</a>&#x003E;&#x003C;<a 
+href="xpack.html#clmse61.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">11.5   </span> <a 
+href="clm.html#QQ2-77-123" id="x77-11400011.5">Name Conﬂicts</a></h3>
+<!--l. 443--><p class="noindent" >A fundamental invariant of the package system is that within one package any
+particular name can refer to at most one symbol. A <em>name conﬂict</em> is said to occur
+when there is more than one candidate symbol and it is not obvious which one to
+choose. If the system does not always choose the same way, the read-read
+consistency rule would be violated. For example, some programs or data might
+have been read in under a certain mapping of the name to a symbol. If
+the mapping changes to a diﬀerent symbol, and subsequently additional
+programs or data are read, then the two programs will not access the
+same symbol even though they use the same name. Even if the system
+did always choose the same way, a name conﬂict is likely to result in a
+mapping from names to symbols diﬀerent from what was expected by
+the user, causing programs to execute incorrectly. Therefore, any time
+a name conﬂict is about to occur, an error is signaled. The user may
+continue from the error and tell the package system how to resolve the
+conﬂict.
+<!--l. 460--><p class="indent" >   It may be that the same symbol is accessible to a package through more than
+one path. For example, the symbol might be an external symbol of more than one
+used package, or the symbol might be directly present in a package and also
+inherited from another package. In such cases there is no name conﬂict. The same
+identical symbol cannot conﬂict with itself. Name conﬂicts occur only between
+distinct symbols with the same name.
+<!--l. 470--><p class="indent" >   The creator of a package can tell the system in advance how to resolve a
+name conﬂict through the use of <em>shadowing</em>. Every package has a list
+of shadowing symbols. A shadowing symbol takes precedence over any
+other symbol of the same name that would otherwise be accessible to
+the package. A name conﬂict involving a shadowing symbol is always
+resolved in favor of the shadowing symbol, without signaling an error
+(except for one instance involving <b><a 
+href="symbols.html#x188-375480r480">import</a></b> described below). The functions
+<b><a 
+href="symbols.html#x188-375835r835">shadow</a></b> and <b><a 
+href="symbols.html#x188-375836r836">shadowing-import</a></b> may be used to declare shadowing
+symbols.
+<!--l. 480--><p class="indent" >   Name conﬂicts are detected when they become possible, that is, when the
+package structure is altered. There is no need to check for name conﬂicts during
+                                                                          
+
+                                                                          
+every name lookup.
+<!--l. 484--><p class="indent" >   The functions <b><a 
+href="symbols.html#x188-375983r983">use-package</a></b>, <b><a 
+href="symbols.html#x188-375480r480">import</a></b>, and <b><a 
+href="symbols.html#x188-375379r379">export</a></b> check for name conﬂicts.
+<b><a 
+href="symbols.html#x188-375983r983">use-package</a></b> makes the external symbols of the package being used accessible to
+the using package; each of these symbols is checked for name conﬂicts with the
+symbols already accessible. <b><a 
+href="symbols.html#x188-375480r480">import</a></b> adds a single symbol to the internals of a
+package, checking for a name conﬂict with an existing symbol either present in the
+package or accessible to it. <b><a 
+href="symbols.html#x188-375480r480">import</a></b> signals a name conﬂict error even if
+the conﬂict is with a shadowing symbol, the rationale being that the
+user has given two explicit and inconsistent directives. <b><a 
+href="symbols.html#x188-375379r379">export</a></b> makes a
+single symbol accessible to all the packages that use the package from
+which the symbol is exported. All of these packages are checked for name
+conﬂicts: <b>(export <em>s</em> <em>p</em>)</b> does <b>(ﬁnd-symbol (symbol-name <em>s</em>) <em>q</em>)</b> for
+each package <em>q</em> in <b>(package-used-by-list <em>p</em>)</b>. Note that in the usual
+case of an <b><a 
+href="symbols.html#x188-375379r379">export</a></b> during the initial deﬁnition of a package, the result of
+<b><a 
+href="symbols.html#x188-375699r699">package-used-by-list</a></b> will be <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> and the name-conﬂict checking will take
+negligible time.
+<!--l. 504--><p class="indent" >   The function <b><a 
+href="symbols.html#x188-375492r492">intern</a></b>, which is the one used most frequently by the Lisp reader
+for looking up names of symbols, does not need to do any name-conﬂict checking,
+because it never creates a new symbol if there is already an accessible symbol with
+the name given.
+<b>
+<!--l. 510--><p class="indent" >   <a 
+href="symbols.html#x188-375835r835">shadow</a></b> and <b><a 
+href="symbols.html#x188-375836r836">shadowing-import</a></b> never signal a name-conﬂict error because
+the user, by calling these functions, has speciﬁed how any possible conﬂict is to be
+resolved. <b><a 
+href="symbols.html#x188-375835r835">shadow</a></b> does name-conﬂict checking to the extent that it checks
+whether a distinct existing symbol with the speciﬁed name is accessible and, if so,
+whether it is directly present in the package or inherited. In the latter case, a new
+symbol is created to shadow it. <b><a 
+href="symbols.html#x188-375836r836">shadowing-import</a></b> does name-conﬂict
+checking to the extent that it checks whether a distinct existing symbol with
+the same name is accessible; if so, it is shadowed by the new symbol,
+which implies that it must be uninterned if it was directly present in the
+package.
+<b>
+<!--l. 522--><p class="indent" >   <a 
+href="symbols.html#x188-375974r974">unuse-package</a></b>, <b><a 
+href="symbols.html#x188-375967r967">unexport</a></b>, and <b><a 
+href="symbols.html#x188-375968r968">unintern</a></b> (when the symbol being
+uninterned is not a shadowing symbol) do not need to do any name-conﬂict
+checking because they only remove symbols from a package; they do not make any
+new symbols accessible.
+<!--l. 527--><p class="indent" >   Giving a shadowing symbol to <b><a 
+href="symbols.html#x188-375968r968">unintern</a></b> can uncover a name conﬂict that had
+previously been resolved by the shadowing. If package A uses packages B and C,
+                                                                          
+
+                                                                          
+A contains a shadowing symbol <b>x</b>, and B and C each contain external symbols
+named <b>x</b>, then removing the shadowing symbol <b>x</b> from A will reveal a name
+conﬂict between <b>b:x</b> and <b>c:x</b> if those two symbols are distinct. In this case
+<b><a 
+href="symbols.html#x188-375968r968">unintern</a></b> will signal an error.
+<!--l. 535--><p class="indent" >   Aborting from a name-conﬂict error leaves the original symbol accessible.
+Package functions always signal name-conﬂict errors before making any change to
+the package structure. When multiple changes are to be made, however, for
+example when <b><a 
+href="symbols.html#x188-375379r379">export</a></b> is given a list of symbols, it is permissible for the
+implementation to process each change separately, so that aborting from a name
+conﬂict caused by the second symbol in the list will not unexport the ﬁrst symbol
+in the list. However, aborting from a name-conﬂict error caused by <b><a 
+href="symbols.html#x188-375379r379">export</a></b> of a
+single symbol will not leave that symbol accessible to some packages and
+inaccessible to others; with respect to each symbol processed, <b><a 
+href="symbols.html#x188-375379r379">export</a></b> behaves as
+if it were an atomic operation.
+<!--l. 548--><p class="indent" >   Continuing from a name-conﬂict error should oﬀer the user a chance to
+resolve the name conﬂict in favor of either of the candidates. The package
+structure should be altered to reﬂect the resolution of the name conﬂict, via
+<b><a 
+href="symbols.html#x188-375836r836">shadowing-import</a></b>, <b><a 
+href="symbols.html#x188-375968r968">unintern</a></b>, or <b><a 
+href="symbols.html#x188-375967r967">unexport</a></b>.
+<!--l. 553--><p class="indent" >   A name conﬂict in <b><a 
+href="symbols.html#x188-375983r983">use-package</a></b> between a symbol directly present in the
+using package and an external symbol of the used package may be resolved in
+favor of the ﬁrst symbol by making it a shadowing symbol, or in favor of the
+second symbol by uninterning the ﬁrst symbol from the using package.
+The latter resolution is dangerous if the symbol to be uninterned is an
+external symbol of the using package, since it will cease to be an external
+symbol.
+<!--l. 561--><p class="indent" >   A name conﬂict in <b><a 
+href="symbols.html#x188-375983r983">use-package</a></b> between two external symbols inherited by
+the using package from other packages may be resolved in favor of either
+symbol by importing it into the using package and making it a shadowing
+symbol.
+<!--l. 566--><p class="indent" >   A name conﬂict in <b><a 
+href="symbols.html#x188-375379r379">export</a></b> between the symbol being exported and a symbol
+already present in a package that would inherit the newly exported symbol may
+be resolved in favor of the exported symbol by uninterning the other
+one, or in favor of the already-present symbol by making it a shadowing
+symbol.
+<!--l. 572--><p class="indent" >   A name conﬂict in <b><a 
+href="symbols.html#x188-375379r379">export</a></b> or <b><a 
+href="symbols.html#x188-375968r968">unintern</a></b> due to a package inheriting two
+distinct symbols with the same name from two other packages may be resolved in
+favor of either symbol by importing it into the using package and making it a
+shadowing symbol, just as with <b><a 
+href="symbols.html#x188-375983r983">use-package</a></b>.
+                                                                          
+
+                                                                          
+<!--l. 578--><p class="indent" >   A name conﬂict in <b><a 
+href="symbols.html#x188-375480r480">import</a></b> between the symbol being imported and a symbol
+inherited from some other package may be resolved in favor of the symbol being
+imported by making it a shadowing symbol, or in favor of the symbol already
+accessible by not doing the <b><a 
+href="symbols.html#x188-375480r480">import</a></b>. A name conﬂict in <b><a 
+href="symbols.html#x188-375480r480">import</a></b> with a symbol
+already present in the package may be resolved by uninterning that symbol, or by
+not doing the <b><a 
+href="symbols.html#x188-375480r480">import</a></b>.
+<!--l. 586--><p class="indent" >   Good user-interface style dictates that <b><a 
+href="symbols.html#x188-375983r983">use-package</a></b> and <b><a 
+href="symbols.html#x188-375379r379">export</a></b>, which can
+cause many name conﬂicts simultaneously, ﬁrst check for all of the name conﬂicts
+before presenting any of them to the user. The user may then choose to resolve all
+of them wholesale or to resolve each of them individually, the latter requiring a lot
+of interaction but permitting diﬀerent conﬂicts to be resolved diﬀerent
+ways.
+<!--l. 594--><p class="indent" >   Implementations may oﬀer other ways of resolving name conﬂicts. For
+instance, if the symbols that conﬂict are not being used as objects but only as
+names for functions, it may be possible to “merge” the two symbols by putting the
+function deﬁnition onto both symbols. References to either symbol for purposes of
+calling a function would be equivalent. A similar merging operation can be done
+for variable values and for things stored on the property list. In Lisp Machine
+Lisp, for example, one can also <em>forward</em> the value, function, and property cells so
+that future changes to either symbol will propagate to the other one. Some other
+implementations are able to do this with value cells but not with property lists.
+Only the user can know whether this way of resolving a name conﬂict is
+adequate, because it will work only if the use of two non-<b><a 
+href="symbols.html#x188-375366r366">eq</a></b> symbols with the
+same name will not prevent the correct operation of the program. The
+value of oﬀering symbol merging as a way of resolving name conﬂicts is
+that it can avoid the need to throw away the whole Lisp world, correct
+the package-deﬁnition forms that caused the error, and start over from
+scratch.
+                                                                          
+
+                                                                          
+<!--l. 613--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse62.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse60.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse60.html#tailclmse60.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="clmse61.html" >Front</a>&#x003E;&#x003C;<a 
+href="xpack.html#clmse61.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+ id="tailclmse61.html"></a>  
+</body></html> 

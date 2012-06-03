@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Using the Automatically Deﬁned Constructor Function</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:03:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
+href="clmse103.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse101.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse101.html#tailclmse101.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="#tailclmse102.html">Tail</a>&#x003E;&#x003C;<a 
+href="struct.html#clmse102.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">19.3   </span> <a 
+href="clm.html#QQ2-126-196" id="x126-16600019.3">Using the Automatically
+Deﬁned Constructor Function</a></h3>
+<!--l. 328--><p class="noindent" >After you have deﬁned a new structure with <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b>, you can create instances
+of this structure by using the constructor function. By default, <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b> deﬁnes
+this function automatically. For a structure named <b>foo</b>, the constructor function is
+normally named <b>make-foo</b>; you can specify a diﬀerent name by giving it as the
+argument to the <b>:constructor</b> option, or specify that you don&#x2019;t want
+a normal constructor function at all by using <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> as the argument (in
+which case one or more “by-position” constructors should be requested; see
+section <a 
+href="clmse105.html#x129-16900019.6">19.6<!--tex4ht:ref: DEFSTRUCT-CONSTRUCTOR-SYNTAX --></a>).
+<!--l. 341--><p class="indent" >   A call to a constructor function, in general, has the form <div class="lisp"><tt><div class="tabbing">
+(<em>name-of-constructor-function</em>
+   <br>             <em>slot-keyword-1</em> <em>form-1</em><br>             <em>slot-keyword-2</em> <em>form-2</em><br>
+        ...)<br>
+<!--l. 347--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 348--><p class="indent" >   All arguments are keyword arguments. Each <em>slot-keyword</em> should be a
+keyword whose name matches the name of a slot of the structure (<b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b>
+determines the possible keywords simply by interning each slot-name in the
+keyword package). All the <em>keywords</em> and <em>forms</em> are evaluated. In short,
+it is just as if the constructor function took all its arguments as <b>&#x0026;key</b>
+parameters. For example, the <b>ship</b> structure shown in section <a 
+href="clmse100.html#x124-16400019.1">19.1<!--tex4ht:ref: DEFSTRUCT-INTRO-SECTION --></a> has a
+constructor function that takes arguments roughly as if its deﬁnition were
+<div class="lisp"><tt><div class="tabbing">
+(defun make-ship (&#x0026;key x-position y-position
+   <br>                                               x-velocity y-velocity mass)<br>
+  ...)<br>
+                                                                          
+
+                                                                          
+<!--l. 361--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 364--><p class="indent" >   If <em>slot-keyword-j</em> names a slot, then that element of the created structure will
+be initialized to the value of <em>form-j</em>. If no pair <em>slot-keyword-j</em> and <em>form-j</em> is
+present for a given slot, then the slot will be initialized by evaluating the
+<em>default-init</em> form speciﬁed for that slot in the call to <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b>. (In other words,
+the initialization speciﬁed in the <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b> defers to any speciﬁed in a call to
+the constructor function.) If the default initialization form is used, it
+is evaluated at construction time, but in the lexical environment of the
+<b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b> form in which it appeared. If the <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b> itself also did not
+specify any initialization, the element&#x2019;s initial value is undeﬁned. You
+should always specify the initialization, either in the <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b> or in the
+call to the constructor function, if you care about the initial value of the
+slot.
+<!--l. 381--><p class="indent" >   Each initialization form speciﬁed for a <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b> component, when
+used by the constructor function for an otherwise unspeciﬁed component,
+is re-evaluated on every call to the constructor function. It is as if the
+initialization forms were used as <em>init</em> forms for the keyword parameters
+of the constructor function. For example, if the form <b>(gensym)</b> were
+used as an initialization form, either in the constructor-function call or
+as the default initialization form in the <b><a 
+href="symbols.html#x188-375313r313">defstruct</a></b> form, then every call
+to the constructor function would call <b><a 
+href="symbols.html#x188-375448r448">gensym</a></b> once to generate a new
+symbol.
+<div class="newer">
+<!--l. 395--><p class="indent" >   X3J13 voted in October 1988 <a 
+ id="dx126-166001"></a>to clarify that the default value in a defstruct
+slot is not evaluated unless it is needed in the creation of a particular
+structure instance. If it is never needed, there can be no type-mismatch
+error, even if the type of the slot is speciﬁed, and no warning should be
+issued.
+<!--l. 403--><p class="indent" >   For example, in the following sequence only the last form is in error.
+<div class="lisp"><tt><div class="tabbing">
+(defstruct person (name .007 :type string))
+   <br>                                                                                               <br>
+(make-person :name &#x0022;James&#x0022;)<br>                                             <br>
+                                                                          
+
+                                                                          
+(make-person)     ;Error to give <b>name</b> the value <b>.007</b><br>
+<!--l. 410--><p class="noindent" ></div>
+</tt>
+</div>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 414--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse103.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse101.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse101.html#tailclmse101.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="clmse102.html" >Front</a>&#x003E;&#x003C;<a 
+href="struct.html#clmse102.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+ id="tailclmse102.html"></a>  
+</body></html> 

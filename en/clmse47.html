@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Macro Expansion</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:03:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
+href="clmse48.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse46.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse46.html#tailclmse46.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="#tailclmse47.html">Tail</a>&#x003E;&#x003C;<a 
+href="macro.html#clmse47.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">8.2   </span> <a 
+href="clm.html#QQ2-60-106" id="x60-970008.2">Macro Expansion</a></h3>
+<!--l. 486--><p class="noindent" >The <b><a 
+href="symbols.html#x188-375573r573">macroexpand</a></b> function is the conventional means for expanding a macro
+call. A hook is provided for a user function to gain control during the expansion
+process.
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 491--><p class="noindent" >[Function]</em><a 
+ id="dx60-97001"></a> <b>macroexpand</b> <i>form</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>env</i><br />
+<em>
+[Function]</em><a 
+ id="dx60-97002"></a> <b>macroexpand-1</b> <i>form</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>env</i>
+</div>
+<!--l. 494--><p class="indent" >   If <em>form</em> is a macro call, then <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b> will expand the macro call <em>once</em>
+and return two values: the expansion and <b><a 
+href="symbols.html#x188-375939r939">t</a></b>. If <em>form</em> is not a macro call, then the
+two values <em>form</em> and <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> are returned.
+<!--l. 499--><p class="indent" >   A <em>form</em> is considered to be a macro call only if it is a cons whose <em>car</em> is a
+symbol that names a macro. The environment <em>env</em> is similar to that used within
+the evaluator (see <b><a 
+href="symbols.html#x188-375375r375">evalhook</a></b>); it defaults to a null environment. Any local macro
+deﬁnitions established within <em>env</em> by <b><a 
+href="symbols.html#x188-375575r575">macrolet</a></b> will be considered. If only
+<em>form</em> is given as an argument, then the environment is eﬀectively null,
+and only global macro deﬁnitions (as established by <b><a 
+href="symbols.html#x188-375308r308">defmacro</a></b>) will be
+considered.
+<!--l. 509--><p class="indent" >   Macro expansion is carried out as follows. Once <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b> has
+determined that a symbol names a macro, it obtains the expansion function for
+that macro. The value of the variable <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b> is then called as a
+function of three arguments: the expansion function, the <em>form</em>, and the
+environment <em>env</em>. The value returned from this call is taken to be the expansion of
+the macro call. The initial value of <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b> is <b><a 
+href="symbols.html#x188-375432r432">funcall</a></b>, and the
+net eﬀect is to invoke the expansion function, giving it <em>form</em> and <em>env</em> as its two
+arguments.
+<div class="newer">
+<!--l. 521--><p class="indent" >   X3J13 voted in June 1988 <a 
+ id="dx60-97003"></a>to specify that the value of <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b>
+                                                                          
+
+                                                                          
+is ﬁrst coerced to a function before being called as the expansion interface hook.
+Therefore its value may be a symbol, a lambda-expression, or any object of type
+<b><a 
+href="symbols.html#x188-375434r434">function</a></b>.
+</div>
+<div class="newer">
+<!--l. 529--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx60-97004"></a>to specify that macro environment objects
+received by a <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b> function have only dynamic extent. The
+consequences are undeﬁned if such objects are referred to outside the dynamic
+extent of that particular invocation of the hook function. This allows
+implementations to use somewhat more eﬃcient techniques for representing
+environment objects.
+</div>
+<div class="newer">
+<!--l. 539--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx60-97005"></a>to clarify that, while <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b>
+may be useful for debugging purposes, despite the original design intent
+there is currently no correct portable way to use it for caching macro
+expansions.
+      <ul class="itemize1">
+      <li class="itemize">Caching by displacement (performing a side eﬀect on the macro-call
+      form) won&#x2019;t work because the same (<b><a 
+href="symbols.html#x188-375366r366">eq</a></b>) macro-call form may appear
+      in distinct lexical contexts. In addition, the macro-call form may be a
+      read-only constant (see <b><a 
+href="symbols.html#x188-375756r756">quote</a></b> and also section <a 
+href="clmse121.html#x150-21500024.1">24.1<!--tex4ht:ref: COMPILER-SECTION --></a>).
+      </li>
+      <li class="itemize">Caching by table lookup won&#x2019;t work because such a table would have
+      to be keyed by both the macro-call form and the environment, but
+      X3J13 voted in March 1989 <a 
+ id="dx60-97006"></a>to permit macro environments to have only
+      dynamic extent.
+      </li>
+      <li class="itemize">Caching  by  storing  macro-call  forms  and  expansions  within  the
+      environment  object  itself  would  work,  but  there  are  no  portable
+      primitives that would allow users to do this.</li></ul>
+<!--l. 560--><p class="noindent" >X3J13 also noted that, although there seems to be no correct portable way to use
+<b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b> to cache macro expansions, there is no requirement that
+an implementation call the macro expansion function more than once for a given
+form and lexical environment.
+</div>
+                                                                          
+
+                                                                          
+<div class="new">
+<!--l. 567--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx60-97007"></a>to specify that <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b> will also expand
+symbol macros deﬁned by <b><a 
+href="symbols.html#x188-375932r932">symbol-macrolet</a></b>; therefore a <em>form</em> may also be a
+macro call if it is a symbol. The vote did not address the interaction
+of this feature with the <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b> function. An obvious
+implementation choice is that the hook function is indeed called and given a
+special expansion function that, when applied to the <em>form</em> (a symbol) and <em>env</em>,
+will produce the expansion, just as for an ordinary macro; but this is only my
+suggestion.
+</div>
+<!--l. 579--><p class="indent" >   The evaluator expands macro calls as if through the use of <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b>;
+the point is that <b><a 
+href="symbols.html#x188-375373r373">eval</a></b> also uses <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b>.
+<b>
+<!--l. 582--><p class="indent" >   <a 
+href="symbols.html#x188-375573r573">macroexpand</a></b> is similar to <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b>, but repeatedly expands <em>form</em>
+until it is no longer a macro call. (In eﬀect, <b><a 
+href="symbols.html#x188-375573r573">macroexpand</a></b> simply calls
+<b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b> repeatedly until the second value returned is <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>.) A second
+value of <b><a 
+href="symbols.html#x188-375939r939">t</a></b> or <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> is returned as for <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b>, indicating whether the
+original <em>form</em> was a macro call.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 591--><p class="noindent" >[Variable]</em><a 
+ id="dx60-97008"></a> <b>*macroexpand-hook*</b>
+</div>
+<!--l. 593--><p class="indent" >   The value of <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b> is used as the expansion interface hook
+by <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b>.
+<hr></div>
+                                                                          
+
+                                                                          
+<!--l. 597--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse48.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse46.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse46.html#tailclmse46.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="clmse47.html" >Front</a>&#x003E;&#x003C;<a 
+href="macro.html#clmse47.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+ id="tailclmse47.html"></a>  
+</body></html> 

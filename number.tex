@@ -81,8 +81,6 @@ to represent one), as integers and ratios may in principle be of any magnitude.
 Floating-point computations may get exponent overflow or underflow;
 this is an error.
 
-\vskip 0pt plus 24pt
-
 \begin{newer}
 X3J13 voted in June 1989 \issue{FLOAT-UNDERFLOW}
 to address certain problems relating to floating-point overflow and
@@ -453,17 +451,13 @@ is \cd{1}, which is an identity for this operation.
 The function \cdf{/}, when given more than one argument, successively divides
 the first argument by all the others and returns the result.
 
-\begin{new}%CORR
 It is generally accepted that it is an error for any argument other than the
 first to be zero.
-\end{new}
 
 With one argument, \cdf{/} reciprocates the argument.
 
-\begin{new}%CORR
 It is generally accepted that it is an error in this case for the argument
 to be zero.
-\end{new}
 
 \cdf{/} will produce a ratio if the mathematical quotient of two integers
 is not an exact integer.  For example:
@@ -1058,8 +1052,6 @@ floating-point number of the desired precision,
 or by writing \cd{(coerce pi \emph{type})}, where \emph{type} is the
 name of the desired type, such as \cdf{short-float}.
 \end{defun}
-
-\penalty-10000\relax
 
 \begin{defun}[Function]
 sinh number \\
@@ -2679,9 +2671,9 @@ in general the second values will differ.  Indeed, we have
 for this example.
 \end{new}
 The \emph{divisor} may be any non-complex number.
-\begin{new}%CORR
+
 It is generally accepted that it is an error for the \emph{divisor} to be zero.
-\end{new}
+
 The one-argument case is exactly like the two-argument case where the second
 argument is \cd{1}.
 
@@ -3651,8 +3643,6 @@ These are analogous to the constants defined above for short-format
 floating-point numbers.
 \end{defun}
 
-\bigskip
-
 \begin{defun}[Constant]
 least-positive-normalized-short-float \\
 least-negative-normalized-short-float
@@ -3737,6 +3727,18 @@ Common Lisp содержит несколько различных предст�
 \end{lisp}
 может быть ложным, а не истинным, если значение \cdf{z} является числом.
 
+\beforenoterule
+\begin{rationale}
+This odd breakdown of \cdf{eq} in the case of numbers
+allows the implementor enough design freedom to produce exceptionally
+efficient numerical code on conventional architectures.
+MacLisp requires this freedom, for example, in order to produce compiled
+numerical code equal in speed to Fortran.
+Common Lisp makes this same restriction,
+if not for this freedom, then at least for the sake of compatibility.
+\end{rationale}
+\afternoterule
+
 Если два объекта сравниваются для <<идентичности>>, но один из может быть
 числом, то использование предиката \cdf{eql} является более подходящим.
 Если оба объекта являются числами, то преимущество стоит отдать \cdf{=}.
@@ -3768,6 +3770,39 @@ Common Lisp содержит несколько различных предст�
 Вычисления с плавающей точкой могут вызвать переполнение экспоненты. Это
 является ошибкой.
 
+\begin{newer}
+X3J13 voted in June 1989 \issue{FLOAT-UNDERFLOW}
+to address certain problems relating to floating-point overflow and
+underflow, but certain parts of the proposed solution were not adopted, namely
+to add the macro \cdf{without-floating-underflow-traps} to the language and to
+require certain behavior of floating-point overflow and underflow.
+The committee agreed that this area of the language requires more
+discussion before a solution is standardized.
+
+For the record, the proposal that was considered and rejected
+(for the nonce) introduced a macro
+\cdf{without-floating-underflow-traps}
+that would execute its body in such a way that, within its dynamic extent,
+a floating-point underflow
+must not signal an error but instead must produce
+either a denormalized number or zero as the result.
+The rejected proposal also specified the following treatment of overflow and underflow:
+\begin{itemize}
+\item A floating-point computation that overflows should signal
+  an error of type \cdf{floating-point-overflow}.
+\item Unless the dynamic extent of a use of
+  \cdf{without-floating-underflow-traps}, a floating-point computation that
+  underflows should signal an error of type \cdf{floating-point-underflow}.  A
+  result that can be represented only in denormalized form must be considered an
+  underflow in implementations that support denormalized floating-point
+  numbers.
+\end{itemize}
+These points refer to conditions \cdf{floating-point-overflow}
+and \cdf{floating-point-underflow}
+that were approved by X3J13
+and are described in section~\ref{PREDEFINED-CONDITIONS-SECTION}.
+\end{newer}
+
 Когда числовой функцией между собой сравниваются или объединяются рациональное и
 число с плавающей точкой, то вступает в силу правило \emph{неявного приведения к
  плавающей точке}.
@@ -3776,6 +3811,39 @@ Common Lisp содержит несколько различных предст�
 Для функций, например \cdf{+}, которые принимает более двух аргументов, может
 быть, что все рациональные будут вычислены и результат будет преобразован в
 число с плавающей точкой.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{CONTAGION-ON-NUMERICAL-COMPARISONS}
+to apply the rule of floating-point
+contagion stated above to the case of \emph{combining} rational and floating-point numbers.
+For \emph{comparing}, the following rule is to be used instead:
+When a rational number and a floating-point number are to be compared
+by a numerical function, in effect the floating-point number is first
+converted to a rational number as if by the function \cdf{rational},
+and then an exact comparison of two rational numbers is performed.
+It is of course valid to use a more efficient implementation than
+ actually calling the function \cdf{rational}, as long as the result
+of the comparison is the same.  In the case of complex numbers, the
+real and imaginary parts are handled separately.
+
+\beforenoterule
+\begin{rationale}
+In general, accuracy cannot be preserved in combining operations, but
+it can be preserved in comparisons, and preserving it makes that part
+of Common Lisp algebraically a bit more tractable.  In particular,
+this change prevents the breakdown of transitivity.
+Let \cdf{a} be the result of \cd{(/~10.0 single-float-epsilon)}, and
+let \cdf{j} be the result of \cd{(floor~a)}.  (Note that \cd{(=~a~(+~a~1.0))}
+is true, by the definition of \cdf{single-float-epsilon}.)
+Under the old rules,
+all of \cd{(<=~a~j)}, \cd{(<~j~(+~j~1))}, and \cd{(<=~(+~j~1)~a)}
+would be true; transitivity would then imply that \cd{(<~a~a)} ought to be
+true, but of course it is false, and therefore transitivity fails.
+Under the new rule, however, \cd{(<=~(+~j~1)~a)} is false.
+\end{rationale}
+\afternoterule
+\end{new}
 
 Для функций, которые математически ассоциативны (и возможно коммутативны),
 реализация Common Lisp'а может обрабатывать аргументы любым подходящим методом с
@@ -3909,6 +3977,7 @@ evenp integer
 > number &rest more-numbers \\
 <= number &rest more-numbers \\
 >= number &rest more-numbers
+
 Каждая из этих функций принимает один и более аргументов. Если последовательно
 аргументов удовлетворяет следующему условию:
 
@@ -4086,6 +4155,16 @@ taking all the arguments into consideration for contagion purposes.
 \cd{(1- \emph{x})} является тем же самым, что \cd{(- \emph{x} 1)}.
 Следует отметить, что короткое имя может ввести в заблуждение: 
 \cd{(1- \emph{x})} \emph{не значит} то же, что и $1-\emph{x}$.
+
+\beforenoterule
+\begin{implementation}
+Compiler writers are very strongly encouraged to ensure
+that \cd{(1+ x)} and \cd{(+ x 1)} compile into identical code, and
+similarly for \cd{(1- x)} and \cd{(- x 1)}, to avoid pressure on a Lisp
+programmer to write possibly less clear code for the sake of efficiency.
+This can easily be done as a source-language transformation.
+\end{implementation}
+\afternoterule
 \end{defun}
 
 \begin{defmac}
@@ -4117,6 +4196,10 @@ decf place [delta]
 только один раз.
 Более того, для некоторых форма \emph{place} \cdf{incf} может быть
 эффективнее чем \cdf{setf}.
+\begin{newer}
+X3J13 voted in March 1988 \issue{PUSH-EVALUATION-ORDER}
+to clarify order of evaluation (see section~\ref{SETF-SECTION}).
+\end{newer}
 \end{defmac}
 
 \begin{defun}[Функция]
@@ -4266,6 +4349,18 @@ expt base-number power-number
 \cdf{rational}, в противном случае результат будет приближенным числом с
 плавающей точкой.
 
+\begin{newer}
+X3J13 voted in March 1989
+\issue{COMPLEX-RATIONAL-RESULT}
+to clarify that provisions similar to those of the previous paragraph apply to complex
+numbers.  If the \emph{base-number} is of type \cd{(complex~rational)}
+and the \emph{power-number} is
+an \cdf{integer},
+the calculation will also be exact and the result will be of type
+\cd{(or~rational (complex rational))};
+otherwise a floating-point or complex floating-point approximation may result.
+\end{newer}
+
 Если \emph{power-number} равен \cd{0} (ноль целочисленного типа), тогда
 результат всегда будет значение 1, такого же типа что и \emph{base-number}, даже
 если \emph{base-number} равен нулю (любого типа). То есть:
@@ -4311,6 +4406,21 @@ log number &optional base
 \begin{lisp}
 (log -1.0) \EQ\ (complex 0.0 (float pi 0.0))
 \end{lisp}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of complex logarithm
+in terms of real logarithm, absolute value,
+arc tangent of two real arguments, and the phase function as
+\begin{tabbing}
+\hskip 10pc\=\kill
+Logarithm\>$ \log \left| \emph{z} \right| + \emph{i} \phase \emph{z} $
+\end{tabbing}
+This specifies the branch cuts precisely whether minus zero is supported or not;
+see \cdf{phase} and \cdf{atan}.
+\end{new}
 \end{defun}
 
 \begin{defun}[Функция]
@@ -4327,6 +4437,20 @@ sqrt number
 В зависимости от реализации результат \cd{(sqrt 9)} может быть как \cd{3}, так и
 \cd{3.0}. Результат \cd{(sqrt -9)} может быть как \cd{\#(0 3)} или \cd{\#c(0.0
   3.0)}.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of complex square root
+in terms of complex logarithm and exponential functions as
+\begin{tabbing}
+\hskip 10pc\=\kill
+Square root\> $ \emph{e}^{(\log z)/2} $
+\end{tabbing}
+This specifies the branch cuts precisely whether minus zero is supported or not;
+see \cdf{phase} and \cdf{atan}.
+\end{new}
 \end{defun}
 
 \begin{defun}[Функция]
@@ -4388,6 +4512,20 @@ phase number
 Аргументом (так называется функция phase) числа z (arg(z) \EQ (phase z))
 является угол $\varphi$ (в радианах) радиус-вектора точки, соответствующей
 комплексному числу z.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported;
+\cdf{phase} is still defined in terms of \cdf{atan} as above,
+but thanks to a change in \cdf{atan} the range of \cdf{phase}
+becomes $-\pi$ \emph{inclusive} to $\pi$ inclusive.  The value $-\pi$
+results from an argument\vadjust{\penalty-10000}
+whose real part is negative and whose imaginary
+part is minus zero.  The \cdf{phase} function therefore has a branch cut
+along the negative real axis.  The phase of $+0+0\emph{i}$ is $+0$, of $+0-0\emph{i}$ is $-0$,
+of $-0+0\emph{i}$ is $+\pi$, and of $-0-0\emph{i}$ is $-\pi$.
+\end{new}
 
 Если аргумент является комплексным числом с частями из чисел с плавающей точкой,
 то результатом является число с плавающей точкой того же типа.
@@ -4471,6 +4609,28 @@ acos number
 Следует отметить, что результат \cdf{asin} или \cd{acos} может быть комплексным
 числом, даже если аргумент не являлся комплексным. Такое происходит, когда
 абсолютное значение аргумента превышает 1.
+
+\begin{newer}
+Kahan \cite{KAHAN-COMPLEX-FNS} suggests for \cdf{acos} the
+defining formula
+\begin{tabbing}
+\hskip 10pc\=\kill
+Arc cosine\>$  \displaystyle { 2 \log \left( \sqrt{{1+\emph{z} \over 2}} + \emph{i} \sqrt{{1-\emph{z} \over 2}} \right) \over i}$
+\end{tabbing}
+or even the much simpler $ (\pi/2)-\arcsin \emph{z} $.  Both equations are mathematically
+equivalent to the formula shown above.
+\end{newer}
+
+\beforenoterule
+\begin{implementation}
+These formulae are mathematically correct, assuming
+completely accurate computation.  They may be terrible methods for
+floating-point computation.  Implementors should consult a good text on
+numerical analysis.  The formulae given above are not necessarily
+the simplest ones for real-valued computations, either; they are chosen
+to define the branch cuts in desirable ways for the complex case.
+\end{implementation}
+\afternoterule
 \end{defun}
 
 \begin{defun}[Функция]
@@ -4515,9 +4675,20 @@ $y=-0$&$x=-0$&Рядом с центром&$-\pi$ \\
 \hskip 10pc\=\kill
 Арктангенс\>$\log (1+\emph{i}\emph{y}) - \log (1-\emph{i}\emph{y}) \over 2\emph{i}$
 \end{tabbing}
- 
+
 Для некомплексного аргумента \emph{y}, результат будет некомплексным и будет
 лежать между $-\pi/2$ и $\pi/2$ (оба невключительно).
+
+\beforenoterule
+\begin{implementation}
+This formula is mathematically correct, assuming
+completely accurate computation.  It may be a terrible method for
+floating-point computation.  Implementors should consult a good text on
+numerical analysis.  The formula given above is not necessarily
+the simplest one for real-valued computations, either; it is chosen
+to define the branch cuts in desirable ways for the complex case.
+\end{implementation}
+\afternoterule
 \end{defun}
 
 \begin{defun}[Константа]
@@ -4535,8 +4706,6 @@ pi
 необходимой точности, или с помощью  \cd{(coerce pi \emph{type})}, где
 \emph{type} является именем необходимого типа, как например \cdf{short-float}.
 \end{defun}
-
-\penalty-10000\relax
 
 \begin{defun}[Функция]
 sinh number \\
@@ -4563,6 +4732,17 @@ atanh number
 аргумент комплексным числом не был. Это происходит если аргумент меньше 1.
 Также результат \cdf{atanh} может быть комплексным, даже если аргумент не был
 комплексным. Это происходит если абсолютное значение аргумента было больше 1.
+
+\beforenoterule
+\begin{implementation}
+Эти формулы математически корректны, предполагая совершенно точные
+вычисления. Но они могут быть неудобны для вычислений чисел с плавающей
+точкой. Разработчики реализация должны ознакомится с хорошей книгой по
+численному анализу. Вышеприведённые формы не обязательно являются самыми
+простыми для вещественных вычислений. Они выбраны для определения точек
+ветвлений для случаев использования комплексных чисел.
+\end{implementation}
+\afternoterule
 \end{defun}
 
 \subsection{Точки ветвления, главные значения и краевые условия на комплексной плоскости}
@@ -4578,8 +4758,1413 @@ Common Lisp определяет точки ветвления, главные �
 \cite{APL-BRANCH-CUTS}.
 Содержимое раздела по большей части скопировано из этих предложений.
 
-[Однако перевод не сделан. Не могу назвать себя знатоком ТФКП]
+\begin{new}
+Indeed, X3J13 voted in January 1989
+\issue{COMPLEX-ATAN-BRANCH-CUT}
+to alter the direction of continuity for
+the branch cuts of \cdf{atan}, and also
+\issue{IEEE-ATAN-BRANCH-CUT}
+to address the treatment of branch cuts
+in implementations that have a distinct floating-point minus zero.
 
+The treatment of minus zero centers in two-argument \cdf{atan}.
+If there is no minus zero, then the branch cut runs just below the negative real
+axis as before, and the range of two-argument \cdf{atan} is $(-\pi,\pi]$.
+If there is a minus zero, however, then the branch cut runs precisely on the negative real
+axis, skittering between pairs of numbers of the form $-\emph{x}\pm 0\emph{i}$,
+and the range of two-argument \cdf{atan} is $[-\pi,\pi]$.
+
+The treatment of minus zero by all other irrational and transcendental functions
+is then specified by defining those functions in terms of two-argument \cdf{atan}.
+First, \cdf{phase} is defined in terms of two-argument \cdf{atan}, and
+complex \cdf{abs} in terms of real \cdf{sqrt};
+then complex \cdf{log} is defined in terms of \cdf{phase}, \cdf{abs}, and real \cdf{log};
+then complex \cdf{sqrt} in terms of complex \cdf{log};
+and finally all others are defined in terms of these.
+
+Kahan \cite{KAHAN-COMPLEX-FNS} treats these matters in some detail and also
+suggests specific algorithms for implementing irrational and transcendental functions
+in IEEE standard floating-point arithmetic \cite{IEEE-PROPOSED-FLOATING-POINT-STANDARD}.
+
+Remarks in the first edition about the direction of the continuity of branch
+cuts continue to hold in the absence of minus zero and may be ignored if minus zero
+is supported; since all branch cuts happen to run along the principal axes, they
+run \emph{between} plus zero and minus zero, and so each sort of zero is associated
+with the obvious quadrant.
+\end{new}
+
+\begin{flushdesc}
+\item[\cdf{sqrt}]
+The branch cut for square root lies along the negative real axis,
+continuous with quadrant II.
+The range consists of the right half-plane, including the non-negative
+imaginary axis and excluding the negative imaginary axis.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of complex square root:
+\begin{tabbing}
+$ \sqrt{\emph{z}} = \emph{e}^{(\log z)/2} $
+\end{tabbing}
+This defines the branch cuts precisely, whether minus zero is supported or not.
+\end{new}
+
+\item[\cdf{phase}]
+The branch cut for the phase function lies along the negative real
+axis, continuous with quadrant II.  The range consists of that portion of
+the real axis between $-\pi$ (exclusive) and $\pi$ (inclusive).
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{IEEE-ATAN-BRANCH-CUT}
+to specify certain floating-point behavior when minus zero is supported.
+As a part of that vote it approved a mathematical definition of phase:
+\begin{tabbing}
+$ \phase \emph{z} = \arctan (\Im \emph{z}, \Re \emph{z}) $
+\end{tabbing}
+where $\Im \emph{z}$ is the imaginary part of $\emph{z}$ and $\Re \emph{z}$ the real part of $\emph{z}$.
+This defines the branch cuts precisely, whether minus zero is supported or not.
+\end{new}
+
+\item[\cdf{log}]
+The branch cut for the logarithm function of one argument (natural
+logarithm) lies along the negative real axis, continuous with quadrant II.
+The domain excludes the origin.  For a complex number $\emph{z}$,
+$\log \emph{z}$ is defined to be
+\begin{tabbing}
+$ \log \emph{z} = \left(\log \left|\emph{z}\right|\right)+\emph{i} (\phase \emph{z}) $
+\end{tabbing}
+Therefore the range of the one-argument logarithm function is that strip
+of the complex plane containing numbers with imaginary parts between
+$-\pi$ (exclusive) and $\pi$ (inclusive).
+
+\begin{new}
+The X3J13 vote on minus zero
+\issue{IEEE-ATAN-BRANCH-CUT}
+would alter that exclusive bound of $-\pi$  to be inclusive if minus zero is supported.
+\end{new}
+
+The two-argument logarithm function is defined as $ \log_{b} \emph{z}=(\log \emph{z})/(\log \emph{b}) $.
+This defines the principal values precisely.  The range of the two-argument
+logarithm function is the entire complex plane.
+It is an error if $\emph{z}$ is zero.  If $\emph{z}$ is non-zero and $\emph{b}$ is zero,
+the logarithm is taken to be zero.
+
+\item[\cdf{exp}]
+The simple exponential function has no branch cut.
+
+\item[\cdf{expt}]
+The two-argument exponential function is defined
+as $ \emph{b}^{x}=\emph{e}^{x \log b } $.
+This defines the principal values precisely.  The range of the
+two-argument exponential function is the entire complex plane.  Regarded
+as a function of $\emph{x}$, with $\emph{b}$ fixed, there is no branch cut.
+Regarded as a function of \emph{b}, with $\emph{x}$ fixed, there is in general
+a branch cut along the negative real axis, continuous with quadrant II.
+The domain excludes the origin.
+By definition, $0^0=1$.  If $\emph{b}=0$ and the real part of $\emph{x}$ is strictly
+positive, then $\emph{b}^{x}=0$.
+For all other values of $\emph{x}$, $0^{x}$
+is an error.
+
+\item[\cdf{asin}]
+The following definition for arc sine determines the range and
+branch cuts:
+\begin{tabbing}
+$ \arcsin \emph{z}=-\emph{i} \log \left(\emph{i}\emph{z}+\sqrt{1-\emph{z}^2}\right) $
+\end{tabbing}
+
+\begin{newer}\noindent
+This is equivalent to the formula
+\begin{tabbing}
+$ \displaystyle \arcsin \emph{z} = { \arcsinh \emph{i}\emph{z} \over \emph{i} }$
+\end{tabbing}
+recommended by Kahan \cite{KAHAN-COMPLEX-FNS}.
+\end{newer}
+
+The branch cut for the arc sine function is in two pieces:
+one along the negative real axis to the left of $-1$
+(inclusive), continuous with quadrant II, and one along the positive real
+axis to the right of 1 (inclusive), continuous with quadrant IV.  The
+range is that strip of the complex plane containing numbers whose real
+part is between $-\pi/2$ and $\pi/2$.  A number with real
+part equal to $-\pi/2$ is in the range if and only if its imaginary
+part is non-negative; a number with real part equal to $\pi/2$ is in
+the range if and only if its imaginary part is non-positive.
+
+\item[\cdf{acos}]
+The following definition for arc cosine determines the range and
+branch cuts:
+\begin{tabbing}
+$ \arccos \emph{z}=-\emph{i} \log \left(\emph{z}+\emph{i} \sqrt{1-\emph{z}^2}\right) $
+\end{tabbing}
+or, which is equivalent,
+\begin{tabbing}
+$ \arccos \emph{z}={\pi \over 2}-\arcsin \emph{z} $
+\end{tabbing}
+The branch cut for the arc cosine function is in two pieces:
+one along the negative real axis to the left of $-1$
+(inclusive), continuous with quadrant II, and one along the positive real
+axis to the right of 1 (inclusive), continuous with quadrant IV.  
+This is the same branch cut as for arc sine.
+The range is that strip of the complex plane containing numbers whose real
+part is between zero and $\pi$.  A number with real
+part equal to zero is in the range if and only if its imaginary
+part is non-negative; a number with real part equal to $\pi$ is in
+the range if and only if its imaginary part is non-positive.
+
+\item[\cdf{atan}]
+The following definition for (one-argument) arc tangent determines the
+range and branch cuts:
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{COMPLEX-ATAN-BRANCH-CUT}
+to replace the formula shown above with the formula
+\begin{tabbing}
+$ \displaystyle \arctan \emph{z} = { \log (1+\emph{i}\emph{z}) - \log (1-\emph{i}\emph{z}) \over 2\emph{i} }$
+\end{tabbing}
+This is equivalent to the formula
+\begin{tabbing}
+$ \displaystyle \arctan \emph{z} = { \arctanh \emph{i}\emph{z} \over \emph{i} }$
+\end{tabbing}
+recommended by Kahan \cite{KAHAN-COMPLEX-FNS}.
+It causes the upper branch cut to be continuous with
+quadrant I rather than quadrant II, and the lower branch cut to
+be continuous with quadrant III rather than quadrant IV; otherwise it agrees with the
+formula of the first edition.  Therefore this change alters the result returned by \cdf{atan}
+only for arguments on the positive imaginary axis that
+are of magnitude greater than 1.  The full description for this new formula is as follows.
+
+The branch cut for the arc tangent function is in two pieces:
+one along the positive imaginary axis above \emph{i}
+(exclusive), continuous with quadrant I, and one along the negative imaginary
+axis below $-\emph{i}$ (exclusive), continuous with quadrant III.  
+The points \emph{i} and $-\emph{i}$ are excluded from the domain.
+The range is that strip of the complex plane containing numbers whose real
+part is between $-\pi/2$ and $\pi/2$.  A number with real
+part equal to $-\pi/2$ is in the range if and only if its imaginary
+part is strictly negative; a number with real part equal to $\pi/2$ is in
+the range if and only if its imaginary part is strictly positive.  Thus the range of
+the arc tangent function is \emph{not} identical to that of the arc sine function.
+\end{new}
+
+\item[\cdf{asinh}]
+The following definition for the inverse hyperbolic sine determines
+the range and branch cuts:
+\begin{tabbing}
+$ \arcsinh \emph{z}=\log \left(\emph{z}+\sqrt{1+\emph{z}^2}\right)$
+\end{tabbing}
+The branch cut for the inverse hyperbolic sine function is in two pieces:
+one along the positive imaginary axis above \emph{i}
+(inclusive), continuous with quadrant I, and one along the negative imaginary
+axis below $-\emph{i}$ (inclusive), continuous with quadrant III.
+The range is that strip of the complex plane containing numbers whose imaginary
+part is between $-\pi/2$ and $\pi/2$.  A number with imaginary
+part equal to $-\pi/2$ is in the range if and only if its real
+part is non-positive; a number with imaginary part equal to $\pi/2$ is in
+the range if and only if its real part is non-negative.
+
+\item[\cdf{acosh}]
+The following definition for the inverse hyperbolic cosine
+determines the range and branch cuts:
+\begin{tabbing}
+$ \arccosh \emph{z}=\log \left(\emph{z}+(\emph{z}+1)\sqrt{(\emph{z}-1)/(\emph{z}+1)}\right) $
+\end{tabbing}
+
+\begin{newer}
+Kahan \cite{KAHAN-COMPLEX-FNS} suggests the formula
+\begin{tabbing}
+$ \arccosh \emph{z}=2 \log \left(  \sqrt{(\emph{z}+1)/2} + \sqrt{(\emph{z}-1)/2} \right) $
+\end{tabbing}
+pointing out that it yields the same principal value but eliminates
+a gratuitous removable singularity at $\emph{z}=-1$.
+A proposal was submitted to X3J13 in September 1989 to replace the
+formula \cdf{acosh} with that recommended by Kahan.
+There is a good possibility that it will be adopted.
+\end{newer}
+
+The branch cut for the inverse hyperbolic cosine function
+lies along the real axis to the left of 1 (inclusive), extending
+indefinitely along the negative real axis, continuous with quadrant II
+and (between 0 and 1) with quadrant I.
+The range is that half-strip of the complex plane containing numbers whose
+real part is non-negative and whose imaginary
+part is between $-\pi$ (exclusive) and $\pi$ (inclusive).
+A number with real part zero is in the range 
+if its imaginary part is between zero (inclusive) and $\pi$ (inclusive).
+
+\item[\cdf{atanh}]
+The following definition for the inverse hyperbolic tangent
+determines the range and branch cuts:
+
+\begin{newer}
+WARNING!  \emph{The formula shown above for hyperbolic arc tangent is incorrect.}
+It is not a matter of incorrect branch cuts; it simply does not compute anything
+like a hyperbolic arc tangent.  This unfortunate error in the first edition
+was the result of mistranscribing a (correct) APL formula from Penfield's paper
+\cite{APL-BRANCH-CUTS}.  The formula should have been transcribed as
+\begin{tabbing}
+$ \arctanh \emph{z}=\log \left((1+\emph{z})\sqrt{1/(1-\emph{z}^2)}\right) $
+\end{tabbing}
+\end{newer}
+
+\begin{newer}
+A proposal was submitted to X3J13 in September 1989 to replace the
+formula \cdf{atanh} with that recommended by Kahan \cite{KAHAN-COMPLEX-FNS}:
+\begin{tabbing}
+$ \displaystyle \arctanh \emph{z}= { \left(\log(1+\emph{z}) - \log(1-\emph{z})\right) \over 2 } $
+\end{tabbing}
+There is a good possibility that it will be adopted.  If it is, the complete
+description of the branch cuts of \cdf{atanh} will then be as follows.
+
+The branch cut for the inverse hyperbolic tangent function
+is in two pieces: one along the negative real axis to the left of
+$-1$ (inclusive), continuous with quadrant II, and one along
+the positive real axis to the right of 1 (inclusive), continuous with
+quadrant IV.  The points $-1$ and 1 are excluded from the
+domain.
+The range is that strip of the complex plane containing
+numbers whose imaginary part is between $-\pi/2$ and
+$\pi/2$.  A number with imaginary part equal to $-\pi/2$
+is in the range if and only if its real part is strictly positive; a number with
+imaginary part equal to $\pi/2$ is in the range if and only if its real
+part is strictly negative.  Thus the range of the inverse
+hyperbolic tangent function is \emph{not} the same as
+that of the inverse hyperbolic sine function.
+\end{newer}
+\end{flushdesc}
+
+With these definitions, the following useful identities are obeyed
+throughout the applicable portion of the complex domain, even on
+the branch cuts:
+
+
+\begin{flushleft}
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
+$\sin \emph{i}\emph{z} = \emph{i} \sinh \emph{z}$&$\sinh \emph{i}\emph{z} = \emph{i} \sin \emph{z}$&$\arctan \emph{i}\emph{z} = \emph{i} \arctanh \emph{z}$ \\
+$\cos \emph{i}\emph{z} = \cosh \emph{z}$&$\cosh \emph{i}\emph{z} = \cos \emph{z}$&$\arcsinh \emph{i}\emph{z} = \emph{i} \arcsin \emph{z}$ \\
+$\tan \emph{i}\emph{z} = \emph{i} \tanh \emph{z}$&$\arcsin \emph{i}\emph{z} = \emph{i} \arcsinh \emph{z}$&$\arctanh \emph{i}\emph{z} = \emph{i} \arctan \emph{z}$
+\end{tabular*}
+\end{flushleft}
+
+\begin{new}
+I thought it would be useful to provide some graphs illustrating the behavior
+of the irrational and transcendental functions in the complex plane.
+It also provides an opportunity to show off the Common Lisp code that
+was used to generate them.
+
+Imagine the complex plane to be decorated
+as follows.  The real and imaginary axes are painted with thick lines.
+Parallels from the axes on both sides at distances of 1, 2, and 3 are painted
+with thin lines; these parallels are doubly infinite lines, as are the axes.
+Four annuli (rings) are painted in gradated shades of gray.  Ring 1, the inner ring,
+consists of points whose radial distances from the origin lie in the range
+$[1/4,1/2]$; ring 2 is in the radial range
+$[3/4, 1]$; ring 3, in the range
+$[\pi /2, 2]$; and ring 4, in the range $[3, \pi]$.
+Ring \emph{j} is divided into $2^{j+1}$ equal sectors, with each sector
+painted a different shade of gray, darkening as one proceeds counterclockwise
+from the positive real axis.
+
+We can illustrate the behavior of a numerical function $\emph{f}$ by considering how
+it maps the complex plane to itself.  More specifically, consider each
+point $\emph{z}$ of the decorated plane.  We decorate a new plane by coloring
+the point $\emph{f}(\emph{z})$ with the same color that point $\emph{z}$ had in the original
+decorated plane.  In other words, the newly decorated plane illustrates
+how the $\emph{f}$ maps the axes, other horizontal and vertical lines, and annuli.
+
+In each figure we will show only a fragment of the complex plane,
+with the real axis horizontal in the usual manner ($-\infty$ to the left, $+\infty$
+to the right) and the imaginary axis vertical ($-\infty \emph{i}$ below, $+\infty \emph{i}$
+above).  Each fragment shows a region containing points whose real and imaginary
+parts are in the range $[-4.1, 4.1]$.  The axes of the new plane are shown as very
+thin lines, with large tick marks at integer coordinates and somewhat smaller
+tick marks at multiples of $\pi/2$.
+
+Figure~\ref{IDENTITY-PLOT} shows the result of plotting the \cdf{identity} function
+(quite literally); the graph exhibits the decoration of the original plane.
+
+Figures~\ref{SECOND-PLOT} through~\ref{LAST-PLOT} show the graphs for the functions
+\cdf{sqrt}, \cdf{exp}, \cdf{log}, \cdf{sin}, \cdf{asin}, \cdf{cos}, \cdf{acos}, \cdf{tan}, \cdf{atan},
+\cdf{sinh}, \cdf{asinh}, \cdf{cosh}, \cdf{acosh}, \cdf{tanh}, and \cdf{atanh}, and
+as a bonus, the graphs for the functions $\sqrt{1-\emph{z}^2}$,
+$\sqrt{1+\emph{z}^2}$, $(\emph{z}-1)/(\emph{z}+1)$, and $(1+\emph{z})/(1-\emph{z})$.  All of these are related
+to the trigonometric functions in various ways.  For example, if
+$\emph{f}(\emph{z})=(\emph{z}-1)/(\emph{z}+1)$, then $\tanh \emph{z} = \emph{f}(\emph{e}^{2z})$, and if $\emph{g}(\emph{z})=\sqrt{1-\emph{z}^2}$, then
+$\cos \emph{z} = \emph{g}(\sin \emph{z})$.  It is instructive to examine the graph for $\sqrt{1-\emph{z}^2}$
+and try to visualize how it transforms the graph for \cdf{sin} into the graph for~\cdf{cos}.
+
+Each figure is accompanied by a commentary on what maps to what and other interesting
+features.  None of this material is terribly new; much of it may be found in any
+good textbook on complex analysis.  I believe that the particular form in which the
+graphs are presented is novel, as well as the fact that the graphs have been generated
+as PostScript \cite{ADOBE-POSTSCRIPT} code by Common Lisp code.  This PostScript
+code was then fed directly to the typesetting equipment that set the pages for this book.
+Samples of this PostScript code follow the figures themselves,
+after which the code for the entire program is presented.
+
+In the commentaries that accompany the figures I
+sometimes speak of mapping the points $\pm\infty$ or $\pm\infty i$.
+When I say that function $f$ maps $+\infty$ to a certain point $z$, I mean that
+\begin{tabbing}
+$ z=\lim_{x\rightarrow +\infty} f(x+0\, i\/) $
+\end{tabbing}
+Similarly, when I say that $f$ maps
+$-\infty i$ to $z$, I mean that
+\begin{tabbing}
+$ z = \lim_{y\rightarrow -\infty} f(0+yi\/) $
+\end{tabbing}
+In other words, I am considering a limit as one travels out along one of the
+main axes.  I~also speak in a similar manner of mapping \emph{to} one of these
+infinities.
+\end{new}
+\clearpage
+
+\begingroup
+
+\ifx \HCode\Undef
+\newcommand{\numplot}[1]{\includegraphics{#1-plot}\\}
+\else
+\newcommand{\numplot}[1]{\includegraphics{#1-plot.png}\\}
+\fi
+
+\newdimen\foodimen
+\foodimen=\textheight
+\setbox0=\vbox{\hrule}
+\advance\foodimen by -2\ht0
+\advance\foodimen by -16pt
+
+
+\begin{figure}
+\caption{Initial Decoration of the Complex Plane (Identity Function)}
+\label{IDENTITY-PLOT}
+\numplot{identity}
+\small\noindent
+This figure was produced in exactly the same manner as succeeding figures,
+simply by plotting the function \cdf{identity} instead of a numerical function.
+Thus the first of these figures was produced by the last function of the first edition.
+I knew it would come in handy someday!
+\end{figure}
+
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Square Root Function}
+\label{SECOND-PLOT}
+\numplot{sqrt}
+\small\noindent
+The \cdf{sqrt} function maps the complex plane into the right half
+of the plane by slitting it along the negative real axis and then sweeping
+it around as if half-closing a folding fan.
+The fan also shrinks, as if it were made of cotton and had gotten
+wetter at the periphery than at the center.
+The positive real axis is mapped onto itself.  The negative real axis is mapped
+onto the positive imaginary axis (but if minus zero is supported, then
+$-\emph{x}+0\emph{i}$ is mapped onto the positive imaginary axis and $-\emph{x}-0\emph{i}$ onto
+the negative imaginary axis, assuming $\emph{x}>0$).  The positive imaginary axis
+is mapped onto the northeast diagonal, and the negative imaginary axis
+onto the southeast diagonal.  More generally, lines are mapped to rectangular hyperbolas
+(or fragments thereof\,) centered on the origin;
+lines through the origin are mapped to degenerate
+hyperbolas (perpendicular lines through the origin).
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Exponential Function}
+\numplot{exp}
+\small\noindent
+The \cdf{exp} function maps horizontal lines to radii and maps vertical
+lines to circles centered at the origin.
+The origin is mapped to 1.  (It is instructive to compare
+this graph with those of other functions
+that map the origin to 1, for example $(1+\emph{z})/(1-\emph{z})$, $\cos \emph{z}$, and $\sqrt{1-\emph{z}^2}$.)
+The entire real axis is mapped to the positive
+real axis, with $-\infty$ mapping to the origin and $+\infty$ to itself.
+The imaginary axis is mapped to the unit circle with infinite multiplicity (period $2\pi$);
+therefore the mapping of the imaginary infinities $\pm\infty \emph{i}$ is indeterminate.
+It follows that the entire left half-plane is mapped to the interior of the unit circle,
+and the right half-plane is mapped to the exterior of the unit circle.
+A line at any angle other than horizontal or vertical is mapped to a
+logarithmic spiral (but this is not illustrated here).
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Natural Logarithm Function}
+\numplot{log}
+\small\noindent
+The \cdf{log} function, which is the inverse of \cdf{exp}, naturally maps radial lines to
+horizontal lines and circles centered at the origin to vertical lines.
+The interior of the unit circle is thus mapped to the entire left half-plane,
+and the exterior of the unit circle is mapped to the right half-plane.
+The positive real axis is mapped to the entire real axis, and the negative
+real axis to a horizontal line of height $\pi$.  The positive and negative
+imaginary axes are mapped to horizontal lines of height $\pm\pi/2$.
+The origin is mapped to $-\infty$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Function $(\emph{z}-1)/(\emph{z}+1)$}
+\numplot{minus-over-plus}
+\small\noindent
+A line is a degenerate circle with infinite radius;
+when I say ``circles'' here I also mean lines.
+Then $(\emph{z}-1)/(\emph{z}+1)$ maps circles into circles.
+All circles through $-1$ become lines; all lines become
+circles through $1$.
+The real axis is mapped onto itself: 1 to
+the origin, the origin to $-1$, $-1$ to infinity, and infinity to 1.
+The imaginary axis becomes the unit circle; \emph{i} is mapped to itself,
+as is $-\emph{i}$.  Thus the entire right half-plane is mapped to the interior
+of the unit circle, the unit circle interior to the left half-plane,
+the left half-plane to the unit circle exterior, and the unit circle exterior
+to the right half-plane.  Imagine the complex plane to be a vast sea.
+The Colossus of Rhodes straddles the origin, its left foot on \emph{i} and its right foot on $-\emph{i}$.
+It bends down and briefly paddles water between its legs so furiously that the water
+directly beneath is pushed out into the entire area behind it; much that was
+behind swirls forward to either side; and all that was before is
+sucked in to lie between its feet.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Function $(1+\emph{z})/(1-\emph{z})$}
+\numplot{plus-over-minus}
+\small\noindent
+The function $\emph{h}(\emph{z})=(1+\emph{z})/(1-\emph{z})$
+is the inverse of $\emph{f}(\emph{z})=(\emph{z}-1)/(\emph{z}+1)$; that is,
+$\emph{h}(\emph{f}(\emph{z}))=\emph{f}(\emph{h}(\emph{z}))=\emph{z}$. At first glance,
+the graph of $\emph{h}$ appears to be that of $\emph{f}$
+flipped left-to-right, or perhaps reflected in the origin, but careful
+consideration of the shaded annuli reveals that this is not so; something more
+subtle is going on.  Note that
+$\emph{f}(\emph{f}(\emph{z}))=\emph{h}(\emph{h}(\emph{z}))=\emph{g}(\emph{z})=-1/\emph{z}$.
+The functions $\emph{f}$, $\emph{g}$, $\emph{h}$, and the identity function
+thus form a group under composition, isomorphic to the group
+of the cyclic permutations of the points $-1$, $0$, $1$, and $\infty$, as
+indeed these functions accomplish the four possible cyclic permutations
+on those points.  This function group is a subset of the group of bilinear
+transformations $(\emph{a}\emph{z}+\emph{b})/(\emph{c}\emph{z}+\emph{d})$,
+all of which are conformal (angle-preserving) and map circles
+onto circles.  Now, doesn't that tangle of circles through $-1$ look like something
+the cat got into?
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Sine Function}
+\numplot{sin}
+\small\noindent
+We are used to seeing \cdf{sin} looking like a wiggly ocean wave,
+graphed vertically as a function of the real axis only.  Here is a different view.
+The entire real axis is mapped to the segment $[-1, 1]$ of the real axis
+with infinite multiplicity (period $2\pi$).  The imaginary axis is mapped to itself
+as if by \cdf{sinh} considered as a real function.  The origin is mapped to itself.
+Horizontal lines are mapped to ellipses with foci at $\pm1$ (note that two horizontal
+lines equidistant from the real axis will map onto the same ellipse).
+Vertical lines are mapped to hyperbolas with the same foci.  There is a curious accident:
+the ellipse for horizontal
+lines at distance $\pm1$ from the real axis appears to intercept the real axis at
+$\pm\pi/2\approx \pm1.57\ldots$ but this is not so; the intercepts are actually at
+$\pm(\emph{e}+1/\emph{e})/2\approx \pm1.54\ldots\,\hbox{}$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Arc Sine Function}
+\numplot{asin}
+\small\noindent
+Just as \cdf{sin} grabs horizontal lines and bends them into elliptical loops around
+the origin, so its inverse \cdf{asin} takes annuli and yanks them more
+or less horizontally straight.  Because sine is not injective,
+its inverse as a function cannot be surjective.  This is just a highfalutin
+way of saying that the range of the \cdf{asin} function doesn't
+cover the entire plane but only a strip $\pi$ wide; arc sine as a one-to-many relation
+would cover the plane with an infinite number of copies of this strip side by side,
+looking for all the world like the tail of a peacock with an infinite number of feathers.
+The imaginary axis is mapped to itself as if by \cdf{asinh} considered as a real function.
+The real axis is mapped to a bent path, turning corners at $\pm\pi/2$ (the points to
+which $\pm 1$ are mapped); $+\infty$ is mapped to $\pi/2-\infty \emph{i}$, and
+$-\infty$ to $-\pi/2+\infty \emph{i}$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Cosine Function}
+\numplot{cos}
+\small\noindent
+We are used to seeing \cdf{cos} looking exactly like \cdf{sin}, a wiggly ocean wave,
+only displaced.  Indeed the complex mapping of \cdf{cos} is also similar
+to that of \cdf{sin}, with horizontal and vertical lines mapping to the same ellipses
+and hyperbolas with foci at $\pm 1$, although mapping to them in a different
+manner, to be sure.
+The entire real axis is again mapped to the segment $[-1, 1]$ of the real axis,
+but each half of the imaginary axis is mapped to the real axis to the right of 1
+(as if by \cdf{cosh} considered as a real function).  Therefore $\pm\infty \emph{i}$
+both map to $+\infty$.
+The origin is mapped to 1.  Whereas \cdf{sin} is an odd function, \cdf{cos} is an
+even function; as a result \emph{two} points in each annulus, one the negative
+of the other, are mapped to the same shaded point in this graph; the shading shown here
+is taken from points in the original upper half-plane.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Arc Cosine Function}
+\numplot{acos}
+\small\noindent
+The graph of \cdf{acos} is very much like that of \cdf{asin}.
+One might think that our nervous peacock has shuffled half a step
+to the right, but the shading on the annuli shows that we have instead caught
+the bird exactly in mid-flight while doing a cartwheel.
+This is easily understood if we recall that $\arccos \emph{z}=(\pi/2)-\arcsin \emph{z}$;
+negating $\arcsin \emph{z}$ rotates it upside down, and adding the result to $\pi/2$
+translates it $\pi/2$ to the right.
+The imaginary axis is mapped upside down to the vertical line at $\pi/2$.
+The point $+1$ is mapped to the origin, and $-1$ to $\pi$.
+The image of the real axis is again cranky; $+\infty$ is mapped to $+\infty \emph{i}$,
+and $-\infty$ to $\pi-\infty \emph{i}$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Tangent Function}
+\numplot{tan}
+\small\noindent
+The usual graph of \cdf{tan} as a real function looks like an infinite chorus
+line of disco dancers, left hands pointed skyward and right hands to the floor.
+The \cdf{tan} function is the quotient of \cdf{sin} and \cdf{cos}
+but it doesn't much look like either except for having period $2\pi$.
+This goes for the complex plane as well, although the swoopy loops produced
+from the annulus between $\pi/2$ and $2$ look vaguely like
+those from the graph of \cdf{sin} inside out.
+The real axis is mapped onto itself with infinite multiplicity (period $2\pi$).
+The imaginary axis is mapped backwards onto $[-\emph{i},\emph{i}]$:
+$+\infty \emph{i}$ is mapped to $-\emph{i}$ and $-\infty \emph{i}$ to $+\emph{i}$.
+Horizontal lines below or above the real axis
+become circles surrounding $+\emph{i}$ or $-\emph{i}$, respectively.
+Vertical lines become circular arcs from $+\emph{i}$ to $-\emph{i}$;
+two vertical lines separated by $(2\emph{k}+1)\pi$ for integer $\emph{k}$
+together become a complete circle.  It seems that two arcs
+shown hit the real axis at $\pm\pi/2=\pm 1.57\ldots$ but that is a coincidence;
+they really hit the axis at $\pm\tan 1= 1.55\ldots\,\hbox{}$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Arc Tangent Function}
+\numplot{xatan}
+\small\noindent
+All I can say is that this peacock is a horse of another color.
+At first glance, the axes seem to map in the same way as for \cdf{asin} and
+\cdf{acos}, but look again: this time it's the imaginary axis doing weird things.
+All infinities map multiply to the points
+$(2\emph{k}+1)\pi/2$; within the strip of principal values we may say that
+the real axis is mapped to the interval $[-\pi/2,+\pi/2]$ and therefore
+$-\infty$ is mapped to $-\pi/2$ and $+\infty$ to $+\pi/2$.
+The point $+\emph{i}$ is mapped to $+\infty \emph{i}$, and $-\emph{i}$ to $-\infty \emph{i}$, and
+so the imaginary axis is mapped into three pieces: the segment
+$[-\infty \emph{i},-\emph{i}]$ is mapped to $[\pi/2,\pi/2-\infty \emph{i}]$; the segment
+$[-\emph{i},\emph{i}]$ is mapped to the imaginary axis $[-\infty \emph{i},+\infty \emph{i}]$; and the segment
+$[+\emph{i},+\infty \emph{i}]$ is mapped to $[-\pi/2+\infty \emph{i},-\pi/2]$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Hyperbolic Sine Function}
+\numplot{sinh}
+\small\noindent
+It would seem that the graph of \cdf{sinh} is merely that of \cdf{sin}
+rotated 90 degrees.  If that were so, then we would have $\sinh \emph{z} = \emph{i} \sin \emph{z}$.
+Careful inspection of the shading, however, reveals that this is not quite the case;
+in both graphs the lightest and darkest shades, which initially are adjacent to
+the positive real axis, remain adjacent to the positive real axis in both cases.
+To derive the graph of \cdf{sinh} from \cdf{sin} we must therefore first
+rotate the complex plane by $-90$ degrees, then apply \cdf{sin}, then
+rotate the result by 90 degrees. In other words, $\sinh \emph{z} = \emph{i} \sin (-\emph{i\/})\emph{z}$;
+consistently replacing $\emph{z}$ with $\emph{i}\emph{z}$ in this formula yields the familiar identity
+$\sinh \emph{i}\emph{z} = \emph{i} \sin \emph{z}$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Hyperbolic Arc Sine Function}
+\numplot{asinh}
+\small\noindent
+The peacock sleeps.  Because $\arcsinh \emph{i}\emph{z} = \emph{i} \arcsin \emph{z}$,
+the graph of \cdf{asinh}
+is related to that of \cdf{asin} by pre- and post-rotations of the complex plane
+in the same way as for \cdf{sinh} and \cdf{sin}.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Hyperbolic Cosine Function}
+\numplot{cosh}
+\small\noindent
+The graph of \cdf{cosh} does \emph{not} look like that of \cdf{cos} rotated
+90 degrees; instead it looks like that of \cdf{cos} unrotated.
+That is because $\cosh \emph{i}\emph{z}$ is not equal to $\emph{i} \cos \emph{z}$;
+rather, $\cosh \emph{i}\emph{z} = \cos \emph{z}$.
+Interpreted, that means that the shading is pre-rotated but there is no
+post-rotation.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Hyperbolic Arc Cosine Function}
+\numplot{acosh}
+\small\noindent
+Hmm---I'd rather not say what happened to this peacock.
+This feather looks a bit mangled.  Actually it is all right---the principal
+value for \cdf{acosh} is so chosen that its graph does not look simply
+like a rotated version of the graph of \cdf{acos}, but if all values were
+shown, the two graphs would fill the plane in repeating patterns related
+by a rotation.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Hyperbolic Tangent Function}
+\numplot{tanh}
+\small\noindent
+The diagram for \cdf{tanh} is simply that of \cdf{tan} turned on its ear:
+$\emph{i} \tan \emph{z} = \tanh \emph{i}\emph{z}$.
+The imaginary axis is mapped onto itself with infinite multiplicity (period $2\pi$),
+and the real axis is mapped onto the segment $[-1,+1]$:
+$+\infty$ is mapped to $+1$, and $-\infty$ to $-1$.
+Vertical lines to the left or right of the real axis
+are mapped to circles surrounding $-1$ or $1$, respectively.
+Horizontal lines are mapped to circular arcs anchored at $-1$ and $+1$;
+two horizontal lines separated by a distance $(2\emph{k}+1)\pi$ for integer $\emph{k}$ are
+together mapped into a complete circle.  How do we know these really are circles?
+Well, $\tanh \emph{z} = ((\exp 2\emph{z})-1)/((\exp 2\emph{z})+1)$, which is the composition of the
+bilinear transform $(\emph{z}-1)/(\emph{z}+1)$, the exponential $\exp \emph{z}$,
+and the magnification $2\emph{z}$.
+Magnification maps lines to lines of the same slope; the exponential maps
+horizontal lines to circles and vertical lines to radial lines;
+and a bilinear transform maps generalized circles (including lines) to
+generalized circles.  Q.E.D.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Hyperbolic Arc Tangent Function}
+\label{ATANH-PLOT}
+\numplot{really-good-atanh}
+\small\noindent
+A sleeping peacock of another color: $\arctanh \emph{i}\emph{z} = \emph{i} \arctan \emph{z}$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Function $\protect\sqrt{1-\emph{z}^2}$}
+\numplot{sqrt-one-minus-sq}
+\small\noindent
+Here is a curious graph indeed for so simple a function!
+The origin is mapped to 1.  The real axis segment $[0,1]$ is
+mapped backwards (and non-linearly) into itself; the segment $[1,+\infty]$
+is mapped non-linearly onto the positive imaginary axis.
+The negative real axis is mapped to the same points as the positive real axis.
+Both halves of the imaginary axis are mapped into $[1,+\infty]$ on the real axis.
+Horizontal lines become vaguely vertical, and
+vertical lines become vaguely horizontal.
+Circles centered at the origin are transformed into Cassinian \hbox{(half-)ovals}; the unit
+circle is mapped to a \hbox{(half-)lemniscate} of Bernoulli.  The outermost annulus appears
+to have its \emph{inner} edge at $\pi$ on the real axis and its \emph{outer}
+edge at 3 on the imaginary axis, but this is another accident; the intercept
+on the real axis, for example, is not really at $\pi\approx 3.14\ldots$ but
+at $\sqrt{1-(3\emph{i\/})^2}=\sqrt{10}\approx 3.16\ldots\,\hbox{}$.
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\caption{Illustration of the Range of the Function $\protect\sqrt{1+\emph{z}^2}$}
+\label{LAST-PLOT}
+\numplot{sqrt-one-plus-sq}
+\small\noindent
+The graph of $\emph{q}(\emph{z})=\sqrt{1+\emph{z}^2}$ looks like that
+of $\emph{p}(\emph{z})=\sqrt{1-\emph{z}^2}$ except for
+the shading.  You might not expect $\emph{p}$ and $\emph{q}$ to be related in the same
+way that \cdf{cos} and \cdf{cosh} are, but after a little reflection (or perhaps
+I should say, after turning it around in one's mind) one can see that
+$\emph{q}(\emph{i}\emph{z})=\emph{p}(\emph{z})$.  This formula is indeed of exactly the same form as
+$\cosh \emph{i}\emph{z} = \cos \emph{z}$.  The function
+$\sqrt{1+\emph{z}^2}$ maps both halves of the real axis into $[1,+\infty]$ on the real axis.
+The segments $[0,\emph{i}]$ and $[0,-\emph{i}]$ of the imaginary axis are each mapped
+backwards onto segment $[0,1]$ of the real axis; $[\emph{i},+\infty \emph{i}]$ and
+$[-\emph{,}-\infty \emph{i}]$ are each mapped onto the positive imaginary axis
+(but if minus zero is supported then opposite sides of the
+imaginary axis map to opposite halves of the imaginary axis---for example,
+$q(+0+2\emph{i\/})=\sqrt{5}\emph{i}$ but $q(-0+2\emph{i\/})=-\sqrt{5}\emph{i}$).
+\end{figure}
+
+\clearpage
+\endgroup
+\begin{new}
+Here is a sample of the PostScript code that generated
+figure~\ref{IDENTITY-PLOT}, showing the initial scaling,
+translation, and clipping parameters; the code for one
+sector of the innermost annulus; and the code for the negative
+imaginary axis.  Comment lines indicate how path or boundary
+segments were generated separately and then spliced (in order to
+allow for the places that a singularity might lurk, in which case
+the generating code can ``inch up'' to the problematical argument
+value).
+
+The size of the entire PostScript file for the
+\cdf{identity} function was about 68 kilobytes (2757 lines, including comments).
+The smallest files
+were the plots for \cdf{atan} and \cdf{atanh}, about 65 kilobytes apiece;
+the largest were the plots for \cdf{sin}, \cdf{cos}, \cdf{sinh}, and \cdf{cosh},
+about 138 kilobytes apiece.
+
+\begingroup\small  \topsep 0pt plus 6pt \relax
+\begin{lisp}
+\\
+\% PostScript file for plot of function IDENTITY \\
+\% Plot is to fit in a region 4.666666666666667 inches square \\
+\% ~showing axes extending 4.1 units from the origin. \\
+ \\
+40.97560975609756 40.97560975609756 scale \\
+4.1 4.1 translate \\
+newpath \\
+~~-4.1 -4.1 moveto \\
+~~4.1 -4.1 lineto \\
+~~4.1 4.1 lineto \\
+~~-4.1 4.1 lineto \\
+~~closepath \\
+clip \\
+\% Moby grid for function IDENTITY \\
+\% Annulus 0.25 0.5 4 0.97 0.45 \\
+\% Sector from 4.7124 to 6.2832 (quadrant 3) \\
+newpath \\
+~~0.0 -0.25 moveto \\
+~~0.0 -0.375 lineto \\
+~~\%middle radial \\
+~~0.0 -0.375 lineto \\
+~~0.0 -0.5 lineto \\
+~~\%end radial \\
+~~0.0 -0.5 lineto \\
+~~0.092 -0.4915 lineto \\
+~~0.1843 -0.4648 lineto \\
+~~0.273 -0.4189 lineto \\
+~~0.3536 -0.3536 lineto \\
+~~\%middle circumferential \\
+~~0.3536 -0.3536 lineto \\
+~~0.413 -0.2818 lineto \\
+~~0.4594 -0.1974 lineto \\
+~~0.4894 -0.1024 lineto \\
+~~0.5 0.0 lineto \\
+~~\%end circumferential \\
+~~0.5 0.0 lineto \\
+~~0.375 0.0 lineto \\
+~~\%middle radial \\
+~~0.375 0.0 lineto \\
+~~0.25 0.0 lineto \\
+~~\%end radial \\
+~~0.25 0.0 lineto \\
+~~0.2297 -0.0987 lineto \\
+~~0.1768 -0.1768 lineto \\
+~~\%middle circumferential \\
+~~0.1768 -0.1768 lineto \\
+~~0.0922 -0.2324 lineto \\
+~~0.0 -0.25 lineto \\
+~~\%end circumferential \\
+~~closepath \\
+currentgray~~~0.45 setgray~~~fill~~~setgray
+\end{lisp}
+\textrm{{\lbrack}2598 lines omitted{\rbrack}}
+\begin{lisp}
+\% Vertical line from (0.0, -0.5) to (0.0, 0.0) \\
+newpath \\
+~~0.0 -0.5 moveto \\
+~~0.0 0.0 lineto \\
+0.05 setlinewidth~~~1 setlinecap~~stroke \\
+\% Vertical line from (0.0, -0.5) to (0.0, -1.0) \\
+newpath \\
+~~0.0 -0.5 moveto \\
+~~0.0 -1.0 lineto \\
+0.05 setlinewidth~~~1 setlinecap~~stroke \\
+\% Vertical line from (0.0, -2.0) to (0.0, -1.0) \\
+newpath \\
+~~0.0 -2.0 moveto \\
+~~0.0 -1.0 lineto \\
+0.05 setlinewidth~~~1 setlinecap~~stroke \\
+\% Vertical line from (0.0, -2.0) to (0.0, -1.1579208923731617E77) \\
+newpath \\
+~~0.0 -2.0 moveto \\
+~~0.0 -6.3553 lineto \\
+~~0.0 -6.378103166302659 lineto \\
+~~0.0 -6.378103166302659 lineto \\
+~~0.0 -6.378103166302659 lineto \\
+0.05 setlinewidth   1 setlinecap  stroke
+\end{lisp}
+\textrm{{\lbrack}84 lines omitted{\rbrack}}
+\begin{lisp}
+\% End of PostScript file for plot of function IDENTITY
+\end{lisp}
+\endgroup
+
+Here is the program that generated the PostScript code for
+the graphs shown in figures~\ref{IDENTITY-PLOT} through~\ref{LAST-PLOT}.
+It contains a mixture of fairly general mechanisms and \emph{ad hoc} kludges
+for plotting functions of a single complex argument while gracefully handling
+extremely large and small values,
+branch cuts, singularities, and periodic behavior.
+The aim was to provide a simple user interface that would not
+require the caller to provide special advice for each function
+to be plotted.
+The file for figure~\ref{IDENTITY-PLOT}, for example, was generated
+by the call \cd{(picture~'identity)}, which resulted in the writing of
+a file named \cd{identity-plot.ps}.
+
+The program assumes that any periodic behavior will have a period that is a multiple of
+$2\pi$; that branch cuts will fall along the real or imaginary axis;
+and that singularities or very large or small values
+will occur only at the origin, at $\pm 1$ or $\pm \emph{i}$,
+or on the boundaries of the annuli (particularly those with radius $\pi/2$ or $\pi$).
+The central function is \cdf{parametric-path}, which accepts four arguments:
+two real numbers that are the endpoints of an interval of real numbers,
+a function that maps this interval into a path in the complex plane,
+and the function to be plotted; the task of \cdf{parametric-path} is to
+generate PostScript code (a series of \cdf{lineto} operations)
+that will plot an approximation to the image of the parametric path
+as transformed by the function to be plotted.
+Each of the functions \cdf{hline}, \cdf{vline}, \cdf{-hline}, \cdf{-vline}, \cdf{radial},
+and \cdf{circumferential} takes appropriate parameters
+and returns a function suitable for use as the third argument
+to \cdf{parametric-path}.
+There is some code that defends against errors
+(by using \cdf{ignore-errors}) and against certain peculiarities of
+IEEE floating-point arithmetic (the code that checks for not-a-number (NaN) results).
+
+The program is offered here without further comment or apology.
+
+\vskip 0pt plus 10pt%manual
+\hrule width 0pt\relax
+
+\begingroup\small \topsep 0pt plus 10pt \relax
+\begin{lisp}
+\\
+(defparameter units-to-show 4.1) \\*
+(defparameter text-width-in-picas 28.0) \\*
+(defparameter device-pixels-per-inch 300) \\*
+(defparameter pixels-per-unit \\*
+~~(* (/ (/ text-width-in-picas 6) \\*
+~~~~~~~~(* units-to-show 2)) \\*
+~~~~~device-pixels-per-inch)) \\
+\\
+(defparameter big (sqrt (sqrt most-positive-single-float))) \\*
+(defparameter tiny (sqrt (sqrt least-positive-single-float))) \\
+\\
+(defparameter path-really-losing 1000.0) \\
+(defparameter path-outer-limit (* units-to-show (sqrt 2) 1.1)) \\
+(defparameter path-minimal-delta (/ 10 pixels-per-unit)) \\
+(defparameter path-outer-delta (* path-outer-limit 0.3)) \\
+(defparameter path-relative-closeness 0.00001) \\*
+(defparameter back-off-delta 0.0005)
+\end{lisp}
+\newpage%manual
+\begin{lisp}
+(defun comment-line (stream \&rest stuff) \\*
+~~(format stream "{\Xtilde}\%\% ") \\*
+~~(apply \#'format stream stuff) \\*
+~~(format t "{\Xtilde}\%\% ") \\*
+~~(apply \#'format t stuff)) \\
+\\
+(defun parametric-path (from to paramfn plotfn) \\*
+~~(assert (and (plusp from) (plusp to))) \\*
+~~(flet ((domainval (x) (funcall paramfn x)) \\*
+~~~~~~~~~(rangeval (x) (funcall plotfn (funcall paramfn x))) \\*
+~~~~~~~~~(losing (x) (or (null x) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(/= (realpart x) (realpart x))~~;NaN? \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(/= (imagpart x) (imagpart x))~~;NaN? \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(> (abs (realpart x)) path-really-losing) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(> (abs (imagpart x)) path-really-losing)))) \\
+~~~~(when (> to 1000.0) \\*
+~~~~~~(let ((f0 (rangeval from)) \\*
+~~~~~~~~~~~~(f1 (rangeval (+ from 1))) \\*
+~~~~~~~~~~~~(f2 (rangeval (+ from (* 2 pi)))) \\*
+~~~~~~~~~~~~(f3 (rangeval (+ from 1 (* 2 pi)))) \\*
+~~~~~~~~~~~~(f4 (rangeval (+ from (* 4 pi))))) \\
+~~~~~~~~(flet ((close (x y) \\*
+~~~~~~~~~~~~~~~~~(or (< (careful-abs (- x y)) path-minimal-delta) \\*
+~~~~~~~~~~~~~~~~~~~~~(< (careful-abs (- x y)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~(* (+ (careful-abs x) (careful-abs y)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~path-relative-closeness))))) \\
+~~~~~~~~~~(when (and (close f0 f2) \\*
+~~~~~~~~~~~~~~~~~~~~~(close f2 f4) \\*
+~~~~~~~~~~~~~~~~~~~~~(close f1 f3) \\*
+~~~~~~~~~~~~~~~~~~~~~(or (and (close f0 f1) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(close f2 f3)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~(and (not (close f0 f1)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(not (close f2 f3))))) \\*
+~~~~~~~~~~~~(format t "{\Xtilde}\&Periodicity detected.") \\*
+~~~~~~~~~~~~(setq to (+ from (* (signum (- to from)) 2 pi))))))) \\
+~~~~~(let ((fromrange (ignore-errors (rangeval from))) \\*
+~~~~~~~~~~(torange (ignore-errors (rangeval to)))) \\*
+~~~~~~(if (losing fromrange) \\*
+~~~~~~~~~~(if (losing torange) \\*
+~~~~~~~~~~~~~~'() \\*
+~~~~~~~~~~~~~~(parametric-path (back-off from to) to paramfn plotfn)) \\
+~~~~~~~~~~(if (losing torange) \\*
+~~~~~~~~~~~~~~(parametric-path from (back-off to from) paramfn plotfn) \\*
+~~~~~~~~~~~~~~(expand-path (refine-path (list from to) \#'rangeval) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~\#'rangeval))))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+(defun back-off (point other) \\*
+~~(if (or (> point 10.0) (< point 0.1)) \\*
+~~~~~~(let ((sp (sqrt point))) \\*
+~~~~~~~~(if (or (> point sp other) (< point sp other)) \\*
+~~~~~~~~~~~~sp \\*
+~~~~~~~~~~~~(* sp (sqrt other)))) \\*
+~~~~~~(+ point (* (signum (- other point)) back-off-delta)))) \\
+\\
+(defun careful-abs (z) \\*
+~~(cond ((or (> (realpart z) big) \\*
+~~~~~~~~~~~~~(< (realpart z) (- big)) \\*
+~~~~~~~~~~~~~(> (imagpart z) big) \\*
+~~~~~~~~~~~~~(< (imagpart z) (- big))) \\*
+~~~~~~~~~big) \\
+~~~~~~~~((complexp z) (abs z)) \\*
+~~~~~~~~((minusp z) (- z)) \\*
+~~~~~~~~(t z))) \\      %intentional extra \\
+\end{lisp}
+\begin{lisp}
+(defparameter max-refinements 5000) \\
+\\
+(defun refine-path (original-path rangevalfn) \\*
+~~(flet ((rangeval (x) (funcall rangevalfn x))) \\*
+~~~~(let ((path original-path)) \\*
+~~~~~~(do ((j 0 (+ j 1))) \\*
+~~~~~~~~~~((null (rest path))) \\
+~~~~~~~~(when (zerop (mod (+ j 1) max-refinements)) \\*
+~~~~~~~~~~~~~~(break "Runaway path")) \\
+~~~~~~~~(let* ((from (first path)) \\*
+~~~~~~~~~~~~~~~(to (second path)) \\*
+~~~~~~~~~~~~~~~(fromrange (rangeval from)) \\*
+~~~~~~~~~~~~~~~(torange (rangeval to)) \\*
+~~~~~~~~~~~~~~~(dist (careful-abs (- torange fromrange))) \\*
+~~~~~~~~~~~~~~~(mid (* (sqrt from) (sqrt to))) \\*
+~~~~~~~~~~~~~~~(midrange (rangeval mid))) \\
+~~~~~~~~~~(cond ((or (and (far-out fromrange) (far-out torange)) \\*
+~~~~~~~~~~~~~~~~~~~~~(and (< dist path-minimal-delta) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~(< (abs (- midrange fromrange)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~path-minimal-delta) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~;; Next test is intentionally asymmetric to \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~;;~~avoid problems with periodic functions. \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~(< (abs (- (rangeval (/ (+ to (* from 1.5)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~2.5)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fromrange)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~path-minimal-delta))) \\*
+~~~~~~~~~~~~~~~~~(pop path)) \\
+~~~~~~~~~~~~~~~~((= mid from) (pop path)) \\*
+~~~~~~~~~~~~~~~~((= mid to) (pop path)) \\*
+~~~~~~~~~~~~~~~~(t (setf (rest path) (cons mid (rest path))))))))) \\*
+~~original-path) \\
+\\
+(defun expand-path (path rangevalfn) \\*
+~~(flet ((rangeval (x) (funcall rangevalfn x))) \\*
+~~~~(let ((final-path (list (rangeval (first path))))) \\*
+~~~~~~(do ((p (rest path) (cdr p))) \\*
+~~~~~~~~~~((null p) \\*
+~~~~~~~~~~~(unless (rest final-path) \\*
+~~~~~~~~~~~~~(break "Singleton path")) \\*
+~~~~~~~~~~~(reverse final-path)) \\
+~~~~~~~~(let ((v (rangeval (car p)))) \\*
+~~~~~~~~~~(cond ((and (rest final-path) \\*
+~~~~~~~~~~~~~~~~~~~~~~(not (far-out v)) \\*
+~~~~~~~~~~~~~~~~~~~~~~(not (far-out (first final-path))) \\*
+~~~~~~~~~~~~~~~~~~~~~~(between v (first final-path) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(second final-path))) \\*
+~~~~~~~~~~~~~~~~~(setf (first final-path) v)) \\
+~~~~~~~~~~~~~~~~((null (rest p))~~~;Mustn't omit last point \\*
+~~~~~~~~~~~~~~~~~(push v final-path)) \\
+~~~~~~~~~~~~~~~~((< (abs (- v (first final-path))) path-minimal-delta)) \\
+~~~~~~~~~~~~~~~~((far-out v) \\*
+~~~~~~~~~~~~~~~~~(unless (and (far-out (first final-path)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(< (abs (- v (first final-path))) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~path-outer-delta)) \\*
+~~~~~~~~~~~~~~~~~~~(push (* 1.01 path-outer-limit (signum v)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~final-path))) \\*
+~~~~~~~~~~~~~~~~(t (push v final-path)))))))) \\
+\\
+(defun far-out (x) \\*
+~~(> (careful-abs x) path-outer-limit)) \\
+\\
+(defparameter between-tolerance 0.000001) \\
+\\
+(defun between (p q r) \\*
+~~(let ((px (realpart p)) (py (imagpart p)) \\*
+~~~~~~~~(qx (realpart q)) (qy (imagpart q)) \\*
+~~~~~~~~(rx (realpart r)) (ry (imagpart r))) \\
+~~~~(and (or (<= px qx rx) (>= px qx rx)) \\*
+~~~~~~~~~(or (<= py qy ry) (>= py qy ry)) \\*
+~~~~~~~~~(< (abs (- (* (- qx px) (- ry qy)) \\*
+~~~~~~~~~~~~~~~~~~~~(* (- rx qx) (- qy py)))) \\*
+~~~~~~~~~~~~between-tolerance))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+(defun circle (radius) \\*
+~~\#'(lambda (angle) (* radius (cis angle)))) \\
+\\
+(defun hline (imag) \\*
+~~\#'(lambda (real) (complex real imag))) \\
+\\
+(defun vline (real) \\*
+~~\#'(lambda (imag) (complex real imag))) \\
+\\
+(defun -hline (imag) \\*
+~~\#'(lambda (real) (complex (- real) imag))) \\
+\\
+(defun -vline (real) \\*
+~~\#'(lambda (imag) (complex real (- imag)))) \\
+\\
+(defun radial (phi quadrant) \\*
+~~\#'(lambda (rho) (repair-quadrant (* rho (cis phi)) quadrant))) \\
+\\
+(defun circumferential (rho quadrant) \\*
+~~\#'(lambda (phi) (repair-quadrant (* rho (cis phi)) quadrant))) \\
+\\
+;;; Quadrant is 0, 1, 2, or 3, meaning I, II, III, or IV. \\
+\\
+(defun repair-quadrant (z quadrant) \\*
+~~(complex (* (+ (abs (realpart z)) tiny) \\*
+~~~~~~~~~~~~~~(case quadrant (0 1.0) (1 -1.0) (2 -1.0) (3 1.0))) \\*
+~~~~~~~~~~~(* (+ (abs (imagpart z)) tiny) \\*
+~~~~~~~~~~~~~~(case quadrant (0 1.0) (1 1.0) (2 -1.0) (3 -1.0))))) \\
+\\
+(defun clamp-real (x) \\*
+~~(if (far-out x) \\*
+~~~~~~(* (signum x) path-outer-limit) \\*
+~~~~~~(round-real x))) \\
+\\
+(defun round-real (x) \\*
+~~(/ (round (* x 10000.0)) 10000.0)) \\
+\\
+(defun round-point (z) \\*
+~~(complex (round-real (realpart z)) (round-real (imagpart z)))) \\
+\\
+(defparameter hiringshade 0.97) \\*
+(defparameter loringshade 0.45) \\
+\\
+(defparameter ticklength 0.12) \\*
+(defparameter smallticklength 0.09)
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+;;; This determines the pattern of lines and annuli to be drawn. \\*
+(defun moby-grid (\&optional (fn 'sqrt) (stream t)) \\*
+~~(comment-line stream "Moby grid for function {\Xtilde}S" fn) \\
+~~(shaded-annulus 0.25 0.5 4 hiringshade loringshade fn stream) \\*
+~~(shaded-annulus 0.75 1.0 8 hiringshade loringshade fn stream) \\*
+~~(shaded-annulus (/ pi 2) 2.0 16 hiringshade loringshade fn stream) \\*
+~~(shaded-annulus 3 pi 32 hiringshade loringshade fn stream) \\
+~~(moby-lines :horizontal 1.0 fn stream) \\*
+~~(moby-lines :horizontal -1.0 fn stream) \\*
+~~(moby-lines :vertical 1.0 fn stream) \\*
+~~(moby-lines :vertical -1.0 fn stream) \\
+~~(let ((tickline 0.015) \\*
+~~~~~~~~(axisline 0.008)) \\
+~~~~(flet ((tick (n) (straight-line (complex n ticklength) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex n (- ticklength)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream)) \\
+~~~~~~~~~~~(smalltick (n) (straight-line (complex n smallticklength) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex n (- smallticklength)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream))) \\
+~~~~~~(comment-line stream "Real axis") \\*
+~~~~~~(straight-line \#c(-5 0) \#c(5 0) axisline stream) \\*
+~~~~~~(dotimes (j (floor units-to-show)) \\*
+~~~~~~~~(let ((q (+ j 1))) (tick q) (tick (- q)))) \\
+~~~~~~(dotimes (j (floor units-to-show (/ pi 2))) \\*
+~~~~~~~~(let ((q (* (/ pi 2) (+ j 1)))) \\*
+~~~~~~~~~~(smalltick q) \\*
+~~~~~~~~~~(smalltick (- q))))) \\
+~~~~(flet ((tick (n) (straight-line (complex ticklength n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex (- ticklength) n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream)) \\
+~~~~~~~~~~~(smalltick (n) (straight-line (complex smallticklength n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(complex (- smallticklength) n) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~tickline \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stream))) \\
+~~~~~~(comment-line stream "Imaginary axis") \\*
+~~~~~~(straight-line \#c(0 -5) \#c(0 5) axisline stream) \\*
+~~~~~~(dotimes (j (floor units-to-show)) \\*
+~~~~~~~~(let ((q (+ j 1))) (tick q) (tick (- q)))) \\
+~~~~~~(dotimes (j (floor units-to-show (/ pi 2))) \\*
+~~~~~~~~(let ((q (* (/ pi 2) (+ j 1)))) \\*
+~~~~~~~~~~(smalltick q) \\*
+~~~~~~~~~~(smalltick (- q)))))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+(defun straight-line (from to wid stream) \\*
+~~(format stream \\*
+~~~~~~~~~~"{\Xtilde}\%newpath~~{\Xtilde}S {\Xtilde}S moveto~~{\Xtilde}S {\Xtilde}S lineto~~{\Xtilde}S {\Xtilde} \\
+~~~~~~~~~~~setlinewidth~~1~~setlinecap~~stroke" \\*
+~~~~~~~~~~(realpart from) \\*
+~~~~~~~~~~(imagpart from) \\*
+~~~~~~~~~~(realpart to) \\*
+~~~~~~~~~~(imagpart to) \\*
+~~~~~~~~~~wid)) \\
+\end{lisp}
+\begin{lisp}
+;;; This function draws the lines for the pattern. \\
+(defun moby-lines (orientation signum plotfn stream) \\*
+~~(let ((paramfn (ecase orientation \\*
+~~~~~~~~~~~~~~~~~~~(:horizontal (if (< signum 0) \#'-hline \#'hline)) \\*
+~~~~~~~~~~~~~~~~~~~(:vertical (if (< signum 0) \#'-vline \#'vline))))) \\
+~~~~(flet ((foo (from to other wid) \\*
+~~~~~~~~~~~~~(ecase orientation \\*
+~~~~~~~~~~~~~~~(:horizontal \\*
+~~~~~~~~~~~~~~~~(comment-line stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"Horizontal line from ({\Xtilde}S, {\Xtilde}S) to ({\Xtilde}S, {\Xtilde}S)" \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum from)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum to)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other))) \\
+~~~~~~~~~~~~~~~(:vertical \\*
+~~~~~~~~~~~~~~~~(comment-line stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"Vertical line from ({\Xtilde}S, {\Xtilde}S) to ({\Xtilde}S, {\Xtilde}S)" \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum from)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(round-real (* signum to))))) \\
+~~~~~~~~~~~~~(postscript-path \\*
+~~~~~~~~~~~~~~~stream \\*
+~~~~~~~~~~~~~~~(parametric-path from \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~to \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(funcall paramfn other) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotfn)) \\*
+~~~~~~~~~~~~~(postscript-penstroke stream wid))) \\
+~~~~~~(let* ((thick 0.05) \\*
+~~~~~~~~~~~~~(thin 0.02)) \\*
+~~~~~~~~;; Main axis \\*
+~~~~~~~~(foo 0.5 tiny 0.0 thick) \\*
+~~~~~~~~(foo 0.5 1.0 0.0 thick) \\*
+~~~~~~~~(foo 2.0 1.0 0.0 thick) \\*
+~~~~~~~~(foo 2.0 big 0.0 thick) \\
+~~~~~~~~;; Parallels at 1 and -1 \\*
+~~~~~~~~(foo 2.0 tiny 1.0 thin) \\*
+~~~~~~~~(foo 2.0 big 1.0 thin) \\*
+~~~~~~~~(foo 2.0 tiny -1.0 thin) \\*
+~~~~~~~~(foo 2.0 big -1.0 thin) \\
+~~~~~~~~;; Parallels at 2, 3, -2, -3 \\*
+~~~~~~~~(foo tiny big 2.0 thin) \\*
+~~~~~~~~(foo tiny big -2.0 thin) \\*
+~~~~~~~~(foo tiny big 3.0 thin) \\*
+~~~~~~~~(foo tiny big -3.0 thin))))) \\
+\\
+(defun splice (p q) \\*
+~~(let ((v (car (last p))) \\*
+~~~~~~~~(w (first q))) \\
+~~~~(and (far-out v) \\*
+~~~~~~~~~(far-out w) \\*
+~~~~~~~~~(>= (abs (- v w)) path-outer-delta) \\
+~~~~~~~~~;; Two far-apart far-out points.~~Try to walk around \\*
+~~~~~~~~~;;~~outside the perimeter, in the shorter direction. \\*
+~~~~~~~~~(let* ((pdiff (phase (/ v w))) \\*
+~~~~~~~~~~~~~~~~(npoints (floor (abs pdiff) (asin .2))) \\*
+~~~~~~~~~~~~~~~~(delta (/ pdiff (+ npoints 1))) \\*
+~~~~~~~~~~~~~~~~(incr (cis delta))) \\
+~~~~~~~~~~~(do ((j 0 (+ j 1)) \\*
+~~~~~~~~~~~~~~~~(p (list w "end splice") (cons (* (car p) incr) p))) \\*
+~~~~~~~~~~~~~~~((= j npoints) (cons "start splice" p))))))) \\
+\end{lisp}
+\begin{lisp}
+;;; This function draws the annuli for the pattern. \\
+(defun shaded-annulus (inner outer sectors firstshade lastshade fn stream) \\*
+~~(assert (zerop (mod sectors 4))) \\*
+~~(comment-line stream "Annulus {\Xtilde}S {\Xtilde}S {\Xtilde}S {\Xtilde}S {\Xtilde}S" \\*
+~~~~~~~~~~~~~~~~(round-real inner) (round-real outer) \\*
+~~~~~~~~~~~~~~~~sectors firstshade lastshade) \\
+~~(dotimes (jj sectors) \\*
+~~~~(let ((j (- sectors jj 1))) \\
+~~~~~~(let* ((lophase (+ tiny (* 2 pi (/ j sectors)))) \\*
+~~~~~~~~~~~~~(hiphase (* 2 pi (/ (+ j 1) sectors))) \\*
+~~~~~~~~~~~~~(midphase (/ (+ lophase hiphase) 2.0)) \\*
+~~~~~~~~~~~~~(midradius (/ (+ inner outer) 2.0)) \\*
+~~~~~~~~~~~~~(quadrant (floor (* j 4) sectors))) \\
+~~~~~~~~(comment-line stream "Sector from {\Xtilde}S to {\Xtilde}S (quadrant {\Xtilde}S)" \\*
+~~~~~~~~~~~~~~~~~~~~~~(round-real lophase) \\*
+~~~~~~~~~~~~~~~~~~~~~~(round-real hiphase) \\*
+~~~~~~~~~~~~~~~~~~~~~~quadrant) \\
+~~~~~~~~(let ((p0 (reverse (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~inner \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial lophase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p1 (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~outer \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial lophase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn)) \\*
+~~~~~~~~~~~~~~(p2 (reverse (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~lophase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential outer \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p3 (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~hiphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential outer quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn)) \\
+~~~~~~~~~~~~~~(p4 (reverse (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~outer \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial hiphase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p5 (parametric-path midradius \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~inner \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(radial hiphase quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn)) \\
+~~~~~~~~~~~~~~(p6 (reverse (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~hiphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential inner \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~~~~~(p7 (parametric-path midphase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~lophase \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(circumferential inner quadrant) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fn))) \\
+~~~~~~~~~~(postscript-closed-path stream \\*
+~~~~~~~~~~~~(append \\*
+~~~~~~~~~~~~~~p0 (splice p0 p1) '("middle radial") \\*
+~~~~~~~~~~~~~~p1 (splice p1 p2) '("end radial") \\
+~~~~~~~~~~~~~~p2 (splice p2 p3) '("middle circumferential") \\
+~~~~~~~~~~~~~~p3 (splice p3 p4) '("end circumferential") \\
+~~~~~~~~~~~~~~p4 (splice p4 p5) '("middle radial") \\
+~~~~~~~~~~~~~~p5 (splice p5 p6) '("end radial") \\
+~~~~~~~~~~~~~~p6 (splice p6 p7) '("middle circumferential") \\
+~~~~~~~~~~~~~~p7 (splice p7 p0) '("end circumferential") \\*
+~~~~~~~~~~~~~~)))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+~~~~~~~~(postscript-shade stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~(/ (+ (* firstshade (- (- sectors 1) j)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(* lastshade j)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(- sectors 1))))))) \\
+\\
+(defun postscript-penstroke (stream wid) \\*
+~~(format stream "{\Xtilde}\%{\Xtilde}S setlinewidth~~~1 setlinecap~~stroke" \\
+~~~~~~~~~~wid)) \\
+\\
+(defun postscript-shade (stream shade) \\*
+~~(format stream "{\Xtilde}\%currentgray~~~{\Xtilde}S setgray~~~fill~~~setgray" \\
+~~~~~~~~~~shade)) \\
+\\
+(defun postscript-closed-path (stream path) \\*
+~~(unless (every \#'far-out (remove-if-not \#'numberp path)) \\*
+~~~~(postscript-raw-path stream path) \\*
+~~~~(format stream "{\Xtilde}\%~~closepath"))) \\
+\\
+(defun postscript-path (stream path) \\*
+~~(unless (every \#'far-out (remove-if-not \#'numberp path)) \\*
+~~~~(postscript-raw-path stream path))) \\
+\\
+;;; Print a path as a series of PostScript "lineto" commands. \\*
+(defun postscript-raw-path (stream path) \\*
+~~(format stream "{\Xtilde}\%newpath") \\*
+~~(let ((fmt "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S moveto")) \\*
+~~~~(dolist (pt path) \\*
+~~~~~~(cond ((stringp pt) \\*
+~~~~~~~~~~~~~(format stream "{\Xtilde}\%~~\%{\Xtilde}A" pt)) \\
+~~~~~~~~~~~~(t (format stream \\*
+~~~~~~~~~~~~~~~~~~~~~~~fmt \\*
+~~~~~~~~~~~~~~~~~~~~~~~(clamp-real (realpart pt)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~(clamp-real (imagpart pt))) \\*
+~~~~~~~~~~~~~~~(setq fmt "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto")))))) \\
+\\
+;;; Definitions of functions to be plotted that are not \\*
+;;; standard Common Lisp functions. \\*
+\\*
+(defun one-plus-over-one-minus (x) (/ (+ 1 x) (- 1 x))) \\
+\\
+(defun one-minus-over-one-plus (x) (/ (- 1 x) (+ 1 x))) \\
+\\
+(defun sqrt-square-minus-one (x) (sqrt (- 1 (* x x)))) \\
+\\
+(defun sqrt-one-plus-square (x) (sqrt (+ 1 (* x x))))
+\end{lisp}
+\vskip 0pt plus 10pt \newpage%manual
+\begin{lisp}
+;;; Because X3J13 voted for a new definition of the atan function, \\*
+;;; the following definition was used in place of the atan function \\*
+;;; provided by the Common Lisp implementation I was using. \\*
+\\*
+(defun good-atan (x) \\*
+~~(/ (- (log (+ 1 (* x \#c(0 1)))) \\*
+~~~~~~~~(log (- 1 (* x \#c(0 1))))) \\*
+~~~~~\#c(0 2))) \\
+\\
+;;; Because the first edition had an erroneous definition of atanh, \\*
+;;; the following definition was used in place of the atanh function \\*
+;;; provided by the Common Lisp implementation I was using. \\*
+\\*
+(defun really-good-atanh (x) \\*
+~~(/ (- (log (+ 1 x)) \\
+~~~~~~~~(log (- 1 x))) \\
+~~~~~2)) \\
+\end{lisp}
+\begin{lisp}
+;;; This is the main procedure that is intended to be called by a user. \\*
+(defun picture (\&optional (fn \#'sqrt)) \\*
+~~(with-open-file (stream (concatenate 'string \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(string-downcase (string fn)) \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"-plot.ps") \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~:direction :output) \\
+~~~~(format stream "\% PostScript file for plot of function {\Xtilde}S{\Xtilde}\%" fn) \\*
+~~~~(format stream "\% Plot is to fit in a region {\Xtilde}S inches square{\Xtilde}\%" \\*
+~~~~~~~~~~~~(/ text-width-in-picas 6.0)) \\
+~~~~(format stream \\*
+~~~~~~~~~~~~"\%~~showing axes extending {\Xtilde}S units from the origin.{\Xtilde}\%" \\*
+~~~~~~~~~~~~units-to-show) \\
+~~~~(let ((scaling (/ (* text-width-in-picas 12) (* units-to-show 2)))) \\*
+~~~~~~(format stream "{\Xtilde}\%{\Xtilde}S {\Xtilde}:*{\Xtilde}S scale" scaling)) \\
+~~~~(format stream "{\Xtilde}\%{\Xtilde}S {\Xtilde}:*{\Xtilde}S translate" units-to-show) \\
+~~~~(format stream "{\Xtilde}\%newpath") \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S moveto" (- units-to-show) (- units-to-show)) \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto" units-to-show (- units-to-show)) \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto" units-to-show units-to-show) \\
+~~~~(format stream "{\Xtilde}\%~~{\Xtilde}S {\Xtilde}S lineto" (- units-to-show) units-to-show) \\
+~~~~(format stream "{\Xtilde}\%~~closepath") \\
+~~~~(format stream "{\Xtilde}\%clip") \\
+~~~~(moby-grid fn stream) \\
+~~~~(format stream \\*
+~~~~~~~~~~~~"{\Xtilde}\%\% End of PostScript file for plot of function {\Xtilde}S" \\*
+~~~~~~~~~~~~fn) \\
+~~~~(terpri stream)))
+\end{lisp}
+\endgroup
+\end{new}
 
 \section{Приведение типов и доступ к компонентам чисел}
 
@@ -4708,10 +6293,29 @@ round number &optional divisor
 разделен на \emph{divisor}, а затем уже будут проведены вышеописанные действия.
 Например, \cd{(floor 5~2)}~\EQ~\cd{(values (floor (/~5~2)))}, но первый вариант
 потенциально эффективнее.
+
+\begin{new}%CORR
+This statement is not entirely accurate; one should instead say that
+\cd{(values (floor 5~2))}~\EQ~\cd{(values (floor (/~5~2)))},
+because there is a second value to consider, as discussed below.
+In other words, the first values returned by the two forms will be the same, but
+in general the second values will differ.  Indeed, we have
+\begin{lisp}
+(floor 5 2) \EV\ 2 \textrm{and} 1 \\
+(floor (/ 5 2)) \EV\ 2 \textrm{and} 1/2
+\end{lisp}
+for this example.
+\end{new}
+
 \emph{divisor} может любым числом, кроме комплексного.
 \emph{divisor} не может равняться нулю.
 Случай вызова функции с одним аргументом эквивалентен вызову с двумя
 аргументами, последний из которых равен \cd{1}.
+
+\begin{newer}
+In other words, the one-argument case returns an integer and fractional part
+for the \emph{number}: \cd{(truncate 5.3) \EV\ 5.0 \textrm{and} 0.3}, for example.
+\end{newer}
 
 Каждая из функций возвращает \emph{два} значения. Второе значение является
 остатком и может быть получено с помощью \cdf{multiple-value-bind} или другими
@@ -4904,6 +6508,25 @@ imagpart number
 \emph{number} не является комплексным числом, тогда \cdf{realpart} возвращает
 это число, а \cdf{imagpart} возвращает \cd{(* 0 \emph{number})}, другими
 словами, \cd{0} того типа, каким был аргумент.
+
+\begin{newer}
+A clever way to multiply a complex number \emph{z} by \emph{i} is to write
+\begin{lisp}
+(complex (- (imagpart \emph{z})) (realpart \emph{z}))
+\end{lisp}
+instead of \cd{(*~\emph{z} \#c(0~1))}.  This cleverness is not always
+gratuitous; it may be of particular importance in the presence of minus
+zero.  For example, if we are using IEEE standard floating-point arithmetic
+and $z=4+0\emph{i}$, the result of the clever expression is $-0+4\emph{i}$, a true
+$90^\circ$ rotation of $\emph{z}$, whereas the result of \cd{(*~\emph{z} \#c(0~1))}
+is likely to be
+\begin{tabbing}
+$ (4+0\emph{i\/})(+0+\emph{i\/}) = ((4)(+0) - (+0)(1)) + ((4)(1) + (+0)(+0))\emph{i} $ \\
+\hskip2pc$ = ((+0)-(+0))+((4)+(+0))\emph{i} = +0+4\emph{i} $
+\end{tabbing}
+which could
+land on the wrong side of a branch cut, for example.
+\end{newer}
 \end{defun}
 
 \section{Логические операции над числами}
@@ -5316,6 +6939,38 @@ deposit-field newbyte bytespec integer
 \>(logbitp \emph{j} \emph{m}) \\
 \>(logbitp \emph{j} \emph{n}))
 \end{lisp}
+
+\beforenoterule
+\begin{implementation}
+If the \emph{bytespec} is a constant, one may of course
+construct, at compile time, an equivalent mask \emph{m}, for example
+by computing \cd{(deposit-field -1 \emph{bytespec} 0)}.  Given
+this mask \emph{m}, one may then compute
+\begin{lisp}
+(deposit-field \emph{newbyte} \emph{bytespec} \emph{integer})
+\end{lisp}
+by computing
+\begin{lisp}
+(logior (logand \emph{newbyte} \emph{m}) (logand \emph{integer} (lognot \emph{m})))
+\end{lisp}
+where the result of \cd{(lognot \emph{m})} can of course also be computed
+at compile time.  However, the following expression
+may also be used and may require fewer
+temporary registers in some situations:
+\begin{lisp}
+(logxor \emph{integer} (logand \emph{m} (logxor \emph{integer} \emph{newbyte})))
+\end{lisp}
+A related, though possibly less useful, trick is that
+\begin{lisp}
+(let ((z (logand (logxor x y) m))) \\
+~~(setq x (logxor z x)) \\
+~~(setq y (logxor z y)))
+\end{lisp}
+interchanges those bits of \cdf{x} and \cdf{y} for which the mask \cdf{m} is
+\cd{1}, and leaves alone those bits of \cdf{x} and \cdf{y} for which \cdf{m} is
+\cd{0}.
+\end{implementation}
+\afternoterule
 \end{defun}
 
 \section{Случайные числа}
@@ -5342,6 +6997,85 @@ random number &optional state
 По-умолчанию он равен значению переменной \cdf{*random-state*}.
 Объект используется для сохранения состояния генератора псевдослучайных чисел и
 изменяется как побочное действие от операции \cdf{random}.
+
+\beforenoterule
+\begin{implementation}
+In general, even if \cdf{random} of zero arguments
+were defined as in MacLisp,
+it is not adequate to define \cd{(random \emph{n})} for integral \emph{n}
+to be simply \cd{(mod (random) \emph{n})}; this fails to be uniformly distributed
+if \emph{n} is larger than the largest number produced by \cdf{random},
+or even if \emph{n} merely approaches this number.
+This is another reason for omitting \cdf{random} of zero arguments in Common Lisp.
+Assuming that the underlying mechanism produces ``random bits''
+(possibly in chunks such as fixnums), the best approach is to produce
+enough random bits to construct an integer \emph{k} some number \emph{d} of bits
+larger than \cd{(integer-length \emph{n})} (see \cdf{integer-length}), and
+then compute \cd{(mod \emph{k} \emph{n})}.  The quantity \emph{d} should be at
+least 7, and preferably 10 or more.
+
+To produce random floating-point numbers in the half-open
+range $[\emph{A},\emph{B})$,
+accepted practice (as determined by a look through the
+\emph{Collected Algorithms from the ACM}, particularly algorithms
+133, 266, 294, and 370) is to compute $\emph{X}\cdot(\emph{B}-\emph{A})+\emph{A}$,
+where \emph{X} is a floating-point number uniformly distributed over
+$[0.0, 1.0)$
+and computed by calculating a random integer $\emph{N}$ in the range
+$[0,\emph{M})$
+(typically by a multiplicative-congruential or linear-congruential method
+mod $\emph{M}$) and then setting $\emph{X}=\emph{N}/\emph{M}$.  See also \cite{KNUTH-VOLUME-2}.
+If one takes $\emph{M}=2^{f}$, where $\emph{f}$ is the length of the significand
+of a floating-point number (and it is in fact common to choose $\emph{M}$
+to be a power of 2), then this method is equivalent to the following
+assembly-language-level procedure.  Assume the representation
+has no hidden bit.  Take a floating-point 0.5,
+and clobber its entire significand with random bits.  Normalize the
+result if necessary.
+
+For example, on the DEC PDP-10, assume that accumulator \cdf{T} is completely random
+(all 36 bits are random).  Then the code sequence
+\begin{lisp}
+LSH T,-9~~~~~~~~~~~~~~~~~;\textrm{Clear high 9 bits; low 27 are random} \\
+FSC T,128.~~~~~~~~~~~~~~~;\textrm{Install exponent and normalize}
+\end{lisp}
+will produce in \cdf{T} a random floating-point number uniformly distributed
+over $[0.0, 1.0)$.  (Instead of the \cdf{LSH} instruction,
+one could do
+\begin{lisp}
+TLZ T,777000~~~~~~~~~~~~~;\textrm{That's 777000 octal}
+\end{lisp}
+but if the 36 random bits came from a congruential random-number generator,
+the high-order bits tend to be ``more random'' than the low-order ones,
+and so the \cdf{LSH} would be better for uniform distribution.
+Ideally all the bits would be the result of high-quality randomness.)
+
+With a hidden-bit representation, normalization is not a problem,
+but dealing with the hidden bit is.  The method can be adapted as follows.
+Take a floating-point 1.0 and clobber the explicit significand bits with
+random bits; this produces a random floating-point number in
+the range $[1.0, 2.0)$.  Then simply subtract 1.0.  In effect, we
+let the hidden bit creep in and then subtract it away again.
+
+For example, on the DEC VAX, assume that register \cdf{T} is
+completely random (but a little less random than on the PDP-10, as
+it has only 32 random bits).  Then the code sequence
+\begin{lisp}
+INSV \#{\Xcircumflex}X81,\#7,\#9,T~~~~~;\textrm{Install correct sign bit and exponent} \\
+SUBF \#{\Xcircumflex}F1.0,T~~~~~~~~~~;\textrm{Subtract 1.0}
+\end{lisp}
+will produce in \cdf{T} a random floating-point number uniformly distributed
+over $[0.0, 1.0)$.  Again, if the low-order bits are not random enough,
+then the instruction
+\begin{lisp}
+ROTL \#7,T
+\end{lisp}
+should be performed first.
+
+Implementors may wish to consult reference \cite{ADDITIVE-RANDOMS} for
+a discussion of some efficient methods of generating pseudo-random numbers.
+\end{implementation}
+\afternoterule
 \end{defun}
 
 \begin{defun}[Переменная]
@@ -5370,6 +7104,57 @@ make-random-state &optional state
 Если \emph{state} равен {\true}, тогда новый возвращается новый объект
 состояния, который в некотором смысле <<случайно>> инициализирован (текущим
 временем например).
+
+\beforenoterule
+\begin{rationale}
+Common Lisp purposely provides no way to initialize a \cdf{random-state}
+object from a user-specified ``seed.''  The reason for this is that
+the number of bits of state information in a \cdf{random-state} object
+may vary widely from one implementation to another, and there is no
+simple way to guarantee that any user-specified seed value will be
+``random enough.''  Instead, the initialization of \cdf{random-state}
+objects is left to the implementor in the case where the argument {\true}
+is given to \cdf{make-random-state}.
+
+To handle the common situation of executing the same program many times
+in a reproducible manner, where that program uses \cdf{random}, the following
+procedure may be used:
+\begin{enumerate}
+\item
+Evaluate \cd{(make-random-state t)} to create a \cdf{random-state} object.
+
+\item
+Write that object to a file, using \cdf{print}, for later use.
+
+\item
+Whenever the program is to be run, first use \cdf{read} to create
+a copy of the \cdf{random-state} object from the printed representation
+in the file.
+Then use the \cdf{random-state} object newly created by the \cdf{read} operation
+to initialize the random-number generator for the program.
+\end{enumerate}
+It is for the sake of this procedure for reproducible execution that
+implementations are required to provide a read/print syntax for objects
+of type \cdf{random-state}.
+
+It is also possible to make copies of a \cdf{random-state} object
+directly without going through the print/read process, simply by
+using the \cdf{make-random-state} function to copy the object; this allows
+the same sequence of random numbers to be generated many times
+within a single program.
+\end{rationale}
+\betweennoterule
+\begin{implementation}
+A recommended way to implement the type \cdf{random-state}
+is effectively to use the machinery for \cdf{defstruct}.
+The usual structure syntax may then be used for printing \cdf{random-state}
+objects; one might look something like
+\begin{lisp}
+\#S(RANDOM-STATE DATA \#(14 49 98436589 786345 8734658324 ...))
+\end{lisp}
+where the components are of course completely implementation-dependent.
+\end{implementation}
+\afternoterule
 \end{defun}
 
 \begin{defun}[Функция]
@@ -5396,6 +7181,17 @@ most-negative-fixnum
 
 Значением \cdf{most-negative-fixnum} является такое число, которое ближе всего
 к отрицательной бесконечности.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{FIXNUM-NON-PORTABLE}
+to specify that \cdf{fixnum} must be a supertype
+of the type \cd{(signed-byte 16)}, and additionally that the value
+of \cdf{array-dimension-limit} must be a fixnum.  This implies that the value
+of \cdf{most-negative-fixnum} must be less than or equal to $-2^{15}$,
+and the value of \cdf{most-positive-fixnum} must be greater than or equal to
+both $2^{15}-1$ and the value of \cdf{array-dimension-limit}.
+\end{new}
 \end{defun}
 
 \begin{defun}[Константа]
@@ -5415,6 +7211,14 @@ most-negative-short-float
 короткого формата с плавающей точкой, которое ближе всего к (но не равно) нулю
 слева. (Следует отметить, что если разработчики поддерживают минус ноль, то
 значение данной константы не может ему равняться.) 
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{FLOAT-UNDERFLOW}
+to clarify that these definitions are to be taken quite literally.
+In implementations that support denormalized numbers,
+the values of \cdf{least-positive-short-float} and
+\cdf{least-negative-short-float} may be denormalized.
+\end{newer}
 
 Значением \cdf{most-negative-short-float} является такое значение числа
 короткого формата с плавающей точкой, которое ближе всего к (но не равно)
@@ -5438,8 +7242,6 @@ most-negative-long-float
 Данные константы аналогичны предыдущим, но указывают на другие форматы чисел с
 плавающей точкой.
 \end{defun}
-
-\bigskip
 
 \begin{defun}[Константа]
 least-positive-normalized-short-float \\

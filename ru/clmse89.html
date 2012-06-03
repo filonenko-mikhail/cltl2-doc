@@ -1,0 +1,379 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Функции для хеш-таблиц</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:04:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Главная</a>&gt; &lt;<a href="symbols.html">Символы</a>&gt; <br />&#x003C;<a 
+href="clmse90.html" >Далее</a>&#x003E;&#x003C;<a 
+href="hash.html" >Назад</a>&#x003E;&#x003C;<a 
+href="hash.html#tailhash.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
+href="#tailclmse89.html">В-конец</a>&#x003E;&#x003C;<a 
+href="hash.html#clmse89.html" >Наверх</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">16.1
+</span> <a 
+href="clm.html#QQ2-110-180" id="x110-15000016.1">Функции для хеш-таблиц</a></h3>
+<!--l. 436--><p class="noindent" >Данный раздел описывает функции для хеш-таблиц, которые используют
+<em>объекты</em> для ключей и ассоциируют другие объекты с этими.
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 440--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150001"></a> <b>make-hash-table</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:test</i> <i>:size</i> <i>:rehash-size</i> <i>:rehash-threshold</i>
+</div>
+<!--l. 442--><p class="indent" >   Эта функция создаёт и возвращает новую хеш-таблицу. Аргумент <b>:test</b>
+определяет как будут сравниваться ключи. Он может быть одним из трёх
+                                                                          
+
+                                                                          
+значений <b>#&#x2019;eq</b>, <b>#&#x2019;eql</b> или <b>#&#x2019;equal</b>, или одним из трёх символов <b><a 
+href="symbols.html#x188-375366r366">eq</a></b>, <b><a 
+href="symbols.html#x188-375367r367">eql</a></b> или
+<b><a 
+href="symbols.html#x188-375369r369">equal</a></b>. По-умолчанию используется <b><a 
+href="symbols.html#x188-375367r367">eql</a></b>.
+<div class="new">
+<!--l. 449--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx110-150002"></a>to add a fourth type of hash table: the value of
+<b>#&#x2019;equalp</b> and the symbol <b><a 
+href="symbols.html#x188-375370r370">equalp</a></b> are to be additional valid possibilities for the
+<b>:test</b> argument.
+<!--l. 455--><p class="indent" >   Note that one consequence of the vote to change the rules of ﬂoating-point
+contagion <a 
+ id="dx110-150003"></a>(described in section <a 
+href="clmse64.html#x81-11800012.1">12.1<!--tex4ht:ref: PRECISION-CONTAGION-COERCION-SECTION --></a>) is to require <b><a 
+href="symbols.html#x188-375064r64">=</a></b>, and therefore also <b><a 
+href="symbols.html#x188-375370r370">equalp</a></b>,
+to compare the values of numbers exactly and not approximately, making <b><a 
+href="symbols.html#x188-375370r370">equalp</a></b>
+a true equivalence relation on numbers.
+<!--l. 464--><p class="indent" >   Another valuable use of <b><a 
+href="symbols.html#x188-375370r370">equalp</a></b> hash tables is case-insensitive comparison of
+keys that are strings.
+</div>
+<!--l. 468--><p class="indent" >   Аргумент <b>:size</b> устанавливает первоначальный размер хеш-таблицы в
+парах. (Указанный размер может быть округлён до «хорошего» размера,
+например, до первого следующего простого числа.) Вы можете не сохранять
+в таблице столько пар, сколько указали. Этот аргумент служит подсказкой
+для реализации о том, какое примерно число элементов вы будете хранить в
+хеш-таблице.
+<div class="new">
+<!--l. 476--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx110-150004"></a>to clarify that the <b>:size</b> argument must be a
+non-negative integer.
+</div>
+<div class="newer">
+<!--l. 483--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx110-150005"></a>to regard the preceding description of the <b>:size</b>
+argument as deﬁnitive: it is approximately the number of entries that can be
+inserted without having to enlarge the hash table.
+</div>
+<!--l. 489--><p class="indent" >   Аргумент <b>:rehash-size</b> указывает, на сколько увеличить размер
+хеш-таблицы, когда она по размерам достигнет пределов. Если это целое
+число, оно должно быть больше нуля, и будет означать абсолютное
+приращение. Если это число с плавающей точкой, оно должно быть больше 1,
+и будет означать относительное приращение к предыдущему размеру.
+Значение по-умолчанию зависит от реализации.
+<!--l. 496--><p class="indent" >   Аргумент <b>:rehash-threshold</b> указывает, насколько должна наполниться
+хеш-таблица, прежде чем она будет увеличена. Он должен быть числом
+типа <b>real</b> между <b>0</b> и <b>1</b>, включительно. Он показывает максимальный
+уровень заполнения хеш-таблицы. Значение по-умолчанию зависит от
+                                                                          
+
+                                                                          
+реализации.
+<!--l. 502--><p class="indent" >   Пример использования <b><a 
+href="symbols.html#x188-375582r582">make-hash-table</a></b>: <div class="lisp"><tt><div class="tabbing">
+(make-hash-table :rehash-size 1.5
+   <br>                                            :size (* number-of-widgets 43))<br>
+<!--l. 506--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 510--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150006"></a> <b>hash-table-p</b> <i>object</i>
+</div>
+<b>
+<!--l. 512--><p class="indent" >   <a 
+href="symbols.html#x188-375469r469">hash-table-p</a></b> возвращает истину, если аргумент является хеш-таблицей.
+Иначе возвращает ложь. <div class="lisp"><tt><div class="tabbing">
+(hash-table-p x) <span class="math"> ≡</span> (typep x &#x2019;hash-table)
+   <br>
+<!--l. 516--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<em>
+                                                                          
+
+                                                                          
+<!--l. 520--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150007"></a> <b>gethash</b> <i>key</i> <i>hash-table</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>default</i>
+</div>
+<b>
+<!--l. 522--><p class="indent" >   <a 
+href="symbols.html#x188-375462r462">gethash</a></b> ищет элемент в хеш-<em>hash-table</em>, чей ключ равен <em>key</em> и возвращает
+связанное значение. Если элемент не был найден, то возвращается значение
+аргумента <em>default</em>, который по-умолчанию равен <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>.
+<b>
+<!--l. 526--><p class="indent" >   <a 
+href="symbols.html#x188-375462r462">gethash</a></b> возвращает два значение. Второе значение является предикатом,
+и истинно, если значение было найдено, и ложно если нет.
+<b>
+<!--l. 529--><p class="indent" >   <a 
+href="symbols.html#x188-375833r833">setf</a></b> может использоваться вместе с <b><a 
+href="symbols.html#x188-375462r462">gethash</a></b> для создания в хеш-таблице
+новых элементов. Если элемент с заданным ключом <em>key</em> уже существует, он
+будет удалён перед добавлением. В этом контексте может использоваться
+аргумент <em>default</em>, он игнорируется <b><a 
+href="symbols.html#x188-375833r833">setf</a></b>, но может быть полезным в таких
+макросах как <b><a 
+href="symbols.html#x188-375482r482">incf</a></b>, которые связаны с <b><a 
+href="symbols.html#x188-375833r833">setf</a></b>: <div class="lisp"><tt><div class="tabbing">
+(incf (gethash a-key table 0))
+   <br>
+<!--l. 536--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 537--><p class="indent" >   обозначает то же, что и <div class="lisp"><tt><div class="tabbing">
+(setf (gethash a-key table 0)
+   <br>                                                    (+ (gethash a-key table 0) 1))<br>
+<!--l. 541--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 542--><p class="indent" >   что можно преобразовать в <div class="lisp"><tt><div class="tabbing">
+(setf (gethash a-key table)
+   <br>                                                    (+ (gethash a-key table 0) 1))<br>
+                                                                          
+
+                                                                          
+<!--l. 546--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 550--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150008"></a> <b>remhash</b> <i>key</i> <i>hash-table</i>
+</div>
+<b>
+<!--l. 552--><p class="indent" >   <a 
+href="symbols.html#x188-375786r786">remhash</a></b> удаляет любой элемент в хеш-таблице <em>hash-table</em> ключ, которого
+равен параметру <em>key</em>. Возвращает истину, если элемент был удалён, и ложь,
+если элемента уже не существовало.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 558--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150009"></a> <b>maphash</b> <i>function</i> <i>hash-table</i>
+</div>
+<!--l. 560--><p class="indent" >   Для каждого элемента в хеш-таблице <em>hash-table</em>, <b><a 
+href="symbols.html#x188-375607r607">maphash</a></b> вызывает
+функцию <em>function</em> с двумя аргументами: ключ элемента и значение элемента.
+<b><a 
+href="symbols.html#x188-375607r607">maphash</a></b> возвращает <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>. Если во время выполнения <b><a 
+href="symbols.html#x188-375607r607">maphash</a></b> в
+хеш-таблице добавлялись или удалялись ключи, то результат непредсказуем,
+но есть исключение: если функция <em>function</em> вызывает <b><a 
+href="symbols.html#x188-375786r786">remhash</a></b> для удаления
+элемента, который в эту функцию и был передан, или устанавливает новое
+значение с помощью <b><a 
+href="symbols.html#x188-375833r833">setf</a></b> этому элементу, то эти операции будут выполнены
+правильно. Например: <div class="lisp"><tt><div class="tabbing">
+;;; Изменение каждого элемента в MY-HASH-TABLE, с заменой на
+   <br>;;; квадратный корень. Элементы с отрицательными значения удаляются.<br>
+(maphash #&#x2019;(lambda (key val)<br>                          (if (minusp val)<br>
+                 (remhash key my-hash-table)<br>
+                                                                          
+
+                                                                          
+                 (setf (gethash key my-hash-table) (sqrt val))))<br>
+         my-hash-table)<br>
+<!--l. 579--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="new">
+<!--l. 582--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx110-150010"></a>to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-900007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 589--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150011"></a> <b>clrhash</b> <i>hash-table</i>
+</div>
+<!--l. 591--><p class="indent" >   Функция удаляет все элемент из хеш-таблицы <em>hash-table</em> и возвращает эту
+хеш-таблицу.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 596--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150012"></a> <b>hash-table-count</b> <i>hash-table</i>
+</div>
+<!--l. 598--><p class="indent" >   Функция возвращает количество элементов в хеш-таблице <em>hash-table</em>.
+Когда хеш-таблица только были сделана, или только что очищена, то
+количество элементов равно нулю.
+<hr></div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 604--><p class="indent" >   <div class="tabbing">
+ <em>[Макрос]</em> <b>with-hash-table-iterator</b> <a 
+ id="dx110-150013"></a>(mname hash-table) {form}*
+   <br>
+<!--l. 605--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+</div>
+<!--l. 606--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx110-150014"></a>to add the macro <b><a 
+href="symbols.html#x188-376006r1006">with-hash-table-iterator</a></b>.
+<!--l. 610--><p class="indent" >   The name <em>mname</em> is bound and deﬁned as if by <b><a 
+href="symbols.html#x188-375575r575">macrolet</a></b>, with the body
+<em>form</em>s as its lexical scope, to be a “generator macro” such that successive
+invocations <b>(<em>mname</em>)</b> will return entries, one by one, from the hash table
+that is the value of the expression <em>hash-table</em> (which is evaluated exactly
+once).
+<!--l. 616--><p class="indent" >   At each invocation of the generator macro, there are two possibilities. If there
+is yet another unprocessed entry in the hash table, then three values are returned:
+<b><a 
+href="symbols.html#x188-375941r941">t</a></b>, the key of the hash table entry, and the associated value of the hash table entry.
+On the other hand, if there are no more unprocessed entries in the hash table,
+then one value is returned: <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>.
+<!--l. 624--><p class="indent" >   The implicit interior state of the iteration over the hash table entries has
+dynamic extent. While the name <em>mname</em> has lexical scope, it is an error to invoke
+the generator macro once the <b><a 
+href="symbols.html#x188-376006r1006">with-hash-table-iterator</a></b> form has been
+exited.
+<!--l. 629--><p class="indent" >   Invocations of <b><a 
+href="symbols.html#x188-376006r1006">with-hash-table-iterator</a></b> and related macros may be nested,
+and the generator macro of an outer invocation may be called from within an
+inner invocation (assuming that its name is visible or otherwise made
+available).
+<div class="new">
+<!--l. 635--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx110-150015"></a>to restrict user side eﬀects; see section <a 
+href="clmse43.html#x55-900007.9">7.9<!--tex4ht:ref: STRUCTURE-TRAVERSAL-SECTION --></a>.
+</div>__________________________________________________________________________<div class="rationale">
+<!--l. 641--><p class="noindent" ><b>Обоснование:</b> This facility is a bit more ﬂexible than <b><a 
+href="symbols.html#x188-375607r607">maphash</a></b>. It makes possible a
+portable and eﬃcient implementation of <b><a 
+href="symbols.html#x188-375565r565">loop</a></b> clauses for iterating over hash tables (see
+chapter <a 
+href="loop.html#x154-22500025">25<!--tex4ht:ref: LOOP --></a>).
+</div>___________________________________________________________________________________________________________
+<hr>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 649--><p class="indent" >     <div class="tabbing">
+(setq turtles (make-hash-table :size 9 :test &#x2019;eq))
+     <br>              (setf (gethash &#x2019;howard-kaylan turtles) &#x2019;(musician lead-singer))<br>
+(setf (gethash &#x2019;john-barbata turtles) &#x2019;(musician drummer))<br>
+                                                                          
+
+                                                                          
+(setf (gethash &#x2019;leonardo turtles) &#x2019;(ninja leader blue))<br>
+(setf (gethash &#x2019;donatello turtles) &#x2019;(ninja machines purple))<br>
+(setf (gethash &#x2019;al-nichol turtles) &#x2019;(musician guitarist))<br>
+(setf (gethash &#x2019;mark-volman turtles) &#x2019;(musician great-hair))<br>
+(setf (gethash &#x2019;raphael turtles) &#x2019;(ninja cool rude red))<br>
+(setf (gethash &#x2019;michaelangelo turtles) &#x2019;(ninja party-dude orange))<br>
+(setf (gethash &#x2019;jim-pons turtles) &#x2019;(musician bassist))<br>
+<br>                               (with-hash-table-iterator (get-turtle turtles)<br>
+  (labels ((try (got-one &#x0026;optional key value)<br>             (when got-one  ;Remember, keys may show up in any order<br>
+               (when (eq (ﬁrst value) &#x2019;ninja)<br>
+                 (format t &#x0022;~%~:(~A~): ~{~A~̂, ~}&#x0022;<br>
+                         key (rest value)))<br>
+               (multiple-value-call #&#x2019;try (get-turtle)))))<br>
+    (multiple-value-call #&#x2019;try (get-turtle))))     ;Prints 4 lines<br>
+Michaelangelo: PARTY-DUDE, ORANGE<br>     Leonardo: LEADER, BLUE<br>
+Raphael: COOL, RUDE, RED<br>           Donatello: MACHINES, PURPLE<br>
+  <span class="math"> ⇒</span> nil<br>
+<!--l. 674--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 677--><p class="noindent" >[Функция]</em><a 
+ id="dx110-150016"></a> <b>hash-table-rehash-size</b> <i>hash-table</i><br />
+<em>
+[Функция]</em><a 
+ id="dx110-150017"></a> <b>hash-table-rehash-threshold</b> <i>hash-table</i><br />
+<em>
+[Функция]</em><a 
+ id="dx110-150018"></a> <b>hash-table-size</b> <i>hash-table</i><br />
+<em>
+[Функция]</em><a 
+ id="dx110-150019"></a> <b>hash-table-test</b> <i>hash-table</i>
+</div>
+<!--l. 682--><p class="indent" >   Добавлены функции, которые возвращают значения используемые при
+вызове <b><a 
+href="symbols.html#x188-375582r582">make-hash-table</a></b>.
+<b>
+<!--l. 685--><p class="indent" >   <a 
+href="symbols.html#x188-375470r470">hash-table-rehash-size</a></b> возвращает размер приращения хеш-таблицы.
+<b>
+                                                                          
+
+                                                                          
+<!--l. 687--><p class="indent" >   <a 
+href="symbols.html#x188-375471r471">hash-table-rehash-threshold</a></b> возвращает текущий уровень заполнения.
+<b>
+<!--l. 689--><p class="indent" >   <a 
+href="symbols.html#x188-375472r472">hash-table-size</a></b> возвращает рекомендуемый размер хеш-таблицы.
+<b>
+<!--l. 691--><p class="indent" >   <a 
+href="symbols.html#x188-375473r473">hash-table-test</a></b> возвращает функцию сравнения используемую для
+ключей. Если данная функция одна из стандартных, то результат всегда
+является символом, даже если при создании хеш-таблицы было указано иное.
+Например: <div class="lisp"><tt><div class="tabbing">
+(hash-table-test (make-hash-table :test #&#x2019;equal)) <span class="math"> ⇒</span> equal
+   <br>
+<!--l. 696--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 697--><p class="indent" >   Реализации, которые расширяют <b><a 
+href="symbols.html#x188-375582r582">make-hash-table</a></b> дополнительными
+функциями сравнения для аргумента <b>:test</b>, могут определять, как будет
+возвращено значение из <b><a 
+href="symbols.html#x188-375473r473">hash-table-test</a></b> для этих дополнительных
+функций.
+<hr></div>
+                                                                          
+
+                                                                          
+<!--l. 702--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse90.html" >Далее</a>&#x003E;&#x003C;<a 
+href="hash.html" >Назад</a>&#x003E;&#x003C;<a 
+href="hash.html#tailhash.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
+href="clmse89.html" >В-начало</a>&#x003E;&#x003C;<a 
+href="hash.html#clmse89.html" >Наверх</a>&#x003E;<br> &lt;<a href="../index.html">Главная</a>&gt; &lt;<a href="symbols.html">Символы</a>&gt;</div><a 
+ id="tailclmse89.html"></a>
+ 
+</body></html> 

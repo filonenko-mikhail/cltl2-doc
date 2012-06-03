@@ -68,19 +68,6 @@ without having to enlarge the hash table.  This definition is certainly
 more convenient for the user.
 \end{newer}
 
-\beforenoterule
-\begin{incompatibility}
-This hash table facility is compatible with Lisp Machine Lisp.  It
-is similar to the hasharray facility of Interlisp, and some of the
-function names are the same.  However, it is \emph{not} compatible with
-Interlisp.  The exact details and the order of arguments are designed to
-be consistent with the rest of MacLisp rather than with
-Interlisp.  For instance, the order of arguments to \cdf{maphash} is
-different, there is no ``system hash table,'' and there is not
-the Interlisp restriction that keys and values may not be {\false}.
-\end{incompatibility}
-\afternoterule
-
 \section{Hash Table Functions}
 
 This section documents the functions for hash tables, which
@@ -147,17 +134,12 @@ it can be a floating-point number greater than 1,
 which is the ratio of the new size to the old size.
 The default value for this argument is implementation-dependent.
 
-\begin{newer}
-X3J13 voted in June 1989 \issue{HASH-TABLE-SIZE} to replace
-the preceding specification of the \cd{:rehash-threshold} argument
-with the following:
 The \cd{:rehash-threshold} argument
 specifies how full the hash table can get before it must grow.
 It may be any \cdf{real} number between \cd{0} and \cd{1}, inclusive.
 It indicates the maximum desired level of hash table occupancy.
 An implementation is permitted to ignore this argument.
 The default value for this argument is implementation-dependent.
-\end{newer}
 
 An example of the use of \cdf{make-hash-table}:
 \begin{lisp}
@@ -261,9 +243,8 @@ When a hash table is first created or has been cleared,
 the number of entries is zero.
 \end{defun}
 
-\begin{new}
 \begin{defmac}
-with-hash-table-iterator (mname hash-table) {\,form}*
+with-hash-table-iterator (mname hash-table) {form}*
 
 X3J13 voted in January 1989
 \issue{HASH-TABLE-PACKAGE-GENERATORS}
@@ -308,8 +289,6 @@ clauses for iterating over hash tables (see chapter~\ref{LOOP}).
 \afternoterule
 \end{defmac}
 
-\newpage%manual
-
 \begin{lisp}
 (setq turtles (make-hash-table :size 9 :test 'eq)) \\*
 (setf (gethash 'howard-kaylan turtles) '(musician lead-singer)) \\*
@@ -336,9 +315,7 @@ Raphael: COOL, RUDE, RED \\*
 Donatello: MACHINES, PURPLE \\*
 ~~\EV\ nil
 \end{lisp}
-\end{new}
 
-\begin{newer}
 \begin{defun}[Function]
 hash-table-rehash-size hash-table \\
 hash-table-rehash-threshold hash-table \\
@@ -367,7 +344,6 @@ Implementations that extend \cdf{make-hash-table} by providing additional
 possibilities for the \cd{:test} argument may determine how the
 value returned by \cdf{hash-table-test} is related to such additional tests.
 \end{defun} 
-\end{newer}
 
 \section{Primitive Hash Function}
 
@@ -442,6 +418,19 @@ read in again into an instance of the same implementation.
 Ключи необязательно должны быть символами. Они могут быть любыми Lisp'овыми
 объектами. Значения также могут быть любыми Lisp'овыми объектами.
 
+\begin{newer}
+There is a discrepancy between the preceding description of the
+size of a hash table and the description of the \cd{:size} argument
+in the specification below
+of \cdf{make-hash-table}.
+
+X3J13 voted in June 1989 \issue{HASH-TABLE-SIZE} to regard the
+latter description as definitive: the \cd{:size} argument
+is approximately the number of entries that can be inserted
+without having to enlarge the hash table.  This definition is certainly
+more convenient for the user.
+\end{newer}
+
 \section{Функции для хеш-таблиц}
 
 Данный раздел описывает функции для хеш-таблиц, которые используют
@@ -456,12 +445,46 @@ make-hash-table &key :test :size :rehash-size :rehash-threshold
 или одним из трёх символов \cdf{eq}, \cdf{eql} или \cdf{equal}.
 По-умолчанию используется \cdf{eql}.
 
+\begin{new}
+X3J13 voted in January 1989
+\issue{HASH-TABLE-TESTS}
+to add a fourth type of hash table:
+the value of \cd{\#'equalp} and the symbol \cdf{equalp} are to be additional
+valid possibilities for the \cd{:test} argument.
+
+Note that one consequence of
+the vote to change the rules of
+floating-point contagion
+\issue{CONTAGION-ON-NUMERICAL-COMPARISONS}
+(described in section~\ref{PRECISION-CONTAGION-COERCION-SECTION})
+is to require \cdf{=}, and therefore also \cdf{equalp},
+to compare the values of numbers exactly and not approximately, making
+\cdf{equalp} a true equivalence relation on numbers.
+
+Another valuable use of \cdf{equalp} hash tables is case-insensitive
+comparison of keys that are strings.
+\end{new}
+
 Аргумент \cd{:size} устанавливает первоначальный размер хеш-таблицы в парах.
 (Указанный размер может быть округлён до <<хорошего>> размера, например, до
 первого следующего простого числа.)
 Вы можете не сохранять в таблице столько пар, сколько указали. Этот аргумент
 служит подсказкой для реализации о том, какое примерно число элементов вы будете
 хранить в хеш-таблице.
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{ARGUMENTS-UNDERSPECIFIED}
+to clarify that the \cd{:size} argument
+must be a non-negative integer.
+\end{new}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{HASH-TABLE-SIZE} to regard the
+preceding description of the \cd{:size} argument as definitive: it
+is approximately the number of entries that can be inserted
+without having to enlarge the hash table.
+\end{newer}
 
 Аргумент \cd{:rehash-size} указывает, на сколько увеличить размер хеш-таблицы,
 когда она по размерам достигнет пределов.
@@ -470,13 +493,11 @@ make-hash-table &key :test :size :rehash-size :rehash-threshold
 означать относительное приращение к предыдущему размеру.
 Значение по-умолчанию зависит от реализации.
 
-\begin{newer}
 Аргумент \cd{:rehash-threshold} указывает, насколько должна наполниться
 хеш-таблица, прежде чем она будет увеличена. Он должен быть числом типа
 \cdf{real} между \cd{0} и \cd{1}, включительно.
 Он показывает максимальный уровень заполнения хеш-таблицы.
 Значение по-умолчанию зависит от реализации.
-\end{newer}
 
 Пример использования \cdf{make-hash-table}:
 \begin{lisp}
@@ -556,6 +577,12 @@ maphash function hash-table
 ~~~~~~~~~~~~~~~~~(setf (gethash key my-hash-table) (sqrt val)))) \\
 ~~~~~~~~~my-hash-table)
 \end{lisp}
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
 \end{defun}
 
 \begin{defun}[Функция]
@@ -573,7 +600,79 @@ hash-table-count hash-table
 элементов равно нулю.
 \end{defun}
 
-\begin{newer}
+\begin{defmac}
+with-hash-table-iterator (mname hash-table) {form}*
+
+X3J13 voted in January 1989
+\issue{HASH-TABLE-PACKAGE-GENERATORS}
+to add the macro \cdf{with-hash-table-iterator}.
+
+The name \emph{mname} is bound and defined as if by \cdf{macrolet},
+with the body \emph{form\/}s as its lexical scope, to be a ``generator macro''
+such that successive invocations \cd{(\emph{mname})} will
+return entries, one by one, from the hash table that is the value of the
+expression \emph{hash-table} (which is evaluated exactly once).
+
+At each invocation of the generator macro, there are two possibilities.
+If there is yet another unprocessed entry in the hash table, then
+three values are returned: \cdf{t},
+the key of the hash table entry, and
+the associated value of the hash table entry.
+On the other hand, if there are no more unprocessed entries in the
+hash table, then one value is returned: \cdf{nil}.
+
+The implicit interior state of the iteration over the hash table
+entries has dynamic extent.  While the name \emph{mname} has
+lexical scope, it is an error to invoke the generator macro
+once the \cdf{with-hash-table-iterator} form has been exited.
+
+Invocations of \cdf{with-hash-table-iterator}
+and related macros may be nested, and the generator macro of an
+outer invocation may be called from within an inner invocation
+(assuming that its name is visible or otherwise made available).
+
+\begin{new}
+X3J13 voted in January 1989
+\issue{MAPPING-DESTRUCTIVE-INTERACTION}
+to restrict user side effects; see section~\ref{STRUCTURE-TRAVERSAL-SECTION}.
+\end{new}
+
+\beforenoterule
+\begin{rationale}
+This facility is a bit more flexible than \cdf{maphash}.
+It makes possible a portable and efficient implementation of \cdf{loop}
+clauses for iterating over hash tables (see chapter~\ref{LOOP}).
+\end{rationale}
+\afternoterule
+\end{defmac}
+
+\begin{lisp}
+(setq turtles (make-hash-table :size 9 :test 'eq)) \\*
+(setf (gethash 'howard-kaylan turtles) '(musician lead-singer)) \\*
+(setf (gethash 'john-barbata turtles) '(musician drummer)) \\*
+(setf (gethash 'leonardo turtles) '(ninja leader blue)) \\*
+(setf (gethash 'donatello turtles) '(ninja machines purple)) \\*
+(setf (gethash 'al-nichol turtles) '(musician guitarist)) \\*
+(setf (gethash 'mark-volman turtles) '(musician great-hair)) \\*
+(setf (gethash 'raphael turtles) '(ninja cool rude red)) \\*
+(setf (gethash 'michaelangelo turtles) '(ninja party-dude orange)) \\*
+(setf (gethash 'jim-pons turtles) '(musician bassist)) \\
+\\
+(with-hash-table-iterator (get-turtle turtles) \\*
+~~(labels ((try (got-one \&optional key value) \\*
+~~~~~~~~~~~~~(when got-one\`;\textrm{Remember, keys may show up in any order} \\*
+~~~~~~~~~~~~~~~(when (eq (first value) 'ninja) \\*
+~~~~~~~~~~~~~~~~~(format t "{\Xtilde}\%{\Xtilde}:({\Xtilde}A{\Xtilde}): {\Xtilde}{\Xlbrace}{\Xtilde}A{\Xtilde}{\Xcircumflex}, {\Xtilde}{\Xrbrace}" \\*
+~~~~~~~~~~~~~~~~~~~~~~~~~key (rest value))) \\*
+~~~~~~~~~~~~~~~(multiple-value-call \#'try (get-turtle))))) \\*
+~~~~(multiple-value-call \#'try (get-turtle))))~~~~~;\textrm{Prints 4 lines} \\*
+Michaelangelo: PARTY-DUDE, ORANGE \\*
+Leonardo: LEADER, BLUE \\*
+Raphael: COOL, RUDE, RED \\*
+Donatello: MACHINES, PURPLE \\*
+~~\EV\ nil
+\end{lisp}
+
 \begin{defun}[Функция]
 hash-table-rehash-size hash-table \\
 hash-table-rehash-threshold hash-table \\
@@ -599,7 +698,6 @@ hash-table-test hash-table
 сравнения для аргумента \cd{:test}, могут определять, как будет возвращено
 значение из \cdf{hash-table-test} для этих дополнительных функций.
 \end{defun} 
-\end{newer}
 
 \section{Функция хеширования}
 

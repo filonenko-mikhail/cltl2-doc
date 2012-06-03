@@ -1,0 +1,341 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>The Property List</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:03:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
+href="clmse55.html" >Next</a>&#x003E;&#x003C;<a 
+href="symbol.html" >Prev</a>&#x003E;&#x003C;<a 
+href="symbol.html#tailsymbol.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="#tailclmse54.html">Tail</a>&#x003E;&#x003C;<a 
+href="symbol.html#clmse54.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">10.1   </span> <a 
+href="clm.html#QQ2-69-115" id="x69-10600010.1">The Property List</a></h3>
+<!--l. 52--><p class="noindent" >Since its inception, Lisp has associated with each symbol a kind of tabular data
+structure called a <em>property list</em> (<em>plist</em> for short). A property list contains zero or
+                                                                          
+
+                                                                          
+more entries; each entry associates with a key (called the <em>indicator</em>), which is
+typically a symbol, an arbitrary Lisp object (called the <em>value</em> or, sometimes, the
+<em>property</em>). There are no duplications among the indicators; a property list may
+only have one property at a time with a given name. In this way, given a
+symbol and an indicator (another symbol), an associated value can be
+retrieved.
+<!--l. 64--><p class="indent" >   A property list is very similar in purpose to an association list. The
+diﬀerence is that a property list is an object with a unique identity; the
+operations for adding and removing property-list entries are destructive
+operations that alter the property list rather than making a new one.
+Association lists, on the other hand, are normally augmented non-destructively
+(without side eﬀects) by adding new entries to the front (see <b><a 
+href="symbols.html#x188-375072r72">acons</a></b> and
+<b><a 
+href="symbols.html#x188-375701r701">pairlis</a></b>).
+<!--l. 73--><p class="indent" >   A property list is implemented as a memory cell containing a list with an even
+number (possibly zero) of elements. (Usually this memory cell is the property-list
+cell of a symbol, but any memory cell acceptable to <b><a 
+href="symbols.html#x188-375832r832">setf</a></b> can be used if <b><a 
+href="symbols.html#x188-375461r461">getf</a></b> and
+<b><a 
+href="symbols.html#x188-375784r784">remf</a></b> are used.) Each pair of elements in the list constitutes an entry; the ﬁrst
+item is the indicator, and the second is the value. Because property-list
+functions are given the symbol and not the list itself, modiﬁcations to the
+property list can be recorded by storing back into the property-list cell of the
+symbol.
+<!--l. 84--><p class="indent" >   When a symbol is created, its property list is initially empty. Properties are
+created by using <b><a 
+href="symbols.html#x188-375450r450">get</a></b> within a <b><a 
+href="symbols.html#x188-375832r832">setf</a></b> form.
+<!--l. 87--><p class="indent" >   Common Lisp does not use a symbol&#x2019;s property list as extensively as earlier
+Lisp implementations did. Less-used data, such as compiler, debugging,
+and documentation information, is kept on property lists in Common
+Lisp.
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 93--><p class="noindent" >[Function]</em><a 
+ id="dx69-106001"></a> <b>get</b> <i>symbol</i> <i>indicator</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>default</i>
+</div>
+<b>
+<!--l. 95--><p class="indent" >   <a 
+href="symbols.html#x188-375450r450">get</a></b> searches the property list of <em>symbol</em> for an indicator <b><a 
+href="symbols.html#x188-375366r366">eq</a></b> to <em>indicator</em>. The
+ﬁrst argument must be a symbol. If one is found, then the corresponding value is
+returned; otherwise <em>default</em> is returned.
+                                                                          
+
+                                                                          
+<!--l. 101--><p class="indent" >   If <em>default</em> is not speciﬁed, then <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> is used for <em>default</em>.
+<!--l. 104--><p class="indent" >   Note that there is no way to distinguish an absent property from one whose
+value is <em>default</em>. <div class="lisp"><tt><div class="tabbing">
+(get x y) <span class="math"> ≡</span> (getf (symbol-plist x) y)
+   <br>
+<!--l. 108--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 109--><p class="indent" >   Suppose that the property list of <b>foo</b> is <b>(bar t baz 3 hunoz &#x0022;Huh?&#x0022;)</b>. Then,
+for example: <div class="lisp"><tt><div class="tabbing">
+(get &#x2019;foo &#x2019;baz) <span class="math"> ⇒</span> 3
+   <br>                                                         (get &#x2019;foo &#x2019;hunoz) <span class="math"> ⇒</span> &#x0022;Huh?&#x0022;<br>
+(get &#x2019;foo &#x2019;zoo) <span class="math"> ⇒</span> <b><a 
+href="symbols.html#x188-375658r658">nil</a></b><br>
+<!--l. 115--><p class="noindent" ></div>
+</tt>
+</div>
+<b>
+<!--l. 117--><p class="indent" >   <a 
+href="symbols.html#x188-375832r832">setf</a></b> may be used with <b><a 
+href="symbols.html#x188-375450r450">get</a></b> to create a new property-value pair, possibly
+replacing an old pair with the same property name. For example: <div class="lisp"><tt><div class="tabbing">
+(get &#x2019;clyde &#x2019;species) <span class="math"> ⇒</span> <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>
+   <br>                           (setf (get &#x2019;clyde &#x2019;species) &#x2019;elephant) <span class="math"> ⇒</span> elephant<br>
+and now (get &#x2019;clyde &#x2019;species) <span class="math"> ⇒</span> elephant<br>
+<!--l. 124--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 125--><p class="indent" >   The <em>default</em> argument may be speciﬁed to <b><a 
+href="symbols.html#x188-375450r450">get</a></b> in this context; it is ignored by
+<b><a 
+href="symbols.html#x188-375832r832">setf</a></b> but may be useful in such macros as <b><a 
+href="symbols.html#x188-375754r754">push</a></b> that are related to <b><a 
+href="symbols.html#x188-375832r832">setf</a></b>:
+<div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+(push item (get sym &#x2019;token-stack &#x2019;(initial-item)))
+   <br>
+<!--l. 130--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 131--><p class="indent" >   means approximately the same as <div class="lisp"><tt><div class="tabbing">
+(setf (get sym &#x2019;token-stack &#x2019;(initial-item))
+   <br>                           (cons item (get sym &#x2019;token-stack &#x2019;(initial-item))))<br>
+<!--l. 135--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 136--><p class="indent" >   which in turn would be treated as simply <div class="lisp"><tt><div class="tabbing">
+(setf (get sym &#x2019;token-stack)
+   <br>                           (cons item (get sym &#x2019;token-stack &#x2019;(initial-item))))<br>
+<!--l. 140--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="newer">
+<!--l. 143--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx69-106002"></a>to clarify the permissible side eﬀects of certain
+operations; <b>(setf (get <em>symbol</em> <em>indicator</em>) <em>newvalue</em>)</b> is required to behave
+exactly the same as <b>(setf (getf (symbol-plist <em>symbol</em>) <em>indicator</em>)
+<em>newvalue</em>)</b>.
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+                                                                          
+
+                                                                          
+<!--l. 152--><p class="noindent" >[Function]</em><a 
+ id="dx69-106003"></a> <b>remprop</b> <i>symbol</i> <i>indicator</i>
+</div>
+<!--l. 154--><p class="indent" >   This removes from <em>symbol</em> the property with an indicator <b><a 
+href="symbols.html#x188-375366r366">eq</a></b> to <em>indicator</em>. The
+property indicator and the corresponding value are removed by destructively
+splicing the property list. It returns <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> if no such property was found, or non-<b><a 
+href="symbols.html#x188-375658r658">nil</a></b>
+if a property was found. <div class="lisp"><tt><div class="tabbing">
+(remprop x y) <span class="math"> ≡</span> (remf (symbol-plist x) y)
+   <br>
+<!--l. 161--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 162--><p class="indent" >   For example, if the property list of <b>foo</b> is initially <div class="lisp"><tt><div class="tabbing">
+(color blue height 6.3 near-to bar)
+   <br>
+<!--l. 165--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 166--><p class="indent" >   then the call <div class="lisp"><tt><div class="tabbing">
+(remprop &#x2019;foo &#x2019;height)
+   <br>
+<!--l. 169--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 170--><p class="indent" >   returns a non-<b><a 
+href="symbols.html#x188-375658r658">nil</a></b> value after altering <b>foo</b>&#x2019;s property list to be <div class="lisp"><tt><div class="tabbing">
+(color blue near-to bar)
+   <br>
+                                                                          
+
+                                                                          
+<!--l. 173--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="newer">
+<!--l. 176--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx69-106004"></a>to clarify the permissible side eﬀects of certain
+operations; <b>(remprop <em>symbol</em> <em>indicator</em>)</b> is required to behave exactly the
+same as <b>(remf (symbol-plist <em>symbol</em>) <em>indicator</em>)</b>.
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 185--><p class="noindent" >[Function]</em><a 
+ id="dx69-106005"></a> <b>symbol-plist</b> <i>symbol</i>
+</div>
+<!--l. 187--><p class="indent" >   This returns the list that contains the property pairs of <em>symbol</em>; the contents of
+the property-list cell are extracted and returned.
+<!--l. 190--><p class="indent" >   Note that using <b><a 
+href="symbols.html#x188-375450r450">get</a></b> on the result of <b><a 
+href="symbols.html#x188-375935r935">symbol-plist</a></b> does <em>not</em> work. One must
+give the symbol itself to <b><a 
+href="symbols.html#x188-375450r450">get</a></b> or else use the function <b><a 
+href="symbols.html#x188-375461r461">getf</a></b>.
+<b>
+<!--l. 194--><p class="indent" >   <a 
+href="symbols.html#x188-375832r832">setf</a></b> may be used with <b><a 
+href="symbols.html#x188-375935r935">symbol-plist</a></b> to destructively replace the entire
+property list of a symbol. This is a relatively dangerous operation, as it may
+destroy important information that the implementation may happen to store in
+property lists. Also, care must be taken that the new property list is in fact a list
+of even length.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 203--><p class="noindent" >[Function]</em><a 
+ id="dx69-106006"></a> <b>getf</b> <i>place</i> <i>indicator</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>default</i>
+</div>
+<b>
+<!--l. 205--><p class="indent" >   <a 
+href="symbols.html#x188-375461r461">getf</a></b> searches the property list stored in <em>place</em> for an indicator <b><a 
+href="symbols.html#x188-375366r366">eq</a></b> to <em>indicator</em>.
+If one is found, then the corresponding value is returned; otherwise <em>default</em> is
+returned. If <em>default</em> is not speciﬁed, then <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> is used for <em>default</em>. Note that
+                                                                          
+
+                                                                          
+there is no way to distinguish an absent property from one whose value is
+<em>default</em>. Often <em>place</em> is computed from a generalized variable acceptable to
+<b><a 
+href="symbols.html#x188-375832r832">setf</a></b>.
+<b>
+<!--l. 215--><p class="indent" >   <a 
+href="symbols.html#x188-375832r832">setf</a></b> may be used with <b><a 
+href="symbols.html#x188-375461r461">getf</a></b>, in which case the <em>place</em> must indeed be acceptable
+as a <em>place</em> to <b><a 
+href="symbols.html#x188-375832r832">setf</a></b>. The eﬀect is to add a new property-value pair, or update an
+existing pair, in the property list kept in the <em>place</em>. The <em>default</em> argument may be
+speciﬁed to <b><a 
+href="symbols.html#x188-375461r461">getf</a></b> in this context; it is ignored by <b><a 
+href="symbols.html#x188-375832r832">setf</a></b> but may be useful in such
+macros as <b><a 
+href="symbols.html#x188-375754r754">push</a></b> that are related to <b><a 
+href="symbols.html#x188-375832r832">setf</a></b>. See the description of <b><a 
+href="symbols.html#x188-375450r450">get</a></b> for an example
+of this.
+<div class="newer">
+<!--l. 225--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx69-106007"></a>to clarify the permissible side eﬀects of certain
+operations; <b><a 
+href="symbols.html#x188-375832r832">setf</a></b> used with <b><a 
+href="symbols.html#x188-375461r461">getf</a></b> is permitted to perform a <b><a 
+href="symbols.html#x188-375832r832">setf</a></b> on the <em>place</em>
+or on any part, <em>car</em> or <em>cdr</em>, of the top-level list structure held by that
+<em>place</em>.
+</div>
+<div class="newer">
+<!--l. 233--><p class="indent" >   X3J13 voted in March 1988 <a 
+ id="dx69-106008"></a>to clarify order of evaluation (see section <a 
+href="clmse36.html#x48-780007.2">7.2<!--tex4ht:ref: SETF-SECTION --></a>).
+</div>
+<hr></div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 239--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>remf</b> <a 
+ id="dx69-106009"></a>place indicator
+   <br>
+<!--l. 240--><p class="noindent" ></div>
+</div>
+<!--l. 241--><p class="indent" >   This removes from the property list stored in <em>place</em> the property with an
+indicator <b><a 
+href="symbols.html#x188-375366r366">eq</a></b> to <em>indicator</em>. The property indicator and the corresponding value are
+removed by destructively splicing the property list. <b><a 
+href="symbols.html#x188-375784r784">remf</a></b> returns <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> if no
+such property was found, or some non-<b><a 
+href="symbols.html#x188-375658r658">nil</a></b> value if a property was found.
+The form <em>place</em> may be any generalized variable acceptable to <b><a 
+href="symbols.html#x188-375832r832">setf</a></b>. See
+<b><a 
+href="symbols.html#x188-375794r794">remprop</a></b>.
+<div class="newer">
+<!--l. 251--><p class="indent" >   X3J13 voted in March 1989 <a 
+ id="dx69-106010"></a>to clarify the permissible side eﬀects of certain
+operations; <b><a 
+href="symbols.html#x188-375784r784">remf</a></b> is permitted to perform a <b><a 
+href="symbols.html#x188-375832r832">setf</a></b> on the <em>place</em> or on any part, <em>car</em>
+                                                                          
+
+                                                                          
+or <em>cdr</em>, of the top-level list structure held by that <em>place</em>.
+</div>
+<div class="newer">
+<!--l. 259--><p class="indent" >   X3J13 voted in March 1988 <a 
+ id="dx69-106011"></a>to clarify order of evaluation (see section <a 
+href="clmse36.html#x48-780007.2">7.2<!--tex4ht:ref: SETF-SECTION --></a>).
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 265--><p class="noindent" >[Function]</em><a 
+ id="dx69-106012"></a> <b>get-properties</b> <i>place</i> <i>indicator-list</i>
+</div>
+<b>
+<!--l. 267--><p class="indent" >   <a 
+href="symbols.html#x188-375457r457">get-properties</a></b> is like <b><a 
+href="symbols.html#x188-375461r461">getf</a></b>, except that the second argument is a list of
+indicators. <b><a 
+href="symbols.html#x188-375457r457">get-properties</a></b> searches the property list stored in <em>place</em> for
+any of the indicators in <em>indicator-list</em> until it ﬁnds the ﬁrst property in
+the property list whose indicator is one of the elements of <em>indicator-list</em>.
+Normally <em>place</em> is computed from a generalized variable acceptable to
+<b><a 
+href="symbols.html#x188-375832r832">setf</a></b>.
+<b>
+<!--l. 275--><p class="indent" >   <a 
+href="symbols.html#x188-375457r457">get-properties</a></b> returns three values. If any property was found, then the ﬁrst
+two values are the indicator and value for the ﬁrst property whose indicator was
+in <em>indicator-list</em>, and the third is that tail of the property list whose <em>car</em> was the
+indicator (and whose <em>cadr</em> is therefore the value). If no property was found, all
+three values are <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>. Thus the third value serves as a ﬂag indicating success or
+failure and also allows the search to be restarted, if desired, after the property was
+found.
+<hr></div>
+                                                                          
+
+                                                                          
+<!--l. 287--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse55.html" >Next</a>&#x003E;&#x003C;<a 
+href="symbol.html" >Prev</a>&#x003E;&#x003C;<a 
+href="symbol.html#tailsymbol.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="clmse54.html" >Front</a>&#x003E;&#x003C;<a 
+href="symbol.html#clmse54.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+ id="tailclmse54.html"></a>  
+</body></html> 

@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Precision, Contagion, and Coercion</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:03:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+     <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
+href="clmse65.html" >Next</a>&#x003E;&#x003C;<a 
+href="number.html" >Prev</a>&#x003E;&#x003C;<a 
+href="number.html#tailnumber.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="#tailclmse64.html">Tail</a>&#x003E;&#x003C;<a 
+href="number.html#clmse64.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">12.1   </span> <a 
+href="clm.html#QQ2-81-127" id="x81-11800012.1">Precision, Contagion, and
+Coercion</a></h3>
+<!--l. 59--><p class="noindent" >In general, computations with ﬂoating-point numbers are only approximate. The
+<em>precision</em> of a ﬂoating-point number is not necessarily correlated at all with the
+<em>accuracy</em> of that number. For instance, 3.142857142857142857 is a more precise
+approximation to <span class="math">π</span> than 3.14159, but the latter is more accurate. The
+precision refers to the number of bits retained in the representation. When an
+operation combines a short ﬂoating-point number with a long one, the result
+will be a long ﬂoating-point number. This rule is made to ensure that
+as much accuracy as possible is preserved; however, it is by no means a
+guarantee. Common Lisp numerical routines do assume, however, that the
+accuracy of an argument does not exceed its precision. Therefore when two
+small ﬂoating-point numbers are combined, the result will always be a
+small ﬂoating-point number. This assumption can be overridden by ﬁrst
+explicitly converting a small ﬂoating-point number to a larger representation.
+(Common Lisp never converts automatically from a larger size to a smaller
+one.)
+<!--l. 78--><p class="indent" >     Rational computations cannot overﬂow in the usual sense (though of course
+there may not be enough storage to represent one), as integers and ratios may in
+principle be of any magnitude. Floating-point computations may get exponent
+overﬂow or underﬂow; this is an error.
+<div class="newer">
+                                                                          
+
+                                                                          
+<!--l. 85--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx81-118001"></a>to address certain problems relating to
+ﬂoating-point overﬂow and underﬂow, but certain parts of the proposed solution
+were not adopted, namely to add the macro <b>without-ﬂoating-underﬂow-traps</b>
+to the language and to require certain behavior of ﬂoating-point overﬂow and
+underﬂow. The committee agreed that this area of the language requires more
+discussion before a solution is standardized.
+<!--l. 93--><p class="indent" >   For the record, the proposal that was considered and rejected (for the nonce)
+introduced a macro <b>without-ﬂoating-underﬂow-traps</b> that would execute its
+body in such a way that, within its dynamic extent, a ﬂoating-point underﬂow
+must not signal an error but instead must produce either a denormalized number
+or zero as the result. The rejected proposal also speciﬁed the following treatment
+of overﬂow and underﬂow:
+      <ul class="itemize1">
+      <li class="itemize">A ﬂoating-point computation that overﬂows should signal an error of
+      type <b><a 
+href="symbols.html#x188-375419r419">ﬂoating-point-overﬂow</a></b>.
+      </li>
+      <li class="itemize">Unless
+      the dynamic extent of a use of <b>without-ﬂoating-underﬂow-traps</b>,
+      a ﬂoating-point computation that underﬂows should signal an error
+      of type <b><a 
+href="symbols.html#x188-375420r420">ﬂoating-point-underﬂow</a></b>. A result that can be represented
+      only  in  denormalized  form  must  be  considered  an  underﬂow  in
+      implementations that support denormalized ﬂoating-point numbers.</li></ul>
+<!--l. 111--><p class="noindent" >These points refer to conditions <b><a 
+href="symbols.html#x188-375419r419">ﬂoating-point-overﬂow</a></b> and <b><a 
+href="symbols.html#x188-375420r420">ﬂoating-point-underﬂow</a></b>
+that were approved by X3J13 and are described in section <a 
+href="clmse149.html#x182-33600028.5">28.5<!--tex4ht:ref: PREDEFINED-CONDITIONS-SECTION --></a>.
+</div>
+<!--l. 117--><p class="indent" >   When rational and ﬂoating-point numbers are compared or combined by a
+numerical function, the rule of <em>ﬂoating-point contagion</em> is followed: when a
+rational meets a ﬂoating-point number, the rational is ﬁrst converted to a
+ﬂoating-point number of the same format. For functions such as <b><a 
+href="symbols.html#x188-375054r54">+</a></b> that take
+more than two arguments, it may be that part of the operation is carried
+out exactly using rationals and then the rest is done using ﬂoating-point
+arithmetic.
+<div class="new">
+<!--l. 127--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx81-118002"></a>to apply the rule of ﬂoating-point contagion
+stated above to the case of <em>combining</em> rational and ﬂoating-point numbers. For
+<em>comparing</em>, the following rule is to be used instead: When a rational number and a
+                                                                          
+
+                                                                          
+ﬂoating-point number are to be compared by a numerical function, in eﬀect the
+ﬂoating-point number is ﬁrst converted to a rational number as if by the function
+<b>rational</b>, and then an exact comparison of two rational numbers is performed. It
+is of course valid to use a more eﬃcient implementation than actually calling the
+function <b>rational</b>, as long as the result of the comparison is the same. In
+the case of complex numbers, the real and imaginary parts are handled
+separately.________________________________________________________________<div class="rationale">
+<!--l. 142--><p class="noindent" ><b>Rationale:</b> In general, accuracy cannot be preserved in combining operations, but it can
+be preserved in comparisons, and preserving it makes that part of Common Lisp
+algebraically a bit more tractable. In particular, this change prevents the breakdown of
+transitivity. Let <b>a</b> be the result of <b>(/ 10.0 single-ﬂoat-epsilon)</b>, and let <b>j</b> be the
+result of <b>(ﬂoor a)</b>. (Note that <b>(= a (+ a 1.0))</b> is true, by the deﬁnition of
+<b><a 
+href="symbols.html#x188-375854r854">single-ﬂoat-epsilon</a></b>.) Under the old rules, all of <b>(&#x003C;= a j)</b>, <b>(&#x003C; j (+ j 1))</b>, and
+<b>(&#x003C;= (+ j 1) a)</b> would be true; transitivity would then imply that <b>(&#x003C; a a)</b> ought to
+be true, but of course it is false, and therefore transitivity fails. Under the new rule,
+however, <b>(&#x003C;= (+ j 1) a)</b> is false.
+</div>___________________________________________________________________________________________________________
+</div>
+<!--l. 159--><p class="indent" >     For functions that are mathematically associative (and possibly commutative),
+a Common Lisp implementation may process the arguments in any manner
+consistent with associative (and possibly commutative) rearrangement. This does
+not aﬀect the order in which the argument forms are evaluated, of course; that
+order is always left to right, as in all Common Lisp function calls. What is left
+loose is the order in which the argument values are processed. The point of all this
+is that implementations may diﬀer in which automatic coercions are applied
+because of diﬀering orders of argument processing. As an example, consider this
+expression: <div class="lisp"><tt><div class="tabbing">
+(+ 1/3 2/3 1.0D0 1.0 1.0E-15)
+     <br>
+<!--l. 172--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 173--><p class="indent" >     One implementation might process the arguments from left to right, ﬁrst
+adding <b>1/3</b> and <b>2/3</b> to get <b>1</b>, then converting that to a double-precision
+                                                                          
+
+                                                                          
+ﬂoating-point number for combination with <b>1.0D0</b>, then successively converting
+and adding <b>1.0</b> and <b>1.0E-15</b>. Another implementation might process the
+arguments from right to left, ﬁrst performing a single-precision ﬂoating-point
+addition of <b>1.0</b> and <b>1.0E-15</b> (and probably losing some accuracy in the process!),
+then converting the sum to double precision and adding <b>1.0D0</b>, then converting
+<b>2/3</b> to double-precision ﬂoating-point and adding it, and then converting <b>1/3</b> and
+adding that. A third implementation might ﬁrst scan all the arguments, process
+all the rationals ﬁrst to keep that part of the computation exact, then ﬁnd an
+argument of the largest ﬂoating-point format among all the arguments and add
+that, and then add in all other arguments, converting each in turn (all in a
+perhaps misguided attempt to make the computation as accurate as possible). In
+any case, all three strategies are legitimate. The user can of course control
+the order of processing explicitly by writing several calls; for example:
+<div class="lisp"><tt><div class="tabbing">
+(+ (+ 1/3 2/3) (+ 1.0D0 1.0E-15) 1.0)
+   <br>
+<!--l. 193--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 194--><p class="indent" >   The user can also control all coercions simply by writing calls to coercion
+functions explicitly.
+<!--l. 197--><p class="indent" >   In general, then, the type of the result of a numerical function is a
+ﬂoating-point number of the largest format among all the ﬂoating-point
+arguments to the function; but if the arguments are all rational, then the
+result is rational (except for functions that can produce mathematically
+irrational results, in which case a single-format ﬂoating-point number may
+result).
+<!--l. 204--><p class="indent" >   There is a separate rule of complex contagion. As a rule, complex numbers
+never result from a numerical function unless one or more of the arguments is
+complex. (Exceptions to this rule occur among the irrational and transcendental
+functions, speciﬁcally <b><a 
+href="symbols.html#x188-375380r380">expt</a></b>, <b><a 
+href="symbols.html#x188-375545r545">log</a></b>, <b><a 
+href="symbols.html#x188-375884r884">sqrt</a></b>, <b><a 
+href="symbols.html#x188-375113r113">asin</a></b>, <b><a 
+href="symbols.html#x188-375073r73">acos</a></b>, <b><a 
+href="symbols.html#x188-375074r74">acosh</a></b>, and <b><a 
+href="symbols.html#x188-375120r120">atanh</a></b>; see
+section <a 
+href="clmse68.html#x85-12200012.5">12.5<!--tex4ht:ref: TRANSCENDENTAL-SECTION --></a>.) When a non-complex number meets a complex number, the
+non-complex number is in eﬀect ﬁrst converted to a complex number by providing
+an imaginary part of zero.
+                                                                          
+
+                                                                          
+<!--l. 216--><p class="indent" >   If any computation produces a result that is a ratio of two integers such that
+the denominator evenly divides the numerator, then the result is immediately
+converted to the equivalent integer. This is called the rule of <em>rational
+canonicalization</em>.
+<!--l. 221--><p class="indent" >   If the result of any computation would be a complex rational with a zero
+imaginary part, the result is immediately converted to a non-complex
+rational number by taking the real part. This is called the rule of <em>complex
+canonicalization</em>. Note that this rule does <em>not</em> apply to complex numbers whose
+components are ﬂoating-point numbers. Whereas <b>#C(5 0)</b> and <b>5</b> are not distinct
+values in Common Lisp (they are always <b><a 
+href="symbols.html#x188-375367r367">eql</a></b>), <b>#C(5.0 0.0)</b> and <b>5.0</b> are always
+distinct values in Common Lisp (they are never <b><a 
+href="symbols.html#x188-375367r367">eql</a></b>, although they are
+<b><a 
+href="symbols.html#x188-375370r370">equalp</a></b>).
+                                                                          
+
+                                                                          
+<!--l. 231--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse65.html" >Next</a>&#x003E;&#x003C;<a 
+href="number.html" >Prev</a>&#x003E;&#x003C;<a 
+href="number.html#tailnumber.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="clmse64.html" >Front</a>&#x003E;&#x003C;<a 
+href="number.html#clmse64.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+ id="tailclmse64.html"></a>  
+</body></html> 

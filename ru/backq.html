@@ -1,0 +1,892 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>C Backquote</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,index=2,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-04-19 23:41:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+<!--l. 11--><p class="noindent" > <div id="main_container"> <div id="content"> <div id="toplinks"><tt>&#x003C;</tt><a 
+href="bib.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse157.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse157.html#tailclmse157.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="#tailbackq.html">В-конец</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clm.html#backq.html" >Наверх</a><tt>&#x003E;</tt></div><h2 class="appendixHead"><span class="titlemark">Приложение C</span><br /><a 
+href="clm.html#QQ2-193-2809" id="x193-2762000C">Backquote</a></h2><div class="appendixTOCS">
+   </div>
+<div class="new">
+<!--l. 15--><p class="indent" >   Here is the code for an implementation of backquote syntax (see section <a 
+href="clmse112.html#x139-158900022.1.3">22.1.3<!--tex4ht:ref: BACKQUOTE --></a>)
+that I have found quite useful in explaining to myself the behavior of nested
+backquotes. It implements the formal rules for backquote processing and
+optionally applies a code simpliﬁer to the result. One must be very careful in
+choosing the simpliﬁcation rules; the rules given here work, but some Common
+Lisp implementations have run into trouble at one time or another by using a
+simpliﬁcation rule that does not work in all cases. Code transformations that are
+plausible when single forms are involved are likely to fail in the presence of
+splicing.
+<!--l. 27--><p class="indent" >   At the end of this appendix are some samples of nested backquote syntax with
+commentary.
+<div class="lisp">
+<!--l. 30--><p class="indent" >   <div class="tabbing">
+;;; Common Lisp backquote implementation, written in Common Lisp.
+   <br>                  ;;; Author: Guy L. Steele Jr.     Date: 27 December 1985<br>
+;;; Tested under Symbolics Common Lisp and Lucid Common Lisp.<br>
+;;; This software is in the public domain.<br>
+<!--l. 35--><p class="noindent" ></div>
+<!--l. 35--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2763000C" id="x193-2763000C"></a></span>
+<!--l. 35--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2764000C" id="x193-2764000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 36--><p class="indent" >   <div class="tabbing">
+;;; $ is pseudo-backquote and % is pseudo-comma.  This makes it
+   <br>                ;;; possible to test this code without interfering with normal<br>
+;;; Common Lisp syntax.<br>
+                                                                          
+
+                                                                          
+<!--l. 40--><p class="noindent" ></div>
+<!--l. 40--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2765000C" id="x193-2765000C"></a></span>
+<!--l. 40--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2766000C" id="x193-2766000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 41--><p class="indent" >   <div class="tabbing">
+;;; The following are unique tokens used during processing.
+   <br>                ;;; They need not be symbols; they need not even be atoms.<br>
+<!--l. 44--><p class="noindent" ></div>
+<!--l. 44--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2767000C" id="x193-2767000C"></a></span>
+<!--l. 44--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2768000C" id="x193-2768000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 45--><p class="indent" >   <div class="tabbing">
+(defvar *comma* (make-symbol &#x0022;COMMA&#x0022;))
+   <br>             (defvar *comma-atsign* (make-symbol &#x0022;COMMA-ATSIGN&#x0022;))<br>
+(defvar *comma-dot* (make-symbol &#x0022;COMMA-DOT&#x0022;))<br>
+(defvar *bq-list* (make-symbol &#x0022;BQ-LIST&#x0022;))<br>
+(defvar *bq-append* (make-symbol &#x0022;BQ-APPEND&#x0022;))<br>
+(defvar *bq-list** (make-symbol &#x0022;BQ-LIST*&#x0022;))<br>
+(defvar *bq-nconc* (make-symbol &#x0022;BQ-NCONC&#x0022;))<br>
+(defvar *bq-clobberable* (make-symbol &#x0022;BQ-CLOBBERABLE&#x0022;))<br>
+(defvar *bq-quote* (make-symbol &#x0022;BQ-QUOTE&#x0022;))<br>
+(defvar *bq-quote-nil* (list *bq-quote* nil))<br>
+<!--l. 56--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 56--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2769000C" id="x193-2769000C"></a></span>
+<!--l. 56--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2770000C" id="x193-2770000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 57--><p class="indent" >   <div class="tabbing">
+;;; Reader macro characters:
+   <br>                                    ;;;    $foo is read in as (BACKQUOTE foo)<br>
+;;;    %foo is read in as (#:COMMA foo)<br>
+;;;    %@foo is read in as (#:COMMA-ATSIGN foo)<br>
+;;;    %.foo is read in as (#:COMMA-DOT foo)<br>
+;;; where #:COMMA is the value of the variable *COMMA*, etc.<br>
+<!--l. 64--><p class="noindent" ></div>
+<!--l. 64--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2771000C" id="x193-2771000C"></a></span>
+<!--l. 64--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2772000C" id="x193-2772000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 65--><p class="indent" >   <div class="tabbing">
+;;; BACKQUOTE is an ordinary macro (not a read-macro) that
+   <br>                    ;;; processes the expression foo, looking for occurrences of<br>
+;;; #:COMMA, #:COMMA-ATSIGN, and #:COMMA-DOT.  It constructs code<br>
+;;; in strict accordance with the rules on pages 349-350 of<br>
+;;; the ﬁrst edition (pages 528-529 of this second edition).<br>
+;;; It then optionally applies a code simpliﬁer.<br>
+<!--l. 72--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 72--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2773000C" id="x193-2773000C"></a></span>
+<!--l. 72--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2774000C" id="x193-2774000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 73--><p class="indent" >   <div class="tabbing">
+(set-macro-character #\$
+   <br>            #&#x2019;(lambda (stream char)<br>                (declare (ignore char))<br>
+      (list &#x2019;backquote (read stream t nil t))))<br>
+<!--l. 78--><p class="noindent" ></div>
+<!--l. 78--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2775000C" id="x193-2775000C"></a></span>
+<!--l. 78--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2776000C" id="x193-2776000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 79--><p class="indent" >   <div class="tabbing">
+(set-macro-character #\%
+   <br>                                                             #&#x2019;(lambda (stream char)<br>
+      (declare (ignore char))<br>          (case (peek-char nil stream t nil t)<br>
+          (#\@ (read-char stream t nil t)<br>
+               (list *comma-atsign* (read stream t nil t)))<br>
+          (#\. (read-char stream t nil t)<br>
+               (list *comma-dot* (read stream t nil t)))<br>
+          (otherwise (list *comma* (read stream t nil t))))))<br>
+<!--l. 89--><p class="noindent" ></div>
+<!--l. 89--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2777000C" id="x193-2777000C"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 89--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2778000C" id="x193-2778000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 90--><p class="indent" >   <div class="tabbing">
+   <br>      ;;; If the value of *BQ-SIMPLIFY* is non-NIL, then BACKQUOTE<br>
+;;; processing applies the code simpliﬁer.  If the value is NIL,<br>
+;;; then the code resulting from BACKQUOTE is exactly that<br>
+;;; speciﬁed by the oﬃcial rules.<br>
+<!--l. 96--><p class="noindent" ></div>
+<!--l. 96--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2779000C" id="x193-2779000C"></a></span>
+<!--l. 96--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2780000C" id="x193-2780000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 97--><p class="indent" >   <div class="tabbing">
+(defparameter *bq-simplify* t)
+   <br>
+<!--l. 99--><p class="noindent" ></div>
+<!--l. 99--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2781000C" id="x193-2781000C"></a></span>
+<!--l. 99--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2782000C" id="x193-2782000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 100--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+(defmacro backquote (x)
+   <br>                                                           (bq-completely-process x))<br>
+<!--l. 103--><p class="noindent" ></div>
+<!--l. 103--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2783000C" id="x193-2783000C"></a></span>
+<!--l. 103--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2784000C" id="x193-2784000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 104--><p class="indent" >   <div class="tabbing">
+;;; Backquote processing proceeds in three stages:
+   <br>    ;;;<br>    ;;; (1) BQ-PROCESS applies the rules to remove occurrences of<br>
+;;; #:COMMA, #:COMMA-ATSIGN, and #:COMMA-DOT corresponding to<br>
+;;; this level of BACKQUOTE.  (It also causes embedded calls to<br>
+;;; BACKQUOTE to be expanded so that nesting is properly handled.)<br>
+;;; Code is produced that is expressed in terms of functions<br>
+;;; #:BQ-LIST, #:BQ-APPEND, and #:BQ-CLOBBERABLE.  This is done<br>
+;;; so that the simpliﬁer will simplify only list construction<br>
+;;; functions actually generated by BACKQUOTE and will not involve<br>
+;;; any user code in the simpliﬁcation.  #:BQ-LIST means LIST,<br>
+;;; #:BQ-APPEND means APPEND, and #:BQ-CLOBBERABLE means IDENTITY<br>
+;;; but indicates places where &#x0022;%.&#x0022; was used and where NCONC may<br>
+;;; therefore be introduced by the simpliﬁer for eﬃciency.<br>                 ;;;<br>
+;;; (2) BQ-SIMPLIFY, if used, rewrites the code produced by<br>
+;;; BQ-PROCESS to produce equivalent but faster code.  The<br>
+;;; additional functions #:BQ-LIST* and #:BQ-NCONC may be<br>
+;;; introduced into the code.<br>                                             ;;;<br>
+;;; (3) BQ-REMOVE-TOKENS goes through the code and replaces<br>
+;;; #:BQ-LIST with LIST, #:BQ-APPEND with APPEND, and so on.<br>
+;;; #:BQ-CLOBBERABLE is simply eliminated (a call to it being<br>
+;;; replaced by its argument).  #:BQ-LIST* is replaced by either<br>
+                                                                          
+
+                                                                          
+;;; LIST* or CONS (the latter is used in the two-argument case,<br>
+;;; purely to make the resulting code a tad more readable).<br>
+<!--l. 131--><p class="noindent" ></div>
+<!--l. 131--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2785000C" id="x193-2785000C"></a></span>
+<!--l. 131--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2786000C" id="x193-2786000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 132--><p class="indent" >   <div class="tabbing">
+(defun bq-completely-process (x)
+   <br>
+  (let ((raw-result (bq-process x)))<br>    (bq-remove-tokens (if *bq-simplify*<br>
+                          (bq-simplify raw-result)<br>
+                          raw-result))))<br>
+<!--l. 138--><p class="noindent" ></div>
+<!--l. 138--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2787000C" id="x193-2787000C"></a></span>
+<!--l. 138--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2788000C" id="x193-2788000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 139--><p class="indent" >   <div class="tabbing">
+(defun bq-process (x)
+   <br>                                                                         (cond ((atom x)<br>
+         (list *bq-quote* x))<br>                    ((eq (car x) &#x2019;backquote)<br>
+         (bq-process (bq-completely-process (cadr x))))<br>
+        ((eq (car x) *comma*) (cadr x))<br>        ((eq (car x) *comma-atsign*)<br>
+                                                                          
+
+                                                                          
+         (error &#x0022;,@~S after ‘&#x0022; (cadr x)))<br>        ((eq (car x) *comma-dot*)<br>
+         (error &#x0022;,.~S after ‘&#x0022; (cadr x)))<br>             (t (do ((p x (cdr p))<br>
+                (q &#x2019;() (cons (bracket (car p)) q)))<br>
+               ((atom p)<br>                          (cons *bq-append*<br>
+                      (nreconc q (list (list *bq-quote* p)))))<br>
+             (when (eq (car p) *comma*)<br>               (unless (null (cddr p)) (error &#x0022;Malformed ,~S&#x0022; p))<br>
+               (return (cons *bq-append*<br>                             (nreconc q (list (cadr p))))))<br>
+             (when (eq (car p) *comma-atsign*)<br>
+               (error &#x0022;Dotted ,@~S&#x0022; p))<br>             (when (eq (car p) *comma-dot*)<br>
+               (error &#x0022;Dotted ,.~S&#x0022; p))))))<br>
+<!--l. 163--><p class="noindent" ></div>
+<!--l. 163--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2789000C" id="x193-2789000C"></a></span>
+<!--l. 163--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2790000C" id="x193-2790000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 164--><p class="indent" >   <div class="tabbing">
+;;; This implements the bracket operator of the formal rules.
+   <br>
+<!--l. 166--><p class="noindent" ></div>
+<!--l. 166--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2791000C" id="x193-2791000C"></a></span>
+<!--l. 166--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2792000C" id="x193-2792000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 167--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+(defun bracket (x)
+   <br>                                                                         (cond ((atom x)<br>
+         (list *bq-list* (bq-process x)))<br>           ((eq (car x) *comma*)<br>
+         (list *bq-list* (cadr x)))<br>          ((eq (car x) *comma-atsign*)<br>
+         (cadr x))<br>                           ((eq (car x) *comma-dot*)<br>
+         (list *bq-clobberable* (cadr x)))<br>
+        (t (list *bq-list* (bq-process x)))))<br>
+<!--l. 178--><p class="noindent" ></div>
+<!--l. 178--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2793000C" id="x193-2793000C"></a></span>
+<!--l. 178--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2794000C" id="x193-2794000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 179--><p class="indent" >   <div class="tabbing">
+;;; This auxiliary function is like MAPCAR but has two extra
+   <br>                  ;;; purposes: (1) it handles dotted lists; (2) it tries to make<br>
+;;; the result share with the argument x as much as possible.<br>
+<!--l. 183--><p class="noindent" ></div>
+<!--l. 183--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2795000C" id="x193-2795000C"></a></span>
+<!--l. 183--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2796000C" id="x193-2796000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 184--><p class="indent" >   <div class="tabbing">
+(defun maptree (fn x)
+                                                                          
+
+                                                                          
+   <br>                           (if (atom x)<br>                               (funcall fn x)<br>
+      (let ((a (funcall fn (car x)))<br>              (d (maptree fn (cdr x))))<br>
+        (if (and (eql a (car x)) (eql d (cdr x)))<br>                        x<br>
+            (cons a d)))))<br>
+<!--l. 193--><p class="noindent" ></div>
+<!--l. 193--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2797000C" id="x193-2797000C"></a></span>
+<!--l. 193--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2798000C" id="x193-2798000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 194--><p class="indent" >   <div class="tabbing">
+;;; This predicate is true of a form that when read looked
+   <br>                                                                ;;; like %@foo or %.foo.<br>
+<!--l. 197--><p class="noindent" ></div>
+<!--l. 197--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2799000C" id="x193-2799000C"></a></span>
+<!--l. 197--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2800000C" id="x193-2800000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 198--><p class="indent" >   <div class="tabbing">
+(defun bq-splicing-frob (x)
+   <br>            (and (consp x)<br>                 (or (eq (car x) *comma-atsign*)<br>
+           (eq (car x) *comma-dot*))))<br>
+<!--l. 203--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 203--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2801000C" id="x193-2801000C"></a></span>
+<!--l. 203--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2802000C" id="x193-2802000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 204--><p class="indent" >   <div class="tabbing">
+   <br>                             ;;; This predicate is true of a form that when read<br>
+;;; looked like %@foo or %.foo or just plain %foo.<br>
+<!--l. 208--><p class="noindent" ></div>
+<!--l. 208--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2803000C" id="x193-2803000C"></a></span>
+<!--l. 208--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2804000C" id="x193-2804000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 209--><p class="indent" >   <div class="tabbing">
+(defun bq-frob (x)
+   <br>                                                                           (and (consp x)<br>
+       (or (eq (car x) *comma*)<br>           (eq (car x) *comma-atsign*)<br>
+           (eq (car x) *comma-dot*))))<br>
+<!--l. 215--><p class="noindent" ></div>
+<!--l. 215--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2805000C" id="x193-2805000C"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 215--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2806000C" id="x193-2806000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 216--><p class="indent" >   <div class="tabbing">
+;;; The simpliﬁer essentially looks for calls to #:BQ-APPEND and
+   <br>        ;;; tries to simplify them.  The arguments to #:BQ-APPEND are<br>
+;;; processed from right to left, building up a replacement form.<br>
+;;; At each step a number of special cases are handled that,<br>
+;;; loosely speaking, look like this:<br>
+;;;<br>                  ;;;  (APPEND (LIST a b c) foo) =&#x003E; (LIST* a b c foo)<br>
+;;;       provided a, b, c are not splicing frobs<br>
+;;;  (APPEND (LIST* a b c) foo) =&#x003E; (LIST* a b (APPEND c foo))<br>
+;;;       provided a, b, c are not splicing frobs<br>
+;;;  (APPEND (QUOTE (x)) foo) =&#x003E; (LIST* (QUOTE x) foo)<br>
+;;;  (APPEND (CLOBBERABLE x) foo) =&#x003E; (NCONC x foo)<br>
+<!--l. 229--><p class="noindent" ></div>
+<!--l. 229--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2807000C" id="x193-2807000C"></a></span>
+<!--l. 229--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2808000C" id="x193-2808000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 230--><p class="indent" >   <div class="tabbing">
+(defun bq-simplify (x)
+   <br>                                   (if (atom x)<br>                                       x<br>
+      (let ((x (if (eq (car x) *bq-quote*)<br>                             x<br>
+                   (maptree #&#x2019;bq-simplify x))))<br>
+        (if (not (eq (car x) *bq-append*))<br>                            x<br>
+            (bq-simplify-args x)))))<br>
+<!--l. 240--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 240--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2809000C" id="x193-2809000C"></a></span>
+<!--l. 240--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2810000C" id="x193-2810000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 241--><p class="indent" >   <div class="tabbing">
+(defun bq-simplify-args (x)
+   <br>             (do ((args (reverse (cdr x)) (cdr args))<br>                  (result<br>
+         nil<br>                                    (cond ((atom (car args))<br>
+                (bq-attach-append *bq-append* (car args) result))<br>
+               ((and (eq (caar args) *bq-list*)<br>
+                     (notany #&#x2019;bq-splicing-frob (cdar args)))<br>
+                (bq-attach-conses (cdar args) result))<br>
+               ((and (eq (caar args) *bq-list**)<br>
+                     (notany #&#x2019;bq-splicing-frob (cdar args)))<br>
+                (bq-attach-conses<br>                  (reverse (cdr (reverse (cdar args))))<br>
+                  (bq-attach-append *bq-append*<br>
+                                    (car (last (car args)))<br>
+                                    result)))<br>
+               ((and (eq (caar args) *bq-quote*)<br>
+                     (consp (cadar args))<br>                     (not (bq-frob (cadar args)))<br>
+                     (null (cddar args)))<br>                (bq-attach-conses (list (list *bq-quote*<br>
+                                              (caadar args)))<br>
+                                  result))<br>
+               ((eq (caar args) *bq-clobberable*)<br>
+                (bq-attach-append *bq-nconc* (cadar args) result))<br>
+               (t (bq-attach-append *bq-append*<br>
+                                    (car args)<br>
+                                    result)))))<br>
+      ((null args) result)))<br>
+<!--l. 271--><p class="noindent" ></div>
+<!--l. 271--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2811000C" id="x193-2811000C"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 271--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2812000C" id="x193-2812000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 272--><p class="indent" >   <div class="tabbing">
+(defun null-or-quoted (x)
+   <br>                        (or (null x) (and (consp x) (eq (car x) *bq-quote*))))<br>
+<!--l. 275--><p class="noindent" ></div>
+<!--l. 275--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2813000C" id="x193-2813000C"></a></span>
+<!--l. 275--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2814000C" id="x193-2814000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 276--><p class="indent" >   <div class="tabbing">
+;;; When BQ-ATTACH-APPEND is called, the OP should be #:BQ-APPEND
+   <br>         ;;; or #:BQ-NCONC.  This produces a form (op item result) but<br>
+;;; some simpliﬁcations are done on the ﬂy:<br>
+;;;<br>                            ;;;  (op &#x2019;(a b c) &#x2019;(d e f g)) =&#x003E; &#x2019;(a b c d e f g)<br>
+;;;  (op item &#x2019;nil) =&#x003E; item, provided item is not a splicable frob<br>
+;;;  (op item &#x2019;nil) =&#x003E; (op item), if item is a splicable frob<br>
+;;;  (op item (op a b c)) =&#x003E; (op item a b c)<br>
+<!--l. 285--><p class="noindent" ></div>
+<!--l. 285--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2815000C" id="x193-2815000C"></a></span>
+<!--l. 285--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2816000C" id="x193-2816000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 286--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+(defun bq-attach-append (op item result)
+   <br>                  (cond ((and (null-or-quoted item) (null-or-quoted result))<br>
+         (list *bq-quote* (append (cadr item) (cadr result))))<br>
+        ((or (null result) (equal result *bq-quote-nil*))<br>
+         (if (bq-splicing-frob item) (list op item) item))<br>
+        ((and (consp result) (eq (car result) op))<br>
+         (list* (car result) item (cdr result)))<br>
+        (t (list op item result))))<br>
+<!--l. 295--><p class="noindent" ></div>
+<!--l. 295--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2817000C" id="x193-2817000C"></a></span>
+<!--l. 295--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2818000C" id="x193-2818000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 296--><p class="indent" >   <div class="tabbing">
+;;; The eﬀect of BQ-ATTACH-CONSES is to produce a form as if by
+   <br>               ;;; ‘(LIST* ,@items ,result) but some simpliﬁcations are done<br>
+;;; on the ﬂy.<br>           ;;;<br>           ;;;  (LIST* &#x2019;a &#x2019;b &#x2019;c &#x2019;d) =&#x003E; &#x2019;(a b c . d)<br>
+;;;  (LIST* a b c &#x2019;nil) =&#x003E; (LIST a b c)<br>
+;;;  (LIST* a b c (LIST* d e f g)) =&#x003E; (LIST* a b c d e f g)<br>
+;;;  (LIST* a b c (LIST d e f g)) =&#x003E; (LIST a b c d e f g)<br>
+<!--l. 305--><p class="noindent" ></div>
+<!--l. 305--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2819000C" id="x193-2819000C"></a></span>
+<!--l. 305--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2820000C" id="x193-2820000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 306--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+(defun bq-attach-conses (items result)
+   <br>                                     (cond ((and (every #&#x2019;null-or-quoted items)<br>
+              (null-or-quoted result))<br>                  (list *bq-quote*<br>
+               (append (mapcar #&#x2019;cadr items) (cadr result))))<br>
+        ((or (null result) (equal result *bq-quote-nil*))<br>
+         (cons *bq-list* items))<br>
+        ((and (consp result)<br>              (or (eq (car result) *bq-list*)<br>
+                  (eq (car result) *bq-list**)))<br>
+         (cons (car result) (append items (cdr result))))<br>
+        (t (cons *bq-list** (append items (list result))))))<br>
+<!--l. 319--><p class="noindent" ></div>
+<!--l. 319--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2821000C" id="x193-2821000C"></a></span>
+<!--l. 319--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2822000C" id="x193-2822000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 320--><p class="indent" >   <div class="tabbing">
+;;; Removes funny tokens and changes (#:BQ-LIST* a b) into
+   <br>               ;;; (CONS a b) instead of (LIST* a b), purely for readability.<br>
+<!--l. 323--><p class="noindent" ></div>
+<!--l. 323--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2823000C" id="x193-2823000C"></a></span>
+<!--l. 323--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2824000C" id="x193-2824000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 324--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+(defun bq-remove-tokens (x)
+   <br>    (cond ((eq x *bq-list*) &#x2019;list)<br>          ((eq x *bq-append*) &#x2019;append)<br>
+        ((eq x *bq-nconc*) &#x2019;nconc)<br>
+        ((eq x *bq-list**) &#x2019;list*)<br>              ((eq x *bq-quote*) &#x2019;quote)<br>
+        ((atom x) x)<br>                      ((eq (car x) *bq-clobberable*)<br>
+         (bq-remove-tokens (cadr x)))<br>
+        ((and (eq (car x) *bq-list**)<br>
+              (consp (cddr x))<br>                       (null (cdddr x)))<br>
+         (cons &#x2019;cons (maptree #&#x2019;bq-remove-tokens (cdr x))))<br>
+        (t (maptree #&#x2019;bq-remove-tokens x))))<br>
+<!--l. 339--><p class="noindent" ></div>
+<!--l. 339--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2825000C" id="x193-2825000C"></a></span>
+<!--l. 339--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2826000C" id="x193-2826000C"></a></span>
+</div>
+<!--l. 341--><p class="indent" >   Suppose that we ﬁrst make the following deﬁnitions:
+<div class="lisp">
+<!--l. 343--><p class="indent" >   <div class="tabbing">
+(setq q &#x2019;(r s))
+   <br>                    (defun r (x) (reduce #&#x2019;* x))<br>                    (setq r &#x2019;(3 5))<br>
+(setq s &#x2019;(4 6))<br>
+<!--l. 348--><p class="noindent" ></div>
+<!--l. 348--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2827000C" id="x193-2827000C"></a></span>
+<!--l. 348--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2828000C" id="x193-2828000C"></a></span>
+</div>
+<!--l. 350--><p class="indent" >   Without simpliﬁcation, the notation <tt>$$(%%q)</tt> (which stands for <tt>‘‘(„q)</tt>) is
+read as the expression <div class="lisp"><div class="tabbing">
+                                                                          
+
+                                                                          
+(APPEND (LIST &#x2019;APPEND) (LIST (APPEND (LIST &#x2019;LIST) (LIST Q))))
+   <br>
+<!--l. 355--><p class="noindent" ></div>
+<!--l. 355--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2829000C" id="x193-2829000C"></a></span>
+<!--l. 355--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2830000C" id="x193-2830000C"></a></span>
+</div>
+<!--l. 356--><p class="indent" >   The value of this expression is <div class="lisp"><div class="tabbing">
+(APPEND (LIST (R S)))
+   <br>
+<!--l. 359--><p class="noindent" ></div>
+<!--l. 359--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2831000C" id="x193-2831000C"></a></span>
+<!--l. 359--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2832000C" id="x193-2832000C"></a></span>
+</div>
+<!--l. 360--><p class="indent" >   and the value of this value is <tt>(24)</tt>. We conclude that the net eﬀect of
+twice-evaluating <tt>‘‘(„q)</tt> is to take the value <tt>24</tt> of the value <tt>(r s)</tt> of <tt>q</tt> and plug it
+into the template <tt>( )</tt> to produce <tt>(24)</tt>.
+<!--l. 366--><p class="indent" >   With simpliﬁcation, the notation <tt>$$(%%q)</tt> is read as the expression
+<div class="lisp"><div class="tabbing">
+(LIST &#x2019;LIST Q)
+   <br>
+<!--l. 371--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 371--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2833000C" id="x193-2833000C"></a></span>
+<!--l. 371--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2834000C" id="x193-2834000C"></a></span>
+</div>
+<!--l. 372--><p class="indent" >   The value of this expression is <div class="lisp"><div class="tabbing">
+(LIST (R S))
+   <br>
+<!--l. 375--><p class="noindent" ></div>
+<!--l. 375--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2835000C" id="x193-2835000C"></a></span>
+<!--l. 375--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2836000C" id="x193-2836000C"></a></span>
+</div>
+<!--l. 376--><p class="indent" >   and the value of this value is <tt>(24)</tt>. Thus the two ways of reading <tt>$$(%%q)</tt> do
+not produce the same expression—this we expected—but the values of the two
+ways are diﬀerent as well. Only the values of the values are the same. In general,
+Common Lisp guarantees the result of an expression with backquotes nested to
+depth k only after k successive evaluations have been performed; the results after
+fewer than k evaluations are implementation-dependent.
+<!--l. 385--><p class="indent" >   (Note that in the expression <tt>‘(foo ,(process ‘(bar ,x)))</tt> the backquotes
+are not doubly nested. The inner backquoted expression occurs within the textual
+scope of a comma belonging to the outer backquote. The correct way to
+determine the backquote nesting level of any subexpression is to start a
+count at zero and proceed up the S-expression tree, adding one for each
+backquote and subtracting one for each comma. This is similar to the rule
+for determining nesting level with respect to parentheses by scanning a
+character string linearly, adding or subtracting one as parentheses are
+passed.)
+<!--l. 396--><p class="indent" >   It is convenient to extend the “<span class="math"> ≡</span>” notation to handle multiple evaluation:
+x <span class="math"> ≡</span><span class="math">≡</span> y means that the expressions x and y may have diﬀerent results but they
+have the same results when twice evaluated. Similarly, x <span class="math"> ≡</span><span class="math">≡</span><span class="math">≡</span> y means that
+the values of the values of the values of x and y are the same, and so
+                                                                          
+
+                                                                          
+on.
+<!--l. 402--><p class="indent" >   We can illustrate the diﬀerences between non-splicing and splicing backquote
+inclusions quite concisely: <div class="lisp"><div class="tabbing">
+$$(%%q)  <span class="math"> ≡</span>
+   <br>  (APPEND (LIST &#x2019;APPEND) (LIST (APPEND (LIST &#x2019;LIST) (LIST Q))))<br>
+  <span class="math"> ≡</span><span class="math">≡</span> (LIST &#x2019;LIST Q) <span class="math"> ⇒</span> (LIST (R S)) <span class="math"> ⇒</span> (24)<br>
+<!--l. 408--><p class="noindent" ></div>
+<!--l. 408--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2837000C" id="x193-2837000C"></a></span>
+<!--l. 408--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2838000C" id="x193-2838000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 409--><p class="indent" >   <div class="tabbing">
+$$(%@%q) <span class="math"> ≡</span>
+   <br>                  (APPEND (LIST &#x2019;APPEND) (LIST Q))<br>
+  <span class="math"> ≡</span><span class="math">≡</span> Q <span class="math"> ⇒</span> (R S) <span class="math"> ⇒</span> 24<br>
+<!--l. 413--><p class="noindent" ></div>
+<!--l. 413--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2839000C" id="x193-2839000C"></a></span>
+<!--l. 413--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2840000C" id="x193-2840000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 414--><p class="indent" >   <div class="tabbing">
+$$(%%@q) <span class="math"> ≡</span>
+                                                                          
+
+                                                                          
+   <br>   (APPEND (LIST &#x2019;APPEND) (LIST (APPEND (LIST &#x2019;LIST) Q)))<br>
+  <span class="math"> ≡</span><span class="math">≡</span> (CONS &#x2019;LIST Q) <span class="math"> ⇒</span> (LIST R S) <span class="math"> ⇒</span> ((3 5) (4 6))<br>
+<!--l. 418--><p class="noindent" ></div>
+<!--l. 418--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2841000C" id="x193-2841000C"></a></span>
+<!--l. 418--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2842000C" id="x193-2842000C"></a></span>
+</div>
+<div class="lisp">
+<!--l. 419--><p class="indent" >   <div class="tabbing">
+$$(%@%@q) <span class="math"> ≡</span>
+   <br>                       (APPEND (LIST &#x2019;APPEND) Q)<br>
+  <span class="math"> ≡</span><span class="math">≡</span> (CONS &#x2019;APPEND Q) <span class="math"> ⇒</span> (APPEND R S) <span class="math"> ⇒</span> (3 5 4 6)<br>
+<!--l. 423--><p class="noindent" ></div>
+<!--l. 423--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2843000C" id="x193-2843000C"></a></span>
+<!--l. 423--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2844000C" id="x193-2844000C"></a></span>
+</div>
+<!--l. 424--><p class="indent" >   In each case I have shown both the unsimpliﬁed and simpliﬁed forms and then
+traced the intermediate evaluations of the simpliﬁed form. (Actually, the
+unsimpliﬁed forms do contain one simpliﬁcation without which they would be
+unreadable: the <tt><a 
+href="symbols.html#x196-2871644r644">nil</a></tt> that terminates each list has been systematically suppressed,
+so that one sees <tt>(append x y)</tt> rather than <tt>(append x y &#x2019;nil)</tt>.)
+<!--l. 432--><p class="indent" >   The following driver function is useful for tracing the behavior of nested
+backquote syntax through multiple evaluations. The argument <tt>ls</tt> is a list of
+strings; each string will be processed by the reader (<tt><a 
+href="symbols.html#x196-2871762r762">read-from-string</a></tt>). The
+argument <tt>n</tt> is the number of evaluations desired. <div class="lisp"><div class="tabbing">
+                                                                          
+
+                                                                          
+(defun try (ls &#x0026;optional (n 0))
+   <br>                        (dolist (x ls)<br>                          (format t &#x0022;~&#x0026;~A&#x0022;<br>
+            (substitute #\‘ #\$ (substitute #\, #\% x)))<br>
+    (do ((form (macroexpand (read-from-string x)) (eval form))<br>
+         (str &#x0022; = &#x0022; &#x0022;~% =&#x003E; &#x0022;)<br>                            (j 0 (+ j 1)))<br>
+        ((&#x003E;= j n)<br>                                        (format t str)<br>
+         (write form :pretty t))<br>                            (format t str)<br>
+      (write form :pretty t)))<br>                           (format t &#x0022;~&#x0026;&#x0022;))<br>
+<!--l. 451--><p class="noindent" ></div>
+<!--l. 451--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2845000C" id="x193-2845000C"></a></span>
+<!--l. 451--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2846000C" id="x193-2846000C"></a></span>
+</div>
+<!--l. 452--><p class="indent" >   This driver routine makes it easdy to explore a large number of cases
+systematically. Here is a list of examples that illustrate not only the diﬀerences
+between <tt>,</tt> and <tt>,@</tt> but also their interaction with <tt>&#x2019;</tt>. <div class="lisp"><div class="tabbing">
+(setq fools2 &#x2019;(
+   <br>                          &#x0022;$$(foo %%p)&#x0022;<br>                          &#x0022;$$(foo %%@q)&#x0022;<br>
+&#x0022;$$(foo %&#x2019;%r)&#x0022;<br>                                          &#x0022;$$(foo %&#x2019;%@s)&#x0022;<br>
+&#x0022;$$(foo %@%p)&#x0022;<br>                                       &#x0022;$$(foo %@%@q)&#x0022;<br>
+&#x0022;$$(foo %@&#x2019;%r)&#x0022;<br>                                       &#x0022;$$(foo %@&#x2019;%@s)&#x0022;<br>
+))<br>
+<!--l. 467--><p class="noindent" ></div>
+<!--l. 467--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2847000C" id="x193-2847000C"></a></span>
+<!--l. 467--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2848000C" id="x193-2848000C"></a></span>
+</div>
+<!--l. 469--><p class="indent" >   Consider this set of sample values: <div class="lisp"><div class="tabbing">
+                                                                          
+
+                                                                          
+(setq p &#x2019;(union x y))
+   <br>           (setq q &#x2019;((union x y) (list &#x2019;sqrt 9)))<br>           (setq r &#x2019;(union x y))<br>
+(setq s &#x2019;((union x y)))<br>
+<!--l. 475--><p class="noindent" ></div>
+<!--l. 475--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2849000C" id="x193-2849000C"></a></span>
+<!--l. 475--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2850000C" id="x193-2850000C"></a></span>
+</div>
+<!--l. 477--><p class="indent" >   Here is what happened when I executed <tt>(try fools2 2)</tt> with a non-<tt><a 
+href="symbols.html#x196-2871644r644">nil</a></tt> value
+for the variable <tt>*bq-simplify*</tt> (to see simpliﬁed forms). I have interpolated some
+remarks. <div class="lisp"><div class="tabbing">
+‘‘(foo „p) = (LIST &#x2019;LIST ”FOO P)
+   <br>                                                    =&#x003E; (LIST &#x2019;FOO (UNION X Y))<br>
+=&#x003E; (FOO (A B C))<br>
+<!--l. 484--><p class="noindent" ></div>
+<!--l. 484--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2851000C" id="x193-2851000C"></a></span>
+<!--l. 484--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2852000C" id="x193-2852000C"></a></span>
+</div>
+<!--l. 485--><p class="indent" >   So <tt>„p</tt> means “the value of <tt>p</tt> is a form; use the value of the value of <tt>p</tt>.”
+<div class="lisp"><div class="tabbing">
+‘‘(foo „@q) = (LIST* &#x2019;LIST ”FOO Q)
+   <br>                             =&#x003E; (LIST &#x2019;FOO (UNION X Y) (LIST &#x2019;SQRT 9))<br>
+=&#x003E; (FOO (A B C) (SQRT 9))<br>
+<!--l. 491--><p class="noindent" ></div>
+                                                                          
+
+                                                                          
+<!--l. 491--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2853000C" id="x193-2853000C"></a></span>
+<!--l. 491--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2854000C" id="x193-2854000C"></a></span>
+</div>
+<!--l. 492--><p class="indent" >   So <tt>„@q</tt> means “the value of <tt>q</tt> is a list of forms; splice the list of values of the
+elements of the value of <tt>q</tt>.” <div class="lisp"><div class="tabbing">
+‘‘(foo ,&#x2019;,r) = (LIST &#x2019;LIST ”FOO (LIST &#x2019;QUOTE R))
+   <br>                                                   =&#x003E; (LIST &#x2019;FOO &#x2019;(UNION X Y))<br>
+=&#x003E; (FOO (UNION X Y))<br>
+<!--l. 498--><p class="noindent" ></div>
+<!--l. 498--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2855000C" id="x193-2855000C"></a></span>
+<!--l. 498--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2856000C" id="x193-2856000C"></a></span>
+</div>
+<!--l. 499--><p class="indent" >   So <tt>,&#x2019;,r</tt> means “the value of <tt>r</tt> may be any object; use the value of <tt>r</tt> that is
+available at the time of ﬁrst evaluation, that is, when the outer backquote is
+evaluated.” (To use the value of <tt>r</tt> that is available at the time of second
+evaluation, that is, when the inner backquote is evaluated, just use <tt>,r</tt>.)
+<div class="lisp"><div class="tabbing">
+‘‘(foo ,&#x2019;,@s) = (LIST &#x2019;LIST ”FOO (CONS &#x2019;QUOTE S))
+   <br>                                                   =&#x003E; (LIST &#x2019;FOO &#x2019;(UNION X Y))<br>
+=&#x003E; (FOO (UNION X Y))<br>
+<!--l. 510--><p class="noindent" ></div>
+<!--l. 510--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2857000C" id="x193-2857000C"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 510--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2858000C" id="x193-2858000C"></a></span>
+</div>
+<!--l. 511--><p class="indent" >   So <tt>,&#x2019;,@s</tt> means “the value of <tt>s</tt> must be a singleton list of any object; use the
+element of the value of <tt>s</tt> that is available at the time of ﬁrst evaluation, that is,
+when the outer backquote is evaluated.” Note that <tt>s</tt> must be a singleton list
+because it will be spliced into a form <tt>(quote )</tt>, and the <tt><a 
+href="symbols.html#x196-2871747r747">quote</a></tt> special
+operator requires exactly one subform to appear; this is generally true of
+the sequence <tt>&#x2019;,@</tt>. (To use the value of <tt>s</tt> that is available at the time of
+second evaluation, that is, when the inner backquote is evaluated, just use
+<tt>,@s</tt>,in which case the list <tt>s</tt> is not restricted to be singleton, or <tt>,(car s)</tt>.)
+<div class="lisp"><div class="tabbing">
+‘‘(foo ,@,p) = (LIST &#x2019;CONS ”FOO P)
+   <br>                                                  =&#x003E; (CONS &#x2019;FOO (UNION X Y))<br>
+=&#x003E; (FOO A B C)<br>
+<!--l. 526--><p class="noindent" ></div>
+<!--l. 526--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2859000C" id="x193-2859000C"></a></span>
+<!--l. 526--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2860000C" id="x193-2860000C"></a></span>
+</div>
+<!--l. 527--><p class="indent" >   So <tt>,@,p</tt> means “the value of <tt>p</tt> is a form; splice in the value of the value of <tt>p</tt>.”
+<div class="lisp"><div class="tabbing">
+‘‘(foo ,@,@q) = (LIST &#x2019;CONS ”FOO (CONS &#x2019;APPEND Q))
+   <br>           =&#x003E; (CONS &#x2019;FOO (APPEND (UNION X Y) (LIST &#x2019;SQRT 9)))<br>
+=&#x003E; (FOO A B C SQRT 9)<br>
+<!--l. 533--><p class="noindent" ></div>
+<!--l. 533--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2861000C" id="x193-2861000C"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 533--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2862000C" id="x193-2862000C"></a></span>
+</div>
+<!--l. 534--><p class="indent" >   So <tt>,@,@q</tt> means “the value of <tt>q</tt> is a list of forms; splice each of the
+values of the elements of the value of <tt>q</tt>, so that many splicings occur.”
+<div class="lisp"><div class="tabbing">
+‘‘(foo ,@&#x2019;,r) = (LIST &#x2019;CONS ”FOO (LIST &#x2019;QUOTE R))
+   <br>                                                 =&#x003E; (CONS &#x2019;FOO &#x2019;(UNION X Y))<br>
+=&#x003E; (FOO UNION X Y)<br>
+<!--l. 541--><p class="noindent" ></div>
+<!--l. 541--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2863000C" id="x193-2863000C"></a></span>
+<!--l. 541--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2864000C" id="x193-2864000C"></a></span>
+</div>
+<!--l. 542--><p class="indent" >   So <tt>,@&#x2019;,r</tt> means “the value of <tt>r</tt> must be a list; splice in the value of <tt>r</tt> that is
+available at the time of ﬁrst evaluation, that is, when the outer backquote is
+evaluated.” (To splice the value of <tt>r</tt> that is available at the time of second
+evaluation, that is, when the inner backquote is evaluated, just use <tt>,@r</tt>.)
+<div class="lisp"><div class="tabbing">
+‘‘(foo ,@&#x2019;,@s) = (LIST &#x2019;CONS ”FOO (CONS &#x2019;QUOTE S))
+   <br>                                                 =&#x003E; (CONS &#x2019;FOO &#x2019;(UNION X Y))<br>
+=&#x003E; (FOO UNION X Y)<br>
+<!--l. 553--><p class="noindent" ></div>
+<!--l. 553--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2865000C" id="x193-2865000C"></a></span>
+                                                                          
+
+                                                                          
+<!--l. 553--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2866000C" id="x193-2866000C"></a></span>
+</div>
+<!--l. 554--><p class="indent" >   So <tt>,@&#x2019;,@s</tt> means “the value of <tt>s</tt> must be a singleton list whose element is a
+list; splice in the list that is the element of the value of <tt>s</tt> that is available at the
+time of ﬁrst evaluation, that is, when the outer backquote is evaluated.”
+(To splice the element of the value of <tt>s</tt> that is available at the time of
+second evaluation, that is, when the inner backquote is evaluated, just use
+<tt>,@(car s)</tt>.)
+<!--l. 563--><p class="indent" >   I leave it to the reader to explore the possibilities of triply nested backquotes.
+<div class="lisp"><div class="tabbing">
+(setq fools3 &#x2019;(
+   <br>                                      &#x0022;$$$(foo %%%p)&#x0022;     &#x0022;$$$(foo %%%@q)&#x0022;<br>
+&#x0022;$$$(foo %%&#x2019;%r)&#x0022;    &#x0022;$$$(foo %%&#x2019;%@s)&#x0022;<br>&#x0022;$$$(foo %%@%p)&#x0022;    &#x0022;$$$(foo %%@%@q)&#x0022;<br>
+&#x0022;$$$(foo %%@&#x2019;%r)&#x0022;   &#x0022;$$$(foo %%@&#x2019;%@s)&#x0022;<br>&#x0022;$$$(foo %&#x2019;%%p)&#x0022;    &#x0022;$$$(foo %&#x2019;%%@q)&#x0022;<br>
+&#x0022;$$$(foo %&#x2019;%&#x2019;%r)&#x0022;   &#x0022;$$$(foo %&#x2019;%&#x2019;%@s)&#x0022;<br>&#x0022;$$$(foo %&#x2019;%@%p)&#x0022;   &#x0022;$$$(foo %&#x2019;%@%@q)&#x0022;<br>
+&#x0022;$$$(foo %&#x2019;%@&#x2019;%r)&#x0022;  &#x0022;$$$(foo %&#x2019;%@&#x2019;%@s)&#x0022;<br>&#x0022;$$$(foo %@%%p)&#x0022;    &#x0022;$$$(foo %@%%@q)&#x0022;<br>
+&#x0022;$$$(foo %@%&#x2019;%r)&#x0022;   &#x0022;$$$(foo %@%&#x2019;%@s)&#x0022;<br>&#x0022;$$$(foo %@%@%p)&#x0022;   &#x0022;$$$(foo %@%@%@q)&#x0022;<br>
+&#x0022;$$$(foo %@%@&#x2019;%r)&#x0022;  &#x0022;$$$(foo %@%@&#x2019;%@s)&#x0022;<br>
+&#x0022;$$$(foo %@&#x2019;%%p)&#x0022;   &#x0022;$$$(foo %@&#x2019;%%@q)&#x0022;<br>
+&#x0022;$$$(foo %@&#x2019;%&#x2019;%r)&#x0022;  &#x0022;$$$(foo %@&#x2019;%&#x2019;%@s)&#x0022;<br>&#x0022;$$$(foo %@&#x2019;%@%p)&#x0022;  &#x0022;$$$(foo %@&#x2019;%@%@q)&#x0022;<br>
+&#x0022;$$$(foo %@&#x2019;%@&#x2019;%r)&#x0022; &#x0022;$$$(foo %@&#x2019;%@&#x2019;%@s)&#x0022;<br>                          ))<br>
+<!--l. 583--><p class="noindent" ></div>
+<!--l. 583--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2867000C" id="x193-2867000C"></a></span>
+<!--l. 583--><p class="noindent" ><span class="paragraphHead"><a 
+href="#x193-2868000C" id="x193-2868000C"></a></span>
+</div>
+<!--l. 584--><p class="indent" >   It is a pleasant exercise to construct values for <tt>p</tt>, <tt>q</tt>, <tt>r</tt>, and <tt>s</tt> that will allow
+execution of <tt>(try fools3 3)</tt> without error.
+</div>
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+                                                                          
+
+                                                                          
+<!--l. 6--><p class="indent" >   <div id="bottomlinks"><tt>&#x003C;</tt><a 
+href="bib.html" >Далее</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse157.html" >Назад</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clmse157.html#tailclmse157.html" >Назад-и-вниз</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="backq.html" >В-начало</a><tt>&#x003E;</tt><tt>&#x003C;</tt><a 
+href="clm.html#backq.html" >Наверх</a><tt>&#x003E;</tt></div><a 
+ id="tailbackq.html"></a>   </div> </div> 
+</body></html> 

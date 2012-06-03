@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>16 Хеш-таблицы</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:04:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Главная</a>&gt; &lt;<a href="symbols.html">Символы</a>&gt; <br />&#x003C;<a 
+href="clmse89.html" >Далее</a>&#x003E;&#x003C;<a 
+href="clmse88.html" >Назад</a>&#x003E;&#x003C;<a 
+href="clmse88.html#tailclmse88.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
+href="#tailhash.html">В-конец</a>&#x003E;&#x003C;<a 
+href="clm.html#hash.html" >Наверх</a>&#x003E;</div><h2 class="chapterHead"><span class="titlemark">Глава 16</span><br /><a 
+href="clm.html#QQ2-109-179" id="x109-14900016">Хеш-таблицы</a></h2><div class="chapterTOCS">
+    <span class="sectionToc" >16.1 <a 
+href="clmse89.html#x110-15000016.1">Функции для хеш-таблиц</a></span>
+<br />    <span class="sectionToc" >16.2 <a 
+href="clmse90.html#x111-15100016.2">Функция хеширования</a></span>
+   </div>
+<!--l. 374--><p class="indent" >   Хеш-таблица является Lisp&#x2019;овыми объектом, который может быстро
+отображать заданный Lisp&#x2019;овый объект в другой Lisp&#x2019;овый объект. <em>Wikipedia
+более понятно излагает: это структура данных, реализующая интерфейс
+ассоциативного массива, а именно, она позволяет хранить пары (ключ,
+значение) и выполнять три операции: операцию добавления новой
+пары, операцию поиска и операцию удаления пары по ключу.</em> Каждая
+хеш-таблица содержит множество <em>элементов</em>, каждый из которых содержит
+<em>значение</em> ассоциированное с <em>ключом</em>. Базовые функции взаимодействия с
+хеш-таблицей могут создавать элементы (пары ключ-значение), удалять
+элементы и искать значения по заданному ключу. Поиск значения очень
+быстрый, даже при наличии большого количества элементов, потому что
+используется хеширование. Это самое важное преимущество хеш-таблиц
+перед списками свойств.
+<!--l. 387--><p class="indent" >   Хеш-таблица может связывать только одно <em>значение</em> с заданным <em>ключом</em>.
+Если вы попробуете добавить второе <em>значение</em>, оно заменит предыдущее. К
+тому же, добавление значения в хеш-таблицу является деструктивной
+операцией, в этом случае хеш-таблица модифицируется. Ассоциативные
+списки же, наоборот, могут расширяться недеструктивно.
+<!--l. 393--><p class="indent" >   Хеш-таблицы существуют в трёх видах, различие между ними в том, как
+сравниваются ключи, с помощью <b><a 
+href="symbols.html#x188-375366r366">eq</a></b>, <b><a 
+href="symbols.html#x188-375367r367">eql</a></b> или <b><a 
+href="symbols.html#x188-375369r369">equal</a></b>. Другими словами,
+существуют хеш таблицы с ключами, которые используют Lisp&#x2019;овые <em>объекты</em>
+(<b><a 
+href="symbols.html#x188-375366r366">eq</a></b> или <b><a 
+href="symbols.html#x188-375367r367">eql</a></b>) и которые используют <em>древовидные структуры</em> (<b><a 
+href="symbols.html#x188-375369r369">equal</a></b>).
+FIXME
+<!--l. 399--><p class="indent" >   Хеш-таблицы создаются функцией <b><a 
+href="symbols.html#x188-375582r582">make-hash-table</a></b>, которая принимает
+различные параметры, включая тип хеш-таблицы (по-умолчанию тип
+<b><a 
+href="symbols.html#x188-375367r367">eql</a></b>). Для поиска значения по ключу используйте <b><a 
+href="symbols.html#x188-375462r462">gethash</a></b>. Новые
+элементы могут быть добавлены с помощью <b><a 
+href="symbols.html#x188-375462r462">gethash</a></b> внутри <b><a 
+href="symbols.html#x188-375833r833">setf</a></b>.
+Для удаления элементов используйте <b><a 
+href="symbols.html#x188-375786r786">remhash</a></b>. Вот простой пример.
+<div class="lisp"><tt><div class="tabbing">
+(setq a (make-hash-table))
+                                                                          
+
+                                                                          
+   <br>        (setf (gethash &#x2019;color a) &#x2019;brown)<br>        (setf (gethash &#x2019;name a) &#x2019;fred)<br>
+(gethash &#x2019;color a) <span class="math"> ⇒</span> brown<br>                    (gethash &#x2019;name a) <span class="math"> ⇒</span> fred<br>
+(gethash &#x2019;pointy a) <span class="math"> ⇒</span> <b><a 
+href="symbols.html#x188-375658r658">nil</a></b><br>
+<!--l. 411--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 413--><p class="indent" >   В этом примере, символы <b>color</b> и <b>name</b> используются в качестве ключей,
+а символы <b>brown</b> и <b>fred</b> в качестве ассоциированных значений. Хеш-таблица
+содержит две пары, в одной ключ <b>color</b> связан с <b>brown</b>, а в другой <b>name</b> с
+<b>fred</b>.
+<!--l. 418--><p class="indent" >   Ключи необязательно должны быть символами. Они могут быть любыми
+Lisp&#x2019;овыми объектами. Значения также могут быть любыми Lisp&#x2019;овыми
+объектами.
+<div class="newer">
+<!--l. 422--><p class="indent" >   There is a discrepancy between the preceding description of the size of a hash
+table and the description of the <b>:size</b> argument in the speciﬁcation below of
+<b><a 
+href="symbols.html#x188-375582r582">make-hash-table</a></b>.
+<!--l. 427--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx109-149001"></a>to regard the latter description as deﬁnitive: the
+<b>:size</b> argument is approximately the number of entries that can be inserted
+without having to enlarge the hash table. This deﬁnition is certainly more
+convenient for the user.
+</div>
+
+
+                                                                          
+
+                                                                          
+   <div id="bottomlinks">&#x003C;<a 
+href="clmse89.html" >Далее</a>&#x003E;&#x003C;<a 
+href="clmse88.html" >Назад</a>&#x003E;&#x003C;<a 
+href="clmse88.html#tailclmse88.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
+href="hash.html" >В-начало</a>&#x003E;&#x003C;<a 
+href="clm.html#hash.html" >Наверх</a>&#x003E;<br> &lt;<a href="../index.html">Главная</a>&gt; &lt;<a href="symbols.html">Символы</a>&gt;</div><a 
+ id="tailhash.html"></a>
+ 
+</body></html> 

@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
+  "http://www.w3.org/TR/html4/loose.dtd">  
+<html > 
+<head><title>Compiler Macros</title> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
+<meta name="src" content="clm.tex"> 
+<meta name="date" content="2012-05-16 18:03:00"> 
+<link rel="stylesheet" type="text/css" href="clm.css"> 
+<link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
+>
+   <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
+href="clmse50.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse48.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse48.html#tailclmse48.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="#tailclmse49.html">Tail</a>&#x003E;&#x003C;<a 
+href="macro.html#clmse49.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">8.4   </span> <a 
+href="clm.html#QQ2-62-108" id="x62-990008.4">Compiler Macros</a></h3>
+<!--l. 621--><p class="noindent" >X3J13 voted in June 1989 <a 
+ id="dx62-99001"></a>to add a facility for deﬁning <em>compiler macros</em> that take
+eﬀect only when compiling code, not when interpreting it.
+<!--l. 625--><p class="indent" >   The purpose of this facility is to permit selective source-code transformations
+only when the compiler is processing the code. When the compiler is about to
+compile a non-atomic form, it ﬁrst calls <b>compiler-macroexpand-1</b> repeatedly
+until there is no more expansion (there might not be any to begin with). Then it
+continues its remaining processing, which may include calling <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b>
+and so on.
+<!--l. 632--><p class="indent" >   The compiler is required to expand compiler macros. It is unspeciﬁed whether
+the interpreter does so. The intention is that only the compiler will do so, but the
+range of possible “compiled-only” implementation strategies precludes any ﬁrm
+speciﬁcation.
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 639--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>deﬁne-compiler-macro</b> <a 
+ id="dx62-99002"></a>name lambda-list
+   <br>                                               {declaration | doc-string}* {form}*<br>
+<!--l. 641--><p class="noindent" ></div>
+</div>
+<!--l. 642--><p class="indent" >   This is just like <b><a 
+href="symbols.html#x188-375308r308">defmacro</a></b> except the deﬁnition is not stored in the symbol
+function cell of <em>name</em> and is not seen by <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b>. It is, however, seen by
+<b>compiler-macroexpand-1</b>. As with <b><a 
+href="symbols.html#x188-375308r308">defmacro</a></b>, the <em>lambda-list</em> may include
+<b>&#x0026;environment</b> and <b>&#x0026;whole</b> and may include destructuring. The deﬁnition is
+global. (There is no provision for deﬁning local compiler macros in the way that
+<b><a 
+href="symbols.html#x188-375575r575">macrolet</a></b> deﬁnes local macros.)
+<!--l. 650--><p class="indent" >   A top-level call to <b><a 
+href="symbols.html#x188-375301r301">deﬁne-compiler-macro</a></b> in a ﬁle being compiled by
+<b><a 
+href="symbols.html#x188-375249r249">compile-ﬁle</a></b> has an eﬀect on the compilation environment similar to
+that of a call to <b><a 
+href="symbols.html#x188-375308r308">defmacro</a></b>, except it is noticed as a compiler macro (see
+section <a 
+href="clmse121.html#x150-21500024.1">24.1<!--tex4ht:ref: COMPILER-SECTION --></a>).
+<!--l. 655--><p class="indent" >   Note that compiler macro deﬁnitions do not appear in information returned by
+                                                                          
+
+                                                                          
+<b><a 
+href="symbols.html#x188-375435r435">function-information</a></b>; they are global, and their interaction with other lexical
+and global deﬁnitions can be reconstructed by <b><a 
+href="symbols.html#x188-375252r252">compiler-macro-function</a></b>. It is
+up to code-walking programs to decide whether to invoke compiler macro
+expansion.
+<div class="newer">
+<!--l. 663--><p class="indent" >   X3J13 voted in March 1988 <a 
+ id="dx62-99003"></a>to specify that the body of the expander function
+deﬁned by <b><a 
+href="symbols.html#x188-375308r308">defmacro</a></b> is implicitly enclosed in a <b><a 
+href="symbols.html#x188-375136r136">block</a></b> construct whose name is
+the same as the <em>name</em> of the deﬁned macro; presumably this applies also to
+<b><a 
+href="symbols.html#x188-375301r301">deﬁne-compiler-macro</a></b>. Therefore <b><a 
+href="symbols.html#x188-375805r805">return-from</a></b> may be used to exit from the
+function.
+</div>
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<em>
+<!--l. 674--><p class="noindent" >[Function]</em><a 
+ id="dx62-99004"></a> <b>compiler-macro-function</b> <i>name</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>env</i>
+</div>
+<!--l. 676--><p class="indent" >   The <em>name</em> must be a symbol. If it has been deﬁned as a compiler macro, then
+<b><a 
+href="symbols.html#x188-375252r252">compiler-macro-function</a></b> returns the macro expansion function; otherwise it
+returns <b><a 
+href="symbols.html#x188-375658r658">nil</a></b>. The lexical environment <em>env</em> may override any global deﬁnition for
+<em>name</em> by deﬁning a local function or local macro (such as by <b><a 
+href="symbols.html#x188-375413r413">ﬂet</a></b>, <b><a 
+href="symbols.html#x188-375503r503">labels</a></b>, or
+<b><a 
+href="symbols.html#x188-375575r575">macrolet</a></b>) in which case <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> is returned.
+<b>
+<!--l. 684--><p class="indent" >   <a 
+href="symbols.html#x188-375832r832">setf</a></b> may be used with <b><a 
+href="symbols.html#x188-375252r252">compiler-macro-function</a></b> to install a function as the
+expansion function for the compiler macro <em>name</em>, in the same manner as for
+<b><a 
+href="symbols.html#x188-375572r572">macro-function</a></b>. Storing the value <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> removes any existing compiler macro
+deﬁnition. As with <b><a 
+href="symbols.html#x188-375572r572">macro-function</a></b>, a non-<b><a 
+href="symbols.html#x188-375658r658">nil</a></b> stored value must be a function of
+two arguments, the entire macro call and the environment. The second argument
+to <b><a 
+href="symbols.html#x188-375252r252">compiler-macro-function</a></b> must be omitted when it is used with
+<b><a 
+href="symbols.html#x188-375832r832">setf</a></b>.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<em>
+                                                                          
+
+                                                                          
+<!--l. 694--><p class="noindent" >[Function]</em><a 
+ id="dx62-99005"></a> <b>compiler-macroexpand</b> <i>form</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>env</i><br />
+<em>
+[Function]</em><a 
+ id="dx62-99006"></a> <b>compiler-macroexpand-1</b> <i>form</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>env</i>
+</div>
+<!--l. 697--><p class="indent" >   These are just like <b><a 
+href="symbols.html#x188-375573r573">macroexpand</a></b> and <b><a 
+href="symbols.html#x188-375574r574">macroexpand-1</a></b> except that the
+expander function is obtained as if by a call to <b><a 
+href="symbols.html#x188-375252r252">compiler-macro-function</a></b>
+on the <em>car</em> of the <em>form</em> rather than by a call to <b><a 
+href="symbols.html#x188-375572r572">macro-function</a></b>.
+Note that <b><a 
+href="symbols.html#x188-375253r253">compiler-macroexpand</a></b> performs repeated expansion but
+<b>compiler-macroexpand-1</b> performs at most one expansion. Two values are
+returned, the expansion (or the original <em>form</em>) and a value that is true if any
+expansion occurred and <b><a 
+href="symbols.html#x188-375658r658">nil</a></b> otherwise.
+<!--l. 706--><p class="indent" >   There are three cases where no expansion happens:
+      <ul class="itemize1">
+      <li class="itemize">There is no compiler macro deﬁnition for the <em>car</em> of <em>form</em>.
+      </li>
+      <li class="itemize">There is such a deﬁnition but there is also a <b>notinline</b> declaration,
+      either globally or in the lexical environment <em>env</em>.
+      </li>
+      <li class="itemize">A global compiler macro deﬁnition is shadowed by a local function or
+      macro deﬁnition (such as by <b><a 
+href="symbols.html#x188-375413r413">ﬂet</a></b>, <b><a 
+href="symbols.html#x188-375503r503">labels</a></b>, or <b><a 
+href="symbols.html#x188-375575r575">macrolet</a></b>).</li></ul>
+<!--l. 715--><p class="noindent" >Note that if there is no expansion, the original <em>form</em> is returned as the ﬁrst value, and
+<b><a 
+href="symbols.html#x188-375658r658">nil</a></b> as the second value.
+<!--l. 718--><p class="indent" >   Any macro expansion performed by the function <b><a 
+href="symbols.html#x188-375253r253">compiler-macroexpand</a></b> or
+by the function <b>compiler-macroexpand-1</b> is carried out by calling the function
+that is the value of <b><a 
+href="symbols.html#x188-375025r25">*macroexpand-hook*</a></b>.
+<!--l. 722--><p class="indent" >   A compiler macro may decline to provide any expansion merely by returning
+the original form. This is useful when using the facility to put “compiler
+optimizers” on various function names. For example, here is a compiler macro that
+“optimizes” (one would hope) the zero-argument and one-argument cases of a
+function called <b>plus</b>: <div class="lisp"><tt><div class="tabbing">
+(deﬁne-compiler-macro plus (&#x0026;whole form &#x0026;rest args)
+                                                                          
+
+                                                                          
+   <br>                                                                      (case (length args)<br>
+    (0 0)<br>                                                   (1 (car args))<br>
+    (t form)))<br>
+<!--l. 734--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 737--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+href="clmse50.html" >Next</a>&#x003E;&#x003C;<a 
+href="clmse48.html" >Prev</a>&#x003E;&#x003C;<a 
+href="clmse48.html#tailclmse48.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="clmse49.html" >Front</a>&#x003E;&#x003C;<a 
+href="macro.html#clmse49.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+ id="tailclmse49.html"></a>  
+</body></html> 

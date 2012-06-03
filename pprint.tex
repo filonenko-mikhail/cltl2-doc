@@ -8,6 +8,7 @@
 \label{PPRINT}
 
 Author: Richard C. Waters
+
 \prefaceword
 \begin{new}
 X3J13 voted in January 1989
@@ -17,6 +18,7 @@ as a part of the forthcoming draft Common Lisp standard.
 This facility is the culmination of thirteen
 years of design, testing, revision, and use of this approach.
 \end{new}
+
 This chapter presents the bulk of the Common Lisp
 pretty printing specification, written by Richard C.~Waters.  I have
 edited it only very lightly
@@ -35,13 +37,13 @@ behavior.
 
 By providing direct access to the mechanisms within the pretty printer that
 make dynamic decisions about layout, the macros and functions
-\cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}, \cdf{pprint-newline}, and \cdf{pprint-indent} make
+\cdf{pprint-logical-block}, \cdf{pprint-newline}, and \cdf{pprint-indent} make
 it possible to specify pretty printing layout rules as a part of any
 function that produces output.  They also make it very easy for the
 function to support
 detection of circularity and sharing and abbreviation based on length and
 nesting depth.  Using the function
-\cd{set-\discretionary{}{}{}pprint-\discretionary{}{}{}dispatch}, one can associate a user-defined pretty
+\cdf{set-pprint-dispatch}, one can associate a user-defined pretty
 printing function with any type of object.  A small set of new \cdf{format}
 directives allows concise implementation of user-defined pretty-printing
 functions.
@@ -49,8 +51,6 @@ Together, these facilities
 enable users to redefine the way code is displayed and allow the full power
 of pretty printing to be applied to complex combinations of data
 structures.
-
-\penalty-10000 % required
 
 \beforenoterule
 \begin{implementation}
@@ -75,8 +75,8 @@ corresponding to these variables.
 *print-pprint-dispatch*
 
 When \cdf{*print-pretty*} is not \cdf{nil}, printing is controlled by the `pprint
-dispatch table' stored in the variable \cd{*print-pprint-dispatch*}.  The
-initial value of \cd{*print-pprint-dispatch*} is implementation-dependent and
+dispatch table' stored in the variable \cdf{*print-pprint-dispatch*}.  The
+initial value of \cdf{*print-pprint-dispatch*} is implementation-dependent and
 causes traditional pretty printing of Lisp code.  The last section of this
 chapter explains how the contents of this table can be changed.
 \end{defun}
@@ -88,15 +88,15 @@ A primary goal of pretty printing is to keep the output between a pair of
 margins.  The left margin is set at the column where the output begins.  If
 this cannot be determined, the left margin is set to zero.
 
-When \cd{*print-right-margin*} is not \cdf{nil}, it specifies the right
-margin to use when making layout decisions.  When \cd{*print-right-margin*}
+When \cdf{*print-right-margin*} is not \cdf{nil}, it specifies the right
+margin to use when making layout decisions.  When \cdf{*print-right-margin*}
 is \cdf{nil} (the initial value), the right margin is set at the maximum
 line length that can be displayed by the output stream without wraparound
 or truncation.  If this cannot be determined, the right margin is set to an
 implementation-dependent value.
 
 To allow for the possibility of variable-width fonts,
-\cd{*print-right-margin*} is in units of ems---the width of an
+\cdf{*print-right-margin*} is in units of ems---the width of an
 ``m'' in the font being used to display characters on the relevant output
 stream at the moment when the variables are consulted.
 \end{defun}
@@ -104,19 +104,19 @@ stream at the moment when the variables are consulted.
 \begin{defun}[Variable]
 *print-miser-width*
 
-If \cd{*print-miser-width*} is not \cdf{nil}, the pretty printer switches to a compact
+If \cdf{*print-miser-width*} is not \cdf{nil}, the pretty printer switches to a compact
 style of output (called miser style) whenever the width available for
-printing a substructure is less than or equal to \cd{*print-miser-width*} ems.
-The initial value of \cd{*print-miser-width*} is implementation-dependent.
+printing a substructure is less than or equal to \cdf{*print-miser-width*} ems.
+The initial value of \cdf{*print-miser-width*} is implementation-dependent.
 \end{defun}
 
 \begin{defun}[Variable]
 *print-lines*
 
 When given a value other than its initial value of \cdf{nil},
-\cd{*print-lines*} limits the number of output lines produced when
+\cdf{*print-lines*} limits the number of output lines produced when
 something is pretty printed.  If an attempt is made to go beyond
-\cd{*print-lines*} lines, ``\cd{~..}'' (a space and two periods)
+\cdf{*print-lines*} lines, ``\cd{~..}'' (a space and two periods)
 is printed at the end of the last
 line followed by all of the suffixes (closing delimiters) that are pending
 to be printed.
@@ -265,7 +265,7 @@ newline originates.
 \begin{defmac}
 pprint-logical-block (stream-symbol list
                       <{\!:prefix! | \!:per-line-prefix!} p | \!:suffix! s>)  
-                     {\,form}*
+                     {form}*
 
 This macro causes printing to be grouped into a logical block.  It returns
 \cdf{nil}.
@@ -313,13 +313,13 @@ for printing.  (See \cdf{pprint-exit-if-list-exhausted} and
 \cdf{pprint-pop}.)  If \emph{list} does not (at run time) evaluate to a list,
 it is printed using \cdf{write}.  (This makes it easier to write printing
 functions that are robust in the face of malformed arguments.)  If
-\cdf{*print-circle*} (and possibly also \cd{*print-shared*})
+\cdf{*print-circle*} (and possibly also \cdf{*print-shared*})
 is not \cdf{nil} and \emph{list} is a circular (or shared) reference
 to a cons, then an appropriate ``\cd{\#\emph{n}\#}'' marker is printed.
 (This makes it easy to write printing functions that provide full support
-for circularity and sharing abbreviation.)  If \cd{*print-level*} is not
+for circularity and sharing abbreviation.)  If \cdf{*print-level*} is not
 \cdf{nil} and the logical block is at a dynamic nesting depth of greater
-than \cd{*print-level*} in logical blocks, ``\cd{\#}'' is printed.  (This
+than \cdf{*print-level*} in logical blocks, ``\cd{\#}'' is printed.  (This
 makes it easy to write printing functions that provide full support for depth
 abbreviation.)
 
@@ -331,7 +331,7 @@ above can be turned off by supplying \cdf{nil} for the \emph{list} argument.)
 
 In addition to the \emph{list} argument of \cdf{pprint-logical-block}, the
 arguments of the standard printing functions such as \cdf{write},
-\cdf{print}, \cdf{pprint}, \cd{print1}, and \cdf{pprint}, as well as the
+\cdf{print}, \cdf{pprint}, \cdf{print1}, and \cdf{pprint}, as well as the
 arguments of the standard \cdf{format} directives such as \cd{{\Xtilde}A},
 \cd{{\Xtilde}S}, (and \cd{{\Xtilde}W}) are all checked (when necessary) for
 circularity and sharing.  However, such checking is not applied to the
@@ -381,37 +381,37 @@ is executed outside of the dynamic extent of this
 pprint-pop \!!
 
 \cdf{pprint-pop} pops elements one at a time off the \emph{list} argument of
-\cd{pprint-\discretionary{}{}{}logical-block}, taking care to obey \cd{*print-length*},
-\cdf{*print-circle*}, and \cd{*print-\discretionary{}{}{}shared*}.  An error message is issued if it is
+\cdf{pprint-logical-block}, taking care to obey \cdf{*print-length*},
+\cdf{*print-circle*}, and \cdf{*print-shared*}.  An error message is issued if it is
 used anywhere other than syntactically nested within a call on
 \cdf{pprint-logical-block}. It is undefined what happens if \cdf{pprint-pop} is executed
-outside of the dynamic extent of this call on \cd{pprint-\discretionary{}{}{}logical-block}.
+outside of the dynamic extent of this call on \cdf{pprint-logical-block}.
 
-Each time \cdf{pprint-pop} is called, it pops the next value off the {\it
-list} argument of \cdf{pprint-logical-block} and returns it.  However,
+Each time \cdf{pprint-pop} is called, it pops the next value off the \emph{list}
+argument of \cdf{pprint-logical-block} and returns it.  However, 
 before doing this, it performs three tests.  If the remaining list is not a
 list (neither a cons nor \cdf{nil}), ``\cd{.~}'' is printed
 followed by the remaining list.  (This makes it easier to write printing
 functions that are robust in the face of malformed arguments.)  If
-\cd{*print-length*} is \cdf{nil} and \cdf{pprint-pop} has already been called
-\cd{*print-length*} times within the immediately containing logical block,
+\cdf{*print-length*} is \cdf{nil} and \cdf{pprint-pop} has already been called
+\cdf{*print-length*} times within the immediately containing logical block,
 ``\cd{...}'' is printed.  (This makes it easy to write printing functions
 that properly handle \cd{*print-length*}.)  If \cdf{*print-circle*} (and possibly also
-\cd{*print-shared*}) is not \cdf{nil}, and the remaining list is a circular
+\cdf{*print-shared*}) is not \cdf{nil}, and the remaining list is a circular
 (or shared) reference, then ``\cd{.~}'' is printed followed by an appropriate
 ``\cd{\#\emph{n}\#}'' marker.  (This catches instances of cdr circularity and sharing
 in lists.)
 
 If any of the three preceding conditions occurs, the indicated output is
 printed on the pretty printing stream created by the immediately containing
-\cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}
+\cdf{pprint-logical-block}
 and the execution of the immediately containing
-\cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}
+\cdf{pprint-logical-block}
 is terminated except for the printing of the suffix.
 
 If \cdf{pprint-logical-block} is given a \emph{list} argument of
 \cdf{nil}---because it is not processing a list---\cdf{pprint-pop} can still
-be used to obtain support for \cd{*print-length*} (see the example function
+be used to obtain support for \cdf{*print-length*} (see the example function
 \cdf{pprint-vector} below).  In this situation, the first and third tests
 above are disabled and \cdf{pprint-pop} always returns \cdf{nil}.
 \end{defmac}
@@ -421,8 +421,9 @@ pprint-indent relative-to n &optional stream
 
 \cdf{pprint-indent} specifies the indentation to use in a logical block.
 \emph{Stream} (which defaults to \cdf{*standard-output*}) follows the
-standard conventions for stream arguments to printing functions.  The argument {\it
-n} specifies the indentation in ems.  If \emph{relative-to} is \cd{:block}, the
+standard conventions for stream arguments to printing functions.  The argument
+\emph{n} specifies the indentation in ems.  If \emph{relative-to} is
+\cd{:block}, the 
 indentation is set to the horizontal position of the first character in the
 block plus \emph{n} ems.  If \emph{relative-to} is \cd{:current}, the
 indentation is set to the current output position plus \emph{n} ems.
@@ -436,7 +437,7 @@ logical block to line up under the first character in the block.
 
 An error is signaled if a value other than \cd{:block} or \cd{:current} is
 supplied for \emph{relative-to}.  If \emph{stream} is a pretty printing
-stream created by \cd{pprint-\discretionary{}{}{}logical-\discretionary{}{}{}block}, \cdf{pprint-indent} sets the
+stream created by \cdf{pprint-logical-block}, \cdf{pprint-indent} sets the
 indentation in the innermost dynamically enclosing logical block.
 Otherwise, \cdf{pprint-indent} has no effect.  The value \cdf{nil} is always
 returned.
@@ -448,8 +449,8 @@ pprint-tab kind colnum colinc &optional stream
 \cdf{pprint-tab} specifies tabbing as performed by the standard \cdf{format}
 directive \cd{{\Xtilde}T}.  \emph{Stream} (which defaults to
 \cdf{*standard-output*}) follows the standard conventions for stream
-arguments to printing functions.  The arguments \emph{colnum} and {\it
-colinc} correspond to the two parameters to \cd{{\Xtilde}T} and are in
+arguments to printing functions.  The arguments \emph{colnum} and \emph{colinc}
+correspond to the two parameters to \cd{{\Xtilde}T} and are in 
 terms of ems.  The \emph{kind} argument specifies the style of tabbing.  It
 must be one of \cd{:line} (tab as by \cd{{\Xtilde}T}) \cd{:section} (tab as
 by \cd{{\Xtilde}T}, but measuring horizontal positions relative to the
@@ -537,7 +538,7 @@ up under the function name because of the call on
 ~~(* X Y))
 \end{lisp}
 
-If \cd{*print-miser-width*} were greater than or equal to 14,
+If \cdf{*print-miser-width*} were greater than or equal to 14,
 the output would have been entirely in miser mode.
 All indentation changes are
 ignored in miser mode and line breaks are inserted at miser-style
@@ -561,9 +562,9 @@ produces the output
 ;;;~~~(* X Y))
 \end{lisp}
 with a line width of 20 and \cdf{nil} as the value
-of the printer control variable \cd{*print-miser-width*}.
+of the printer control variable \cdf{*print-miser-width*}.
 
-(If \cd{*print-miser-width*} were not \cdf{nil} the output
+(If \cdf{*print-miser-width*} were not \cdf{nil} the output
 \begin{lisp}
 ;;; (DEFUN \\*
 ;;; ~PROD \\*
@@ -618,7 +619,7 @@ separated by spaces and linear-style conditional newlines.
 ~~~~~~~~~~(write (pprint-pop)))))
 \end{lisp}
 
-Suppose that the following is evaluated with \cd{*print-level*} having the value \cd{4} and
+Suppose that the following is evaluated with \cdf{*print-level*} having the value \cd{4} and
 \cdf{*print-circle*} having the value \cdf{t}.
 \begin{lisp}
 (pprint-let '\#1=(let (x (*print-length* (f (g 3)))  \\*
@@ -649,7 +650,7 @@ fill-style conditional newlines separating the binding pairs.
 ~~~~~\#1\#)
 \end{lisp}
 
-Suppose that the line length is further reduced to 22 and \cd{*print-length*} is
+Suppose that the line length is further reduced to 22 and \cdf{*print-length*} is
 set to 3. In this situation, line breaks are inserted after both the first
 and second binding pairs.  In addition, the second binding pair is itself
 broken across two lines.  Clause (b) of the description of fill-style
@@ -729,11 +730,11 @@ printer control variable (as by \cdf{write}).  In addition, \cd{{\Xtilde}W}
 interacts correctly with depth abbreviation by not resetting the depth
 counter to zero.  \cd{{\Xtilde}W} does not accept parameters.  If given the colon
 modifier, \cd{{\Xtilde}W} binds \cdf{*print-pretty*} to \cdf{t}.  If given the atsign
-modifier, \cd{{\Xtilde}W} binds \cd{*print-level*} and \cd{*print-length*} to 
+modifier, \cd{{\Xtilde}W} binds \cdf{*print-level*} and \cdf{*print-length*} to 
 \cdf{nil}.
 
 \cd{{\Xtilde}W} provides automatic support for circularity detection.  If
-\cdf{*print-circle*} (and possibly also \cd{*print-shared*}) is not \cdf{nil} and
+\cdf{*print-circle*} (and possibly also \cdf{*print-shared*}) is not \cdf{nil} and
 \cd{{\Xtilde}W} is applied to an argument that is a circular (or shared) reference,
 an appropriate ``\cd{\#\emph{n}\#}'' marker is inserted in the output
 instead of printing the argument.
@@ -741,13 +742,13 @@ instead of printing the argument.
 \item[\cd{{\Xtilde}{\Xunderscore}}]
 \emph{Conditional newline.} Without any modifiers,
 \cd{{\Xtilde}{\Xunderscore}} is equivalent to
-\cd{(pprint-\discretionary{}{}{}newline :linear)}.
+\cd{(pprint-newline :linear)}.
 The directive \cd{{\Xtilde}{\Xatsign}{\Xunderscore}} is
-equivalent to \cd{(pprint-\discretionary{}{}{}newline :miser)}.
+equivalent to \cd{(pprint-newline :miser)}.
 The directive \cd{{\Xtilde}:{\Xunderscore}}
-is equivalent to \cd{(pprint-\discretionary{}{}{}newline :fill)}.
+is equivalent to \cd{(pprint-newline :fill)}.
 The directive \cd{{\Xtilde}:{\Xatsign}{\Xunderscore}} is
-equivalent to \cd{(pprint-\discretionary{}{}{}newline :mandatory)}.
+equivalent to \cd{(pprint-newline :mandatory)}.
 
 
 \item[\cd{{\Xtilde}<\emph{str}{\Xtilde}:>}]
@@ -762,8 +763,8 @@ The portion of the \cdf{format} control string nested within the
 \cd{:suffix}, and body of the \cdf{pprint-logical-block}.
 
 The \cdf{format} string portion enclosed by \cd{{\Xtilde}<...{\Xtilde}:>} can be
-divided into segments \cd{{\Xtilde}<\emph{prefix\/}{\Xtilde};\emph{body\/}{\Xtilde};{\it
-suffix\/}{\Xtilde}:>} by \cd{{\Xtilde};} directives.  If the first section is
+divided into segments \cd{{\Xtilde}<\emph{prefix\/}{\Xtilde};\emph{body\/}{\Xtilde};
+\emph{suffix}{\Xtilde}:>} by \cd{{\Xtilde};} directives.  If the first section is
 terminated by \cd{\Xtilde\Xatsign;}, it specifies a per-line prefix rather than a
 simple prefix.  The prefix and suffix cannot contain \cdf{format} directives.  
 An error is signaled if either the prefix or suffix fails to be a constant string
@@ -937,7 +938,7 @@ instead.
 \section{Pretty Printing Dispatch Tables}
 
 When \cdf{*print-pretty*} is not \cdf{nil}, the pprint dispatch table in the variable
-\cd{*print-pprint-dispatch*} controls how objects are printed.  The information
+\cdf{*print-pprint-dispatch*} controls how objects are printed.  The information
 in this table takes precedence over all other mechanisms for specifying how
 to print objects.  In particular, it overrides user-defined \cdf{print-object}
 methods and print functions for structures.  However, if there is no
@@ -949,7 +950,7 @@ are type specifiers.  The values are functions and numerical priorities.
 Basic insertion and retrieval is done based on the keys with the equality
 of keys being tested by \cdf{equal}.  The function to use when pretty printing an
 object is chosen by finding the highest priority function in
-\cd{*print-pprint-dispatch*} that is associated with a type specifier that
+\cdf{*print-pprint-dispatch*} that is associated with a type specifier that
 matches the object.
 
 \begin{defun}[Function]
@@ -957,7 +958,7 @@ copy-pprint-dispatch &optional table
 
 A copy is made of \emph{table}, which defaults to the current pprint dispatch
 table.  If \emph{table} is \cdf{nil}, a copy is returned of the initial value of
-\cd{*print-pprint-dispatch*}.
+\cdf{*print-pprint-dispatch*}.
 \end{defun}
 
 \begin{defun}[Function]
@@ -975,9 +976,9 @@ specifiers match the object, a function is returned that prints object with
 As a second return value, \cdf{pprint-dispatch} returns a flag that is \cdf{t} if a
 matching type specifier was found in \emph{table} and \cdf{nil} if not.
 
-\emph{Table} (which defaults to \cd{*print-pprint-dispatch*}) must be a
+\emph{Table} (which defaults to \cdf{*print-pprint-dispatch*}) must be a
 pprint dispatch table.  \emph{Table} can be \cdf{nil}, in which case
-retrieval is done in the initial value of \cd{*print-pprint-dispatch*}.
+retrieval is done in the initial value of \cdf{*print-pprint-dispatch*}.
 
 When \cdf{*print-pretty*} is \cdf{t}, \cd{(write~object~:stream~s)} is equivalent to
 \cd{(funcall~(pprint-dispatch~object)~s~object)}.
@@ -999,7 +1000,7 @@ table: a function and a priority.  The \emph{function} must accept two
 arguments:  the stream to send output to and the object to be printed.
 The \emph{function} should pretty print the object on the stream.  The {\it
 function} can assume that object satisfies \emph{type}.  The \emph{function}
-should obey \cd{*print-readably*}.  Any values returned by the \emph{function}
+should obey \cdf{*print-readably*}.  Any values returned by the \emph{function}
 are ignored.
 
 The \emph{priority} (which defaults to 0) must be a non-complex number.
@@ -1007,7 +1008,7 @@ This number is used as a
 priority to resolve conflicts when an object matches more than one entry.  An error
 is signaled if priority fails to be a non-complex number.
 
-The \emph{table} (which defaults to the value of \cd{*print-pprint-dispatch*}) must be a pprint
+The \emph{table} (which defaults to the value of \cdf{*print-pprint-dispatch*}) must be a pprint
 dispatch table.  The specified entry is placed in this table.
 
 It is permissible for \emph{function} to be \cdf{nil}.  In this situation,
@@ -1024,15 +1025,15 @@ the type specifier \emph{cdr-type}.  The \emph{cdr-type} can be omitted, in whic
 it defaults to \cdf{t}.
 \end{defun}
 
-The initial value of \cd{*print-pprint-dispatch*} is implementation-dependent.
+The initial value of \cdf{*print-pprint-dispatch*} is implementation-dependent.
 However, the initial entries all use a special class of priorities that
 are less than every priority that can be
 specified using \cdf{set-pprint-dispatch}.  This guarantees that pretty printing
 functions specified by users will override everything in the initial value of
-\cd{*print-pprint-dispatch*}.
+\cdf{*print-pprint-dispatch*}.
 
 Consider the following examples.  The first form restores
-\cd{*print-\discretionary{}{}{}pprint-\discretionary{}{}{}dispatch*} to its initial value.
+\cdf{*print-pprint-dispatch*} to its initial value.
 The next two forms then specify a special way of pretty printing ratios.  Note that the more specific type
 specifier has to be associated with a higher priority.
 \begin{lisp}
@@ -1103,8 +1104,8 @@ user defined data structure.
 The pretty printing function for the structure \cdf{family} specifies how to
 adjust the layout of the output so that it can fit aesthetically into a
 variety of line widths.  In addition, it obeys the printer control
-variables \cd{*print-level*}, \cd{*print-length*}, \cd{*print-lines*},
-\cdf{*print-circle*}, \cd{*print-shared*}, and \cdf{*print-escape*}, and can tolerate
+variables \cdf{*print-level*}, \cdf{*print-length*}, \cdf{*print-lines*},
+\cdf{*print-circle*}, \cdf{*print-shared*}, and \cdf{*print-escape*}, and can tolerate
 several different kinds of malformity in the data structure.  The output below
 shows what is printed out with a right margin of 25, \cdf{*print-pretty*}
 \cdf{t}, \cdf{*print-escape*} \cdf{nil}, and a malformed \cdf{kids} list.

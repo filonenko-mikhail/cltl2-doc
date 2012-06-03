@@ -37,7 +37,7 @@ compiler before the first use of the macro.
 
 More generally, an implementation of Common Lisp has great latitude in deciding
 exactly when to expand macro calls within a program.  For example,
-it is acceptable for the \cdf{defun} special form to expand all macro
+it is acceptable for the \cdf{defun} special operator to expand all macro
 calls within its body at the time the \cdf{defun} form is executed
 and record the fully expanded body as the body of the function
 being defined.
@@ -63,10 +63,6 @@ The function \cdf{macro-function} determines whether a given symbol
 is the name of a macro.  The \cdf{defmacro} construct provides
 a convenient way to define new macros.
 
-\begin{newer}
-X3J13 voted in March 1988 \issue{MACRO-FUNCTION-ENVIRONMENT}
-to add an optional environment argument to \cdf{macro-function}.
-
 \begin{defun}[Function]
 macro-function symbol &optional env
 
@@ -78,15 +74,15 @@ then the expansion function
 (a function of two arguments, the macro-call form and an environment)
 is returned.
 If the symbol has no function definition, or has a definition
-as an ordinary function or as a special form but not as a macro, then
+as an ordinary function or as a special operator but not as a macro, then
 {\false} is returned.  The function \cdf{macroexpand} or \cdf{macroexpand-1}
 is the best way to invoke the expansion function.
 
 It is possible for \emph{both} \cdf{macro-function} and \cdf{special-operator-p}
 to be true of a symbol.  This is possible because an implementation is
-permitted to implement any macro also as a special form for speed.
+permitted to implement any macro also as a special operator for speed.
 On the other hand, the macro definition must be available
-for use by programs that understand only the standard special forms
+for use by programs that understand only the standard special operators
 listed in table~\ref{SPECIAL-FORM-TABLE}.
 
 \cdf{setf} may be used with \cdf{macro-function} to install
@@ -102,14 +98,13 @@ definition, whether as a macro or as a function, is lost.
 One cannot use \cdf{setf} to establish a local macro definition;
 it is an error to supply a second argument to \cdf{macro-function}
 when using it with \cdf{setf}.
-It is an error to attempt to redefine the name of a special form.
+It is an error to attempt to redefine the name of a special operator.
 
 See also \cdf{compiler-macro-function}.
 \end{defun}
-\end{newer}
 
 \begin{defmac}
-defmacro name lambda-list <{declaration}* | doc-string> {\,form}*
+defmacro name lambda-list <{declaration}* | doc-string> {form}*
 
 \cdf{defmacro} is a macro-defining macro that
 arranges to decompose the macro-call form in an elegant and useful way.
@@ -120,22 +115,16 @@ the \emph{form\/}s constitute the body of the expander function.
 The \cdf{defmacro} construct arranges to install this expander function,
 as the global macro definition of \emph{name}.
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}
-to clarify that, while defining forms normally appear at top level,
+While defining forms normally appear at top level,
 it is meaningful to place them in non-top-level contexts.
 Furthermore, \cdf{defmacro} should define the expander function
 within the enclosing lexical environment, not within the global
 environment.
-\end{newer}
 
-\begin{newer}
-X3J13 voted in March 1988 \issue{FLET-IMPLICIT-BLOCK}
-to specify that the body of the expander function defined
+The body of the expander function defined
 by \cdf{defmacro} is implicitly enclosed in a \cdf{block} construct
 whose name is the same as the \emph{name} of the defined macro.
 Therefore \cdf{return-from} may be used to exit from the function.
-\end{newer}
 
 The \emph{name} is returned
 as the value of the \cdf{defmacro} form.
@@ -156,9 +145,7 @@ present only if at least one \emph{form} is also specified, as it is
 otherwise taken to be a \emph{form}), then it is attached to the \emph{name}
 as a documentation string of type \cdf{function}; see \cdf{documentation}.
 
-\begin{new}
 These three markers are now allowed in other constructs as well.
-\end{new}
 \begin{indentdesc}{6pc}
 \item[\cd{\&body}]
 This is identical in function to \cd{\&rest}, but it informs certain
@@ -185,12 +172,6 @@ in the rare cases where a macro definition must explicitly expand any macros
 in a subform of the macro call before computing its own expansion.
 \end{indentdesc}
 See \cdf{lambda-list-keywords}.
-
-\begin{new}%CORR
-\emph{Notice of correction.}
-In the first edition, the symbol \cd{\&environment} at the
-left margin above was inadvertently omitted.
-\end{new}
 
 \begin{newer}
 X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
@@ -221,9 +202,9 @@ that lambda-list, even before an occurrence of \cd{\&whole}.
 \cdf{defmacro}, unlike any other Common Lisp construct that has a lambda-list
 as part of its syntax, provides an additional facility known as
 \emph{destructuring}.
-\begin{newer}
+
 See \cdf{destructuring-bind}, which provides the destructuring facility separately.
-\end{newer}
+
 Anywhere in the lambda-list where a parameter
 name may appear, and where ordinary lambda-list syntax (as described
 in section~\ref{LAMBDA-EXPRESSIONS-SECTION}) does not
@@ -613,15 +594,10 @@ The value of \cdf{*macroexpand-hook*} is used as the expansion
 interface hook by \cdf{macroexpand-1}.
 \end{defun}
 
-\begin{newer}
 \section{Destructuring}
 
-X3J13 voted in March 1989 \issue{DESTRUCTURING-BIND}
-to make the destructuring feature of \cdf{defmacro}
-available as a separate facility.
-
 \begin{defmac}
-destructuring-bind lambda-list expression {declaration}* {\,form}*
+destructuring-bind lambda-list expression {declaration}* {form}*
 
    This macro binds the variables specified in \emph{lambda-list} to the corresponding
    values in the tree structure resulting from evaluating the \emph{expression},
@@ -639,10 +615,7 @@ has the same format as inner levels of a \cdf{defmacro} lambda-list.
    If the result of evaluating the \emph{expression} does not match the 
    destructuring pattern, an error should be signaled.
 \end{defmac}
-\end{newer}
 
-
-\begin{newer}
 \section{Compiler Macros}
 
 X3J13 voted in June 1989 \issue{DEFINE-COMPILER-MACRO}
@@ -664,7 +637,7 @@ implementation strategies precludes any firm specification.
 
 \begin{defmac}
 define-compiler-macro name lambda-list
-                      {declaration | doc-string}* {\,form}*
+                      {declaration | doc-string}* {form}*
 
   This is just like \cdf{defmacro} except the definition is not stored in the
   symbol function cell of \emph{name} and is not seen by \cdf{macroexpand-1}.
@@ -760,10 +733,7 @@ a function called \cdf{plus}:
 ~~~~(t form)))
 \end{lisp}
 \end{defun}
-\end{newer}
 
-
-\begin{newer}
 \section{Environments}
 
 X3J13 voted in June 1989 \issue{SYNTACTIC-ENVIRONMENT-ACCESS} to add some facilities for obtaining information
@@ -909,7 +879,7 @@ function-information function &optional env
 
 \item[\cd{:macro}] The \emph{function} refers to a macro.
 
-\item[\cd{:special-form}] The \emph{function} refers to a special form.
+\item[\cd{:special-form}] The \emph{function} refers to a special operator.
 \end{indentdesc}
   Some function-names can refer to both a global macro and a global special
   form.  In such a case the macro takes precedence and \cd{:macro} is returned as
@@ -1032,7 +1002,7 @@ augment-environment env &key :variable :symbol-macro :function :macro :declare
  The argument is a list of symbol macro definitions, each of the form
                 \cd{(\emph{name} \emph{definition})}; that is, the argument is
                 in the same format as the
-                \emph{cadr} of a \cdf{symbol-macrolet} special form.  The new environment
+                \emph{cadr} of a \cdf{symbol-macrolet} special operator.  The new environment
                 will have local symbol-macro bindings of each symbol to the
                 corresponding expansion, so that \cdf{macroexpand} will be able to
                 expand them properly.  A type declaration in the \cd{:declare}
@@ -1050,7 +1020,7 @@ augment-environment env &key :variable :symbol-macro :function :macro :declare
         each of the form \cd{(\emph{name} \emph{definition})}.
         Note that the argument is \emph{not}
                 in the same format as the
-                \emph{cadr} of a \cdf{macrolet} special form.
+                \emph{cadr} of a \cdf{macrolet} special operator.
                 Each \emph{definition} must be a function of two
                 arguments (a form and an environment).  The new environment
                 will have local macro bindings of each name to the
@@ -1093,7 +1063,7 @@ augment-environment env &key :variable :symbol-macro :function :macro :declare
 \end{defun}
 
 \begin{defmac}
-define-declaration decl-name lambda-list {\,form}*
+define-declaration decl-name lambda-list {form}*
 
   This macro defines a handler for the named declaration.  It is the mechanism by which
   \cdf{augment-environment} is extended to support additional declaration
@@ -1174,8 +1144,7 @@ enclose lambda-expression &optional env
   lexically visible in \emph{env}, any \cdf{go} to a tag that is lexically visible in 
   \emph{env}, or any \cdf{return-from} mentioning a block name that is lexically 
   visible in \emph{env}.
-\end{defun}  
-\end{newer}
+\end{defun}
 
 %RUSSIAN
 \else
@@ -1272,7 +1241,7 @@ macro-function symbol &optional env
 \end{defun}
 
 \begin{defmac}
-defmacro name lambda-list <{declaration}* | doc-string> {\,form}*
+defmacro name lambda-list <{declaration}* | doc-string> {form}*
 
 \cdf{defmacro} является макросом определяющим макросы, которые преобразуют формы
 макровызовов.
@@ -1283,6 +1252,16 @@ defmacro name lambda-list <{declaration}* | doc-string> {\,form}*
 Конструкция \emph{defmacro} устанавливает функцию раскрытия, как глобальное
 определение макроса для символа \emph{name}.
 FIXME
+
+Форма обычно используется на верхнем уровне, но её также можно
+использовать на неверхнем уровне.
+Таким образом, \cdf{defmacro} должна определять функцию раскрытия макроса в
+некотором лексическом, а не глобальном окружении.
+
+Тело функции раскрытия, определяемое с помощью \cdf{defmacro}, неявно
+оборачивается в конструкцию \cdf{block}, имя которой совпадает с именем
+\cdf{name}, определяемого макроса.
+Таким образом для выхода из функции может использоваться \cdf{return-from}.
 
 Форма \cdf{defmacro} возвращает в качестве значение \emph{name}.
 
@@ -1304,7 +1283,6 @@ FIXME
 Следующие три дополнительных маркера доступны в определении лямбда-списка.
 \begin{indentdesc}{6pc}
 \item[\cd{\&body}]
-
 Данный маркер эквивалентен \cd{\&rest} маркеру, но дополнительно сообщает для
 функций вывода-форматирования и редактирования, что оставшаяся часть формы
 рассматривается как тело и должна быть правильно отформатирована.
@@ -1318,7 +1296,6 @@ FIXME
 лямбда-списке, перед другими параметрами или маркерами.
 
 \item[\cd{\&environment}]
-
 За данным маркером указывается одна переменная, которая будет связана с
 окружением, отображающим лексическое окружение, в котором произошёл
 макровызов. Это окружение может не быть полным лексическим окружением. Оно
@@ -1328,15 +1305,40 @@ FIXME
 редко, когда определение макроса должно явно раскрыть другие макросы в процессе
 своего раскрытия.
 \end{indentdesc}
-
 Смотрите \cdf{lambda-list-keywords}.
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+to specify that macro environment objects received with the \cd{\&environment}
+argument of a macro function
+have only dynamic extent.  The consequences are undefined if such objects are
+referred to outside the dynamic extent of that particular
+invocation of the macro function.
+This allows implementations to use somewhat more efficient techniques
+for representing environment objects. 
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{DEFMACRO-LAMBDA-LIST} to clarify the permitted
+uses of \cd{\&body}, \cd{\&whole}, and \cd{\&environment}:
+\begin{itemize}
+\item \cd{\&body} may appear at any level of a \cdf{defmacro} lambda-list.
+\item \cd{\&whole} may appear at any level of a \cdf{defmacro} lambda-list.
+At inner levels a \cd{\&whole} variable is bound to that part of the argument
+that matches the sub-lambda-list in which \cd{\&whole} appears.  No matter where
+\cd{\&whole} is used, other parameters or lambda-list keywords may follow it.
+\item \cd{\&environment} may occur only at the outermost level of a \cdf{defmacro}
+lambda-list, and it may occur at most once, but it may occur anywhere within
+that lambda-list, even before an occurrence of \cd{\&whole}.
+\end{itemize}
+\end{newer}
 
 \cdf{defmacro}, в отличие от любых других конструкций Common Lisp'а, имеющих
 лямбда-списки в своём синтаксисе, предоставляет дополнительную функциональность
 известную как \emph{деструктуризация}.
-\begin{newer}
+
 Смотрите \cdf{destructuring-bind}, которая отдельно предоставляет эту функциональность.
-\end{newer}
+
 В любом месте, где могло бы стоять имя параметра, и где по синтаксису не
 ожидается использование списка (как описано в
 разделе~\ref{LAMBDA-EXPRESSIONS-SECTION}), можно использовать ещё один
@@ -1496,10 +1498,8 @@ FIXME
 Все это приведёт к тому, что функция раскрытия получит следующие значения для её
 параметров:
 \begin{flushleft}
-\cf
 \begin{tabular}{@{}ll@{}}
-\textrm{Parameter}&\textrm{Value} \\
-\hlinesp
+\textrm{Параметр}&\textrm{Значение} \\
 mouth&m \\
 eye1&(car eyes) \\
 eye2&(cdr eyes) \\
@@ -1508,7 +1508,6 @@ length1&(count-scales f1) \\
 fin2&f2 \\
 length2&(count-scales f2) \\
 tail&my-favorite-tail \\
-\hline
 \end{tabular}
 \end{flushleft}
 Следующий макровызов ошибочный, так как аргумента для параметра \cd{length1} не
@@ -1551,10 +1550,9 @@ tail&my-favorite-tail \\
 \begin{flushleft}
 \cf
 \begin{tabular}{@{}ll@{}}
-\textrm{Parameter}&\textrm{Value} \\
+\textrm{Параметр}&\textrm{Значение} \\
 \hlinesp
 head&(m (car eyes) (cdr eyes)) \\
-\hline
 \end{tabular}
 \end{flushleft}
 
@@ -1635,6 +1633,65 @@ cons-ячейкой, у которой \emph{car} элемент являетс�
 следовательно просто запускает функцию раскрытия с двумя параметрами: формой
 \emph{form} и окружением \emph{env}.
 
+\begin{newer}
+X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to specify
+that the value of \cdf{*macroexpand-hook*} is first coerced to a
+function before being called as the expansion interface hook.
+Therefore its value may be a symbol, a lambda-expression, or any
+object of type \cdf{function}.
+\end{newer}
+
+\begin{newer}
+X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+to specify that macro environment objects received
+by a \cdf{*macroexpand-hook*} function
+have only dynamic extent.  The consequences are undefined if such objects are
+referred to outside the dynamic extent of that particular invocation of the hook
+function.  This allows implementations to use somewhat more efficient techniques
+for representing environment objects. 
+\end{newer}
+
+\begin{newer}
+X3J13 voted in June 1989 \issue{MACRO-CACHING} to clarify that, while
+\cdf{*macroexpand-hook*} may be useful for debugging purposes, despite
+the original design intent there is
+currently no correct portable way to use it for caching macro expansions.
+\begin{itemize}
+\item
+ Caching by displacement (performing a side effect on the
+ macro-call form) won't work because the same (\cdf{eq}) macro-call
+ form may appear in distinct lexical contexts.  In addition, the macro-call
+ form may be a read-only constant (see \cdf{quote} and also
+ section~\ref{COMPILER-SECTION}).
+\item
+ Caching by table lookup won't work because such a table would have to
+ be keyed by both the macro-call form and the environment,
+ but X3J13 voted in March 1989 \issue{MACRO-ENVIRONMENT-EXTENT}
+ to permit macro environments to have only dynamic extent.
+\item
+ Caching by storing macro-call forms and expansions within the
+ environment object itself would work, but there are no portable
+ primitives that would allow users to do this.
+\end{itemize}
+X3J13 also noted that, although there seems to be no correct portable way to use
+\cdf{*macroexpand-hook*} to cache macro expansions, there is no
+requirement that an implementation call the macro expansion
+function more than once for a given form and lexical environment.
+\end{newer}
+
+\begin{new}
+X3J13 voted in March 1989
+\issue{SYMBOL-MACROLET-SEMANTICS}
+to specify that \cdf{macroexpand-1} will also expand symbol macros
+defined by \cdf{symbol-macrolet}; therefore a \emph{form} may also be
+a macro call if it is a symbol.  The vote did not address the interaction
+of this feature with the \cdf{*macroexpand-hook*} function.  An obvious
+implementation choice is that the hook function is indeed called
+and given a special expansion function that, when applied to the
+\emph{form} (a symbol) and \emph{env}, will produce the expansion,
+just as for an ordinary macro; but this is only my suggestion.
+\end{new}
+
 Вычислитель раскрывает макровызовы, как если бы использовал
 \cdf{macroexpand-1}. Таким образом \cdf{eval} также использует
 \cdf{*macroexpand-hook*}.
@@ -1657,7 +1714,7 @@ cons-ячейкой, у которой \emph{car} элемент являетс�
 \section{Деструктуризация}
 
 \begin{defmac}
-destructuring-bind lambda-list expression {declaration}* {\,form}*
+destructuring-bind lambda-list expression {declaration}* {form}*
 
    Данный макрос связывает переменные указанные в \emph{лямбда-списке} с
    соответствующими значениями в древовидной структуре, являющейся результатом
@@ -1673,5 +1730,535 @@ destructuring-bind lambda-list expression {declaration}* {\,form}*
 Если результат выполнения \emph{выражения} не совпадает с шаблоном
 деструктуризации, то должна быть сигнализирована ошибка.
 \end{defmac}
+
+\section{Compiler Macros}
+
+X3J13 voted in June 1989 \issue{DEFINE-COMPILER-MACRO}
+to add a facility for defining \emph{compiler macros} that
+take effect only when compiling code, not when interpreting it.
+
+The purpose of this facility is to permit selective source-code
+transformations only when the compiler is processing the code.
+When the compiler is about to compile a non-atomic form, it first calls
+\cd{compiler-macroexpand-1} repeatedly until there is no more expansion
+(there might not be any to begin with).  Then it continues its
+remaining processing, which may include calling \cdf{macroexpand-1} and so on.
+
+The compiler is required to expand compiler macros.  It is unspecified
+whether the interpreter does so.  The intention is that only the
+compiler will do so, but the range of possible ``compiled-only''
+implementation strategies precludes any firm specification.
+
+
+\begin{defmac}
+define-compiler-macro name lambda-list
+                      {declaration | doc-string}* {form}*
+
+  This is just like \cdf{defmacro} except the definition is not stored in the
+  symbol function cell of \emph{name} and is not seen by \cdf{macroexpand-1}.
+  It is, however, seen by \cd{compiler-macroexpand-1}.  As with \cdf{defmacro}, the
+  \emph{lambda-list} may include \cd{\&environment} and \cd{\&whole}
+  and may include destructuring.  The definition is
+  global.  (There is no provision for defining local compiler
+  macros in the way that \cdf{macrolet} defines local macros.)
+
+  A top-level call to \cdf{define-compiler-macro} in a file being compiled by
+  \cdf{compile-file} has an effect on the compilation environment similar to
+  that of a call to \cdf{defmacro}, except it is noticed as a
+  compiler macro (see section~\ref{COMPILER-SECTION}).
+
+Note that compiler macro definitions do not appear in information returned by
+\cdf{function-information}; they are global, and their interaction
+with other lexical and global definitions can be reconstructed by
+\cdf{compiler-macro-function}.  It is up to code-walking programs to decide
+whether to invoke compiler macro expansion.
+
+
+\begin{newer}
+X3J13 voted in March 1988 \issue{FLET-IMPLICIT-BLOCK}
+to specify that the body of the expander function defined
+by \cdf{defmacro} is implicitly enclosed in a \cdf{block} construct
+whose name is the same as the \emph{name} of the defined macro;
+presumably this applies also to \cdf{define-compiler-macro}.
+Therefore \cdf{return-from} may be used to exit from the function.
+\end{newer}
+
+\end{defmac}
+
+\begin{defun}[Function]
+compiler-macro-function name &optional env
+
+  The \emph{name} must be a symbol.
+  If it has been defined as a compiler macro, then
+  \cdf{compiler-macro-function} returns the macro expansion
+  function; otherwise it returns \cdf{nil}.  The
+  lexical environment \emph{env} may override any global definition for \emph{name}
+  by defining a local function or local macro (such as by \cdf{flet}, \cdf{labels}, or
+  \cdf{macrolet}) in which case \cdf{nil} is returned.
+
+  \cdf{setf} may be used with \cdf{compiler-macro-function} to install a function as
+  the expansion function for the compiler macro \emph{name}, in the same manner as for
+  \cdf{macro-function}.  Storing the value \cdf{nil} removes any existing
+  compiler macro definition.  As with \cdf{macro-function}, a non-\cdf{nil} stored value
+  must be a function of two arguments, the entire macro call and 
+  the environment.  The second argument to \cdf{compiler-macro-function} must
+  be omitted when it is used with \cdf{setf}.
+\end{defun}
+
+\begin{defun}[Function]
+compiler-macroexpand form &optional env \\
+compiler-macroexpand-1 form &optional env
+
+  These are just like \cdf{macroexpand} and \cdf{macroexpand-1}
+  except that the expander function is obtained as if by a call to
+  \cdf{compiler-macro-function} on the \emph{car} of the \emph{form} rather than by a call to
+  \cdf{macro-function}.
+  Note that \cdf{compiler-macroexpand} performs repeated expansion
+  but \cd{compiler-macroexpand-1} performs at most one expansion.
+  Two values are returned, the expansion (or the original \emph{form})
+  and a value that is true if any expansion occurred and \cdf{nil} otherwise.
+
+  There are three cases where no expansion happens:
+  \begin{itemize}
+    \item There is no compiler macro definition for the \emph{car} of \emph{form}.
+    \item There is such a definition but there is also a \cdf{notinline}
+        declaration, either globally or in the lexical environment \emph{env}.
+    \item A global compiler macro definition is shadowed by a local
+        function or macro definition (such as by \cdf{flet}, \cdf{labels}, or
+        \cdf{macrolet}).
+  \end{itemize}
+  Note that if there is no expansion, the original \emph{form} is returned as
+  the first value, and \cdf{nil} as the second value.
+  
+  Any macro expansion performed by the function \cdf{compiler-macroexpand}
+  or by the function \cd{compiler-macroexpand-1} is carried out
+  by calling the function that is the value of \cdf{*macroexpand-hook*}.
+
+A compiler macro may decline to provide any expansion merely
+by returning the original form. This is useful when using the facility
+to put ``compiler optimizers'' on various function names.  For example,
+here is a compiler macro that ``optimizes'' (one would hope)
+the zero-argument and one-argument cases of
+a function called \cdf{plus}:
+\begin{lisp}
+(define-compiler-macro plus (\&whole form \&rest args) \\*
+~~(case (length args) \\*
+~~~~(0 0) \\*
+~~~~(1 (car args)) \\*
+~~~~(t form)))
+\end{lisp}
+\end{defun}
+
+\section{Environments}
+
+X3J13 voted in June 1989 \issue{SYNTACTIC-ENVIRONMENT-ACCESS} to add some facilities for obtaining information
+from environment objects of the kind received as arguments
+by macro expansion functions, \cdf{*macroexpand-hook*} functions,
+and \cdf{*evalhook*} functions.
+There is a minimal set of accessors (\cdf{variable-information},
+\cdf{function-information}, and \cdf{declaration-information}) and a constructor
+(\cdf{augment-environment}) for environments.
+
+All of the standard declaration specifiers, with the exception of \cdf{special},
+can be defined fairly easily using \cdf{define-declaration}.  It also
+seems to be able to handle most extended declarations.
+
+The function \cdf{parse-macro} is provided so that
+users don't have to write their
+  own code to destructure macro arguments.
+This function is not entirely necessary since X3J13 voted
+in March 1989 \issue{DESTRUCTURING-BIND}
+to add \cdf{destructuring-bind} to the language.
+  However, \cdf{parse-macro} is worth having anyway, since any program-analyzing
+  program is going to need to define it, and the implementation isn't completely
+  trivial even with \cdf{destructuring-bind} to build upon.
+
+  The function \cdf{enclose} allows expander functions to be defined in a non-null
+  lexical environment, as required by the vote of X3J13 in
+  March 1989 \issue{DEFINING-MACROS-NON-TOP-LEVEL}.  It
+  also provides a mechanism by which a program processing
+  the body of an \cd{(eval-when (:compile-toplevel)~...)} form
+  can execute it in the enclosing environment (see issue
+  \issue{EVAL-WHEN-NON-TOP-LEVEL}).
+
+In all of these functions the argument named \emph{env} is an environment
+object.  (It is not required that implementations
+ provide a distinguished representation for such objects.)  Optional \emph{env}
+ arguments default to \cdf{nil}, which represents the local null lexical environment
+ (containing only global definitions and proclamations that are present in the
+ run-time environment).  All of these functions should signal an error of type
+ \cdf{type-error} if the value of an environment argument is not a syntactic
+ environment object.
+
+ The accessor functions \cdf{variable-information}, \cdf{function-information}, and
+ \cdf{declaration-information} retrieve information about
+ declarations that are in
+ effect in the environment.  Since implementations are permitted to ignore
+ declarations (except for \cdf{special} declarations and \cd{optimize safety}
+ declarations if they ever compile unsafe code), these accessors are required
+ only to return information about declarations that were explicitly added to
+ the environment using \cdf{augment-environment}.  They might also return
+ information about declarations recognized and added to the environment by the
+ interpreter or the compiler, but that is at the discretion of the
+ implementor.  Implementations are also permitted to canonicalize
+ declarations, so the information returned by the accessors might not be
+ identical to the information that was passed to \cdf{augment-environment}.
+
+\begin{defun}[Function]
+variable-information variable &optional env
+
+  This function returns information about the interpretation of the symbol
+  \emph{variable} when it appears as a variable within the lexical environment \emph{env}.
+  Three values are returned.
+
+  The first value indicates the type of definition or binding for \emph{variable}
+  in \emph{env\/}:
+\begin{indentdesc}{7pc}
+\item[\cdf{nil}]
+There is no apparent definition or binding for \emph{variable}.
+
+\item[\cd{:special}]
+The \emph{variable} refers to a special variable, either declared or proclaimed. 
+
+\item[\cd{:lexical}]
+The \emph{variable} refers to a lexical variable.
+
+\item[\cd{:symbol-macro}]
+The \emph{variable} refers to a \cdf{symbol-macrolet} binding.
+
+\item[\cd{:constant}]
+Either the \emph{variable} refers to a named constant defined by
+\cdf{defconstant} or the \emph{variable} is a keyword symbol.
+\end{indentdesc}
+
+  The second value indicates whether there is a local binding of the name.  If
+  the name is locally bound, the second value is true; otherwise, the second value
+  is \cdf{nil}.
+
+  The third value is an a-list containing information about declarations
+  that apply to the apparent binding of the \emph{variable}.  The keys in the a-list
+  are symbols that name declaration specifiers, and the format of the
+  corresponding value in the \emph{cdr} of each pair depends on the particular 
+  declaration name involved.  The standard declaration names
+  that might appear as keys in this a-list are:
+\begin{indentdesc}{7pc}
+\item[\cdf{dynamic-extent}]
+A non-\cdf{nil} value indicates that the \emph{variable} has been
+                declared \cdf{dynamic-extent}. If the value is \cdf{nil}, the pair
+                might be omitted.
+
+\item[\cdf{ignore}]
+A non-\cdf{nil} value indicates that the \emph{variable} has been declared
+                \cdf{ignore}. If the value is \cdf{nil}, the pair might be omitted.
+
+\item[\cdf{type}]
+The value is a type specifier associated with the \emph{variable} by a \cdf{type}
+                declaration or an abbreviated declaration such as
+                \cd{(fixnum \emph{variable})}.
+                If no explicit association exists, either by \cdf{proclaim} or
+                \cdf{declare}, then the type specifier is \cdf{t}.  It is permissible for
+                implementations to use a type specifier that is equivalent
+                to or a supertype of the one appearing in the original
+                declaration.  If the value is \cdf{t}, the pair might be
+                omitted.
+\end{indentdesc}
+  If an implementation supports additional declaration specifiers that
+  apply to variable bindings, those declaration names might also
+  appear in the a-list.  However, the corresponding key must not
+  be a symbol that is external in any package defined in the standard
+  or that is otherwise accessible in the \cdf{common-lisp-user} package.
+
+  The a-list might contain multiple entries for a given key.
+  The consequences of destructively modifying the list
+  structure of this a-list or its elements (except for values that 
+  appear in the a-list as a result of \cdf{define-declaration}) are undefined.
+
+  Note that the global binding might differ from the
+  local one and can be retrieved by calling \cdf{variable-information}
+  with a null lexical environment.
+\end{defun}
+
+\begin{defun}[Function]
+function-information function &optional env
+
+  This function returns information about the interpretation of the function-name
+  \emph{function} when it appears in a functional position within lexical 
+  environment \emph{env}.  Three values are returned.
+
+  The first value indicates the type of definition or binding of the function-name
+  which is apparent in \emph{env}:
+\begin{indentdesc}{7pc}
+\item[\cdf{nil}] There is no apparent definition for \emph{function}.
+
+\item[\cd{:function}] The \emph{function} refers to a function.
+
+\item[\cd{:macro}] The \emph{function} refers to a macro.
+
+\item[\cd{:special-form}] The \emph{function} refers to a special operator.
+\end{indentdesc}
+  Some function-names can refer to both a global macro and a global special
+  form.  In such a case the macro takes precedence and \cd{:macro} is returned as
+  the first value.
+
+  The second value specifies whether the definition is local or global.  If
+  local, the second value is true; it is \cdf{nil} when the definition is
+  global.
+
+  The third value is an a-list containing information about declarations
+  that apply to the apparent binding of the function.  The keys in the a-list
+  are symbols that name declaration specifiers, and the format of the
+  corresponding values in the \emph{cdr} of each pair depends on the particular 
+  declaration name involved.  The standard declaration names
+  that might appear as keys in this a-list are:
+\begin{indentdesc}{7pc}
+\item[\cdf{dynamic-extent}]
+A non-\cdf{nil} value indicates that the function has been
+                declared \cdf{dynamic-extent}.  If the value is \cdf{nil}, the pair
+                might be omitted.
+
+\item[\cdf{inline}]
+The value is one of the symbols \cdf{inline}, \cdf{notinline}, or \cdf{nil} to indicate
+                whether the function-name has been declared \cdf{inline},
+                declared \cdf{notinline}, or neither, respectively.
+                If the value is \cdf{nil}, the pair might be omitted.
+
+\item[\cdf{ftype}]
+The value is the type specifier associated with the function-name in the
+                environment, or the symbol \cdf{function} if there is no functional
+                type declaration or proclamation associated with the function-name.
+                This value might not include all the apparent \cdf{ftype}
+                declarations for the function-name.  It is permissible for
+                implementations to use a type specifier that is equivalent
+                to or a supertype of the one that appeared in the original
+                declaration.  If the value is \cdf{function}, the pair might be
+                omitted. 
+\end{indentdesc}
+  If an implementation supports additional declaration specifiers that
+  apply to function bindings, those declaration names might also
+  appear in the a-list.  However, the corresponding key must not be
+  a symbol that is external in any package defined in the standard or
+  that is otherwise accessible in the \cdf{common-lisp-user} package.
+
+  The a-list might contain multiple entries for a given key.
+  In this case the value associated with the first entry has
+  precedence.  The consequences of destructively modifying the list
+  structure of this a-list or its elements (except for values
+  that appear in the a-list as a result of \cdf{define-declaration}) are 
+  undefined.
+
+  Note that the global binding might differ from the local
+  one and can be retrieved by calling \cdf{function-information} with a null
+  lexical environment.
+\end{defun}
+
+\begin{defun}[Function]
+declaration-information decl-name &optional env
+
+  This function returns information about declarations named by the
+  symbol \emph{decl-name} that are in force in the environment \emph{env}.
+  Only declarations that do not apply to function or variable bindings
+  can be accessed with this function.  The format of the information
+  that is returned depends on the \emph{decl-name} involved.
+
+  It is required that this function recognize \cdf{optimize} and \cdf{declaration} as
+  \emph{decl-name\/}s.  The values returned for these two cases are as follows:
+\begin{indentdesc}{7pc}
+\item[\cdf{optimize}]
+A single value is returned,
+a list whose entries are of the form \cd{(\emph{quality} \emph{value})}, where
+                \emph{quality} is one of the standard optimization qualities
+                (\cdf{speed}, \cdf{safety}, \cdf{compilation-speed}, \cdf{space}, \cdf{debug})
+                or some implementation-specific optimization quality, and
+                \emph{value} is an integer in the range 0 to 3 (inclusive).
+                The returned list
+                always contains an entry for each of the standard qualities and
+                for each of the implementation-specific qualities.  In the
+                absence of any previous declarations, the associated values are
+                implementation-dependent.  The list might contain multiple
+                entries for a quality, in which case the first such entry
+                specifies the current value.
+                The consequences of destructively modifying this list or
+		its elements are undefined.
+                
+
+\item[\cdf{declaration}]
+A single value is returned,
+a list of the declaration names that have been proclaimed as
+                valid through the use of the \cdf{declaration} proclamation.
+                The consequences of destructively modifying this list or
+		its elements are undefined.
+\end{indentdesc}
+  If an implementation is extended to recognize additional
+  declaration specifiers in \cdf{declare} or \cdf{proclaim}, it is required that
+  either the \cdf{declaration-information} function should recognize those
+  declarations also or the implementation should provide a similar accessor that is
+  specialized for that declaration specifier.  If \cdf{declaration-information}
+  is used to return the information, the corresponding \emph{decl-name} must not
+  be a symbol that is external in any package defined in the standard or
+  that is otherwise accessible in the \cdf{common-lisp-user} package.
+\end{defun}
+
+\begin{defun}[Function]
+augment-environment env &key :variable :symbol-macro :function :macro :declare
+
+  This function returns a new environment containing the information present in
+  \emph{env} augmented with the information provided by the keyword arguments.  It is
+  intended to be used by program analyzers that perform a code walk.
+
+  The arguments are supplied as follows.
+\begin{flushdesc}
+\item[\cd{:variable}]
+     The argument is a list of symbols that will be visible as bound variables in
+                the new environment.  Whether each binding is to be interpreted
+                as special or lexical depends on \cdf{special} declarations recorded
+                in the environment or provided in the \cd{:declare} argument.
+
+\item[\cd{:symbol-macro}]
+ The argument is a list of symbol macro definitions, each of the form
+                \cd{(\emph{name} \emph{definition})}; that is, the argument is
+                in the same format as the
+                \emph{cadr} of a \cdf{symbol-macrolet} special operator.  The new environment
+                will have local symbol-macro bindings of each symbol to the
+                corresponding expansion, so that \cdf{macroexpand} will be able to
+                expand them properly.  A type declaration in the \cd{:declare}
+                argument that refers to a name in this list implicitly
+                modifies the definition associated with the name.  The effect
+                is to wrap a \cdf{the} form mentioning the type around the
+                definition.
+
+\item[\cd{:function}]
+     The argument is a list of function-names that will be visible as local
+                function bindings in the new environment.
+
+\item[\cd{:macro}]
+        The argument is a list of local macro definitions, 
+        each of the form \cd{(\emph{name} \emph{definition})}.
+        Note that the argument is \emph{not}
+                in the same format as the
+                \emph{cadr} of a \cdf{macrolet} special operator.
+                Each \emph{definition} must be a function of two
+                arguments (a form and an environment).  The new environment
+                will have local macro bindings of each name to the
+                corresponding expander function, which will be returned by
+                \cdf{macro-function} and used by \cdf{macroexpand}.
+
+\item[\cd{:declare}]
+      The argument is a list of declaration specifiers.
+      Information about these declarations can
+                be retrieved from the resulting environment using
+                \cdf{variable-information}, \cdf{function-information}, and
+                \cdf{declaration-information}.
+\end{flushdesc}
+  The consequences of subsequently
+  destructively modifying the list
+  structure of any of the arguments to this function are undefined.
+
+  An error is signaled if any of the symbols naming a symbol macro in the
+  \cd{:symbol-macro} argument is also included in the \cd{:variable} argument.
+  An error is
+  signaled if any symbol naming a symbol macro in the \cd{:symbol-macro} argument is
+  also included in a \cdf{special} declaration specifier in the \cd{:declare} argument.
+  An error is
+  signaled if any symbol naming a macro in the \cd{:macro} argument is also included
+  in the \cd{:function} argument.
+  The condition type of each of these errors is \cdf{program-error}.
+
+  The extent of the returned environment is the same as the extent of the
+  argument environment \emph{env}.  The result might share structure with \emph{env}
+  but \emph{env} is not modified.
+
+  While an environment argument received by an \cdf{*evalhook*}
+  function is permitted to be used as the
+  environment argument to \cdf{augment-environment}, the consequences are undefined if an
+  attempt is made to use the result of \cdf{augment-environment} as the environment
+  argument for \cdf{evalhook}.  The environment
+  returned by \cdf{augment-environment} can be used only for syntactic analysis, that is,
+  as an argument to
+  the functions defined in this section and functions such as \cdf{macroexpand}.
+\end{defun}
+
+\begin{defmac}
+define-declaration decl-name lambda-list {form}*
+
+  This macro defines a handler for the named declaration.  It is the mechanism by which
+  \cdf{augment-environment} is extended to support additional declaration
+  specifiers.  The function defined by this macro will be called with two
+  arguments, a declaration specifier whose \emph{car} is \emph{decl-name}
+  and the \emph{env} argument to
+  \cdf{augment-environment}.  This function must return two values.  The
+  first value must be one of the following keywords:
+\begin{indentdesc}{7pc}
+\item[\cd{:variable}]     The declaration applies to variable bindings.
+\item[\cd{:function}]     The declaration applies to function bindings.
+\item[\cd{:declare}]      The declaration does not apply to bindings.
+\end{indentdesc}
+If the first value is \cd{:variable} or \cd{:function}
+then the second value must be a list, the elements of which are lists of the
+  form \cd{(\emph{binding-name} \emph{key} \emph{value})}.  If the corresponding information
+  function (either \cdf{variable-information} or \cdf{function-information}) is applied to
+  the \emph{binding-name} and the augmented environment, the a-list returned
+  by the information function as its third value will contain the \emph{value}
+  under the specified \emph{key}.
+
+  If the first value is \cd{:declare}, the second value must be a cons
+  of the form \cd{(\emph{key}~.~\emph{value})}.  The function
+  \cdf{declaration-information} will return \emph{value} when applied to the
+  \emph{key} and the augmented environment.
+
+  \cdf{define-declaration} causes \emph{decl-name} to be proclaimed to be a
+  declaration; it is as if its expansion included a call \cd{(proclaim
+  '(declaration \emph{decl-name}))}.  As is the case with standard
+  declaration specifiers, the evaluator and compiler are permitted,
+  but not required, to add information about declaration specifiers
+  defined with \cdf{define-declaration} to the macro expansion and \cdf{*evalhook*}
+  environments.
+
+  The consequences are undefined if \emph{decl-name} is a symbol that can
+  appear as the \emph{car} of any standard declaration specifier.
+
+  The consequences are also undefined if the return value from a 
+  declaration handler defined with \cdf{define-declaration} includes a \emph{key} name
+  that is used by the corresponding accessor to return information about
+  any standard declaration specifier.  (For example, if
+  the first return value from the handler is \cd{:variable}, the second return
+  value may not use the symbols \cdf{dynamic-extent}, \cdf{ignore}, or \cdf{type}
+  as \emph{key} names.)
+
+  The \cdf{define-declaration} macro does not have any special compile-time
+  side effects (see section~\ref{COMPILER-SECTION}).
+\end{defmac}
+
+\begin{defun}[Function]
+parse-macro name lambda-list body &optional env
+
+  This function is used to process a macro definition in the same way
+  as \cdf{defmacro} and \cdf{macrolet}.  It returns a lambda-expression that accepts
+  two arguments, a form and an environment.  The \emph{name}, \emph{lambda-list},
+  and \emph{body} arguments correspond to the parts of a \cdf{defmacro} or \cdf{macrolet}
+  definition.
+
+  The \emph{lambda-list} argument may include \cd{\&environment} and \cd{\&whole}
+  and may include destructuring.
+  The \emph{name}
+  argument is used to enclose the \emph{body} in an implicit \cdf{block} and might also
+  be used for implementation-dependent purposes (such as including the name of
+  the macro in error messages if the form does not match the \emph{lambda-list}).
+\end{defun}
+
+\begin{defun}[Function]
+enclose lambda-expression &optional env
+
+  This function returns an object of type \cdf{function} that is equivalent to what
+  would be obtained by evaluating \cd{{\Xbq}(function ,\emph{lambda-expression})}
+  in a syntactic
+  environment \emph{env}.  The \emph{lambda-expression} is permitted to reference only the
+  parts of the environment argument \emph{env} that are relevant only to syntactic
+  processing, specifically declarations and the definitions of macros and
+  symbol macros.  The consequences are undefined if the \emph{lambda-expression}
+  contains any references to variable or function bindings that are 
+  lexically visible in \emph{env}, any \cdf{go} to a tag that is lexically visible in 
+  \emph{env}, or any \cdf{return-from} mentioning a block name that is lexically 
+  visible in \emph{env}.
+\end{defun}
 
 \fi
