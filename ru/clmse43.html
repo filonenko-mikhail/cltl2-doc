@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Structure Traversal and Side Eﬀects</title> 
+<head><title>Перечисление элементов структур данных и побочные эффекты</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-06-05 16:10:00"> 
+<meta name="date" content="2012-06-19 07:19:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 <link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
 >
@@ -18,158 +18,147 @@ href="clmse42.html#tailclmse42.html" >Назад-и-вниз</a>&#x003E;&#x003C;
 href="#tailclmse43.html">В-конец</a>&#x003E;&#x003C;<a 
 href="contrl.html#clmse43.html" >Наверх</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">7.9
 </span> <a 
-href="clm.html#QQ2-55-98" id="x55-900007.9">Structure Traversal and Side Eﬀects</a></h3>
-<!--l. 7622--><p class="noindent" >X3J13 voted in January 1989 <a 
- id="dx55-90001"></a>to restrict side eﬀects during the course of a built-in
-operation that can execute user-supplied code while traversing a data
-structure.
-<!--l. 7627--><p class="indent" >   Consider the following example: <div class="lisp"><tt><div class="tabbing">
+href="clm.html#QQ2-55-98" id="x55-900007.9">Перечисление элементов структур данных и побочные эффекты</a></h3>
+<!--l. 7627--><p class="noindent" >В момент выполнения некоторых системных операций (функций,
+операторов), в которых может вызываться пользовательский код (например,
+при использовании <b><a 
+href="symbols.html#x188-376880r880">sort</a></b>), для этого кода запрещены побочные эффекты
+(действия).
+<!--l. 7631--><p class="indent" >   Рассмотрим следующий пример: <div class="lisp"><tt><div class="tabbing">
 (let ((x &#x2019;(apples peaches pumpkin pie)))
    <br>                                                                              (dolist (z x)<br>
     (when (eq z &#x2019;peaches)<br>             (setf (cddr x) &#x2019;(mango kumquat)))<br>
     (format t &#x0022; S &#x0022; (car z))))<br>
-<!--l. 7634--><p class="noindent" ></div>
+<!--l. 7638--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 7635--><p class="indent" >   Depending on the details of the implementation of <b><a 
-href="symbols.html#x188-375342r342">dolist</a></b>, this bit of code
-could easily print <div class="lisp"><tt><div class="tabbing">
+<!--l. 7639--><p class="indent" >   В зависимости от особенностей реализации <b><a 
+href="symbols.html#x188-376342r342">dolist</a></b>, данный код может
+просто вывести <div class="lisp"><tt><div class="tabbing">
 apples peaches mango kumquat
    <br>
-<!--l. 7639--><p class="noindent" ></div>
+<!--l. 7643--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 7640--><p class="indent" >   (which is perhaps what was intended), but it might as easily print
-<div class="lisp"><tt><div class="tabbing">
+<!--l. 7644--><p class="indent" >   (что скорее всего и ожидается), но может также вывести и <div class="lisp"><tt><div class="tabbing">
 apples peaches pumpkin pie
    <br>
                                                                           
 
                                                                           
-<!--l. 7643--><p class="noindent" ></div>
+<!--l. 7647--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 7644--><p class="indent" >   Here is a plausible implementation of <b><a 
-href="symbols.html#x188-375342r342">dolist</a></b> that produces the ﬁrst result:
-<div class="lisp"><tt><div class="tabbing">
+<!--l. 7648--><p class="indent" >   Вот вероятная реализация <b><a 
+href="symbols.html#x188-376342r342">dolist</a></b> для первого варианта <div class="lisp"><tt><div class="tabbing">
 (defmacro dolist ((var listform &#x0026;optional (resultform ”nil))
    <br>
                   &#x0026;body body)<br>    (let ((tailvar (gensym &#x0022;DOLIST&#x0022;)))<br>
     ‘(do ((,tailvar ,listform (cdr ,tailvar)))<br>
          ((null ,tailvar) ,resultform)<br>
        (let ((,var (car ,tailvar))) ,@body))<br>
-<!--l. 7653--><p class="noindent" ></div>
+<!--l. 7656--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 7654--><p class="indent" >   But here is a plausible implementation of <b><a 
-href="symbols.html#x188-375342r342">dolist</a></b> that produces the second
-result: <div class="lisp"><tt><div class="tabbing">
+<!--l. 7657--><p class="indent" >   А вот вероятная реализация <b><a 
+href="symbols.html#x188-376342r342">dolist</a></b> для второго варианта <div class="lisp"><tt><div class="tabbing">
 (defmacro dolist ((var listform &#x0026;optional (resultform ”nil))
    <br>
                   &#x0026;body body)<br>    (let ((tailvar (gensym &#x0022;DOLIST&#x0022;)))<br>
     ‘(do ((,tailvar ,listform))<br>                  ((null ,tailvar) ,resultform)<br>
        (let ((,var (pop ,tailvar))) ,@body))<br>
-<!--l. 7663--><p class="noindent" ></div>
+<!--l. 7665--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 7665--><p class="indent" >   The X3J13 recognizes and legitimizes varying implementation practices: in
-general it is an error for code executed during a “structure-traversing” operation
-to destructively modify the structure in a way that might aﬀect the ongoing
-traversal operation. The committee identiﬁed in particular the following special
-cases.
-<!--l. 7671--><p class="indent" >   For list traversal operations, the <em>cdr</em> chain may not be destructively
-modiﬁed.
+<!--l. 7667--><p class="indent" >   В общем случае, деструктивная модификация структуры, которая может
+нарушить порядок перечисления элементов, запрещена. Частные случае
+перечислены ниже.
+<!--l. 7671--><p class="indent" >   Для операций перечисления элементов списка, <em>cdr</em> цепочка не может быть
+деструктивно разговаривать.
+<!--l. 7674--><p class="indent" >   Для операций, которые перечисляют элементы массива, данный массив не
+может быть расширен (смотрите <b><a 
+href="symbols.html#x188-376080r80">adjust-array</a></b>) и, при наличии, не может
+быть изменен указатель заполнения.
                                                                           
 
                                                                           
-<!--l. 7674--><p class="indent" >   For array traversal operations, the array may not be adjusted (see
+<!--l. 7678--><p class="indent" >   Для операций перечисления элементов хеш-таблицы (таких как
 <b><a 
-href="symbols.html#x188-375080r80">adjust-array</a></b>) and its ﬁll pointer, if any, may not be modiﬁed.
-<!--l. 7677--><p class="indent" >   For hash table operations (such as <b><a 
-href="symbols.html#x188-376004r1004">with-hash-table-iterator</a></b> and
+href="symbols.html#x188-377004r1004">with-hash-table-iterator</a></b> и <b><a 
+href="symbols.html#x188-376607r607">maphash</a></b>, в пользовательком коде не могут
+добавляться в данную таблицу новые элементы.
+<!--l. 7682--><p class="indent" >   Для операций перечисления символов пакета (например, <b><a 
+href="symbols.html#x188-377009r1009">with-package-iterator</a></b>
+и <b><a 
+href="symbols.html#x188-376339r339">do-symbols</a></b>) в пакет не могут интернироваться, дезинтернироваться
+новые символы, которые относятся к данному пакету. Однако текущий
+обрабатываемый символ может быть дезинтернирован.
+<!--l. 7687--><p class="indent" >   Деструктивные операции, такие как <b><a 
+href="symbols.html#x188-376317r317">delete</a></b>, требуют более жёстких
+ограничений и эти ограничения описаны отельно в каждой функции.
+<!--l. 7690--><p class="indent" >   Таблица <a 
+href="#x55-900011">7.1<!--tex4ht:ref: TRAVERSAL-OPERATIONS-TABLE --></a> содержит большинство операций и функций запрещающих
+побочные эффекты в пользовательском коде, которые в них передаются в
+качестве тела для исполнения или в виде функционального объекта.
+<!--l. 7694--><p class="indent" >   Кроме того, следует отметить, что пользовательский код не должен
+модифицировать структуру списка, которая интерпретируется вычислителем,
+который был вызван неявно или явно с помощью <b><a 
+href="symbols.html#x188-376373r373">eval</a></b>. Например, как
+в случае функции-ловушки (функция вывода <b>defsctruct</b>, значение
 <b><a 
-href="symbols.html#x188-375607r607">maphash</a></b>), new entries may not be added or deleted, <em>except</em> that the very entry
-being processed by user code may be changed or deleted.
-<!--l. 7682--><p class="indent" >   For package symbol operations (for example, <b><a 
-href="symbols.html#x188-376009r1009">with-package-iterator</a></b> and
-<b><a 
-href="symbols.html#x188-375339r339">do-symbols</a></b>), new symbols may not be interned in, nor symbols uninterned from,
-the packages being traversed or any packages they use, <em>except</em> that the very
-symbol being processed by user code may be uninterned.
-<!--l. 7688--><p class="indent" >   X3J13 noted that this vote is intended to clarify restrictions on the use of
-structure traversal operations that are not themselves inherently destructive; for
-example, it applies to <b><a 
-href="symbols.html#x188-375600r600">map</a></b> and <b><a 
-href="symbols.html#x188-375342r342">dolist</a></b>. Destructive operators such as <b><a 
-href="symbols.html#x188-375317r317">delete</a></b>
-require even more complicated restrictions and are addressed by a separate
-proposal.
-<!--l. 7694--><p class="indent" >   The X3J13 vote did not specify a complete list of the operations to
-which these restrictions apply. Table <a 
-href="#x55-900021">7.1<!--tex4ht:ref: TRAVERSAL-OPERATIONS-TABLE --></a> shows what I believe to be a
-complete list of operations that traverse structures and take user code as a
-body (in the case of macros) or as a functional argument (in the case of
-functions).
-<!--l. 7700--><p class="indent" >   In addition, note that user code should not modify list structure that
-might be undergoing interpretation by the evaluator, whether explicitly
-invoked via <b><a 
-href="symbols.html#x188-375373r373">eval</a></b> or implicitly invoked, for example as in the case of a
-hook function (a <b><a 
-href="symbols.html#x188-375313r313">defstruct</a></b> print function, the value of <b><a 
-href="symbols.html#x188-375018r18">*evalhook*</a></b> or
-<b><a 
-href="symbols.html#x188-375008r8">*applyhook*</a></b>, etc.) that happens to be a closure of interpreted code.
-Similarly, <b><a 
-href="symbols.html#x188-375313r313">defstruct</a></b> print functions and other hooks should not perform side
-eﬀects on data structures being printed or being processed by <b><a 
-href="symbols.html#x188-375426r426">format</a></b>, or
-on a string given to <b><a 
-href="symbols.html#x188-375594r594">make-string-input-stream</a></b>. You get the idea; be
-sensible.
-<!--l. 7711--><p class="indent" >   Note that an operation such as <b><a 
-href="symbols.html#x188-375605r605">mapcar</a></b> or <b><a 
-href="symbols.html#x188-375342r342">dolist</a></b> traverses not only <em>cdr</em>
-pointers (in order to chase down the list) but also <em>car</em> pointers (in order to obtain
-the elements themselves). The restriction against modiﬁcation appears to apply to
-all these pointers.
+href="symbols.html#x188-376018r18">*evalhook*</a></b> или <b><a 
+href="symbols.html#x188-376008r8">*applyhook*</a></b>, и так далее), которая является замыканием
+интерпретируемого кода. Также, функции вывода <b><a 
+href="symbols.html#x188-376313r313">defstruct</a></b> и другие
+ловушки не должны выполнять побочные действия над выводимыми
+структурами, или над строками переданными в <b><a 
+href="symbols.html#x188-376594r594">make-string-input-stream</a></b>.
+В целом, будте бдительны.
+<!--l. 7704--><p class="indent" >   Следует отметить, что такие операции как <b><a 
+href="symbols.html#x188-376605r605">mapcar</a></b> или <b><a 
+href="symbols.html#x188-376342r342">dolist</a></b> работают
+не только с <em>cdr</em> указателями (при прохождении к концу списка), но
+также и с <em>car</em> указателями (при обработке непосредственно элемента).
+Ограничения побочных эффектов относятся и к одному, и ко второму
+указателям.
    <div class="table">
                                                                           
 
                                                                           
-<!--l. 7716--><p class="indent" >   <a 
- id="x55-900021"></a><hr class="float"><div class="float" 
+<!--l. 7709--><p class="indent" >   <a 
+ id="x55-900011"></a><hr class="float"><div class="float" 
 >
                                                                           
 
                                                                           
 <br />  <div class="caption" 
-><span class="id">Таблица 7.1:  </span><span  
-class="content">Structure  Traversal  Operations  Subject  to  Side  Eﬀect
-Restrictions</span></div><!--tex4ht:label?: x55-900021 -->
-<div class="tabular"><table width="100%" class="tabular"><tr><td align="left" >adjoin                   </td><td align="left" >maphash           </td><td align="left" >reduce                       </td>
-</tr><tr><td align="left" >assoc                    </td><td align="left" >mapl                </td><td align="left" >remove                      </td>
-</tr><tr><td align="left" >assoc-if                  </td><td align="left" >maplist             </td><td align="left" >remove-duplicates        </td>
-</tr><tr><td align="left" >assoc-if-not            </td><td align="left" >member            </td><td align="left" >remove-if                   </td></tr><tr><td align="left" >count  </td><td align="left" >member-if </td><td align="left" >remove-if-not</td>
-</tr><tr><td align="left" >count-if                 </td><td align="left" >member-if-not    </td><td align="left" >search                       </td></tr><tr><td align="left" >count-if-not  </td><td align="left" >merge </td><td align="left" >set-diﬀerence</td>
-</tr><tr><td align="left" >delete                    </td><td align="left" >mismatch          </td><td align="left" >set-exclusive-or           </td></tr><tr><td align="left" >delete-duplicates  </td><td align="left" >nintersection </td><td align="left" >some</td>
-</tr><tr><td align="left" >delete-if                 </td><td align="left" >notany              </td><td align="left" >sort                          </td>
-</tr><tr><td align="left" >delete-if-not           </td><td align="left" >notevery            </td><td align="left" >stable-sort                 </td>
-</tr><tr><td align="left" >do-all-symbols        </td><td align="left" >nset-diﬀerence    </td><td align="left" >sublis                        </td>
-</tr><tr><td align="left" >do-external-symbols </td><td align="left" >nset-exclusive-or </td><td align="left" >subsetp                     </td>
-</tr><tr><td align="left" >do-symbols             </td><td align="left" >nsublis              </td><td align="left" >subst                        </td>
-</tr><tr><td align="left" >dolist                    </td><td align="left" >nsubst              </td><td align="left" >subst-if                      </td>
-</tr><tr><td align="left" >eval                      </td><td align="left" >nsubst-if            </td><td align="left" >subst-if-not                </td>
-</tr><tr><td align="left" >every                    </td><td align="left" >nsubst-if-not      </td><td align="left" >substitute                  </td>
-</tr><tr><td align="left" >ﬁnd                      </td><td align="left" >nsubstitute        </td><td align="left" >substitute-if               </td>
-</tr><tr><td align="left" >ﬁnd-if                   </td><td align="left" >nsubstitute-if     </td><td align="left" >substitute-if-not          </td>
-</tr><tr><td align="left" >ﬁnd-if-not              </td><td align="left" >nsubstitute-if-not</td><td align="left" >tree-equal                  </td>
-</tr><tr><td align="left" >intersection            </td><td align="left" >nunion              </td><td align="left" >union                        </td>
-</tr><tr><td align="left" >certain loop clauses  </td><td align="left" >position            </td><td align="left" >with-hash-table-iterator</td>
-</tr><tr><td align="left" >map                      </td><td align="left" >position-if          </td><td align="left" >with-input-from-string  </td>
-</tr><tr><td align="left" >mapc                    </td><td align="left" >position-if-not    </td><td align="left" >with-output-to-string   </td>
-</tr><tr><td align="left" >mapcan                 </td><td align="left" >rassoc               </td><td align="left" >with-package-iterator   </td>
-</tr><tr><td align="left" >mapcar                 </td><td align="left" >rassoc-if            </td>
-</tr><tr><td align="left" >mapcon                 </td><td align="left" >rassoc-if-not       </td></tr></table></div>
+><span class="id">Таблица 7.1:   </span><span  
+class="content">Операции   не   допускающие   побочных   действий   в
+пользовательском коде</span></div><!--tex4ht:label?: x55-900011 -->
+<div class="tabular"><table width="100%" class="tabular"><tr><td align="left" >adjoin                              </td><td align="left" >maphash           </td><td align="left" >reduce                       </td>
+</tr><tr><td align="left" >assoc                                </td><td align="left" >mapl                </td><td align="left" >remove                      </td>
+</tr><tr><td align="left" >assoc-if                             </td><td align="left" >maplist             </td><td align="left" >remove-duplicates        </td>
+</tr><tr><td align="left" >assoc-if-not                        </td><td align="left" >member            </td><td align="left" >remove-if                   </td></tr><tr><td align="left" >count  </td><td align="left" >member-if </td><td align="left" >remove-if-not</td>
+</tr><tr><td align="left" >count-if                             </td><td align="left" >member-if-not    </td><td align="left" >search                       </td></tr><tr><td align="left" >count-if-not  </td><td align="left" >merge </td><td align="left" >set-diﬀerence</td>
+</tr><tr><td align="left" >delete                               </td><td align="left" >mismatch          </td><td align="left" >set-exclusive-or           </td></tr><tr><td align="left" >delete-duplicates  </td><td align="left" >nintersection </td><td align="left" >some</td>
+</tr><tr><td align="left" >delete-if                            </td><td align="left" >notany              </td><td align="left" >sort                          </td>
+</tr><tr><td align="left" >delete-if-not                       </td><td align="left" >notevery            </td><td align="left" >stable-sort                 </td>
+</tr><tr><td align="left" >do-all-symbols                    </td><td align="left" >nset-diﬀerence    </td><td align="left" >sublis                        </td>
+</tr><tr><td align="left" >do-external-symbols            </td><td align="left" >nset-exclusive-or </td><td align="left" >subsetp                     </td>
+</tr><tr><td align="left" >do-symbols                        </td><td align="left" >nsublis              </td><td align="left" >subst                        </td>
+</tr><tr><td align="left" >dolist                               </td><td align="left" >nsubst              </td><td align="left" >subst-if                      </td>
+</tr><tr><td align="left" >eval                                 </td><td align="left" >nsubst-if            </td><td align="left" >subst-if-not                </td>
+</tr><tr><td align="left" >every                                </td><td align="left" >nsubst-if-not      </td><td align="left" >substitute                  </td>
+</tr><tr><td align="left" >ﬁnd                                  </td><td align="left" >nsubstitute        </td><td align="left" >substitute-if               </td>
+</tr><tr><td align="left" >ﬁnd-if                               </td><td align="left" >nsubstitute-if     </td><td align="left" >substitute-if-not          </td>
+</tr><tr><td align="left" >ﬁnd-if-not                         </td><td align="left" >nsubstitute-if-not</td><td align="left" >tree-equal                  </td>
+</tr><tr><td align="left" >intersection                       </td><td align="left" >nunion              </td><td align="left" >union                        </td>
+</tr><tr><td align="left" >некоторые loop выражения </td><td align="left" >position            </td><td align="left" >with-hash-table-iterator</td>
+</tr><tr><td align="left" >map                                 </td><td align="left" >position-if          </td><td align="left" >with-input-from-string  </td>
+</tr><tr><td align="left" >mapc                               </td><td align="left" >position-if-not    </td><td align="left" >with-output-to-string   </td>
+</tr><tr><td align="left" >mapcan                            </td><td align="left" >rassoc               </td><td align="left" >with-package-iterator   </td>
+</tr><tr><td align="left" >mapcar                             </td><td align="left" >rassoc-if            </td>
+</tr><tr><td align="left" >mapcon                            </td><td align="left" >rassoc-if-not       </td></tr></table></div>
                                                                           
 
                                                                           
@@ -178,7 +167,7 @@ Restrictions</span></div><!--tex4ht:label?: x55-900021 -->
                                                                           
 
                                                                           
-<!--l. 7754--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+<!--l. 7747--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
 href="clmse44.html" >Далее</a>&#x003E;&#x003C;<a 
 href="clmse42.html" >Назад</a>&#x003E;&#x003C;<a 
 href="clmse42.html#tailclmse42.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 

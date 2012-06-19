@@ -920,7 +920,7 @@ X3J13 voted in March 1989
 \issue{SYMBOL-MACROLET-SEMANTICS} to add this case as well:
 \begin{itemize}
 \item A variable reference that refers to a symbol macro definition made by
-\cd{symbol-\discretionary{}{}{}macrolet}, in which case \cdf{setf} expands the reference and
+\cdf{symbol-macrolet}, in which case \cdf{setf} expands the reference and
 then analyzes the resulting form.
 \end{itemize}
 \end{new}
@@ -5231,7 +5231,7 @@ X3J13 voted in March 1989
 \issue{SYMBOL-MACROLET-SEMANTICS} to add this case as well:
 \begin{itemize}
 \item A variable reference that refers to a symbol macro definition made by
-\cd{symbol-\discretionary{}{}{}macrolet}, in which case \cdf{setf} expands the reference and
+\cdf{symbol-macrolet}, in which case \cdf{setf} expands the reference and
 then analyzes the resulting form.
 \end{itemize}
 \end{new}
@@ -5428,10 +5428,10 @@ as is usual in situations involving multiple values.
 одну и ту же ссылку. Сохранение порядка выполнения исходной программы и
 количества выполнений чрезвычайно важно.
 
-As an example of these semantic rules, in the generalized-variable
-reference \cd{(setf \emph{reference} \emph{value})} the \emph{value} form
-must be evaluated \emph{after} all the subforms of the reference because
-the \emph{value} form appears to the right of them.
+В качестве примера этих семантических правил, в ссылке на обобщённую переменную
+\cd{(setf \emph{reference} \emph{value})} форма \emph{value} должны быть
+вычислена \emph{после} всех подформ данной ссылки, потому что форма \emph{value}
+стоит правее всех.
 
 The expansion of these macros must consist of code that follows these
 rules or has the same effect as such code.  This is accomplished by
@@ -7261,6 +7261,9 @@ dolist (var listform [resultform])
 \end{lisp}
 Для завершения цикла и возврата заданного значения может использоваться явное
 выражение \cdf{return}.
+
+Пользователь ограничен в создании побочных действий так, как это описано в
+разделе~\ref{STRUCTURE-TRAVERSAL-SECTION}
 \end{defmac}
 
 \begin{defmac}
@@ -7434,6 +7437,9 @@ mapcon function list &rest more-lists
 \cdf{apply}. Он не может быть макросов или именем специальной формы.
 Кроме того, в качестве функционального аргумента можно использовать функцию,
 имеющую \cd{\&optional} и \cd{\&rest} параметры.
+
+Пользователь ограничен в создании побочных действий так, как это описано в
+разделе~\ref{STRUCTURE-TRAVERSAL-SECTION}
 \end{defun}
 
 \subsection{Использование <<GOTO>>}
@@ -7608,23 +7614,21 @@ go tag
 
 Форма \cdf{go} никогда не возвращает значение.
 
-В целях стиля, рекомендуется дважды подумать, прежде чем использовать
+В целях хорошего стиля, рекомендуется дважды подумать, прежде чем использовать
 \cdf{go}. Большинство функций \cdf{go} могут быть заменены циклами, вложенными
 условными формами или \cdf{return-from}. Если использование \cdf{go} неизбежно,
 рекомендуется управляющую структуру реализованную с помощью \cdf{go} <<упаковать>>
 в определении макроса. 
 \end{defspec}
 
-
-\section{Structure Traversal and Side Effects}
+\section{Перечисление элементов структур данных и побочные эффекты}
 \label{STRUCTURE-TRAVERSAL-SECTION}
 
-X3J13 voted in January 1989 \issue{MAPPING-DESTRUCTIVE-INTERACTION}
-to restrict side effects during the course
-of a built-in operation that can execute user-supplied code while
-traversing a data structure.
+В момент выполнения некоторых системных операций (функций, операторов), в
+которых может вызываться пользовательский код (например, при использовании
+\cdf{sort}), для этого кода запрещены побочные эффекты (действия).
 
-Consider the following example:
+Рассмотрим следующий пример:
 \begin{lisp}
 (let ((x '(apples peaches pumpkin pie))) \\*
 ~~(dolist (z x) \\*
@@ -7632,17 +7636,16 @@ Consider the following example:
 ~~~~~~(setf (cddr x) '(mango kumquat))) \\*
 ~~~~(format t "~S " (car z))))
 \end{lisp}
-Depending on the details of the implementation of \cdf{dolist},
-this bit of code could easily print
+В зависимости от особенностей реализации \cdf{dolist}, данный код может просто
+вывести
 \begin{lisp}
 apples peaches mango kumquat
 \end{lisp}
-(which is perhaps what was intended), but it might as easily print
+(что скорее всего и ожидается), но может также вывести и
 \begin{lisp}
 apples peaches pumpkin pie
 \end{lisp}
-Here is a plausible implementation of \cdf{dolist} that
-produces the first result:
+Вот вероятная реализация \cdf{dolist} для первого варианта
 \begin{lisp}
 (defmacro dolist ((var listform \&optional (resultform ''nil)) \\*
 ~~~~~~~~~~~~~~~~~~\&body body) \\*
@@ -7651,8 +7654,7 @@ produces the first result:
 ~~~~~~~~~((null ,tailvar) ,resultform) \\*
 ~~~~~~~(let ((,var (car ,tailvar))) ,@body))
 \end{lisp}
-But here is a plausible implementation of \cdf{dolist} that
-produces the second result:
+А вот вероятная реализация \cdf{dolist} для второго варианта
 \begin{lisp}
 (defmacro dolist ((var listform \&optional (resultform ''nil)) \\*
 ~~~~~~~~~~~~~~~~~~\&body body) \\*
@@ -7662,60 +7664,51 @@ produces the second result:
 ~~~~~~~(let ((,var (pop ,tailvar))) ,@body))
 \end{lisp}
 
-The X3J13 recognizes and legitimizes varying implementation practices:
-in general it is an error for code executed during a ``structure-traversing''
-operation to destructively modify the structure in a way that might
-affect the ongoing traversal operation.  The committee identified in particular
-the following special cases.
+В общем случае, деструктивная модификация структуры, которая может нарушить
+порядок перечисления элементов, запрещена. Частные случае
+перечислены ниже.
 
-For list traversal operations, the \emph{cdr} chain
-may not be destructively modified.
+Для операций перечисления элементов списка, \emph{cdr} цепочка не может быть
+деструктивно разговаривать.
 
-For array traversal operations, the array may not be adjusted
-(see \cdf{adjust-array}) and its fill pointer, if any, may not be modified.
+Для операций, которые перечисляют элементы массива, данный массив не может быть
+расширен (смотрите \cdf{adjust-array}) и, при наличии, не может быть изменен
+указатель заполнения.
 
-For hash table operations (such as \cdf{with-hash-table-iterator}
-and \cdf{maphash}), new entries may not be added or deleted,
-\emph{except} that the very entry being processed by user code
-may be changed or deleted.
+Для операций перечисления элементов хеш-таблицы (таких как
+\cdf{with-hash-table-iterator} и \cdf{maphash}, в пользовательком коде не могут
+добавляться в данную таблицу новые элементы.
 
-For package symbol operations (for example, \cdf{with-package-iterator}
-and \cdf{do-symbols}), new symbols may not be interned in,
-nor symbols uninterned from, the packages being traversed or
-any packages they use, \emph{except} that the very symbol
-being processed by user code may be uninterned.
+Для операций перечисления символов пакета (например, \cdf{with-package-iterator}
+и \cdf{do-symbols}) в пакет не могут интернироваться, дезинтернироваться новые
+символы, которые относятся к данному пакету. Однако текущий обрабатываемый
+символ может быть дезинтернирован.
 
-X3J13 noted that this vote is intended to clarify restrictions
-on the use of structure traversal operations that are not themselves
-inherently destructive; for example, it applies to \cdf{map} and \cdf{dolist}.
-Destructive operators such as \cdf{delete} require even more complicated
-restrictions and are addressed by a separate proposal.
+Деструктивные операции, такие как \cdf{delete}, требуют более жёстких
+ограничений и эти ограничения описаны отельно в каждой функции.
 
-The X3J13 vote did not specify a complete list of the operations to which these
-restrictions apply.  Table~\ref{TRAVERSAL-OPERATIONS-TABLE}
-shows what I believe to be a complete list of operations
-that traverse structures and take user code as a body (in the case of
-macros) or as a functional argument (in the case of functions).
+Таблица~\ref{TRAVERSAL-OPERATIONS-TABLE} содержит большинство операций и функций
+запрещающих побочные эффекты в пользовательском коде, которые в них передаются в
+качестве тела для исполнения или в виде функционального объекта.
 
-In addition, note that user code should not modify list
-structure that might be undergoing interpretation by the evaluator,
-whether explicitly invoked via \cdf{eval} or implicitly invoked,
-for example as in the case of a hook function (a \cdf{defstruct}
-print function, the value of \cdf{*evalhook*} or \cdf{*applyhook*}, etc.)
-that happens to be a closure of interpreted code.  Similarly, \cdf{defstruct}
-print functions and other hooks should not perform side effects
-on data structures being printed or being processed by \cdf{format}, or on a
-string given to \cdf{make-string-input-stream}.  You get the idea;
-be sensible.
+Кроме того, следует отметить, что пользовательский код не должен модифицировать
+структуру списка, которая интерпретируется вычислителем, который был вызван
+неявно или явно с помощью \cdf{eval}. Например, как в случае функции-ловушки
+(функция вывода \cdf{defsctruct}, значение \cdf{*evalhook*} или
+\cdf{*applyhook*}, и так далее), которая является замыканием интерпретируемого
+кода.
+Также, функции вывода \cdf{defstruct} и другие ловушки не должны выполнять
+побочные действия над выводимыми структурами, или над строками переданными в
+\cdf{make-string-input-stream}. В целом, будте бдительны.
 
-Note that an operation such as \cdf{mapcar} or \cdf{dolist} traverses
-not only \emph{cdr} pointers (in order to chase down the list)
-but also \emph{car} pointers (in order to obtain the elements themselves).
-The restriction against modification appears to apply to all these pointers.
+Следует отметить, что такие операции как \cdf{mapcar} или \cdf{dolist} работают
+не только с \emph{cdr} указателями (при прохождении к концу списка), но также и
+с \emph{car} указателями (при обработке непосредственно элемента). Ограничения
+побочных эффектов относятся и к одному, и ко второму указателям.
 
 \begin{table}[t]
 \leavevmode
-\caption{Structure Traversal Operations Subject to Side Effect Restrictions}
+\caption{Операции не допускающие побочных действий в пользовательском коде}
 \label{TRAVERSAL-OPERATIONS-TABLE}
 
 \begingroup\cf \tabcolsep0pt\relax
@@ -7741,7 +7734,7 @@ find & nsubstitute & substitute-if \\
 find-if & nsubstitute-if & substitute-if-not \\
 find-if-not & nsubstitute-if-not & tree-equal \\
 intersection & nunion & union \\
-\textrm{certain} loop \textrm{clauses} & position & with-hash-table-iterator \\
+\textrm{некоторые} loop \textrm{выражения} & position & with-hash-table-iterator \\
 map & position-if & with-input-from-string \\
 mapc & position-if-not & with-output-to-string \\
 mapcan & rassoc & with-package-iterator \\
