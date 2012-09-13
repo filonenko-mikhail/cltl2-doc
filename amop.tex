@@ -14,6 +14,8 @@ Authors: Gregor Kiczales, Jim des Rivieres, and Daniel G. Bobrow
 \section{Concepts}
 
 \subsection{Introduction}
+\subsection{Введение}
+
 
 The CLOS Specification~\ref{CLOS} describes the standard Programmer Interface for the
 Common Lisp Object System (CLOS). This document extends that specification by
@@ -29,7 +31,22 @@ behavior provides the behavior of the CLOS language itself, they are considered
 meta-level objects or metaobjects. The protocol followed by the metaobjects to
 provide the behavior of CLOS is called the CLOS Metaobject Protocol (MOP). 
 
+CLOS спецификация~\ref{CLOS} описывает API для Common Lisp'овой объектной
+системы. Данная глава дополняет эту спецификацию описанием метаобъектного
+протокола для CLOS --- то. В этом описании, базовые элементы CLOS'а (классы,
+определения слотов, обобщённые функции, методы, специализаторы и комбинации
+методов) представлены в качестве представлены как объекты первого
+класса. Поведение CLOS'а регулируется этими объектами, или, если быть точнее,
+методами, специализированным для объектов этих классов.
+
+Так как эти объекты представляют части CLOS программы, и так как их поведение
+задаёт поведение языка CLOS, они рассматриваются как объекты метауровня или
+метаобъекты. Протокол определения методов для метаобъектов называется
+Метаобъектным Протоколом CLOS (на английском MOP).
+
 \subsubsection{Metaobjects}
+
+\subsubsection{Метаобъекты}
 
 For each kind of program element there is a corresponding basic metaobject
 class. These are the classes: \cdf{class}, \cdf{slot-definition},
@@ -39,12 +56,28 @@ classes. The results are undefined if an attempt is made to define a class that
 is a subclass of more than one basic metaobject class. A metaobject is an
 instance of a metaobject class. 
 
+Для каждого элемента CLOS программы существует соответствующий базовый
+метаобъектный класс. Все классы: \cdf{class}, \cdf{slot-definition},
+\cdf{generic-function}, \cdf{method} 
+и \cdf{method-combination}. Метаобъектный класс является подклассом только
+одного из вышеперечисленных. При попытке определить класс, которые наследует
+более одного базового метакласса поведение непресказуемо. Метаобъект является
+экземпляром метакласса.
+
 Each metaobject represents one program element. Associated with each metaobject
 is the information required to serve its role. This includes information that
 might be provided directly in a user interface macro such as \cdf{defclass} or
 \cdf{defmethod}. It also includes information computed indirectly from other
 metaobjects such as that computed from class inheritance or the full set of
 methods associated with a generic function. 
+
+Каждый метаобъект представляет один элемент CLOS программы. С каждым
+метаобъектом связана информация, которая необходима для выполнения им своей
+роли. Она включает информацию, которая может быть предоставлена напрямую в
+пользовательский макрос, такой, например, как \cdf{defclass} или
+\cdf{defmethod}. Она также включает информацию, вычисляемую ненапрямую от других
+метаобъектов, так, например, вычисление информации из иерархии классов или
+полного множества методов связанных с обобщённой функцией.
 
 Much of the information associated with a metaobject is in the form of
 connections to other metaobjects. This interconnection means that the role of a
@@ -53,36 +86,67 @@ this interconnected structure, this section presents a partial enumeration of
 the kinds of information associated with each kind of metaobject. More detailed
 information is presented later. 
 
+Много информации связанной с метаобъектом находится в виде виде связи с другими
+метаобъектами. Такая взаимосвязь означает, что роль метаобъекта всегда основана
+на других метаобъектах. В качестве введения структуру данных взаимосвязей,
+данный раздел предоставляет частичное перечисление типов информации связанной с
+каждым типов метаобъектов. Более подробная информация будет предоставлена позже.
+
 \subsubsection{Classes}
+
+\subsubsection{Классы}
 
 A \emph{class metaobject} determines the structure and the default behavior of its
 instances. The following information is associated with class metaobjects: 
 
+\emph{Классовые метаобъекты} определяют структуру и поведение по-умолчанию для
+их экземпляров. С классовыми метаобъектами связана следующая информация:
 
   \begin{itemize}
   \item 
     The name, if there is one, is available as an object.
 
   \item 
+    Имя, если оно существует, доступно как объект.
+
+  \item 
     The direct subclasses, direct superclasses and class precedence list are
     available as lists of class metaobjects. 
+
+  \item 
+    Прямые подклассы, прямые суперклассы и список предшествования классов
+    доступны как списки классовых метаобъектов.
 
   \item 
     The slots defined directly in the class are available as a list of direct
     slot definition metaobjects. The slots which are accessible in instances of
     the class are available as a list of effective slot definition metaobjects.
 
+  \item
+    Слоты прямо определённые в классе доступны как список прямых слотовых
+    метаобъектов. Слоты, которые доступны в экземплярах класса доступны как
+    список действительных слотовых метаобъектов. FIXME
+
   \item 
     The documentation is available as a string or \cdf{nil}.
+
+  \item 
+    Документация доступна как строка или \cdf{nil}.
 
   \item 
     The methods which use the class as a specializer, and the generic functions
     associated with those methods are available as lists of method and generic
     function metaobjects respectively. 
+
+  \item 
+    Методы, которые используют класс в качестве специализатора, и обобщённые
+    функции, связанные с этими методами, доступны как списки методовых или
+    функциональных метаобъектов соответственно.
   \end{itemize}
 
-
 \subsubsection{Slot Definitions}
+
+\subsubsection{Определения слотов}
 
 A \emph{slot definition metaobject} contains information about the definition of a
 slot. There are two kinds of slot definition metaobjects. A direct slot
@@ -92,6 +156,14 @@ forms. An effective slot definition metaobject is used to represent information,
 including inherited information, about a slot which is accessible in instances
 of a particular class. 
 
+\emph{Слотовый метаобъект} содержит информацию об определении слота. Существуют
+два вида этих метаобъектов. Прямой слотовой метаобъект используется для
+представления определённых слотов напрямую в классе. Он приблизительно отвечает
+за спецификаторы слотов, указанные в формах \cdf{defclass}. Метаобъект
+действующего слота отображает информацию, которая включает информацию об
+унаследованных свойствах слота, о слотах, которые доступны в экземплярах
+отдельно взятого класса.
+
 Associated with each class metaobject is a list of direct slot definition
 metaobjects representing the slots defined directly in the class. Also
 associated with each class metaobject is a list of effective slot definition
@@ -100,7 +172,6 @@ class.
 
 The following information is associated with both direct and effective slot
 definitions metaobjects: 
-
 
   \begin{itemize}
   \item 
@@ -226,7 +297,7 @@ A \emph{method metaobject} contains information about a specific method.
 
 \subsubsection{Specializers}
 
-A specializer metaobject represents the specializers of a method. Class
+A \emph{specializer metaobject} represents the specializers of a method. Class
 metaobjects are themselves specializer metaobjects. A special kind of
 specializer metaobject is used for \emph{eql} specializers.
 
@@ -825,22 +896,22 @@ after :function are assumed to be additional initargs returned from the call to
 \label{example-3}
 \begin{lisp}
 (defmethod move :before ((p position) (l (eql 0))\\*
-~~~~~~~~~~~~~~~~~~~~~~~~ \&optional (visiblyp t)\\*
-~~~~~~~~~~~~~~~~~~~~~~~~ \&key color)\\*
+~~~~~~~~~~~~~~~~~~~~~~~~~\&optional (visiblyp t)\\*
+~~~~~~~~~~~~~~~~~~~~~~~~~\&key color)\\*
 ~~(set-to-origin p)\\*
 ~~(when visiblyp (show-move p 0 color)))\\*
 \\
 (let ((\#:g001 (ensure-generic-function 'move)))\\*
 ~~(add-method \#:g001\\*
 ~~~~(make-instance (generic-function-method-class \#:g001)\\*
-~~~~~~~~~~~~~~~~~~ ':qualifiers '(:before)\\*
-~~~~~~~~~~~~~~~~~~ ':specializers (list (find-class 'position)\\*
+~~~~~~~~~~~~~~~~~~~':qualifiers '(:before)\\*
+~~~~~~~~~~~~~~~~~~~':specializers (list (find-class 'position)\\*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(intern-eql-specializer 0))\\*
-~~~~~~~~~~~~~~~~~~ ':lambda-list '(p l \&optional (visiblyp t)\\*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \&key color)\\*
-~~~~~~~~~~~~~~~~~~ ':function (function~~method-lambda)\\*
-~~~~~~~~~~~~~~~~~~ 'additional-initarg-1 't\\*
-~~~~~~~~~~~~~~~~~~ 'additional-initarg-2 '39)))\\*
+~~~~~~~~~~~~~~~~~~~':lambda-list '(p l \&optional (visiblyp t)\\*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\&key color)\\*
+~~~~~~~~~~~~~~~~~~~':function (function~~method-lambda)\\*
+~~~~~~~~~~~~~~~~~~~'additional-initarg-1 't\\*
+~~~~~~~~~~~~~~~~~~~'additional-initarg-2 '39)))\\*
 \end{lisp}
 \end{figure}
 
@@ -1378,7 +1449,7 @@ specializers of each method. The following is an example of the format for a
 method signature: 
 
 \begin{defun}[Primary Method]
-Primary Method gf1 (x class) y &optional z &key k
+gf1 (x class) y &optional z &key k
 
 This signature indicates that this primary method on the generic function gf1
 has two required parameters, named x and y. In addition, there is an optional

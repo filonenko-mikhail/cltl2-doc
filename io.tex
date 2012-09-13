@@ -6,6 +6,9 @@
 \chapter{Input/Output}
 \label{IO}
 
+%\chapter{Система ввода/вывода}
+%\label{IO}
+
 Common Lisp provides a rich set of facilities for performing input/output.
 All input/output operations are performed on streams of various kinds.
 This chapter is devoted to stream data transfer operations.
@@ -23,7 +26,24 @@ or a \cd{PL/I} \cd{PUT EDIT} statement.  The most useful I/O operations,
 however, read and write printed representations of arbitrary
 Lisp objects.
 
+Common Lisp содержит богатый функционал для выполнения операций ввода/вывода.
+Все эти операции производятся на различного вида потоках.
+Данная глава посвящена тому, как оперировать данными в потоках.
+Потоки обсуждаются в главе~\ref{STREAM}, а способы работы с файлами
+через потоки в главе~\ref{FILES}.
+
+Большинство операций ввода/вывода в Common Lisp'е читают и записывают строковые
+символы, но также есть функции и для бинарных данных.
+Есть простые примитивы для чтения и записи одного символа
+или строк данных. Функция \cdf{format} функции может выполнять сложное
+форматирование выходных данных, направленных управляющей строкой как в выражении
+\cdf{FORMAT} в Fortran'е или в \cd{PUT EDIT} в \cd{PL/I}.
+Однако, самые полезные операции ввода/вывода читают и записывает выводимые
+представления произвольных Lisp'овых объектов.
+
 \section{Printed Representation of Lisp Objects}
+
+%\section{Выводимое представление Lisp'овых объектов}
 
 Lisp objects in general are not text strings but complex data structures.
 They have very different properties from text strings as a consequence of
@@ -39,15 +59,34 @@ stream, interprets them as a printed representation of a Lisp object,
 builds that object, and returns it; the collection of routines
 that does this is called the (Lisp) \emph{reader}.
 \indexterm{printer}
-%\indexterm{printed representation}
+\indexterm{printed representation}
 \indexterm{reader}
 
-Ideally, one could print a Lisp object and then read the printed
-representation back in, and so obtain the same identical object.
-In practice this is difficult and for some purposes not even desirable.
-Instead, reading a printed representation produces an object
-that is (with obscure technical exceptions)
-\cdf{equal} to the originally printed object.
+В общем случае Lisp'овые объекты являются не строками, а сложными структурами
+данных.  Как следствие их внутреннего представления, свойства этих объектов
+очень отличается от свойств строк. Однако, для того, чтобы можно было
+повествовать о Lisp'овых объектах, Lisp большинство объектов отображает в форме
+текста. Это называется \emph{выводимое представление}, которое используется для
+ввода/вывода, а также в примерах в данной книге. Такие функции, как \cdf{print},
+принимают Lisp'овый объект и посылают строковые символы выводимого представления
+в поток. Коллекция этих функций называется (Lisp'овым) \emph{принтером}. Функция
+\cdf{read} принимает строковые символы из потока, интерпретирует их как
+представление некоторого Lisp'ового объекта, создаёт этот объект и возвращает
+его. Коллекция этих функций называется (Lisp'овым) \emph{считывателем}.
+\indexterm{printer}
+\indexterm{printed representation}
+\indexterm{reader}
+
+Ideally, one could print a Lisp object and
+then read the printed representation back in, and so obtain the same identical
+object.  In practice this is difficult and for some purposes not even desirable.
+Instead, reading a printed representation produces an object that is (with
+obscure technical exceptions) \cdf{equal} to the originally printed object.
+
+В идеале, можно вывести Lisp'овый объект, а затем прочесть его обратно и
+получить идентичный первому объект. На практике это сделать сложнее, а в
+некоторых случаях это и не желательно. Вместо этого, считывание выводимого
+представления создаёт объект, который равен \cdf{equal} оригинальному объекту.
 
 Most Lisp objects have more than one possible printed representation.
 For example, the integer twenty-seven can be written in any of these ways:
@@ -65,18 +104,45 @@ The last example, which is spread over three lines, may be ugly, but it
 is legitimate.  In general, wherever whitespace is permissible in a printed
 representation, any number of spaces and newlines may appear.
 
+Большинство Lisp'овых объектов имеют более одного представления. Например, целое
+число двадцать семь может быть записано одним из способов:
+\begin{lisp}
+27~~~~27.~~~~\#o33~~~~\#x1B~~~~\#b11011~~~~\#.(* 3 3 3)~~~~81/3
+\end{lisp}
+Список двух символов \cdf{A} и \cdf{B} может быть записан в виде:
+\begin{lisp}
+~~~~(A B)~~~~(a b)~~~~(~~a~~b~)~~~~({\Xbackslash}A |B|) \\
+~~~~(|{\Xbackslash}A| \\
+~~B \\
+)
+\end{lisp}
+Последний пример, который занимает три строки, может и некрасив, но вполне
+законен. В общем случае, везде в представлении, где разрешены пробелы, может
+встречаться любое количество пробелов или знаков перевода строки.
+
 When \cdf{print} produces a printed representation, it must choose arbitrarily
 from among many possible printed representations.  It attempts to choose
 one that is readable.  There are a number of global variables that can
 be used to control the actions of \cdf{print}, and a number of different
 printing functions.
 
+Когда \cdf{print} выводит представление объекта, она должна произвольно выбрать
+одно из возможных представлений. Она пытается выбрать то, которое может быть
+прочитано считывателем. В Common Lisp'е представлено некоторое количество
+глобальных переменных, которые могут изменять поведение \cdf{print}, и некоторое
+количество различных функций для вывода.
+
 This section describes in detail what is the standard printed
 representation for any Lisp object and also describes how \cdf{read} operates.
+
+Этот раздел детально описывает, что является стандартным выводимым
+представлением для любого Lisp'ового объекта, и также описывает то, как работает
+\cdf{read}.
 
 \subsection{What the Read Function Accepts}
 \label{READER}
 \indexterm{reader}
+
 The purpose of the Lisp reader is to accept characters, interpret them
 as the printed representation of a Lisp object, and construct and
 return such an object.  The reader cannot accept everything that the
@@ -88,6 +154,16 @@ abbreviations for frequently used but unwieldy constructs.  The reader is
 also parameterized in such a way that it can be used as a lexical
 analyzer for a more general user-written parser.
 
+Целью Lisp'ового считывателя (ридера) является чтение символов, интерпретация их
+как Lisp'ового объекта, создание и возврат этого объекта.
+Считыватель (ридер) не может прочесть все возможные выводимые представления
+объектов, например невозможно прочесть представление скомпилированного
+кода. Однако считыватель (ридер) содержит много таких возможностей, которые не
+используются при выводе. К ним относятся комментарии, альтернативные
+представления и удобные аббревиатуры для частоиспользуемых но тяжеловесных
+конструкций. Считыватель также может быть настроен так, чтобы использоваться в
+качестве лексического анализатора для более общих пользовательских парсеров.
+
 The reader is organized as a recursive-descent parser.
 Broadly speaking,
 the reader operates by reading a character from
@@ -98,6 +174,15 @@ to make a \emph{token}, which is then interpreted as a number or symbol.
 Macro characters trigger the invocation of functions (possibly
 user-supplied) that can perform arbitrary parsing actions,
 including recursive invocation of the reader.
+
+Считыватель выполнен как рекурсивный нисходящий парсер.  Проще говоря,
+считыватель считывает строковый символ из входящего потока и обрабатывает его
+одним из трёх способов.  Пробельные строковые символы расцениваются как
+разделители, более одного игнорируются. Обычные и экранирующие строковые символы
+накапливаются и составляют \emph{токен}, которые затем интерпретирует как число
+или символ. Макросимволы запускают (вызывают) функцию (возможно
+пользовательскую), которая выполняет произвольный парсинг, которые может
+содержать рекурсивный вызов считывателя.
 
 More precisely,
 when the reader is invoked, it reads a single character from the input stream
@@ -121,6 +206,24 @@ Constituents additionally have one or more attributes,
 the most important of which is \emph{alphabetic}; these attributes are discussed
 further in section~\ref{PARSE-TOKENS-SECTION}.
 
+Более точное описание: когда вызывается считыватель, он читает один строковый
+символ из входящего потока и действует в зависимости от типа данного символа.
+Каждый символ, который может встретиться во входящем потоке должен принадлежать
+только определённым типам:
+\emph{некорректный},
+\emph{пробельный},
+\emph{обычный},
+\emph{одиночный экранирующий},
+\emph{много экранирующий}, or
+\emph{макросимвол}.
+Макросимволы в свою очередь делятся на \emph{терминальные} и
+\emph{нетерминальные}. (Следует отметить, что макросимволы не имеют ничего
+общего с макросами. Подобие заключается в том, что макросы позволяют расширить
+синтаксис Common Lisp'а на уровне форм, тогда как макросимволы позволяют
+расширить синтаксис на уровне строковых символов.)
+Обычные символы имеют один или более атрибутов, наиболее важный из них это
+\emph{алфавитный}. Эти атрибуты описаны далее в разделе~\ref{PARSE-TOKENS-SECTION}.
+
 The parsing of Common Lisp expressions is discussed in terms of these
 syntactic character types because the types of individual characters
 are not fixed
@@ -140,6 +243,20 @@ The primary intent
 is that they be used as macro characters; but a user might choose,
 for example, to make \cd{!} be a \emph{single escape} character
 (as it is in Portable Standard Lisp).
+
+Парсинг Common Lisp'овых выражений описан в терминах типов синтаксических
+символов, так как типы отдельных символов не фиксированы и могут быть изменены
+пользователем (смотрите \cdf{set-syntax-from-char} и \cdf{set-macro-character}).
+Символы из стандартного множества имеют типы указанные в
+таблице~\ref{Standard-Character-Syntax-Table}.  Следует отметить, что
+квадратные, фигурные скобки, вопросительные знак и восклицательный знак (то
+есть, \cd{{\Xlbracket}}, \cd{{\Xrbracket}}, \cd{{\Xlbrace}}, \cd{{\Xrbrace}},
+\cd{?}, и \cd{!}) являются обычными символами, но они не используются в
+стандартном Common Lisp'е и не встречаются в именах системных функций и
+переменных.  Эти символы явно зарезервированы для нужд пользователя.  Главная
+цель в том, чтобы использовать эти символы в качестве макросимволов, но
+пользователь также может, например, сделать символ \cd{!} \emph{одиночным
+  экранирующим} символом (как в Portable Standard Lisp).
 
 \begin{table}
 \caption{Standard Character Syntax Types}
@@ -191,6 +308,55 @@ any other desired purpose.
 \end{small}
 \end{table}
 
+\begin{table}
+\caption{Стандартные типы символьного синтакса}
+\label{Standard-Character-Syntax-Table}
+
+\begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
+$\langle$tab$\rangle$\cd{~~}\emph{пробел}&$\langle$page$\rangle$\cd{~~}\emph{пробел}&$\langle$newline$\rangle$\cd{~~}\emph{пробел} \\
+$\langle$space$\rangle$\cd{~~}\emph{пробел}&\cd{{\Xatsign}~~}\emph{обычный}&\cd{{\Xbq}~~}\emph{терминальный макрос} \\
+\cd{!~~}\emph{обычный} *&\cd{A~~}\emph{обычный}&\cd{a~~}\emph{обычный} \\
+\cd{"~~}\emph{терминальный макрос}&\cd{B~~}\emph{обычный}&\cd{b~~}\emph{обычный} \\
+\cd{\#~~}\emph{не-терминальный макрос}&\cd{C~~}\emph{обычный}&\cd{c~~}\emph{обычный} \\
+\cd{\$~~}\emph{обычный}&\cd{D~~}\emph{обычный}&\cd{d~~}\emph{обычный} \\
+\cd{\%~~}\emph{обычный}&\cd{E~~}\emph{обычный}&\cd{e~~}\emph{обычный} \\
+\cd{\&~~}\emph{обычный}&\cd{F~~}\emph{обычный}&\cd{f~~}\emph{обычный} \\
+\cd{'~~}\emph{терминальный макрос}&\cd{G~~}\emph{обычный}&\cd{g~~}\emph{обычный} \\
+\cd{(~~}\emph{терминальный макрос}&\cd{H~~}\emph{обычный}&\cd{h~~}\emph{обычный} \\
+\cd{)~~}\emph{терминальный макрос}&\cd{I~~}\emph{обычный}&\cd{i~~}\emph{обычный} \\
+\cd{*~~}\emph{обычный}&\cd{J~~}\emph{обычный}&\cd{j~~}\emph{обычный} \\
+\cd{+~~}\emph{обычный}&\cd{K~~}\emph{обычный}&\cd{k~~}\emph{обычный} \\
+\cd{,~~}\emph{терминальный макрос}&\cd{L~~}\emph{обычный}&\cd{l~~}\emph{обычный} \\
+\cd{-~~}\emph{обычный}&\cd{M~~}\emph{обычный}&\cd{m~~}\emph{обычный} \\
+\cd{.~~}\emph{обычный}&\cd{N~~}\emph{обычный}&\cd{n~~}\emph{обычный} \\
+\cd{/~~}\emph{обычный}&\cd{O~~}\emph{обычный}&\cd{o~~}\emph{обычный} \\
+\cd{0~~}\emph{обычный}&\cd{P~~}\emph{обычный}&\cd{p~~}\emph{обычный} \\
+\cd{1~~}\emph{обычный}&\cd{Q~~}\emph{обычный}&\cd{q~~}\emph{обычный} \\
+\cd{2~~}\emph{обычный}&\cd{R~~}\emph{обычный}&\cd{r~~}\emph{обычный} \\
+\cd{3~~}\emph{обычный}&\cd{S~~}\emph{обычный}&\cd{s~~}\emph{обычный} \\
+\cd{4~~}\emph{обычный}&\cd{T~~}\emph{обычный}&\cd{t~~}\emph{обычный} \\
+\cd{5~~}\emph{обычный}&\cd{U~~}\emph{обычный}&\cd{u~~}\emph{обычный} \\
+\cd{6~~}\emph{обычный}&\cd{V~~}\emph{обычный}&\cd{v~~}\emph{обычный} \\
+\cd{7~~}\emph{обычный}&\cd{W~~}\emph{обычный}&\cd{w~~}\emph{обычный} \\
+\cd{8~~}\emph{обычный}&\cd{X~~}\emph{обычный}&\cd{x~~}\emph{обычный} \\
+\cd{9~~}\emph{обычный}&\cd{Y~~}\emph{обычный}&\cd{y~~}\emph{обычный} \\
+\cd{:~~}\emph{обычный}&\cd{Z~~}\emph{обычный}&\cd{z~~}\emph{обычный} \\
+\cd{;~~}\emph{терминальный макрос}&\cd{{\Xlbracket}~~}\emph{обычный} *&\cd{{\Xlbrace}~~}\emph{обычный} * \\
+\cd{<~~}\emph{обычный}&\cd{{\Xbackslash}~~}\emph{экранирующий один}&\cd{|~~}\emph{экранирующий много} \\
+\cd{=~~}\emph{обычный}&\cd{{\Xrbracket}~~}\emph{обычный} *&\cd{{\Xrbrace}~~}\emph{обычный} * \\
+\cd{>~~}\emph{обычный}&\cd{{\Xcircumflex}~~}\emph{обычный}&\cd{{\Xtilde}~~}\emph{обычный} \\
+\cd{?~~}\emph{обычный} *&\cd{{\Xunderscore}~~}\emph{обычный}&$\langle$rubout$\rangle$\cd{~~}\emph{обычный} \\
+$\langle$backspace$\rangle$\cd{~~}\emph{обычный}&$\langle$return$\rangle$\cd{~~}\emph{пробел}&$\langle$linefeed$\rangle$\cd{~~}\emph{пробел}
+\end{tabular*}
+\vfill
+\begin{small}
+\noindent
+Символы помеченный звездочкой первоначально являются составной частью, но
+зарезервированы для пользователя в качестве использования макросимволов или для
+других целей.
+\end{small}
+\end{table}
+
 The algorithm performed by the Common Lisp reader is roughly as follows:
 \begingroup\leftmargini 1.5em
 \begin{enumerate}
@@ -236,13 +402,9 @@ then read the next character and call it \emph{y}
 Ignore the usual syntax of \emph{y}
 and pretend it is a \emph{constituent} whose only attribute is
 \emph{alphabetic}.
-\begin{obsolete}
-(If \emph{y} is a lowercase character, leave it alone;
-do not replace it with the corresponding uppercase character.)
-\end{obsolete}
-\begin{newer}
+
 For the purposes of \cdf{readtable-case}, \emph{y} is not replaceable.
-\end{newer}
+
 Use \emph{y} to begin a token, and go to step~\ref{READER-PLAIN-TOKEN}.
 
 \item
@@ -257,16 +419,10 @@ After the entire token is read in, it will be interpreted
 either as representing a Lisp object such as a symbol or number
 (in which case that object is returned as the result of the read operation),
 or as being of illegal syntax (in which case an error is signaled).
-\begin{obsolete}
-If \emph{x} is a lowercase character, replace it with the
-corresponding uppercase character.
-\end{obsolete}
-\begin{newer}
-X3J13 voted in June 1989 \issue{READ-CASE-SENSITIVITY} to introduce
-\cdf{readtable-case}.  Consequently, the preceding sentence
-should be ignored.  The case of \emph{x\/} should not be altered; instead,
+
+The case of \emph{x\/} should not be altered; instead,
 \emph{x} should be regarded as replaceable.
-\end{newer}
+
 Use \emph{x} to begin a token, and go on to step~\ref{READER-PLAIN-TOKEN}.
 
 \item
@@ -280,16 +436,10 @@ perform one of the following actions according to its syntactic type:
 \item
 If \emph{y} is a \emph{constituent} or \emph{non-terminating macro},
 then do the following.
-\begin{obsolete}
-If \emph{y} is a lowercase character, replace it with the
-corresponding uppercase character.
-\end{obsolete}
-\begin{newer}
-X3J13 voted in June 1989 \issue{READ-CASE-SENSITIVITY} to introduce
-\cdf{readtable-case}.  Consequently, the preceding sentence
-should be ignored.  The case of \emph{y\/} should not be altered; instead,
+
+The case of \emph{y\/} should not be altered; instead,
 \emph{y} should be regarded as replaceable.
-\end{newer}
+
 Append \emph{y} to the token being built,
 and repeat step~\ref{READER-PLAIN-TOKEN}.
 
@@ -300,13 +450,9 @@ and call it \emph{z}
 Ignore the usual syntax of \emph{z}
 and pretend it is a \emph{constituent} whose only attribute is
 \emph{alphabetic}.
-\begin{obsolete}
-(If \emph{z} is a lowercase character, leave it alone;
-do not replace it with the corresponding uppercase character.)
-\end{obsolete}
-\begin{newer}
+
 For the purposes of \cdf{readtable-case}, \emph{z} is not replaceable.
-\end{newer}
+
 Append \emph{z} to the token being built,
 and repeat step~\ref{READER-PLAIN-TOKEN}.
 
@@ -342,13 +488,9 @@ If \emph{y} is a \emph{constituent}, \emph{macro}, or \emph{whitespace}
 character, then ignore the usual syntax of that character
 and pretend it is a \emph{constituent} whose only attribute is
 \emph{alphabetic}.
-\begin{obsolete}
-(If \emph{y} is a lowercase character, leave it alone;
-do not replace it with the corresponding uppercase character.)
-\end{obsolete}
-\begin{newer}
+
 For the purposes of \cdf{readtable-case}, \emph{y} is not replaceable.
-\end{newer}
+
 Append \emph{y} to the token being built,
 and repeat step~\ref{READER-MULTI-TOKEN}.
 
@@ -359,13 +501,9 @@ and call it \emph{z}
 Ignore the usual syntax of \emph{z}
 and pretend it is a \emph{constituent} whose only attribute is
 \emph{alphabetic}.
-\begin{obsolete}
-(If \emph{z} is a lowercase character, leave it alone;
-do not replace it with the corresponding uppercase character.)
-\end{obsolete}
-\begin{newer}
+
 For the purposes of \cdf{readtable-case}, \emph{z} is not replaceable.
-\end{newer}
+
 Append \emph{z} to the token being built,
 and repeat step~\ref{READER-MULTI-TOKEN}.
 
@@ -446,12 +584,10 @@ as a symbol, or take some other action.  Programmers should avoid
 the use of such reserved tokens.  (A symbol whose name looks like a reserved
 token can always be written using one or more escape characters.)
 
-\begin{new}
 Just as \emph{bignum} is the standard term used by Lisp implementors for
 very large integers, and \emph{flonum} (rhymes with ``low hum'') refers
 to a floating-point number, the term \emph{potnum} has been used widely
 as an abbreviation for ``potential number.''  ``Potnum'' rhymes with ``hot rum.''
-\end{new}
 
 \goodbreak
 
@@ -975,6 +1111,7 @@ this is a means by which the reader can be extended.
 The macro characters normally defined are as follows:
 \begin{flushdesc}
 \item[\cd{(}]
+\indexterm{(!macro character}
 The left-parenthesis character initiates reading of a pair or list.
 The function~\cdf{read} is called recursively to read successive objects
 until a right parenthesis is found to be next in the input stream.
@@ -1031,6 +1168,7 @@ but a list following a dot
 is a non-standard form that \cdf{print} will never produce.
 
 \item[\cd{)}]
+\indexterm{)!macro character}
 The right-parenthesis character is part of various constructs
 (such as the syntax for lists) using the left-parenthesis character and
 is invalid except when used in such a construct.
@@ -1040,6 +1178,7 @@ is invalid except when used in such a construct.
 \newpage%required
 
 \item[\cd{{\Xquote}}]
+\indexterm{'!macro character}
 The single-quote (accent acute) character provides
 an abbreviation to make it easier to put constants in programs.
 The form
@@ -1048,8 +1187,7 @@ The form
 
 \item[\cd{;}]
 Semicolon is used to write comments.
-%\indexterm{; macro character} fix label
-%\indexterm{;}
+\indexterm{;!macro character}
 \indexterm{comments}
 The semicolon and all characters
 up to and including the next newline are ignored.
@@ -1060,7 +1198,6 @@ token anyway.)
 
 There is no functional difference between using one semicolon and using
 more than one, but the conventions shown here are in common use.
-
 
 \begin{lisp}
 ;;;; COMMENT-EXAMPLE function. \\
@@ -1093,20 +1230,25 @@ continued lines of the comment one space (after the
 semicolon).
 
 \item
+\indexterm{;;!macro character}
 Double-semicolon comments are aligned to the level of indentation
 of the code.  A space conventionally follows the two semicolons.
 Such comments usually describe the state of the program at that point
 or the code section that follows the comment.
 
 \item
+\indexterm{;;;!macro character}
 Triple-semicolon comments are aligned to the left margin.
 They usually document whole programs or large code blocks.
 
 \item
+\indexterm{;;;;!macro character}
 Quadruple-semicolon comments usually indicate titles of whole programs or large code blocks.
 \end{itemize}
 
 \item[\cd{"}]
+%\indexterm{"!macro character}
+\indexterm{'doublequote!macrocharacter} % quote needed for sorting
 The double quote character begins the printed representation
 of a string.
 Successive characters are read from the input stream and accumulated until
@@ -1119,15 +1261,12 @@ characters up to but not including the matching double quote are
 made into a simple string and returned.
 
 \item[\cd{{\Xbq}}]
+\indexterm{`!macro character}
 The backquote (accent grave) character
 makes it easier to write programs to construct complex data structures by
 using a template.
 \label{BACKQUOTE}
-\begin{new}%CORR
-\emph{Notice of correction.}
-In the first edition, the backquote character $\langle$\cd{\Xbq}$\rangle$
-appearing at the left margin above was inadvertently omitted.
-\end{new}
+
 As an example, writing
 \begin{lisp}
 {\Xbq}(cond ((numberp ,x) ,{\Xatsign}y) (t (print ,x) ,{\Xatsign}y))
@@ -1288,13 +1427,13 @@ of the use of nested backquotes.
 \end{new}
 
 \item[\cd{,}]
+\indexterm{,!macro character}
 The comma character is part of the backquote syntax
 and is invalid if used other than inside the body of a backquote
 construction as described above.
-%\indexterm{\cd{, }macro character} fix label
-%\indexterm{,}
 
 \item[\cd{\#}]
+\indexterm{'diez!macro character}
 This is a \emph{dispatching} macro character.
 It reads an optional digit string and then one more character,
 and uses that character to select a function to run as a macro-character
@@ -1308,6 +1447,7 @@ also the only standard non-terminating macro character.
 
 See the next section for predefined \cd{\#} macro-character constructions.
 \end{flushdesc}
+
 
 \subsection{Standard Dispatching Macro Character Syntax}
 \label{SHARP-SIGN-MACRO-CHARACTER-SECTION}
@@ -1388,6 +1528,7 @@ are explicitly reserved for the user and will never be defined by the
 Common Lisp standard.
 \begin{flushdesc}
 \item[\cd{\#{\Xbackslash}}]
+\indexterm{'diezbackslash!macro character}
 \cd{\#{\Xbackslash}\emph{x}} reads in as a character object that represents the
 character \emph{x}.  Also, \cd{\#{\Xbackslash}\emph{name}} reads in as the character object
 whose name is \emph{name}.
@@ -5736,72 +5877,7 @@ and why it requires a multiple-action sequence to answer it.
 
 %\else %RUSSIAN
 
-%\chapter{Input/Output}
-%\label{IO}
 
-% Common Lisp содержит богатый функционал для выполнения операций ввода/вывода.
-% Все эти операции производятся на различного вида потоках.
-% Данная глава посвящена тому, как оперировать данными в потоках.
-% Потоки обсуждаются в главе~\ref{STREAM}, а способы работы с файлами
-% через потоки в главе~\ref{FILES}.
-
-% Большинство операций ввода/вывода в Common Lisp'е читают и записывают строковые
-% символы, но также есть функции и для бинарных данных.
-% Есть простые примитивы для чтения и записи одного символа
-% или строк данных. Функция \cdf{format} функции может выполнять сложное
-% форматирование выходных данных, направленных управляющей строкой как в выражении
-% \cdf{FORMAT} в Fortran'е или в \cd{PUT EDIT} в \cd{PL/I}.
-% Однако, самые полезные операции ввода/вывода читают и записывает выводимые
-% представления произвольных Lisp'овых объектов.
-
-% \begin{table}
-% \caption{Стандартные типы символьного синтакса}
-% \label{Standard-Character-Syntax-Table}
-
-% \begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
-% $\langle$tab$\rangle$\cd{~~}\emph{пробел}&$\langle$page$\rangle$\cd{~~}\emph{пробел}&$\langle$newline$\rangle$\cd{~~}\emph{пробел} \\
-% $\langle$space$\rangle$\cd{~~}\emph{пробел}&\cd{{\Xatsign}~~}\emph{составная часть}&\cd{{\Xbq}~~}\emph{терминальный макрос} \\
-% \cd{!~~}\emph{составная часть} *&\cd{A~~}\emph{составная часть}&\cd{a~~}\emph{составная часть} \\
-% \cd{"~~}\emph{терминальный макрос}&\cd{B~~}\emph{составная часть}&\cd{b~~}\emph{составная часть} \\
-% \cd{\#~~}\emph{не-терминальный макрос}&\cd{C~~}\emph{составная часть}&\cd{c~~}\emph{составная часть} \\
-% \cd{\$~~}\emph{составная часть}&\cd{D~~}\emph{составная часть}&\cd{d~~}\emph{составная часть} \\
-% \cd{\%~~}\emph{составная часть}&\cd{E~~}\emph{составная часть}&\cd{e~~}\emph{составная часть} \\
-% \cd{\&~~}\emph{составная часть}&\cd{F~~}\emph{составная часть}&\cd{f~~}\emph{составная часть} \\
-% \cd{'~~}\emph{терминальный макрос}&\cd{G~~}\emph{составная часть}&\cd{g~~}\emph{составная часть} \\
-% \cd{(~~}\emph{терминальный макрос}&\cd{H~~}\emph{составная часть}&\cd{h~~}\emph{составная часть} \\
-% \cd{)~~}\emph{терминальный макрос}&\cd{I~~}\emph{составная часть}&\cd{i~~}\emph{составная часть} \\
-% \cd{*~~}\emph{составная часть}&\cd{J~~}\emph{составная часть}&\cd{j~~}\emph{составная часть} \\
-% \cd{+~~}\emph{составная часть}&\cd{K~~}\emph{составная часть}&\cd{k~~}\emph{составная часть} \\
-% \cd{,~~}\emph{терминальный макрос}&\cd{L~~}\emph{составная часть}&\cd{l~~}\emph{составная часть} \\
-% \cd{-~~}\emph{составная часть}&\cd{M~~}\emph{составная часть}&\cd{m~~}\emph{составная часть} \\
-% \cd{.~~}\emph{составная часть}&\cd{N~~}\emph{составная часть}&\cd{n~~}\emph{составная часть} \\
-% \cd{/~~}\emph{составная часть}&\cd{O~~}\emph{составная часть}&\cd{o~~}\emph{составная часть} \\
-% \cd{0~~}\emph{составная часть}&\cd{P~~}\emph{составная часть}&\cd{p~~}\emph{составная часть} \\
-% \cd{1~~}\emph{составная часть}&\cd{Q~~}\emph{составная часть}&\cd{q~~}\emph{составная часть} \\
-% \cd{2~~}\emph{составная часть}&\cd{R~~}\emph{составная часть}&\cd{r~~}\emph{составная часть} \\
-% \cd{3~~}\emph{составная часть}&\cd{S~~}\emph{составная часть}&\cd{s~~}\emph{составная часть} \\
-% \cd{4~~}\emph{составная часть}&\cd{T~~}\emph{составная часть}&\cd{t~~}\emph{составная часть} \\
-% \cd{5~~}\emph{составная часть}&\cd{U~~}\emph{составная часть}&\cd{u~~}\emph{составная часть} \\
-% \cd{6~~}\emph{составная часть}&\cd{V~~}\emph{составная часть}&\cd{v~~}\emph{составная часть} \\
-% \cd{7~~}\emph{составная часть}&\cd{W~~}\emph{составная часть}&\cd{w~~}\emph{составная часть} \\
-% \cd{8~~}\emph{составная часть}&\cd{X~~}\emph{составная часть}&\cd{x~~}\emph{составная часть} \\
-% \cd{9~~}\emph{составная часть}&\cd{Y~~}\emph{составная часть}&\cd{y~~}\emph{составная часть} \\
-% \cd{:~~}\emph{составная часть}&\cd{Z~~}\emph{составная часть}&\cd{z~~}\emph{составная часть} \\
-% \cd{;~~}\emph{терминальный макрос}&\cd{{\Xlbracket}~~}\emph{составная часть} *&\cd{{\Xlbrace}~~}\emph{составная часть} * \\
-% \cd{<~~}\emph{составная часть}&\cd{{\Xbackslash}~~}\emph{экранирующий один}&\cd{|~~}\emph{экранирующий много} \\
-% \cd{=~~}\emph{составная часть}&\cd{{\Xrbracket}~~}\emph{составная часть} *&\cd{{\Xrbrace}~~}\emph{составная часть} * \\
-% \cd{>~~}\emph{составная часть}&\cd{{\Xcircumflex}~~}\emph{составная часть}&\cd{{\Xtilde}~~}\emph{составная часть} \\
-% \cd{?~~}\emph{составная часть} *&\cd{{\Xunderscore}~~}\emph{составная часть}&$\langle$rubout$\rangle$\cd{~~}\emph{составная часть} \\
-% $\langle$backspace$\rangle$\cd{~~}\emph{составная часть}&$\langle$return$\rangle$\cd{~~}\emph{пробел}&$\langle$linefeed$\rangle$\cd{~~}\emph{пробел}
-% \end{tabular*}
-% \vfill
-% \begin{small}
-% \noindent
-% Символы помеченный звездочкой первоначально являются составной частью, но
-% зарезервированы для пользователя в качестве использования макросимволов или для
-% других целей.
-% \end{small}
-% \end{table}
 % \begin{table}[t]
 % \caption{Синтаксис чисел}
 % \label{NUMBER-SYNTAX-TABLE}

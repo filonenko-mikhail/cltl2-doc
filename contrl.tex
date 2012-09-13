@@ -4038,8 +4038,8 @@ such constructs will use {\false} as the test value if zero values are returned.
 \label{CATCH-THROW-SECTION}
 \indexterm{non-local exit}
 \indexterm{dynamic exit}
-\indexterm{catch}
-\indexterm{throw}
+%\indexterm{catch}
+%\indexterm{throw}
 
 Common Lisp provides a facility for exiting from a complex process
 in a non-local, dynamically scoped manner.  There are two classes of
@@ -5000,7 +5000,7 @@ setf {place newvalue}*
 \cd{(setf \emph{place} \emph{newvalue})} принимает форму \emph{place}, которая
 при своём вычислении получает доступ к объекту в некотором месте хранения и
 <<инвертирует>> эту форму в соответствующую форму \emph{изменения}.
-Таким образом вызов макроса \cdf{setf} разворачивается в форму изменения,
+Таким образом вызов макроса \cdf{setf} разворачивается в форму изменения, 
 которая сохраняет результат вычисления формы \emph{newvalue} в место хранения,
 на которое ссылалась форма доступа.
 
@@ -5062,12 +5062,10 @@ setf {place newvalue}*
 определение функции, и не ссылается на локальное определение или макрос.
 
 \item
-A function call form whose first element is the name of
-any one of the following functions, provided that the new value
-
-is of the specified type so that it can be used to
-replace the specified ``location'' (which is in each of these cases
-not truly a generalized variable):
+Формой вызова функции, у которой первый элемент является именем одной из
+следующих функции. В этом случае новое значение, указанного ниже типа, замещает
+значение в указанном <<месте>> (которое не является обобщённой переменной в обычном
+понимании этого термина).
 
 \begin{flushleft}
 \leavevmode
@@ -5093,22 +5091,18 @@ by some such phrase as ``the element-type of the argument vector.''
 Это правило применяется только когда имя функции ссылается на глобальное, а не
 локальное определение функции.
 
-In the case of \cdf{subseq}, the replacement value must be a sequence
-whose elements may be contained by the sequence argument to \cdf{subseq}.
-(Note that this is not so stringent as to require that the
-replacement value be a sequence of the same type as the sequence
-of which the subsequence is specified.)
-If the length of the replacement value does not equal the length of
-the subsequence to be replaced, then the shorter length determines
-the number of elements to be stored, as for the function \cdf{replace}.
+В случае использования \cdf{subseq}, новое значение должно быть
+последовательностью, элементы которой могут быть вставлены в последовательность
+из аргумента для \cdf{subseq}.
+Если длина нового значения не совпадает с длиной замещаемой последовательности,
+тогда используется наименьшая указанная длина, как и для функции \cdf{replace}.
 
 \item
 Форма вызова функции, первый элемент которой является именем одной из
 следующих функций при условии, что указанный аргумент этой функции в свою
 очередь является формой \emph{place}. 
-in this case the new \emph{place} has stored back into it the
-result of applying the specified ``update'' function
-(which is in each of these cases not a true update function): FIXME
+В этом случае новое значение \emph{place} сохраняется в то место, доступ к
+которому был получен с помощью функци.
 
 \begin{flushleft}
 \begin{tabular}{@{}lll@{}}
@@ -5137,17 +5131,18 @@ result of applying the specified ``update'' function
 \item 
 Вызов функции \cdf{apply}, в которой первый аргумент является функцией, которая
 может является \emph{местом} для \cdf{setf}.
-That is, \cd{(function \emph{name})}, where \emph{name}
-is the name of a function, calls to which are recognized as places by \cdf{setf}.
-Suppose that the use of \cdf{setf} with \cdf{apply} looks like this:
+То есть, \cd{(function \emph{name})}, где \emph{name} является именем функции,
+вызов которой может рассматриваться как места для присваивания с помощью \cdf{setf}.
+
+Использование \cdf{setf} с \cdf{apply} выглядит как:
 \begin{lisp}
 (setf (apply \#'\emph{name} \emph{x1} \emph{x2} ... \emph{xn} \emph{rest}) \emph{x0})
 \end{lisp}
-The \cdf{setf} method for the function \emph{name} must be such that
+\cdf{setf} метод для функции \emph{name} должен быть такой
 \begin{lisp}
 (setf (\emph{name} \emph{z1} \emph{z2} ... \emph{zm}) \emph{z0})
 \end{lisp}
-expands into a store form
+чтобы разворачивается в форму сохранения значения
 \begin{lisp}
 (\emph{storefn} \emph{zi${}_1$} \emph{zi${}_2$} ... \emph{zi${}_k$} \emph{zm})
 \end{lisp}
@@ -5158,31 +5153,32 @@ call must be the same as the last argument of the access call.
 See \cdf{define-setf-method} for more details on accessing
 and storing forms.
 
-Given this, the \cdf{setf}-of-\cdf{apply} form shown above expands into
+Смотрите \cdf{define-setf-method} для подробного описания форм для доступа и
+сохранения значений.
+
+Таким образом форма \cdf{setf}-для-\cdf{apply}, показанная выше, разворачивается в
 \begin{lisp}
 (apply \#'\emph{storefn} \emph{xi${}_1$} \emph{xi${}_2$} ... \emph{xi${}_k$} \emph{rest})
 \end{lisp}
-As an example, suppose that the variable \cdf{indexes} contains a list
-of subscripts for a multidimensional array \emph{foo} whose rank is not
-known until run time.  One may access the indicated
-element of the array by writing
+В качестве примера, предположим, что переменная \cdf{indexes} содержит список
+индексов для многомерного массива \emph{foo}, ранг которого известен только во
+время выполнения. Для доступа к элементам массива можно использовать
 \begin{lisp}
 (apply \#'aref foo indexes)
 \end{lisp}
-and one may alter the value of the indicated element to that
-of \cdf{newvalue} by writing
+и для изменения элемента на значение \cdf{newvalue} можно использовать
 \begin{lisp}
 (setf (apply \#'aref foo indexes) newvalue)
 \end{lisp}
 
-Это правило применяется только тогда, когда имя функции ссылается глобальное
+Это правило применяется только тогда, когда имя функции ссылается на глобальное
 определение функции, и не ссылается на локальное определение или макрос.
 
 \item 
 Макровызов, в случае чего \cdf{setf} разворачивает макровызов и затем
 анализирует полученную форму.
 
-Этот шаг используется \cdf{macroexpand-1}, но не \cdf{macroexpand}.  Это
+Этот шаг использует \cdf{macroexpand-1}, но не \cdf{macroexpand}.  Это
 позволяет пременить какое-либо из предшествующих правил.
 
 \item 
@@ -5191,27 +5187,23 @@ of \cdf{newvalue} by writing
 
 Это правило применяется только тогда, когда имя функции ссылается глобальное
 определение функции, и не ссылается на локальное определение или макрос.
-\end{itemize}
 
-\begin{newer}
-X3J13 voted in March 1989 \issue{FUNCTION-NAME} to add one more rule to
-the preceding list, coming after all those listed above:
-\begin{itemize}
-\item  Any other list whose first element is a symbol (call it \emph{f\/}).
-     In this case, the call to \cdf{setf} expands into a call to the function
-     named by the
-     list \cd{(setf~\emph{f\/})} (see section~\ref{FUNCTION-NAME-SECTION}).
-     The first argument is the new value and the
-     remaining arguments are the values of the remaining elements of
-     \emph{place}.  This expansion occurs regardless of whether either \emph{f\/} or
-     \cd{(setf \emph{f\/})} is defined as a function locally, globally, or not at
-     all.  For example,
+\item
+Любой другой список, первый элемент которого является символом (вызов некоторой
+функции \emph{f}). В этом случае, вызов \cdf{setf} разворачивается в вызов
+функции с именем в виде списка \cd{(setf~\emph{f\/})} (смотрите
+раздел~\ref{FUNCTION-NAME-SECTION}). При этом первый передаваемый аргумент
+является новым значением, а остальные --- теми, которые были указаны в
+\emph{place}. Раскрытие осуществляется вне зависимости от того, что и \emph{f}
+и \cd{(setf \emph{f\/})} определены как функции локально, глобально или не
+определены вовсе. Например,
+
 \begin{lisp}
 (setf (\emph{f\/} \emph{arg1} \emph{arg2} ...) \emph{newvalue})
 \end{lisp}
-     expands into a form with the same effect and value as
+раскрывается в форму эквивалентную следующей
 \begin{lisp}
-(let ((\#:temp1 \emph{arg1})~~~~~;\textrm{Force correct order of evaluation} \\*
+(let ((\#:temp1 \emph{arg1})~~~~~;\textrm{Упорядоченное слева направо вычисление} \\*
 ~~~~~~(\#:temp2 \emph{arg2}) \\*
 ~~~~~~... \\*
 ~~~~~~(\#:temp0 newvalue)) \\*
@@ -5220,21 +5212,15 @@ the preceding list, coming after all those listed above:
 ~~~~~~~~~~~\#:temp1 \\*
 ~~~~~~~~~~~\#:temp2 ...))
 \end{lisp}
-By convention, any function named \cd{(setf \emph{f\/})} should return its first
-argument as its only value, in order to preserve the specification that
-\cdf{setf} returns its \emph{newvalue}.
-\end{itemize}
-\end{newer}
+По соглашению, любая функция с именем \cd{(setf \emph{f\/})} в качестве
+единственного значения должна возвращать свой первый аргумент, для следования
+спецификации функции \cdf{setf} о возврате аргумента \emph{newvalue}.
 
-\begin{new}
-X3J13 voted in March 1989
-\issue{SYMBOL-MACROLET-SEMANTICS} to add this case as well:
-\begin{itemize}
-\item A variable reference that refers to a symbol macro definition made by
-\cdf{symbol-macrolet}, in which case \cdf{setf} expands the reference and
-then analyzes the resulting form.
+\item
+Ссылка на переменную, которая ссылается на определение символьного макроса,
+созданного с помощью \cdf{macrolet}. В этом случае \cdf{setf} раскрывается
+данную ссылку и затем анализирует результат.
 \end{itemize}
-\end{new}
 
 \cdf{setf} тщательно сохраняет обычный порядок выполнения подформ слева
 направо.
@@ -6150,14 +6136,6 @@ apply function arg &rest more-args
 
 Функция применяет функцию \emph{function} к списку аргументов.
 
-\begin{newer}
-X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to allow the \emph{function}
-to be only of type \cdf{symbol} or \cdf{function}; a lambda-expression
-is no longer acceptable as a functional argument.  One must use the
-\cdf{function} special operator or the abbreviation \cd{\#'} before
-a lambda-expression that appears as an  explicit argument form.
-\end{newer}
-
 Все аргументы, кроме \emph{function} передаются в применяемую функцию.
 Если последний аргумент список, то он присоединяется в конец к списку первых
 аргументов. Например:
@@ -6194,14 +6172,6 @@ funcall fn &rest arguments
 \emph{a1}, \emph{a2}, ..., \emph{an}.
 \emph{fn} не может быть специальной формой или макросом, это не имело бы
 смысла. 
-
-\begin{newer}
-X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to allow the \emph{fn}
-to be only of type \cdf{symbol} or \cdf{function}; a lambda-expression
-is no longer acceptable as a functional argument.  One must use the
-\cdf{function} special operator or the abbreviation \cd{\#'} before
-a lambda-expression that appears as an  explicit argument form.
-\end{newer}
 
 Например:
 \begin{lisp}
@@ -6942,7 +6912,7 @@ return-from name [result]
 Форма \cdf{return-from} сама по себе ничего и никогда не возвращает.
 Она указывает на то, что результат выполнения будет возвращён из конструкции
 \cdf{block}.
-Если вычисление формы \emph{result} приводит к нескольким значение, эти
+Если вычисление формы \emph{result} приводит к нескольким значениям, эти
 несколько значений и будут возвращены и конструкции.
 \end{defspec}
 
@@ -6952,7 +6922,7 @@ return [result]
 \cd{(return \emph{form})} идентично по смыслу 
 \cd{(return-from {\nil} \emph{form})}. Она возвращает управление из блока с
 именем {\nil}.
-Такие блоки с именем {/nil} устанавливаются автоматически в конструкциях циклов,
+Такие блоки с именем {\nil} устанавливаются автоматически в конструкциях циклов,
 таких как \cdf{do}, таким образом \cdf{return} будет производить корректный
 выход из таких конструкций.
 \end{defmac}
@@ -8092,8 +8062,8 @@ nth-value n form
 \label{CATCH-THROW-SECTION}
 \indexterm{non-local exit}
 \indexterm{dynamic exit}
-\indexterm{catch}
-\indexterm{throw}
+%\indexterm{catch}
+%\indexterm{throw}
 
 Common Lisp предоставляет функциональность для выхода из сложного процесса в
 нелокальном, динамических ограниченном стиле. Для этих целей есть два вида

@@ -1,465 +1,2202 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Opening and Closing Files</title> 
+<head><title>File Names</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-06-19 08:48:00"> 
+<meta name="date" content="2012-09-13 12:36:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 <link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
 >
    <div id="toplinks"> &lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; <br> &#x003C;<a 
 href="clmse118.html" >Next</a>&#x003E;&#x003C;<a 
-href="clmse116.html" >Prev</a>&#x003E;&#x003C;<a 
-href="clmse116.html#tailclmse116.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="files.html" >Prev</a>&#x003E;&#x003C;<a 
+href="files.html#tailfiles.html" >PrevTail</a>&#x003E;&#x003C;<a 
 href="#tailclmse117.html">Tail</a>&#x003E;&#x003C;<a 
-href="files.html#clmse117.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">23.2   </span> <a 
-href="clm.html#QQ2-145-249" id="x145-21000023.2">Opening and Closing
-Files</a></h3>
-<!--l. 1922--><p class="noindent" >When a ﬁle is <em>opened</em>, a stream object is constructed to serve as the ﬁle system&#x2019;s
-ambassador to the Lisp environment; operations on the stream are reﬂected by
-operations on the ﬁle in the ﬁle system. The act of <em>closing</em> the ﬁle (actually, the
-stream) ends the association; the transaction with the ﬁle system is terminated,
-and input/output may no longer be performed on the stream. The stream
-function <b><a 
-href="symbols.html#x188-376240r240">close</a></b> may be used to close a ﬁle; the functions described below may be
-used to open them. The basic operation is <b><a 
-href="symbols.html#x188-376689r689">open</a></b>, but <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> is usually
-more convenient for most applications.
+href="files.html#clmse117.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">24.1   </span> <a 
+href="clm.html#QQ2-146-240" id="x146-20000024.1">File Names</a></h3>
+<!--l. 53--><p class="noindent" >Common Lisp programs need to use names to designate ﬁles. The main diﬃculty
+in dealing with names of ﬁles is that diﬀerent ﬁle systems have diﬀerent naming
+formats for ﬁles. For example, here is a table of several ﬁle systems (actually,
+operating systems that provide ﬁle systems) and what equivalent ﬁle names might
+look like for each one:
+<div class="flushleft" 
+>
+<!--l. 59--><p class="noindent" >
+ <!--tex4ht:inline--><div class="tabular"><table width="100%" class="tabular"><tr><td align="left" >System           </td><td align="left" >File Name                                </td>
+</tr><tr><td align="left" >TOPS-20        </td><td align="left" ><b>&#x003C;LISPIO&#x003E;FORMAT.FASL.13</b></td>
+</tr><tr><td align="left" >TOPS-10        </td><td align="left" ><b>FORMAT.FAS[1,4]</b>               </td>
+</tr><tr><td align="left" >ITS                </td><td align="left" ><b>LISPIO;FORMAT FASL</b>        </td>
+</tr><tr><td align="left" >MULTICS       </td><td align="left" ><b>&#x003E;udd&#x003E;LispIO&#x003E;format.fasl</b>     </td>
+</tr><tr><td align="left" >TENEX          </td><td align="left" ><b>&#x003C;LISPIO&#x003E;FORMAT.FASL;13</b></td>
+</tr><tr><td align="left" >VAX/VMS      </td><td align="left" ><b>[LISPIO]FORMAT.FAS;13</b>     </td>
+</tr><tr><td align="left" >UNIX             </td><td align="left" ><b>/usr/lispio/format.fasl</b>          </td></tr><tr 
+class="hline"><td><hr></td><td><hr></td></tr><tr><td align="left" > </td></tr></table>
+</div></div>
+<!--l. 73--><p class="noindent" >It would be impossible for each program that deals with ﬁle names to know about
+each diﬀerent ﬁle name format that exists; a new Common Lisp implementation
+might use a format diﬀerent from any of its predecessors. Therefore, Common
+Lisp provides <em>two</em> ways to represent ﬁle names: <em>namestrings</em>, which are strings in
+the implementation-dependent form customary for the ﬁle system, and
+<em>pathnames</em>, which are special abstract data objects that represent ﬁle names in an
+implementation-independent way. Functions are provided to convert between
+these two representations, and all manipulations of ﬁles can be expressed in
+machine-independent terms by using pathnames.
+<!--l. 84--><p class="indent" >   In order to allow Common Lisp programs to operate in a network environment
+that may have more than one kind of ﬁle system, the pathname facility allows
+                                                                          
+
+                                                                          
+a ﬁle name to specify which ﬁle system is to be used. In this context,
+each ﬁle system is called a <em>host</em>, in keeping with the usual networking
+terminology.
+<div class="newer">
+<!--l. 91--><p class="indent" >   Diﬀerent hosts may use diﬀerent notations for ﬁle names. Common Lisp allows
+customary notation to be used for each host, but also supports a system of logical
+pathnames that provides a standard framework for naming ﬁles in a portable
+manner (see section <a 
+href="#x146-20500024.1.5">24.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
+</div>
+<!--l. 98--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">24.1.1   </span> <a 
+href="frontmatter.html#QQ2-146-241" id="x146-20100024.1.1">Pathnames</a></h4>
+<!--l. 100--><p class="noindent" >All ﬁle systems dealt with by Common Lisp are forced into a common framework,
+in which ﬁles are named by a Lisp data object of type <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b>.
+<!--l. 103--><p class="indent" >   A pathname always has six components, described below. These components
+are the common interface that allows programs to work the same way with
+diﬀerent ﬁle systems; the mapping of the pathname components into the
+concepts peculiar to each ﬁle system is taken care of by the Common Lisp
+implementation.
+<div class="flushdesc">
+      <ul><li><b>
+<em>host</em> </b></li>The name of the ﬁle system on which the ﬁle resides.
+      <li><b>
+<em>device</em> </b></li>Corresponds to the “device” or “ﬁle structure” concept in many host
+      ﬁle systems: the name of a (logical or physical) device containing ﬁles.
+      <li><b>
+<em>directory</em> </b></li>Corresponds to the “directory” concept in many host ﬁle systems:
+      the name of a group of related ﬁles (typically those belonging to a single
+      user or project).
+      <li><b>
+<em>name</em> </b></li>The name of a group of ﬁles that can be thought of as the “same” ﬁle.
+                                                                          
+
+                                                                          
+      <li><b>
+<em>type</em> </b></li>Corresponds to the “ﬁletype” or “extension” concept in many host ﬁle
+      systems;  identiﬁes  the  type  of  ﬁle.  Files  with  the  same  names  but
+      diﬀerent types are usually related in some speciﬁc way, for instance,
+      one being a source ﬁle, another the compiled form of that source, and
+      a third the listing of error messages from the compiler.
+      <li><b>
+<em>version</em> </b></li>Corresponds to the “version number”  concept in many host ﬁle
+      systems. Typically this is a number that is incremented every time the
+      ﬁle is modiﬁed.</ul>
+</div>
+<!--l. 140--><p class="indent" >   Note that a pathname is not necessarily the name of a speciﬁc ﬁle. Rather, it
+is a speciﬁcation (possibly only a partial speciﬁcation) of how to access a ﬁle. A
+pathname need not correspond to any ﬁle that actually exists, and more than one
+pathname can refer to the same ﬁle. For example, the pathname with a version of
+“newest” may refer to the same ﬁle as a pathname with the same components
+except a certain number as the version. Indeed, a pathname with version “newest”
+may refer to diﬀerent ﬁles as time passes, because the meaning of such a
+pathname depends on the state of the ﬁle system. In ﬁle systems with such
+facilities as “links,” multiple ﬁle names, logical devices, and so on, two
+pathnames that look quite diﬀerent may turn out to address the same ﬁle. To
+access a ﬁle given a pathname, one must do a ﬁle system operation such as
+<b><a 
+href="symbols.html#x190-382701r701">open</a></b>.
+<!--l. 155--><p class="indent" >   Two important operations involving pathnames are <em>parsing</em> and <em>merging</em>.
+Parsing is the conversion of a namestring (which might be something supplied
+interactively by the user when asked to supply the name of a ﬁle) into a pathname
+object. This operation is implementation-dependent, because the format of
+namestrings is implementation-dependent. Merging takes a pathname with
+missing components and supplies values for those components from a source of
+defaults.
+<!--l. 164--><p class="indent" >   Not all of the components of a pathname need to be speciﬁed. If a
+component of a pathname is missing, its value is <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>. Before the ﬁle system
+interface can do anything interesting with a ﬁle, such as opening the ﬁle,
+all the missing components of a pathname must be ﬁlled in (typically
+from a set of defaults). Pathnames with missing components may be used
+internally for various purposes; in particular, parsing a namestring that does
+not specify certain components will result in a pathname with missing
+                                                                          
+
+                                                                          
+components.
+<div class="newer">
+<!--l. 175--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx146-201001"></a>to permit any component of a pathname to have
+the value <b>:unspeciﬁc</b>, meaning that the component simply does not exist, for ﬁle
+systems in which such a value makes sense. (For example, a UNIX ﬁle system
+usually does not support version numbers, so the version component of a
+pathname for a UNIX host might be <b>:unspeciﬁc</b>. Similarly, the ﬁle type is
+usually regarded in a UNIX ﬁle system as the part of a name after a
+period, but some ﬁle names contain no periods and therefore have no ﬁle
+types.)
+<!--l. 186--><p class="indent" >   When a pathname is converted to a namestring, the values <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> and
+<b>:unspeciﬁc</b> have the same eﬀect: they are treated as if the component were
+empty (that is, they each cause the component not to appear in the namestring).
+When merging, however, only a <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> value for a component will be replaced with
+the default for that component; the value <b>:unspeciﬁc</b> will be left alone as if the
+ﬁeld were ﬁlled.
+<!--l. 194--><p class="indent" >   The results are undeﬁned if <b>:unspeciﬁc</b> is supplied to a ﬁle system in
+a component for which <b>:unspeciﬁc</b> does not make sense for that ﬁle
+system.
+<!--l. 198--><p class="indent" >   Programming hint: portable programs should be prepared to handle the
+value <b>:unspeciﬁc</b> in the device, directory, type, or version ﬁeld in some
+implementations. Portable programs should not explicitly place <b>:unspeciﬁc</b> in
+any ﬁeld because it might not be permitted in some situations, but portable
+programs may sometimes do so implicitly (by copying such a value from another
+pathname, for example).
+</div>
+<!--l. 207--><p class="indent" >   What values are allowed for components of a pathname depends, in general, on
+the pathname&#x2019;s host. However, in order for pathnames to be usable in a
+system-independent way, certain global conventions are adhered to. These
+conventions are stronger for the type and version than for the other components,
+since the type and version are explicitly manipulated by many programs,
+while the other components are usually treated as something supplied
+by the user that just needs to be remembered and copied from place to
+place.
+<!--l. 216--><p class="indent" >   The type is always a string or <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> or <b>:wild</b>. It is expected that most programs
+that deal with ﬁles will supply a default type for each ﬁle.
+<!--l. 220--><p class="indent" >   The version is either a positive integer or a special symbol. The meanings of
+<b><a 
+href="symbols.html#x190-382670r670">nil</a></b> and <b>:wild</b> have been explained above. The keyword <b>:newest</b> refers to the
+                                                                          
+
+                                                                          
+largest version number that already exists in the ﬁle system when reading a ﬁle, or
+to a version number greater than any already existing in the ﬁle system when
+writing a new ﬁle. Some Common Lisp implementors may choose to deﬁne other
+special version symbols. Some semi-standard names, suggested but not required to
+be supported by every Common Lisp implementation, are <b>:oldest</b>, to refer to the
+smallest version number that exists in the ﬁle system; <b>:previous</b>, to refer to the
+version previous to the newest version; and <b>:installed</b>, to refer to a version that
+is oﬃcially installed for users (as opposed to a working or development
+version). Some Common Lisp implementors may also choose to attach a
+meaning to non-positive version numbers (a typical convention is that <b>0</b> is
+synonymous with <b>:newest</b> and <b>-1</b> with <b>:previous</b>), but such interpretations are
+implementation-dependent.
+<!--l. 240--><p class="indent" >   The host may be a string, indicating a ﬁle system, or a list of strings, of which
+the ﬁrst names the ﬁle system and the rest may be used for such a purpose as
+inter-network routing.
+<div class="newer">
+<!--l. 245--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-201002"></a>to approve the following clariﬁcations and
+speciﬁcations of precisely what are valid values for the various components of a
+pathname.
+<!--l. 257--><p class="indent" >   Pathname component value strings never contain the punctuation
+characters that are used to separate ﬁelds in a namestring (for example,
+slashes and periods as used in UNIX ﬁle systems). Punctuation characters
+appear only in namestrings. Characters used as punctuation can appear in
+pathname component values with a non-punctuation meaning if the ﬁle system
+allows it (for example, UNIX ﬁle systems allow a ﬁle name to begin with a
+period).
+<!--l. 265--><p class="indent" >   When examining pathname components, conforming programs must be
+prepared to encounter any of the following siutations:
+      <ul class="itemize1">
+      <li class="itemize">Any component can be <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, which means the component has not been
+      speciﬁed.
+      </li>
+      <li class="itemize">Any component can be <b>:unspeciﬁc</b>, which means the component has
+      no meaning in this particular pathname.
+      </li>
+      <li class="itemize">The device, directory, name, and type can be strings.
+                                                                          
+
+                                                                          
+      </li>
+      <li class="itemize">The host can be any object, at the discretion of the implementation.
+      </li>
+      <li class="itemize">The  directory  can  be  a  list  of  strings  and  symbols  as  described  in
+      section <a 
+href="#x146-20300024.1.3">24.1.3<!--tex4ht:ref: STRUCTURED-DIRECTORY-SECTION --></a>.
+      </li>
+      <li class="itemize">The version can be any symbol or any integer. The symbol <b>:newest</b>
+      refers to the largest version number that already exists in the ﬁle system
+      when reading, overwriting, appending, superseding, or directory-listing
+      an existing ﬁle; it refers to the smallest version number greater than
+      any existing version number when creating a new ﬁle. Other symbols
+      and integers have implementation-deﬁned meaning. It is suggested, but
+      not required, that implementations use positive integers starting at
+      1 as version numbers, recognize the symbol <b>:oldest</b> to designate the
+      smallest existing version number, and use keyword symbols for other
+      special versions.</li></ul>
+<!--l. 293--><p class="indent" >   When examining wildcard components of a wildcard pathname, conforming
+programs must be prepared to encounter any of the following additional
+values in any component or any element of a list that is the directory
+component:
+      <ul class="itemize1">
+      <li class="itemize">The symbol <b>:wild</b>, which matches anything.
+      </li>
+      <li class="itemize">A   string   containing   implementation-dependent   special   wildcard
+      characters.
+      </li>
+      <li class="itemize">Any   object,   representing   an   implementation-dependent   wildcard
+      pattern.</li></ul>
+<!--l. 305--><p class="indent" >   When constructing a pathname from components, conforming programs must
+follow these rules:
+      <ul class="itemize1">
+      <li class="itemize">Any component may be <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>. Specifying <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> for the host may, in some
+      implementations, result in using a default host rather than an actual
+      <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> value.
+                                                                          
+
+                                                                          
+      </li>
+      <li class="itemize">The host, device, directory, name, and type may be strings. There are
+      implementation-dependent limits on the number and type of characters
+      in these strings. A plausible assumption is that letters (of a single case)
+      and digits are acceptable to most ﬁle systems.
+      </li>
+      <li class="itemize">The  directory  may  be  a  list  of  strings  and  symbols  as  described
+      in section <a 
+href="#x146-20300024.1.3">24.1.3<!--tex4ht:ref: STRUCTURED-DIRECTORY-SECTION --></a>. There are implementation-dependent limits on the
+      length and contents of the list.
+      </li>
+      <li class="itemize">The version may be <b>:newest</b>.
+      </li>
+      <li class="itemize">Any component may be taken from the corresponding component of
+      another  pathname.  When  the  two  pathnames  are  for  diﬀerent  ﬁle
+      systems (in implementations that support multiple ﬁle systems), an
+      appropriate translation occurs. If no meaningful translation is possible,
+      an error is signaled. The deﬁnitions of “appropriate” and “meaningful”
+      are implementation-dependent.
+      </li>
+      <li class="itemize">When constructing a wildcard pathname, the name, type, or version
+      may be <b>:wild</b>, which matches anything.
+      </li>
+      <li class="itemize">An implementation might support other values for some components,
+      but a portable program should not use those values. A conforming
+      program can use implementation-dependent values but this can make it
+      non-portable; for example, it might work only with UNIX ﬁle systems.</li></ul>
+</div>
+<!--l. 341--><p class="indent" >   The best way to compare two pathnames for equality is with <b><a 
+href="symbols.html#x190-382381r381">equal</a></b>, not <b><a 
+href="symbols.html#x190-382379r379">eql</a></b>.
+(On pathnames, <b><a 
+href="symbols.html#x190-382379r379">eql</a></b> is simply the same as <b><a 
+href="symbols.html#x190-382378r378">eq</a></b>.) Two pathname objects are <b><a 
+href="symbols.html#x190-382381r381">equal</a></b>
+if and only if all the corresponding components (host, device, and so on) are
+equivalent. (Whether or not uppercase and lowercase letters are considered
+equivalent in strings appearing in components depends on the ﬁle name
+conventions of the ﬁle system.) Pathnames that are <b><a 
+href="symbols.html#x190-382381r381">equal</a></b> should be functionally
+equivalent.
+                                                                          
+
+                                                                          
+<!--l. 352--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">24.1.2   </span> <a 
+href="frontmatter.html#QQ2-146-242" id="x146-20200024.1.2">Case Conventions</a></h4>
+<!--l. 355--><p class="noindent" >Issues of alphabetic case in pathnames are a major source of problems. In some
+ﬁle systems, the customary case is lowercase, in some uppercase, in some mixed.
+Some ﬁle systems are case-sensitive (that is, they treat <b>FOO</b> and <b>foo</b> as diﬀerent
+ﬁle names) and others are not.
+<!--l. 360--><p class="indent" >   There are two kinds of pathname case portability problems: moving programs
+from one Common Lisp to another, and moving pathname component values from
+one ﬁle system to another. The solution to the ﬁrst problem is the requirement
+that all Common Lisp implementations that support a particular ﬁle system
+must use compatible representations for pathname component values. The
+solution to the second problem is the use of a common representation for the
+least-common-denominator pathname component values that exist on all
+interesting ﬁle systems.
+<!--l. 370--><p class="indent" >   Requiring a common representation directly conﬂicts with the desire among
+programmers that use only one ﬁle system to work with the local conventions and
+to ignore issues of porting to other ﬁle systems. The common representation
+cannot be the same as local (varying) conventions.
+<!--l. 376--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-202001"></a>to add a keyword argument <b>:case</b> to each of
+the functions <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b>, <b><a 
+href="symbols.html#x190-382721r721">pathname-host</a></b>, <b><a 
+href="symbols.html#x190-382719r719">pathname-device</a></b>,
+<b><a 
+href="symbols.html#x190-382720r720">pathname-directory</a></b>, <b><a 
+href="symbols.html#x190-382723r723">pathname-name</a></b>, and <b><a 
+href="symbols.html#x190-382724r724">pathname-type</a></b>. The
+possible values for the argument are <b>:common</b> and <b>:local</b>. The default is
+<b>:local</b>.
+<!--l. 384--><p class="indent" >   The value <b>:local</b> means that strings given to <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> or returned by
+any of the pathname component accessors follow the local ﬁle system&#x2019;s
+conventions for alphabetic case. Strings given to <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> will
+be used exactly as written if the ﬁle system supports both cases. If the
+ﬁle system supports only one case, the strings will be translated to that
+case.
+<!--l. 391--><p class="indent" >   The value <b>:common</b> means that strings given to <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> or
+returned by any of the pathname component accessors follow this common
+convention:
+      <ul class="itemize1">
+      <li class="itemize">All uppercase means that a ﬁle system&#x2019;s customary case will be used.
+      </li>
+      <li class="itemize">All lowercase means that the opposite of the customary case will be
+      used.
+                                                                          
+
+                                                                          
+      </li>
+      <li class="itemize">Mixed case represents itself.</li></ul>
+<!--l. 399--><p class="noindent" >Uppercase is used as the common case for no better reason than consistency with
+Lisp symbols. The second and third points allow translation from local
+representation to common and back to be information-preserving. (Note
+that translation from common to local representation and back may or
+may not be information-preserving, depending on the nature of the local
+representation.)
+<!--l. 406--><p class="indent" >   Namestrings always use <b>:local</b> ﬁle system case conventions.
+<!--l. 408--><p class="indent" >   Finally, <b><a 
+href="symbols.html#x190-382631r631">merge-pathnames</a></b> and <b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b> map customary case
+in the input pathnames into customary case in the output pathname.
+<!--l. 411--><p class="indent" >   Examples of possible use of this convention:
+      <ul class="itemize1">
+      <li class="itemize">TOPS-20 is case-sensitive and prefers uppercase, translating lowercase
+      to uppercase unless escaped with <b>̂V</b>; for a TOPS-20–based ﬁle system,
+      a Common Lisp implementation should use identical representations
+      for common and local.
+      </li>
+      <li class="itemize">UNIX  is  case-sensitive  and  prefers  lowercase;  for  a  UNIX-based
+      ﬁle   system,   a   Common   Lisp   implementation   should   translate
+      between common and local representations by inverting the case of
+      non-mixed-case strings.
+      </li>
+      <li class="itemize">VAX/VMS  is  uppercase-only  (that  is,  the  ﬁle  system  translates
+      all  ﬁle  name  arguments  to  uppercase);  for  a  VAX/VMS-based  ﬁle
+      system,  a  Common  Lisp  implementation  should  translate  common
+      representation to local by converting to uppercase and should translate
+      local representation to common with no change.
+      </li>
+      <li class="itemize">The  Macintosh  operating  system  is  case-insensitive  and  prefers
+      lowercase, but remembers the cases of letters actually used to name a
+      ﬁle; for a Macintosh-based ﬁle system, a Common Lisp implementation
+      should  translate  between  common  and  local  representations  by
+      inverting the case of non-mixed-case strings and should ignore case
+      when determining whether two pathnames are <b><a 
+href="symbols.html#x190-382381r381">equal</a></b>.</li></ul>
+                                                                          
+
+                                                                          
+<!--l. 438--><p class="indent" >
+                                                                          
+
+                                                                          
+<!--l. 440--><p class="indent" >   Here are some examples of this behavior. Assume that the host <b>T</b> runs
+TOPS-20, <b>U</b> runs UNIX, <b>V</b> runs VAX/VMS, and <b>M</b> runs the Macintosh
+operating system. <div class="lisp"><tt><div class="tabbing">
+;;; Returns two values: the PATHNAME-NAME from a namestring
+   <br>             ;;; in :COMMON and :LOCAL representations (in that order).<br>
+(defun pathname-example (name)<br>   (let ((path (parse-namestring name))))<br>
+    (values (pathname-name path :case :common)<br>
+            (pathname-name path :case :local))))<br>                        <br>
+                                              ;Common    Local<br>
+(pathname-example &#x0022;T:&#x003C;ME&#x003E;FOO.LISP&#x0022;)        <span class="math"> ⇒</span> &#x0022;FOO&#x0022; and &#x0022;FOO&#x0022;<br>
+(pathname-example &#x0022;T:&#x003C;ME&#x003E;foo.LISP&#x0022;)        <span class="math"> ⇒</span> &#x0022;FOO&#x0022; and &#x0022;FOO&#x0022;<br>
+(pathname-example &#x0022;T:&#x003C;ME&#x003E;̂Vf̂VôVo.LISP&#x0022;)  <span class="math"> ⇒</span> &#x0022;foo&#x0022; and &#x0022;foo&#x0022;<br>
+(pathname-example &#x0022;T:&#x003C;ME&#x003E;TeX.LISP&#x0022;)        <span class="math"> ⇒</span> &#x0022;TEX&#x0022; and &#x0022;TEX&#x0022;<br>
+(pathname-example &#x0022;T:&#x003C;ME&#x003E;T̂VeX.LISP&#x0022;)      <span class="math"> ⇒</span> &#x0022;TeX&#x0022; and &#x0022;TeX&#x0022;<br>
+(pathname-example &#x0022;U:/me/FOO.lisp&#x0022;)        <span class="math"> ⇒</span> &#x0022;foo&#x0022; and &#x0022;FOO&#x0022;<br>
+(pathname-example &#x0022;U:/me/foo.lisp&#x0022;)        <span class="math"> ⇒</span> &#x0022;FOO&#x0022; and &#x0022;foo&#x0022;<br>
+(pathname-example &#x0022;U:/me/TeX.lisp&#x0022;)        <span class="math"> ⇒</span> &#x0022;TeX&#x0022; and &#x0022;TeX&#x0022;<br>
+(pathname-example &#x0022;V:[me]FOO.LISP&#x0022;)        <span class="math"> ⇒</span> &#x0022;FOO&#x0022; and &#x0022;FOO&#x0022;<br>
+(pathname-example &#x0022;V:[me]foo.LISP&#x0022;)        <span class="math"> ⇒</span> &#x0022;FOO&#x0022; and &#x0022;FOO&#x0022;<br>
+(pathname-example &#x0022;V:[me]TeX.LISP&#x0022;)        <span class="math"> ⇒</span> &#x0022;TEX&#x0022; and &#x0022;TEX&#x0022;<br>
+(pathname-example &#x0022;M:FOO.LISP&#x0022;)            <span class="math"> ⇒</span> &#x0022;foo&#x0022; and &#x0022;FOO&#x0022;<br>
+(pathname-example &#x0022;M:foo.LISP&#x0022;)            <span class="math"> ⇒</span> &#x0022;FOO&#x0022; and &#x0022;foo&#x0022;<br>
+(pathname-example &#x0022;M:TeX.LISP&#x0022;)            <span class="math"> ⇒</span> &#x0022;TeX&#x0022; and &#x0022;TeX&#x0022;<br>
+<!--l. 467--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 468--><p class="indent" >   The following example illustrates the creation of new pathnames. The name is
+converted from common representation to local because namestrings always use
+local conventions. <div class="lisp"><tt><div class="tabbing">
+(defun make-pathname-example (h n)
+   <br>           (namestring (make-pathname :host h :name n :case :common))<br>
+<br>                      (make-pathname-example &#x0022;T&#x0022; &#x0022;FOO&#x0022;) <span class="math"> ⇒</span> &#x0022;T:FOO&#x0022;<br>
+                                                                          
+
+                                                                          
+(make-pathname-example &#x0022;T&#x0022; &#x0022;foo&#x0022;) <span class="math"> ⇒</span> &#x0022;T:̂Vf̂VôVo&#x0022;<br>
+(make-pathname-example &#x0022;T&#x0022; &#x0022;TeX&#x0022;) <span class="math"> ⇒</span> &#x0022;T:T̂VeX&#x0022;<br>
+(make-pathname-example &#x0022;U&#x0022; &#x0022;FOO&#x0022;) <span class="math"> ⇒</span> &#x0022;U:foo&#x0022;<br>
+(make-pathname-example &#x0022;U&#x0022; &#x0022;foo&#x0022;) <span class="math"> ⇒</span> &#x0022;U:FOO&#x0022;<br>
+(make-pathname-example &#x0022;U&#x0022; &#x0022;TeX&#x0022;) <span class="math"> ⇒</span> &#x0022;U:TeX&#x0022;<br>
+(make-pathname-example &#x0022;V&#x0022; &#x0022;FOO&#x0022;) <span class="math"> ⇒</span> &#x0022;V:FOO&#x0022;<br>
+(make-pathname-example &#x0022;V&#x0022; &#x0022;foo&#x0022;) <span class="math"> ⇒</span> &#x0022;V:FOO&#x0022;<br>
+(make-pathname-example &#x0022;V&#x0022; &#x0022;TeX&#x0022;) <span class="math"> ⇒</span> &#x0022;V:TeX&#x0022;<br>
+(make-pathname-example &#x0022;M&#x0022; &#x0022;FOO&#x0022;) <span class="math"> ⇒</span> &#x0022;M:foo&#x0022;<br>
+(make-pathname-example &#x0022;M&#x0022; &#x0022;foo&#x0022;) <span class="math"> ⇒</span> &#x0022;M:FOO&#x0022;<br>
+(make-pathname-example &#x0022;M&#x0022; &#x0022;TeX&#x0022;) <span class="math"> ⇒</span> &#x0022;M:TeX&#x0022;<br>
+<!--l. 487--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 488--><p class="indent" >   A big advantage of this set of conventions is that one can, for example,
+call <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> with <b>:type &#x0022;LISP&#x0022;</b> and <b>:case :common</b>, and
+the result will appear in a namestring as <b>.LISP</b> or <b>.lisp</b>, whichever is
+appropriate.
+   <h4 class="subsectionHead"><span class="titlemark">24.1.3   </span> <a 
+href="frontmatter.html#QQ2-146-243" id="x146-20300024.1.3">Structured Directories</a></h4>
+<!--l. 496--><p class="noindent" >X3J13 voted in June 1989 <a 
+ id="dx146-203001"></a>to deﬁne a speciﬁc pathname component format for
+structured directories.
+<!--l. 499--><p class="indent" >   The value of a pathname&#x2019;s directory component may be a list. The <em>car</em> of the
+list should be a keyword, either <b>:absolute</b> or <b>:relative</b>. Each remaining element
+of the list should be a string or a symbol (see below). Each string names a single
+level of directory structure and should consist of only the directory name without
+any punctuation characters.
+<!--l. 505--><p class="indent" >   A list whose <em>car</em> is the symbol <b>:absolute</b> represents a directory path starting
+from the root directory. For example, the list <b>(:absolute)</b> represents the root
+directory itself; the list <b>(:absolute &#x0022;foo&#x0022; &#x0022;bar&#x0022; &#x0022;baz&#x0022;)</b> represents the directory
+that in a UNIX ﬁle system would be called <b>/foo/bar/baz</b>.
+<!--l. 510--><p class="indent" >   A list whose <em>car</em> is the symbol <b>:relative</b> represents a directory path starting
+from a default directory. The list <b>(:relative)</b> has the same meaning as
+<b><a 
+href="symbols.html#x190-382670r670">nil</a></b> and hence normally is not used. The list <b>(:relative &#x0022;foo&#x0022; &#x0022;bar&#x0022;)</b>
+represents the directory named <b>bar</b> in the directory named <b>foo</b> in the default
+directory.
+                                                                          
+
+                                                                          
+<!--l. 516--><p class="indent" >   In place of a string, at any point in the list, a symbol may occur to indicate
+a special ﬁle notation. The following symbols have standard meanings.
+<div class="indentdesc">
+      <ul><li><b>
+<b>:wild</b> </b></li>Wildcard match of one level of directory structure
+      <li><b>
+<b>:wild-inferiors</b> </b></li>Wildcard match of any number of directory levels
+      <li><b>
+ <b>:up</b> </b></li>Go upward in directory structure (semantic)
+      <li><b>
+<b>:back</b> </b></li>Go upward in directory structure (syntactic)</ul>
+</div>
+<!--l. 533--><p class="indent" >   (See section <a 
+href="#x146-20400024.1.4">24.1.4<!--tex4ht:ref: WILD-PATHNAME-SECTION --></a> for a discussion of wildcard pathnames.)
+<!--l. 535--><p class="indent" >   Implementations are permitted to add additional objects of any non-string
+type if necessary to represent features of their ﬁle systems that cannot be
+represented with the standard strings and symbols. Supplying any non-string,
+including any of the symbols listed below, to a ﬁle system for which it does
+not make sense signals an error of type <b><a 
+href="symbols.html#x190-382402r402">ﬁle-error</a></b>. For example, most
+implementations of the UNIX ﬁle system do not support <b>:wild-inferiors</b>.
+Any directory list in which <b>:absolute</b> or <b>:wild-inferiors</b> is immediately
+followed by <b>:up</b> or <b>:back</b> is illegal and when processed causes an error to be
+signaled.
+<!--l. 545--><p class="indent" >   The keyword <b>:back</b> has a “syntactic” meaning that depends only on the
+pathname and not on the contents of the ﬁle system. The keyword <b>:up</b> has a
+“semantic” meaning that depends on the contents of the ﬁle system; to resolve a
+pathname containing <b>:up</b> to a pathname whose directory component contains
+only <b>:absolute</b> and strings requires a search of the ﬁle system. Note that use of
+<b>:up</b> instead of <b>:back</b> can result in designating a diﬀerent actual directory only
+in ﬁle systems that support multiple names for directories, perhaps via
+symbolic links. For example, suppose that there is a directory link such that
+<div class="lisp"><tt><div class="tabbing">
+(:absolute &#x0022;X&#x0022; &#x0022;Y&#x0022;)  is linked to  (:absolute &#x0022;A&#x0022; &#x0022;B&#x0022;)
+   <br>
+                                                                          
+
+                                                                          
+<!--l. 556--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 557--><p class="indent" >   and there also exist directories <div class="lisp"><tt><div class="tabbing">
+(:absolute &#x0022;A&#x0022; &#x0022;Q&#x0022;)  and  (:absolute &#x0022;X&#x0022; &#x0022;Q&#x0022;)
+   <br>
+<!--l. 560--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 561--><p class="indent" >   Then <div class="lisp"><tt><div class="tabbing">
+(:absolute &#x0022;X&#x0022; &#x0022;Y&#x0022; :up &#x0022;Q&#x0022;)  designates  (:absolute &#x0022;A&#x0022; &#x0022;Q&#x0022;)
+   <br>
+<!--l. 564--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 565--><p class="indent" >   but <div class="lisp"><tt><div class="tabbing">
+(:absolute &#x0022;X&#x0022; &#x0022;Y&#x0022; :back &#x0022;Q&#x0022;)  designates  (:absolute &#x0022;X&#x0022; &#x0022;Q&#x0022;)
+   <br>
+<!--l. 568--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 570--><p class="indent" >   If a string is used as the value of the <b>:directory</b> argument to <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b>,
+it should be the name of a top-level directory and should not contain any
+punctuation characters. Specifying a string <em>s</em> is equivalent to specifying the list
+<b>(:absolute <em>s</em>)</b>. Specifying the symbol <b>:wild</b> is equivalent to specifying the list
+<b>(:absolute :wild-inferiors)</b> (or <b>(:absolute :wild)</b> in a ﬁle system that does not
+support <b>:wild-inferiors</b>).
+                                                                          
+
+                                                                          
+<!--l. 577--><p class="indent" >   The function <b><a 
+href="symbols.html#x190-382720r720">pathname-directory</a></b> always returns <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, <b>:unspeciﬁc</b>, or a
+list—never a string, never <b>:wild</b>. If a list is returned, it is not guaranteed to be
+freshly consed; the consequences of modifying this list are undeﬁned.
+<!--l. 582--><p class="indent" >   In non-hierarchical ﬁle systems, the only valid list values for the directory
+component of a pathname are <b>(:absolute <em>s</em>)</b> (where <em>s</em> is a string) and <b>(:absolute
+:wild)</b>. The keywords <b>:relative</b>, <b>:wild-inferiors</b>, <b>:up</b>, and <b>:back</b> are not used in
+non-hierarchical ﬁle systems.
+<!--l. 589--><p class="indent" >   Pathname merging treats a relative directory specially. Let <em>pathname</em>
+and <em>defaults</em> be the ﬁrst two arguments to <b><a 
+href="symbols.html#x190-382631r631">merge-pathnames</a></b>. If
+<b>(pathname-directory <em>pathname</em>)</b> is a list whose <em>car</em> is <b>:relative</b>, and
+<b>(pathname-directory <em>defaults</em>)</b> is a list, then the merged directory is the value
+of <div class="lisp"><tt><div class="tabbing">
+(append (pathname-directory <em>defaults</em>)
+   <br>                                 (cdr     ;Remove <b>:relative</b> from the front<br>
+          (pathname-directory <em>pathname</em>)))<br>
+<!--l. 598--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 599--><p class="indent" >   except that if the resulting list contains a string or <b>:wild</b> immediately followed
+by <b>:back</b>, both of them are removed. This removal of redundant occurrences of
+<b>:back</b> is repeated as many times as possible. If <b>(pathname-directory <em>defaults</em>)</b>
+is not a list or <b>(pathname-directory <em>pathname</em>)</b> is not a list whose <em>car</em> is
+<b>:relative</b>, the merged directory is the value of <div class="lisp"><tt><div class="tabbing">
+(or (pathname-directory <em>pathname</em>)
+   <br>                                                    (pathname-directory <em>defaults</em>))<br>
+<!--l. 608--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 610--><p class="indent" >   A relative directory in the pathname argument to a function such as <b><a 
+href="symbols.html#x190-382701r701">open</a></b> is
+merged with the value of <b>*default-pathname-defaults*</b> before the ﬁle system is
+accessed.
+                                                                          
+
+                                                                          
+<!--l. 614--><p class="indent" >   Here are some examples of the use of structured directories. Suppose that host
+<b>L</b> supports a Symbolics Lisp Machine ﬁle system, host <b>U</b> supports a UNIX ﬁle
+system, and host <b>V</b> supports a VAX/VMS ﬁle system. <div class="lisp"><tt><div class="tabbing">
+(pathname-directory (parse-namestring &#x0022;V:[FOO.BAR]BAZ.LSP&#x0022;))
+   <br>                                               <span class="math"> ⇒</span> (:ABSOLUTE &#x0022;FOO&#x0022; &#x0022;BAR&#x0022;)<br>
+<!--l. 621--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 622--><p class="indent" >   <div class="tabbing">
+(pathname-directory (parse-namestring &#x0022;U:/foo/bar/baz.lisp&#x0022;))
+   <br>                                                    <span class="math"> ⇒</span> (:ABSOLUTE &#x0022;foo&#x0022; &#x0022;bar&#x0022;)<br>
+<!--l. 625--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 626--><p class="indent" >   <div class="tabbing">
+(pathname-directory (parse-namestring &#x0022;U:../baz.lisp&#x0022;))
+   <br>                                                               <span class="math"> ⇒</span> (:RELATIVE :UP)<br>
+<!--l. 629--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 630--><p class="indent" >   <div class="tabbing">
+                                                                          
+
+                                                                          
+(pathname-directory (parse-namestring &#x0022;U:/foo/bar/../mum/baz&#x0022;))
+   <br>                                   <span class="math"> ⇒</span> (:ABSOLUTE &#x0022;foo&#x0022; &#x0022;bar&#x0022; :UP &#x0022;mum&#x0022;)<br>
+<!--l. 633--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 634--><p class="indent" >   <div class="tabbing">
+(pathname-directory (parse-namestring &#x0022;U:bar/../../ztesch/zip&#x0022;))
+   <br>                                     <span class="math"> ⇒</span> (:RELATIVE &#x0022;bar&#x0022; :UP :UP &#x0022;ztesch&#x0022;)<br>
+<!--l. 637--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 638--><p class="indent" >   <div class="tabbing">
+(pathname-directory (parse-namestring &#x0022;L:&#x003E;foo&#x003E;**&#x003E;bar&#x003E;baz.lisp&#x0022;))
+   <br>                   <span class="math"> ⇒</span> (:ABSOLUTE &#x0022;FOO&#x0022; :WILD-INFERIORS &#x0022;BAR&#x0022;)<br>
+<!--l. 641--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 642--><p class="indent" >   <div class="tabbing">
+(pathname-directory (parse-namestring &#x0022;L:&#x003E;foo&#x003E;*&#x003E;bar&#x003E;baz.lisp&#x0022;))
+   <br>                                     <span class="math"> ⇒</span> (:ABSOLUTE &#x0022;FOO&#x0022; :WILD &#x0022;BAR&#x0022;)<br>
+                                                                          
+
+                                                                          
+<!--l. 645--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 647--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">24.1.4   </span> <a 
+href="frontmatter.html#QQ2-146-244" id="x146-20400024.1.4">Extended Wildcards</a></h4>
+<!--l. 650--><p class="noindent" >Some ﬁle systems provide more complex conventions for wildcards than
+simple component-wise wildcards representable by <b>:wild</b>. For example,
+the namestring <b>&#x0022;F*O&#x0022;</b> might mean a normal three-character name; a
+three-character name with the middle character wild; a name with at
+least two characters, beginning with <b>F</b> and ending with <b>O</b>; or perhaps
+a wild match spanning multiple directories. Similarly, the namestring
+<b>&#x0022;&#x003E;foo&#x003E;**&#x003E;bar&#x003E;&#x0022;</b> might imply that the middle directory is named <b>&#x0022;**&#x0022;</b>; the
+middle directory is <b>:wild</b>; there are zero or more middle directories that are <b>:wild</b>;
+or perhaps that the middle directory name matches any two-letter name.
+Some ﬁle systems support even more complex wildcards, such as regular
+expressions.
+<!--l. 663--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-204001"></a>to provide some facilities for dealing with more
+general wildcard pathnames in a fairly portable manner.
 <div class="defun">
 <div class="defunheader">
+<a 
+ id="dx146-204002"></a>
 <em>
-<!--l. 1934--><p class="noindent" >[Function]</em><a 
- id="dx145-210001"></a> <b>open</b> <i>ﬁlename</i> <tt><a 
-href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:direction</i> <i>:element-type</i> <i>:if-exists</i> <i>:if-does-not-exist</i>
-<i>:external-format</i>
+<!--l. 668--><p class="noindent" >[Function]</em> <b>wild-pathname-p</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>ﬁeld-key</i>
 </div>
-<div class="newer">
-<!--l. 1937--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx145-210002"></a>to add to the function <b><a 
-href="symbols.html#x188-376689r689">open</a></b> a new keyword
-argument <b>:external-format</b>. This argument did not appear in the preceding
-argument description in the ﬁrst edition.
-</div>
-<!--l. 1943--><p class="indent" >   This returns a stream that is connected to the ﬁle speciﬁed by <em>ﬁlename</em>. The
-<em>ﬁlename</em> is the name of the ﬁle to be opened; it may be a string, a pathname, or a
-stream. (If the <em>ﬁlename</em> is a stream, then it is not closed ﬁrst or otherwise
-aﬀected; it is used merely to provide a ﬁle name for the opening of a new
-stream.)
-<div class="new">
-<!--l. 1950--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx145-210003"></a>to specify that the result of <b><a 
-href="symbols.html#x188-376689r689">open</a></b>, if it is a
-stream, is always a stream of type <b>ﬁle-stream</b>.
-</div>
-<div class="new">
+<!--l. 670--><p class="indent" >   Tests a pathname for the presence of wildcard components. If the ﬁrst
+argument is not a pathname, string, or ﬁle stream, an error of type <b><a 
+href="symbols.html#x190-382973r973">type-error</a></b> is
+signaled.
+<!--l. 674--><p class="indent" >   If no <em>ﬁeld-key</em> is provided, or the <em>ﬁeld-key</em> is <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, the result is true if and only if
+<em>pathname</em> has any wildcard components.
+<!--l. 677--><p class="indent" >   If a non-null <em>ﬁeld-key</em> is provided, it must be one of <b>:host</b>, <b>:device</b>,
+<b>:directory</b>, <b>:name</b>, <b>:type</b>, or <b>:version</b>. In this case, the result is true if and only
+if the indicated component of <em>pathname</em> is a wildcard.
+<!--l. 682--><p class="indent" >   Note that X3J13 voted in June 1989 <a 
+ id="dx146-204003"></a>to specify that an implementation need
+not support wildcards in all ﬁelds; the only requirement is that the name, type, or
                                                                           
 
                                                                           
-<!--l. 1957--><p class="indent" >   X3J13 voted in March 1988 <a 
- id="dx145-210004"></a>to specify exactly which streams may be used as
-pathnames. See section <a 
-href="clmse116.html#x144-20900023.1.6">23.1.6<!--tex4ht:ref: PATHNAME-FUNCTIONS --></a>.
-</div>
-<div class="new">
-<!--l. 1964--><p class="indent" >   X3J13 voted in January 1989 <a 
- id="dx145-210005"></a>to specify that <b><a 
-href="symbols.html#x188-376689r689">open</a></b> is unaﬀected by whether
-the ﬁrst argument, if a stream, is open or closed. If the ﬁrst argument is a stream,
-<b><a 
-href="symbols.html#x188-376689r689">open</a></b> behaves as if the function <b><a 
-href="symbols.html#x188-376706r706">pathname</a></b> were applied to the stream and the
-resulting pathname used instead.
-</div>
-<div class="newer">
-<!--l. 1973--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx145-210006"></a>to clarify that <b><a 
-href="symbols.html#x188-376689r689">open</a></b> accepts only non-wild
-pathnames; an error is signaled if <b><a 
-href="symbols.html#x188-377001r1001">wild-pathname-p</a></b> would be true of
-<em>ﬁlename</em>.
-</div>
-<div class="newer">
-<!--l. 1979--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx145-210007"></a>to require <b><a 
-href="symbols.html#x188-376689r689">open</a></b> to accept logical pathnames (see
-section <a 
-href="clmse116.html#x144-20300023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
-</div>
-<!--l. 1983--><p class="indent" >   The keyword arguments specify what kind of stream to produce and how to
-handle errors: <div class="flushdesc">
-      <ul><li><b>
-<b>:direction</b> </b></li>This argument speciﬁes whether the stream should handle input,
-      output, or both.
-              <div class="quotation">
-<div class="flushdesc">
-    <ul><li><b>
-<b>:input</b> </b></li>The  result  will  be  an  input  stream.  This  is  the
-    default.
-    <li><b>
-<b>:output</b> </b></li>The result will be an output stream.
-    <li><b>
-<b>:io</b> </b></li>The result will be a bidirectional stream.
-    <li><b>
-<b>:probe</b> </b></li>The result will be a no-directional stream (in eﬀect,
-                                                                          
-
-                                                                          
-    the stream is created and then closed). This is useful for
-    determining whether a ﬁle exists without actually setting
-    up a complete stream.</ul>
-</div>
-           </div>
-      <li><b>
-<b>:element-type</b> </b></li>This argument speciﬁes the type of the unit of transaction for the
-      stream. Anything that can be recognized as being a ﬁnite subtype of
-      <b><a 
-href="symbols.html#x188-376222r222">character</a></b> or <b>integer</b> is acceptable. In particular, the following types are
-      recognized:
-      <!--l. 2013--><p class="noindent" >
-              <div class="quotation">
-<div class="flushdesc">
-    <ul><li><b>
-<b><a 
-href="symbols.html#x188-376222r222">character</a></b> </b></li>The  unit  of  transaction  is  any  character,  not
-    just  a  string-character.  The  functions  <b><a 
-href="symbols.html#x188-376769r769">read-char</a></b> and
-    <b><a 
-href="symbols.html#x188-377017r1017">write-char</a></b> (depending on the value of the <b>:direction</b>
-    argument)  may  be  used  on  the  stream.  This  is  the
-    default.
-    <li><b>
-<b>base-char</b> </b></li>The unit of transaction is a base character. The
-    functions <b><a 
-href="symbols.html#x188-376769r769">read-char</a></b> and <b><a 
-href="symbols.html#x188-377017r1017">write-char</a></b> (depending on the
-    value of the <b>:direction</b> argument) may be used on the
-    stream.</ul>
-</div>
-           </div>
-      <!--l. 2027--><p class="noindent" >
-              <div class="quotation">
-<div class="flushdesc">
-                                                                          
-
-                                                                          
-    <ul><li><b>
-<b>(unsigned-byte <em>n</em>)</b> </b></li>The unit of transaction is an unsigned
-    byte (a non-negative integer) of size <em>n</em>. The functions
-    <b><a 
-href="symbols.html#x188-376768r768">read-byte</a></b>  and/or  <b><a 
-href="symbols.html#x188-377016r1016">write-byte</a></b>  may  be  used  on  the
-    stream.
-    <li><b>
-<b>unsigned-byte</b> </b></li>The  unit  of  transaction  is  an  unsigned
-    byte  (a  non-negative  integer);  the  size  of  the  byte  is
-    determined by the ﬁle system. The functions <b><a 
-href="symbols.html#x188-376768r768">read-byte</a></b>
-    and/or <b><a 
-href="symbols.html#x188-377016r1016">write-byte</a></b> may be used on the stream.
-    <li><b>
-<b>(signed-byte <em>n</em>)</b> </b></li>The unit of transaction is a signed byte
-    of size <em>n</em>. The functions <b><a 
-href="symbols.html#x188-376768r768">read-byte</a></b> and/or <b><a 
-href="symbols.html#x188-377016r1016">write-byte</a></b>
-    may be used on the stream.
-    <li><b>
-<b>signed-byte</b> </b></li>The unit of transaction is a signed byte; the
-    size of the byte is determined by the ﬁle system. The
-    functions <b><a 
-href="symbols.html#x188-376768r768">read-byte</a></b> and/or <b><a 
-href="symbols.html#x188-377016r1016">write-byte</a></b> may be used
-    on the stream.
-    <li><b>
-<b><a 
-href="symbols.html#x188-376123r123">bit</a></b> </b></li>The unit of transaction is a bit (values <b>0</b> and <b>1</b>). The
-    functions <b><a 
-href="symbols.html#x188-376768r768">read-byte</a></b> and/or <b><a 
-href="symbols.html#x188-377016r1016">write-byte</a></b> may be used
-    on the stream.
-    <li><b>
-<b>(mod <em>n</em>)</b> </b></li>The   unit   of   transaction   is   a   non-negative
-    integer  less  than  <em>n</em>.  The  functions  <b><a 
-href="symbols.html#x188-376768r768">read-byte</a></b> and/or
-    <b><a 
-href="symbols.html#x188-377016r1016">write-byte</a></b> may be used on the stream.
-    <li><b>
-<b>:default</b> </b></li>The  unit  of  transaction  is  to  be  determined
-    by   the   ﬁle   system,   based   on   the   ﬁle   it   ﬁnds.
-    The  type  can  be  determined  by  using  the  function
-    <b><a 
-href="symbols.html#x188-376893r893">stream-element-type</a></b>.</ul>
-</div>
-           </div>
-      <li><b>
-<b>:if-exists</b> </b></li>This argument speciﬁes the action to be taken if the <b>:direction</b> is
-                                                                          
-
-                                                                          
-      <b>:output</b> or <b>:io</b> and a ﬁle of the speciﬁed name already exists. If the
-      direction is <b>:input</b> or <b>:probe</b>, this argument is ignored.
-              <div class="quotation">
-<div class="flushdesc">
-    <ul><li><b>
-<b>:error</b> </b></li>Signals an error. This is the default when the version
-    component of the <em>ﬁlename</em> is not <b>:newest</b>.
-    <li><b>
-<b>:new-version</b> </b></li>Creates a new ﬁle with the same ﬁle name but
-    with a larger version number. This is the default when
-    the version component of the <em>ﬁlename</em> is <b>:newest</b>.
-    <li><b>
-<b>:rename</b> </b></li>Renames the existing ﬁle to some other name and
-    then creates a new ﬁle with the speciﬁed name.
-    <li><b>
-<b>:rename-and-delete</b> </b></li>Renames  the  existing  ﬁle  to  some
-    other name and then deletes it (but does not expunge
-    it,  on  those  systems  that  distinguish  deletion  from
-    expunging). Then create a new ﬁle with the speciﬁed
-    name.
-    <li><b>
-<b>:overwrite</b> </b></li>Uses  the  existing  ﬁle.  Output  operations  on
-    the  stream  will  destructively  modify  the  ﬁle.  If  the
-    <b>:direction</b> is <b>:io</b>, the ﬁle is opened in a bidirectional
-    mode  that  allows  both  reading  and  writing.  The  ﬁle
-    pointer is initially positioned at the beginning of the ﬁle;
-    however, the ﬁle is not truncated back to length zero
-    when it is opened. This mode is most useful when the
-    <b><a 
-href="symbols.html#x188-376394r394">ﬁle-position</a></b> function can be used on the stream.
-    <li><b>
-<b>:append</b> </b></li>Uses the existing ﬁle. Output operations on the
-    stream will destructively modify the ﬁle. The ﬁle pointer
-    is  initially  positioned  at  the  end  of  the  ﬁle.  If  the
-    <b>:direction</b> is <b>:io</b>, the ﬁle is opened in a bidirectional
-                                                                          
-
-                                                                          
-    mode that allows both reading and writing.
-    <li><b>
-<b>:supersede</b> </b></li>Supersedes  the  existing  ﬁle.  If  possible,  the
-    implementation should arrange not to destroy the old ﬁle
-    until the new stream is closed, against the possibility that
-    the stream will be closed in “abort”  mode (see <b><a 
-href="symbols.html#x188-376240r240">close</a></b>).
-    This  diﬀers  from  <b>:new-version</b>  in  that  <b>:supersede</b>
-    creates a new ﬁle with the same name as the old one,
-    rather than a ﬁle name with a higher version number.
-    <li><b>
-<b><b><a 
-href="symbols.html#x188-376658r658">nil</a></b></b> </b></li>Does not create a ﬁle or even a stream, but instead simply
-    returns <b><a 
-href="symbols.html#x188-376658r658">nil</a></b> to indicate failure.</ul>
-</div>
-           </div>
-      <!--l. 2125--><p class="noindent" >If the <b>:direction</b> is <b>:output</b> or <b>:io</b> and the value of <b>:if-exists</b> is
-      <b>:new-version</b>, then the version of the (newly created) ﬁle that is
-      opened will be a version greater than that of any other ﬁle in the ﬁle
-      system whose other pathname components are the same as those of
-      <em>ﬁlename</em>.
-      <!--l. 2131--><p class="noindent" >If the <b>:direction</b> is <b>:input</b> or <b>:probe</b> or the value of <b>:if-exists</b> is not
-      <b>:new-version</b>, <em>and</em> the version component of the <em>ﬁlename</em> is <b>:newest</b>,
-      then the ﬁle opened is that ﬁle already existing in the ﬁle system
-      that has a version greater than that of any other ﬁle in the ﬁle
-      system whose other pathname components are the same as those of
-      <em>ﬁlename</em>.
-<div class="new">
-      <!--l. 2139--><p class="noindent" >Some ﬁle systems permit yet other actions to be taken when a ﬁle already
-      exists; therefore, some implementations provide implementation-speciﬁc
-      <b>:if-exist</b> options.
-      </div></ul>
-</div>__________________________________________________________________________<div class="implementation">
-<!--l. 2146--><p class="noindent" ><b>Implementation note:</b> The various ﬁle systems in existence today have widely
-diﬀering capabilities. A given implementation may not be able to support all of these
-options in exactly the manner stated. An implementation is required to recognize all of
-these option keywords and to try to do something “reasonable” in the context of the host
-operating system. Implementors are encouraged to approximate the semantics speciﬁed
-                                                                          
-
-                                                                          
-here as closely as possible.
-<!--l. 2155--><p class="indent" >   As an example, suppose that a ﬁle system does not support distinct ﬁle versions and
-does not distinguish the notions of deletion and expunging (in some ﬁle systems ﬁle
-deletion is reversible until an expunge operation is performed). Then <b>:new-version</b>
-might be treated the same as <b>:rename</b> or <b>:supersede</b>, and <b>:rename-and-delete</b> might
-be treated the same as <b>:supersede</b>.
-<!--l. 2162--><p class="indent" >   If it is utterly impossible for an implementation to handle some option in a manner
-close to what is speciﬁed here, it may simply signal an error. The opening of ﬁles is an
-area where complete portability is too much to hope for; the intent here is simply to
-make things as portable as possible by providing speciﬁc names for a range of commonly
-supportable options.
-</div>
-__________________________________________________________________________
-<div class="flushdesc">
-        <ul><li><b>
-<b>:if-does-not-exist</b> </b></li>This argument speciﬁes the action to be taken if a ﬁle of the
-        speciﬁed name does not already exist.
-                   <div class="quotation">
-<div class="flushdesc">
-      <ul><li><b>
-<b>:error</b> </b></li>Signals an error. This is the default if the <b>:direction</b>
-     is <b>:input</b>, or if the <b>:if-exists</b> argument is <b>:overwrite</b> or
-      <b>:append</b>.
-      <li><b>
-<b>:create</b> </b></li>Creates an empty ﬁle with the speciﬁed name and
-      then  proceeds  as  if  it  had  already  existed  (but  do
-      not perform any processing directed by the <b>:if-exists</b>
-     argument).  This  is  the  default  if  the  <b>:direction</b>  is
-      <b>:output</b> or <b>:io</b>, and the <b>:if-exists</b> argument is anything
-      but <b>:overwrite</b> or <b>:append</b>.
-      <li><b>
-<b><b><a 
-href="symbols.html#x188-376658r658">nil</a></b></b> </b></li>Does not create a ﬁle or even a stream, but instead simply
-      returns <b><a 
-href="symbols.html#x188-376658r658">nil</a></b> to indicate failure. This is the default if the
-      <b>:direction</b> is <b>:probe</b>.</ul>
-                                                                          
-
-                                                                          
-</div>
-           </div>
-      </ul>
-</div>
-<div class="newer">
-<!--l. 2197--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx145-210008"></a>to add to the function <b><a 
-href="symbols.html#x188-376689r689">open</a></b> a new keyword
-argument <b>:external-format</b>. <div class="flushdesc">
-      <ul><li><b>
-<b>:external-format</b> </b></li>This  argument  speciﬁes  an  implementation-recognized
-      scheme for representing characters in ﬁles. The default value is <b>:default</b>
-      and is implementation-deﬁned but must support the base characters.
-      An error is signaled if the implementation does recognize the speciﬁed
-      format.
-      <!--l. 2206--><p class="noindent" >This argument may be speciﬁed if the <b>:direction</b> argument is <b>:input</b>,
-      <b>:output</b>, or <b>:io</b>. It is an error to write a character to the resulting
-      stream  that  cannot  be  represented  by  the  speciﬁed  ﬁle  format.
-      (However, the <b>#\Newline</b> character cannot produce such an error;
-      implementations must provide appropriate line division behavior for all
-      character streams.)
-      <!--l. 2213--><p class="noindent" >See <b><a 
-href="symbols.html#x188-376896r896">stream-external-format</a></b>.</ul>
-</div>
-</div>
-<!--l. 2217--><p class="indent" >   When the caller is ﬁnished with the stream, it should close the ﬁle by using
-the <b><a 
-href="symbols.html#x188-376240r240">close</a></b> function. The <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> form does this automatically,
-and so is preferred for most purposes. <b><a 
-href="symbols.html#x188-376689r689">open</a></b> should be used only when
-the control structure of the program necessitates opening and closing of
-a ﬁle in some way more complex than provided by <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b>. It
-is suggested that any program that uses <b><a 
-href="symbols.html#x188-376689r689">open</a></b> directly should use the
-special operator <b><a 
-href="symbols.html#x188-376978r978">unwind-protect</a></b> to close the ﬁle if an abnormal exit
-occurs.
+version may be <b>:wild</b>. However, portable programs should be prepared to
+encounter either <b>:wild</b> or implementation-dependent wildcards in any pathname
+component. The function <b><a 
+href="symbols.html#x190-383013r1013">wild-pathname-p</a></b> provides a portable way for testing
+the presence of wildcards.
 <hr></div>
-<div class="defmac">
-<div class="defmacheader">
-<!--l. 2228--><p class="indent" >   <div class="tabbing">
-                                                                          
-
-                                                                          
- <em>[Macro]</em> <b>with-open-ﬁle</b> <a 
- id="dx145-210009"></a>(stream ﬁlename {options}*){declaration}* {form}*
-   <br>
-<!--l. 2230--><p class="noindent" ></div>
-</div>
-<b>
-<!--l. 2231--><p class="indent" >   <a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> evaluates the <em>forms</em> of the body (an implicit <b><a 
-href="symbols.html#x188-376750r750">progn</a></b>) with the
-variable <em>stream</em> bound to a stream that reads or writes the ﬁle named by the value
-of <em>ﬁlename</em>. The <em>options</em> are evaluated and are used as keyword arguments to the
-function <b><a 
-href="symbols.html#x188-376689r689">open</a></b>.
-<!--l. 2238--><p class="indent" >   When control leaves the body, either normally or abnormally (such as by use
-of <b>throw</b>), the ﬁle is automatically closed. If a new output ﬁle is being written,
-and control leaves abnormally, the ﬁle is aborted and the ﬁle system is left, so far
-as possible, as if the ﬁle had never been opened. Because <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> always
-closes the ﬁle, even when an error exit is taken, it is preferred over <b><a 
-href="symbols.html#x188-376689r689">open</a></b> for most
-applications.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-204004"></a>
 <em>
-<!--l. 2246--><p class="indent" >   ﬁlename</em> is the name of the ﬁle to be opened; it may be a string, a pathname,
-or a stream.
-<div class="new">
-<!--l. 2250--><p class="indent" >   X3J13 voted in March 1988 <a 
- id="dx145-210010"></a>to specify exactly which streams may be used as
-pathnames. See section <a 
-href="clmse116.html#x144-20900023.1.6">23.1.6<!--tex4ht:ref: PATHNAME-FUNCTIONS --></a>.
+<!--l. 692--><p class="noindent" >[Function]</em> <b>pathname-match-p</b> <i>pathname</i> <i>wildname</i>
 </div>
-<div class="newer">
-<!--l. 2257--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx145-210011"></a>to clarify that <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> accepts only
-non-wild pathnames; an error is signaled if <b><a 
-href="symbols.html#x188-377001r1001">wild-pathname-p</a></b> would be true of
-the <em>ﬁlename</em> argument.
+<!--l. 694--><p class="indent" >   This predicate is true if and only if the <em>pathname</em> matches the <em>wildname</em>. The
+matching rules are implementation-deﬁned but should be consistent with the
+behavior of the <b><a 
+href="symbols.html#x190-382343r343">directory</a></b> function. Missing components of <em>wildname</em> default to
+<b>:wild</b>.
+<!--l. 699--><p class="indent" >   If either argument is not a pathname, string, or ﬁle stream, an error of type
+<b><a 
+href="symbols.html#x190-382973r973">type-error</a></b> is signaled. It is valid for <em>pathname</em> to be a wild pathname; a wildcard
+ﬁeld in <em>pathname</em> will match only a wildcard ﬁeld in <em>wildname</em>; that is,
+<b><a 
+href="symbols.html#x190-382722r722">pathname-match-p</a></b> is not commutative. It is valid for <em>wildname</em> to be a
+non-wild pathname; I believe that in this case <b><a 
+href="symbols.html#x190-382722r722">pathname-match-p</a></b> will have
+the same behavior as <b><a 
+href="symbols.html#x190-382381r381">equal</a></b>, though the X3J13 speciﬁcation did not say
+so.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-204005"></a>
+<em>
+<!--l. 709--><p class="noindent" >[Function]</em> <b>translate-pathname</b> <i>source</i> <i>from-wildname</i> <i>to-wildname</i>
+<tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt>
 </div>
-<div class="newer">
-<!--l. 2264--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx145-210012"></a>to require <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> to accept logical
-pathnames (see section <a 
-href="clmse116.html#x144-20300023.1.5">23.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
-</div>
-<!--l. 2269--><p class="indent" >   For example: <div class="lisp"><tt><div class="tabbing">
-(with-open-ﬁle (iﬁle name
-   <br>                                                               :direction :input)<br>
-  (with-open-ﬁle (oﬁle (merge-pathname-defaults iﬁle<br>
+<!--l. 711--><p class="indent" >   Translates the pathname <em>source</em>, which must match <em>from-wildname</em>, into a
+corresponding pathname (call it <em>result</em>), which is constructed so as to match
+<em>to-wildname</em>, and returns <em>result</em>.
+<!--l. 715--><p class="indent" >   The pathname <em>result</em> is a copy of <em>to-wildname</em> with each missing or wildcard
                                                                           
 
                                                                           
-                                                  nil<br>
-                                                  &#x0022;out&#x0022;)<br>
-                         :direction :output<br>
-                         :if-exists :supersede)<br>
-    (transduce-ﬁle iﬁle oﬁle)))<br>
-<!--l. 2279--><p class="noindent" ></div>
-</tt>
-</div>
-<div class="newer">
-<!--l. 2282--><p class="indent" >   X3J13 voted in June 1989 <a 
- id="dx145-210013"></a>to specify that the variable <em>stream</em> is not always
-bound to a stream; rather it is bound to whatever would be returned by a call to
+ﬁeld replaced by a portion of <em>source</em>; for this purpose a wildcard ﬁeld
+is a pathname component with a value of <b>:wild</b>, a <b>:wild</b> element of a
+list-valued directory component, or an implementation-deﬁned portion of a
+component, such as the <b><a 
+href="symbols.html#x190-382011r11">*</a></b> in the complex wildcard string <b>&#x0022;foo*bar&#x0022;</b> that some
+implementations support. An implementation that adds other wildcard
+features, such as regular expressions, must deﬁne how <b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b>
+extends to those features. A missing ﬁeld is a pathname component that is
 <b><a 
-href="symbols.html#x188-376689r689">open</a></b>. For example, if the options include <b>:if-does-not-exist nil</b>, <em>stream</em> will be
-bound to <b><a 
-href="symbols.html#x188-376658r658">nil</a></b> if the ﬁle does not exist. In this case the value of <em>stream</em> should be
-tested within the body of the <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> form before it is used as a stream.
-For example: <div class="lisp"><tt><div class="tabbing">
-(with-open-ﬁle (iﬁle name
-   <br>                                                                :direction :input<br>
-                 :if-does-not-exist nil)<br>
-  ;; Process the ﬁle only if it actually exists.<br>        (when (streamp name)<br>
-    (compile-cobol-program iﬁle)))<br>
-<!--l. 2297--><p class="noindent" ></div>
+href="symbols.html#x190-382670r670">nil</a></b>.
+<!--l. 725--><p class="indent" >   The portion of <em>source</em> that is copied into <em>result</em> is implementation-deﬁned.
+Typically it is determined by the user interface conventions of the ﬁle systems
+involved. Usually it is the portion of <em>source</em> that matches a wildcard ﬁeld of
+<em>from-wildname</em> that is in the same position as the missing or wildcard ﬁeld of
+<em>to-wildname</em>. If there is no wildcard ﬁeld in <em>from-wildname</em> at that position, then
+usually it is the entire corresponding pathname component of <em>source</em> or, in the
+case of a list-valued directory component, the entire corresponding list
+element. For example, if the name components of <em>source</em>, <em>from-wildname</em>, and
+<em>to-wildname</em> are <b>&#x0022;gazonk&#x0022;</b>, <b>&#x0022;gaz*&#x0022;</b>, and <b>&#x0022;h*&#x0022;</b> respectively, then in most ﬁle
+systems the wildcard ﬁelds of the name component of <em>from-wildname</em> and
+<em>to-wildname</em> are each <b>&#x0022;*&#x0022;</b>, the matching portion of <em>source</em> is <b>&#x0022;onk&#x0022;</b>, and the
+name component of <em>result</em> is <b>&#x0022;honk&#x0022;</b>; however, the exact behavior of
+<b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b> is not dictated by the Common Lisp language and
+may vary according to the user interface conventions of the ﬁle systems
+involved.
+<!--l. 742--><p class="indent" >   During the copying of a portion of <em>source</em> into <em>result</em>, additional
+implementation-deﬁned translations of alphabetic case or ﬁle naming conventions
+may occur, especially when <em>from-wildname</em> and <em>to-wildname</em> are for diﬀerent
+hosts.
+<!--l. 747--><p class="indent" >   If any of the ﬁrst three arguments is not a pathname, string, or ﬁle stream,
+an error of type <b><a 
+href="symbols.html#x190-382973r973">type-error</a></b> is signaled. It is valid for <em>source</em> to be a
+wild pathname; in general this will produce a wild <em>result</em> pathname. It is
+valid for <em>from-wildname</em> or <em>to-wildname</em> or both to be non-wild. An error
+is signaled if the <em>source</em> pathname does not match the <em>from-wildname</em>,
+that is, if <b>(pathname-match-p <em>source</em> <em>from-wildname</em>)</b> would not be
+true.
+<!--l. 755--><p class="indent" >   There are no speciﬁed keyword arguments for <b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b>, but
+implementations are permitted to extend it by adding keyword arguments. There
+is one speciﬁed return value from <b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b>; implementations are
+permitted to extend it by returning additional values.
+                                                                          
+
+                                                                          
+<!--l. 760--><p class="indent" >   Here is an implementation suggestion. One ﬁle system performs this operation
+by examining corresponding pieces of the three pathnames in turn, where a piece
+is a pathname component or a list element of a structured component such as a
+hierarchical directory. Hierarchical directory elements in <em>from-wildname</em> and
+<em>to-wildname</em> are matched by whether they are wildcards, not by depth in the
+directory hierarchy. If the piece in <em>to-wildname</em> is present and not wild, it is
+copied into the result. If the piece in <em>to-wildname</em> is <b>:wild</b> or <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, the
+corresponding piece in <em>source</em> is copied into the result. Otherwise, the piece in
+<em>to-wildname</em> might be a complex wildcard such as <b>&#x0022;foo*bar&#x0022;</b>; the portion of the
+piece in <em>source</em> that matches the wildcard portion of the corresponding piece in
+<em>from-wildname</em> (or the entire <em>source</em> piece, if the <em>from-wildname</em> piece
+is not wild and therefore equals the <em>source</em> piece) replaces the wildcard
+portion of the piece in <em>to-wildname</em> and the value produced is used in the
+result.
+<!--l. 775--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-204006"></a>to require <b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b> to map customary
+case in argument pathnames to the customary case in returned pathnames (see
+section <a 
+href="#x146-20200024.1.2">24.1.2<!--tex4ht:ref: PATHNAME-COMPONENT-CASE-SECTION --></a>).
+<!--l. 780--><p class="indent" >   Here are some examples of the use of the new wildcard pathname facilities.
+These examples are not portable. They are written to run with particular
+ﬁle systems and particular wildcard conventions and are intended to be
+illustrative, not prescriptive. Other implementations may behave diﬀerently.
+<div class="lisp"><tt><div class="tabbing">
+(wild-pathname-p (make-pathname :name :wild)) <span class="math"> ⇒</span> t
+   <br>              (wild-pathname-p (make-pathname :name :wild) :name) <span class="math"> ⇒</span> t<br>
+(wild-pathname-p (make-pathname :name :wild) :type) <span class="math"> ⇒</span> nil<br>
+(wild-pathname-p (pathname &#x0022;S:&#x003E;foo&#x003E;**&#x003E;&#x0022;)) <span class="math"> ⇒</span> t         ;Maybe<br>
+(wild-pathname-p (make-pathname :name &#x0022;F*O&#x0022;)) <span class="math"> ⇒</span> t     ;Probably<br>
+<!--l. 791--><p class="noindent" ></div>
 </tt>
 </div>
+<!--l. 792--><p class="indent" >   One cannot rely on <b><a 
+href="symbols.html#x190-382808r808">rename-ﬁle</a></b> to handle wild pathnames in a predictable
+manner. However, one can use <b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b> explicitly to control the
+process. <div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+(defun rename-ﬁles (from to)
+   <br>                           &#x0022;Rename all ﬁles that match the ﬁrst argument by<br>
+   translating their names to the form of the second<br>
+   argument. Both arguments may be wild pathnames.&#x0022;<br>
+  (dolist (ﬁle (directory from))<br>
+    ;; DIRECTORY produces only pathnames that match from-wildname.<br>
+    (rename-ﬁle ﬁle (translate-pathname ﬁle from to))))<br>
+<!--l. 803--><p class="noindent" ></div>
+</tt>
 </div>
 <hr>
-</div>__________________________________________________________________________<div class="implementation">
-<!--l. 2302--><p class="noindent" ><b>Implementation note:</b> While <b><a 
-href="symbols.html#x188-377008r1008">with-open-ﬁle</a></b> tries to automatically close the stream
-on exit from the construct, for robustness it is helpful if the garbage collector can detect
-discarded streams and automatically close them.
-</div>___________________________________________________________________________________________________________
+</div>
+<!--l. 806--><p class="indent" >   Assuming one particular set of popular wildcard conventions, this function
+might exhibit the following behavior. Not all ﬁle systems will run this example
+exactly as written. <div class="lisp"><tt><div class="tabbing">
+(rename-ﬁles &#x0022;/usr/me/*.lisp&#x0022; &#x0022;/dev/her/*.l&#x0022;)
+   <br>                  renames  /usr/me/init.lisp<br>               to  /dev/her/init.l<br>
+<br>                            (rename-ﬁles &#x0022;/usr/me/pcl*/*&#x0022; &#x0022;/sys/pcl/*/&#x0022;)<br>
+   renames  /usr/me/pcl-5-may/low.lisp<br>  to  /sys/pcl/pcl-5-may/low.lisp<br>
+   (in some ﬁle systems the result might be /sys/pcl/5-may/low.lisp)<br>
+<br>                        (rename-ﬁles &#x0022;/usr/me/pcl*/*&#x0022; &#x0022;/sys/library/*/&#x0022;)<br>
+   renames  /usr/me/pcl-5-may/low.lisp<br>to  /sys/library/pcl-5-may/low.lisp<br>
+   (in some ﬁle systems the result might be /sys/library/5-may/low.lisp)<br>
+<br>                             (rename-ﬁles &#x0022;/usr/me/foo.bar&#x0022; &#x0022;/usr/me2/&#x0022;)<br>
+   renames  /usr/me/foo.bar<br>                       to  /usr/me2/foo.bar<br>
+<br>                                     (rename-ﬁles &#x0022;/usr/joe/*-recipes.text&#x0022;<br>
+              &#x0022;/usr/jim/personal/cookbook/joe&#x2019;s-*-rec.text&#x0022;)<br>
+   renames  /usr/joe/lamb-recipes.text<br>to  /usr/jim/personal/cookbook/joe&#x2019;s-lamb-rec.text    <br>
+   renames  /usr/joe/veg-recipes.text<br>to  /usr/jim/personal/cookbook/joe&#x2019;s-veg-rec.text     <br>
+   renames  /usr/joe/cajun-recipes.text<br>to  /usr/jim/personal/cookbook/joe&#x2019;s-cajun-rec.text   <br>
+   renames  /usr/joe/szechuan-recipes.text<br>to  /usr/jim/personal/cookbook/joe&#x2019;s-szechuan-rec.text<br>
+<!--l. 838--><p class="noindent" ></div>
+</tt>
                                                                           
 
                                                                           
-<!--l. 2310--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+</div>
+<!--l. 840--><p class="indent" >   The following examples use UNIX syntax and the wildcard conventions of one
+particular version of UNIX. <div class="lisp"><tt><div class="tabbing">
+(namestring
+   <br>                                  (translate-pathname &#x0022;/usr/dmr/hacks/frob.l&#x0022;<br>
+                      &#x0022;/usr/d*/hacks/*.l&#x0022;<br>
+                      &#x0022;/usr/d*/backup/hacks/backup-*.*&#x0022;))<br>
+   <span class="math"> ⇒</span> &#x0022;/usr/dmr/backup/hacks/backup-frob.l&#x0022;<br>
+<!--l. 848--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 850--><p class="indent" >   <div class="tabbing">
+(namestring
+   <br>                                  (translate-pathname &#x0022;/usr/dmr/hacks/frob.l&#x0022;<br>
+                      &#x0022;/usr/d*/hacks/fr*.l&#x0022;<br>
+                      &#x0022;/usr/d*/backup/hacks/backup-*.*&#x0022;))<br>
+   <span class="math"> ⇒</span> &#x0022;/usr/dmr/backup/hacks/backup-ob.l&#x0022;<br>
+<!--l. 856--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 857--><p class="indent" >   The following examples are similar to the preceding examples but use two
+diﬀerent hosts; host <b>U</b> supports a UNIX ﬁle system and host <b>V</b> supports a
+VAX/VMS ﬁle system. Note the translation of ﬁle type (from <b>l</b> to <b>LSP</b>) and the
+change of alphabetic case conventions. <div class="lisp"><tt><div class="tabbing">
+(namestring
+                                                                          
+
+                                                                          
+   <br>                               (translate-pathname &#x0022;U:/usr/dmr/hacks/frob.l&#x0022;<br>
+                      &#x0022;U:/usr/d*/hacks/*.l&#x0022;<br>
+                      &#x0022;V:SYS$DISK:[D*.BACKUP.HACKS]BACKUP-*.*&#x0022;))<br>
+   <span class="math"> ⇒</span> &#x0022;V:SYS$DISK:[DMR.BACKUP.HACKS]BACKUP-FROB.LSP&#x0022;<br>
+<!--l. 867--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="lisp">
+<tt>
+<!--l. 868--><p class="indent" >   <div class="tabbing">
+(namestring
+   <br>                               (translate-pathname &#x0022;U:/usr/dmr/hacks/frob.l&#x0022;<br>
+                      &#x0022;U:/usr/d*/hacks/fr*.l&#x0022;<br>
+                      &#x0022;V:SYS$DISK:[D*.BACKUP.HACKS]BACKUP-*.*&#x0022;))<br>
+   <span class="math"> ⇒</span> &#x0022;V:SYS$DISK:[DMR.BACKUP.HACKS]BACKUP-OB.LSP&#x0022;<br>
+<!--l. 874--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 875--><p class="indent" >   The next example is a version of the function <b><a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b>
+(simpliﬁed a bit) for a logical host named <b>FOO</b>. The points of interest are the use
+of <b><a 
+href="symbols.html#x190-382722r722">pathname-match-p</a></b> as a <b>:test</b> argument for <b><a 
+href="symbols.html#x190-382128r128">assoc</a></b> and the use of
+<b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b> as a substrate for <b><a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b>.
+<div class="lisp"><tt><div class="tabbing">
+(deﬁne-condition logical-translation-error (ﬁle-error))
+   <br>       <br>       (defun my-translate-logical-pathname (pathname &#x0026;key rules)<br>
+  (let ((rule (assoc pathname rules :test #&#x2019;pathname-match-p)))<br>
+    (unless rule<br>
+      (error &#x2019;logical-translation-error :pathname pathname))<br>
+    (translate-pathname pathname (ﬁrst rule) (second rule))))<br>            <br>
+(my-translate-logical-pathname<br>                &#x0022;FOO:CODE;BASIC.LISP&#x0022;<br>
+  :rules &#x2019;((&#x0022;FOO:DOCUMENTATION;&#x0022; &#x0022;U:/doc/foo/&#x0022;)<br>
+                                                                          
+
+                                                                          
+           (&#x0022;FOO:CODE;&#x0022;          &#x0022;U:/lib/foo/&#x0022;)<br>
+           (&#x0022;FOO:PATCHES;*;&#x0022;     &#x0022;U:/lib/foo/patch/*/&#x0022;)))<br>
+   <span class="math"> ⇒</span> #P&#x0022;U:/lib/foo/basic.l&#x0022;<br>
+<!--l. 895--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 897--><p class="indent" >
+                                                                          
+
+                                                                          
+   <h4 class="subsectionHead"><span class="titlemark">24.1.5   </span> <a 
+href="frontmatter.html#QQ2-146-245" id="x146-20500024.1.5">Logical Pathnames</a></h4>
+<!--l. 902--><p class="noindent" >Pathname values are not portable, but sometimes they must be mentioned in a
+program (for example, the names of ﬁles containing the program and the data
+used by the program).
+<!--l. 906--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-205001"></a>to provide some facilities for portable pathname
+values. The idea is to provide a portable framework for pathname values; these
+logical pathnames are then mapped to physical (that is, actual) pathnames by a
+set of implementation-dependent or site-dependent rules. The logical pathname
+facility therefore separates the concerns of program writing and user software
+architecture from the details of how a software system is embedded in a particular
+ﬁle system or operating environment.
+<!--l. 915--><p class="indent" >   Pathname values are not portable because not all Common Lisp
+implementations use the same operating system and ﬁle name syntax varies
+widely among operating systems. In addition, corresponding ﬁles at two
+diﬀerent sites may have diﬀerent names even when the operating system is
+the same; for example, they may be on diﬀerent directories or diﬀerent
+devices. The Common Lisp logical pathname system deﬁnes a particular
+pathname structure and namestring syntax that must be supported by all
+implementations.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-205002"></a>
+<em>
+<!--l. 924--><p class="noindent" >[Class]</em> <b>logical-pathname</b>
+</div>
+<!--l. 926--><p class="indent" >   This is a subclass of <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b>.
+<hr></div>
+<!--l. 929--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x146-20600024.1.5" id="x146-20600024.1.5">Syntax of Logical Pathname Namestrings</a></h5>
+<!--l. 931--><p class="noindent" >The syntax of a logical pathname namestring is as follows: <div class="tabbing">
+                                                                          
+
+                                                                          
+<em>logical-namestring</em> ::=  [<i>host <b>:</b></i>]  [<i><b>;</b></i>]  {<i>directory <b>;</b></i>}*  [<i>name</i>]  [<i><b>.</b> type  [<i><b>.</b> version</i>]</i>]
+   <br>
+<!--l. 935--><p class="noindent" ></div>Note that a logical namestring has no <em>device</em> portion.
+<!--l. 938--><p class="indent" >   <div class="tabbing">
+<em>host</em> ::= <em>word</em>
+   <br>                      <em>directory</em> ::= <em>word</em> | <em>wildcard-word</em> | <em>wildcard-inferiors</em><br>
+<em>name</em> ::= <em>word</em> | <em>wildcard-word</em><br>               <em>type</em> ::= <em>word</em> | <em>wildcard-word</em><br>
+<em>version</em> ::= <em>word</em> | <em>wildcard-word</em><br>             <em>word</em> ::=  {<i>letter | digit | <b><a 
+href="symbols.html#x190-382064r64">-</a></b></i>}+ <br>
+<em>wildcard-word</em> ::=  [<i>word</i>]  <b><a 
+href="symbols.html#x190-382011r11">*</a></b> {<i>word <b><a 
+href="symbols.html#x190-382011r11">*</a></b></i>}*  [<i>word</i>] <br>     <em>wildcard-inferiors</em> ::= <b><a 
+href="symbols.html#x190-382012r12">**</a></b><br>
+<!--l. 947--><p class="noindent" ></div>
+<!--l. 949--><p class="indent" >   A <em>word</em> consists of one or more uppercase letters, digits, and hyphens.
+<!--l. 951--><p class="indent" >   A <em>wildcard word</em> consists of one or more asterisks, uppercase letters, digits, and
+hyphens, including at least one asterisk, with no two asterisks adjacent. Each
+asterisk matches a sequence of zero or more characters. The wildcard word <b><a 
+href="symbols.html#x190-382011r11">*</a></b>
+parses as <b>:wild</b>; all others parse as strings.
+<!--l. 958--><p class="indent" >   Lowercase letters may also appear in a word or wildcard word occurring in a
+namestring. Such letters are converted to uppercase when the namestring is
+converted to a pathname. The consequences of using other characters are
+unspeciﬁed.
+<!--l. 963--><p class="indent" >   The <em>host</em> is a word that has been deﬁned as a logical pathname host by using
+<b><a 
+href="symbols.html#x190-382845r845">setf</a></b> with the function <b><a 
+href="symbols.html#x190-382565r565">logical-pathname-translations</a></b>.
+<!--l. 966--><p class="indent" >   There is no device, so the device component of a logical pathname is
+always <b>:unspeciﬁc</b>. No other component of a logical pathname can be
+<b>:unspeciﬁc</b>.
+<!--l. 969--><p class="indent" >   Each <em>directory</em> is a word, a wildcard word, or <b><a 
+href="symbols.html#x190-382012r12">**</a></b> (which is parsed as
+<b>:wild-inferiors</b>). If a semicolon precedes the directories, the directory component
+is relative; otherwise it is absolute.
+<!--l. 973--><p class="indent" >   The <em>name</em> is a word or a wildcard word.
+<!--l. 975--><p class="indent" >   The <em>type</em> is a word or a wildcard word.
+<!--l. 977--><p class="indent" >   The <em>version</em> is a positive decimal integer or the word <b>NEWEST</b> (which is
+parsed as <b>:newest</b>) or <b><a 
+href="symbols.html#x190-382011r11">*</a></b> (which is parsed as <b>:wild</b>). The letters in <b>NEWEST</b> can
+be in either alphabetic case.
+<!--l. 981--><p class="indent" >   The consequences of using any value not speciﬁed here as a logical pathname
+component are unspeciﬁed. The null string <b>&#x0022;&#x0022;</b> is not a valid value for any
+                                                                          
+
+                                                                          
+component of a logical pathname, since the null string is not a word or a wildcard
+word.
+<!--l. 986--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x146-20700024.1.5" id="x146-20700024.1.5">Parsing of Logical Pathname Namestrings</a></h5>
+<!--l. 988--><p class="noindent" >Logical pathname namestrings are recognized by the functions <b><a 
+href="symbols.html#x190-382564r564">logical-pathname</a></b>
+and <b><a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b>. The host portion of the logical pathname
+namestring and its following colon must appear in the namestring arguments to
+these functions.
+<!--l. 993--><p class="indent" >   The function <b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b> recognizes a logical pathname namestring
+when the <em>host</em> argument is logical or the <em>defaults</em> argument is a logical pathname.
+In this case the host portion of the logical pathname namestring and its following
+colon are optional. If the host portion of the namestring and the <em>host</em> argument
+are both present and do not match, an error is signaled. The host argument is
+logical if it is supplied and came from <b><a 
+href="symbols.html#x190-382721r721">pathname-host</a></b> of a logical pathname.
+Whether a host argument is logical if it is a string <b><a 
+href="symbols.html#x190-382381r381">equal</a></b> to a logical pathname
+host name is implementation-deﬁned.
+<!--l. 1004--><p class="indent" >   The function <b><a 
+href="symbols.html#x190-382631r631">merge-pathnames</a></b> recognizes a logical pathname namestring
+when the <em>defaults</em> argument is a logical pathname. In this case the host
+portion of the logical pathname namestring and its following colon are
+optional.
+<!--l. 1009--><p class="indent" >   Whether the other functions that coerce strings to pathnames recognize
+logical pathname namestrings is implementation-deﬁned. These functions
+include <b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b> in circumstances other than those described
+above, <b>merge-pathnames</b> in circumstances other than those described
+above, the <b>:defaults</b> argument to <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b>, and the following
+functions:
+<div class="flushleft" 
+>
+<!--l. 1014--><p class="noindent" >
+ <!--tex4ht:inline--><div class="tabular"><table width="100%" class="tabular"><tr><td align="left" > <b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b>              </td><td align="left" ><b><a 
+href="symbols.html#x190-382408r408">ﬁle-write-date</a></b>        </td><td align="left" ><b><a 
+href="symbols.html#x190-382723r723">pathname-name</a></b>     </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382262r262">compile-ﬁle-pathname</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-382486r486">host-namestring</a></b>     </td><td align="left" ><b><a 
+href="symbols.html#x190-382724r724">pathname-type</a></b>      </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382331r331">delete-ﬁle</a></b>                </td><td align="left" ><b><a 
+href="symbols.html#x190-382553r553">load</a></b>                    </td><td align="left" ><b><a 
+href="symbols.html#x190-382725r725">pathname-version</a></b>  </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382343r343">directory</a></b>                 </td><td align="left" ><b><a 
+href="symbols.html#x190-382664r664">namestring</a></b>           </td><td align="left" ><b><a 
+href="symbols.html#x190-382756r756">probe-ﬁle</a></b>             </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382344r344">directory-namestring</a></b> </td><td align="left" ><b><a 
+href="symbols.html#x190-382701r701">open</a></b>                    </td><td align="left" ><b><a 
+href="symbols.html#x190-382808r808">rename-ﬁle</a></b>           </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382359r359">dribble</a></b>                    </td><td align="left" ><b><a 
+href="symbols.html#x190-382718r718">pathname</a></b>             </td><td align="left" ><b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b></td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382364r364">ed</a></b>                          </td><td align="left" ><b><a 
+href="symbols.html#x190-382719r719">pathname-device</a></b>    </td><td align="left" ><b><a 
+href="symbols.html#x190-382969r969">truename</a></b>             </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382372r372">enough-namestring</a></b>    </td><td align="left" ><b><a 
+href="symbols.html#x190-382720r720">pathname-directory</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-383013r1013">wild-pathname-p</a></b>   </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382401r401">ﬁle-author</a></b>               </td><td align="left" ><b><a 
+href="symbols.html#x190-382721r721">pathname-host</a></b>      </td><td align="left" ><b><a 
+href="symbols.html#x190-383020r1020">with-open-ﬁle</a></b>       </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382405r405">ﬁle-namestring</a></b>         </td><td align="left" ><b><a 
+href="symbols.html#x190-382722r722">pathname-match-p</a></b> </td><td align="left" >                         </td></tr></table></div></div>
+                                                                          
+
+                                                                          
+<!--l. 1028--><p class="noindent" >Note that many of these functions must accept logical pathnames even though they
+do not accept logical pathname namestrings.
+<!--l. 1032--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x146-20800024.1.5" id="x146-20800024.1.5">Using Logical Pathnames</a></h5>
+<!--l. 1034--><p class="noindent" >Some real ﬁle systems do not have versions. Logical pathname translation to such
+a ﬁle system ignores the version. This implies that a portable program cannot rely
+on being able to store in a ﬁle system more than one version of a ﬁle named by a
+logical pathname.
+<!--l. 1040--><p class="indent" >   The type of a logical pathname for a Common Lisp source ﬁle is <b>LISP</b>. This
+should be translated into whatever implementation-deﬁned type is appropriate in
+a physical pathname.
+<!--l. 1044--><p class="indent" >   The logical pathname host name <b>SYS</b> is reserved for the implementation.
+The existence and meaning of logical pathnames for logical host <b>SYS</b> is
+implementation-deﬁned.
+<!--l. 1048--><p class="indent" >   File manipulation functions must operate with logical pathnames according to
+the following requirements:
+      <ul class="itemize1">
+      <li class="itemize">The following accept logical pathnames and translate them into physical
+      pathnames as if by calling the function <b><a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b>:
+      <div class="flushleft" 
+>
+<!--l. 1054--><p class="noindent" >
+ <!--tex4ht:inline--><div class="tabular"><table width="100%" class="tabular"><tr><td align="left" ><b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b>               </td><td align="left" ><b><a 
+href="symbols.html#x190-382364r364">ed</a></b>               </td><td align="left" ><b><a 
+href="symbols.html#x190-382756r756">probe-ﬁle</a></b>      </td>
+</tr><tr><td align="left" ><b><a 
+href="symbols.html#x190-382262r262">compile-ﬁle-pathname</a></b> </td><td align="left" ><b><a 
+href="symbols.html#x190-382401r401">ﬁle-author</a></b>     </td><td align="left" ><b><a 
+href="symbols.html#x190-382808r808">rename-ﬁle</a></b>    </td>
+</tr><tr><td align="left" ><b><a 
+href="symbols.html#x190-382331r331">delete-ﬁle</a></b>                 </td><td align="left" ><b><a 
+href="symbols.html#x190-382408r408">ﬁle-write-date</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-382969r969">truename</a></b>      </td></tr><tr><td align="left" ><b><a 
+href="symbols.html#x190-382343r343">directory</a></b>  </td> <td align="left" ><b><a 
+href="symbols.html#x190-382553r553">load</a></b> </td> <td align="left" ><b><a 
+href="symbols.html#x190-383020r1020">with-open-ﬁle</a></b></td>
+</tr><tr><td align="left" ><b><a 
+href="symbols.html#x190-382359r359">dribble</a></b>                     </td><td align="left" ><b><a 
+href="symbols.html#x190-382701r701">open</a></b>            </td><td align="left" >                  </td></tr></table>
+</div></div>
+      </li>
+      <li class="itemize">Applying the function <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> to a stream created by the function <b><a 
+href="symbols.html#x190-382701r701">open</a></b>
+      or the macro <b><a 
+href="symbols.html#x190-383020r1020">with-open-ﬁle</a></b> using a logical pathname produces a logical
+      pathname.
+      </li>
+      <li class="itemize">The functions <b><a 
+href="symbols.html#x190-382969r969">truename</a></b>, <b><a 
+href="symbols.html#x190-382756r756">probe-ﬁle</a></b>, and <b><a 
+href="symbols.html#x190-382343r343">directory</a></b> never return logical
+      pathnames.
+                                                                          
+
+                                                                          
+      </li>
+      <li class="itemize">Calling <b><a 
+href="symbols.html#x190-382808r808">rename-ﬁle</a></b> with a logical pathname as the second argument
+      returns a logical pathname as the ﬁrst value.
+      </li>
+      <li class="itemize"><b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> returns a logical pathname if and only if the host is
+      logical. If the <b>:host</b> argument to <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> is supplied, the host is
+      logical if it came from the <b><a 
+href="symbols.html#x190-382721r721">pathname-host</a></b> of a logical pathname. Whether
+      a <b>:host</b> argument is logical if it is a string equal to a logical pathname host
+      name is implementation-deﬁned.</li></ul>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-208001"></a>
+<em>
+<!--l. 1081--><p class="noindent" >[Function]</em> <b>logical-pathname</b> <i>pathname</i>
+</div>
+<!--l. 1083--><p class="indent" >   Converts the argument to a logical pathname and returns it. The argument
+can be a logical pathname, a logical pathname namestring containing a host
+component, or a stream for which the <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> function returns a logical
+pathname. For any other argument, <b><a 
+href="symbols.html#x190-382564r564">logical-pathname</a></b> signals an error of type
+<b><a 
+href="symbols.html#x190-382973r973">type-error</a></b>.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-208002"></a>
+<em>
+<!--l. 1091--><p class="noindent" >[Function]</em> <b>translate-logical-pathname</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt>
+</div>
+<!--l. 1093--><p class="indent" >   Translates a logical pathname to the corresponding physical pathname. The
+<em>pathname</em> argument is ﬁrst coerced to a pathname. If it is not a pathname, string,
+or ﬁle stream, an error of type <b><a 
+href="symbols.html#x190-382973r973">type-error</a></b> is signaled.
+<!--l. 1098--><p class="indent" >   If the coerced argument is a physical pathname, it is returned.
+<!--l. 1100--><p class="indent" >   If the coerced argument is a logical pathname, the ﬁrst matching translation
+(according to <b><a 
+href="symbols.html#x190-382722r722">pathname-match-p</a></b>) of the logical pathname host is applied, as if
+                                                                          
+
+                                                                          
+by calling <b><a 
+href="symbols.html#x190-382967r967">translate-pathname</a></b>. If the result is a logical pathname, this
+process is repeated. When the result is ﬁnally a physical pathname, it is
+returned.
+<!--l. 1106--><p class="indent" >   If no translation matches a logical pathname, an error of type <b><a 
+href="symbols.html#x190-382402r402">ﬁle-error</a></b> is
+signaled.
+<b>
+<!--l. 1109--><p class="indent" >   <a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b> may perform additional translations,
+typically to provide translation of ﬁle types to local naming conventions,
+to accommodate physical ﬁle systems with names of limited length, or
+to deal with special character requirements such as translating hyphens
+to underscores or uppercase letters to lowercase. Any such additional
+translations are implementation-deﬁned. Some implementations do no additional
+translations.
+<!--l. 1117--><p class="indent" >   There are no speciﬁed keyword arguments for <b><a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b>
+but implementations are permitted to extend it by adding keyword arguments.
+There is one speciﬁed return value from <b><a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b>;
+implementations are permitted to extend it by returning additional values.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-208003"></a>
+<em>
+<!--l. 1125--><p class="noindent" >[Function]</em> <b>logical-pathname-translations</b> <i>host</i>
+</div>
+<!--l. 1127--><p class="indent" >   If the speciﬁed <em>host</em> is not the host component of a logical pathname and is
+not a string that has been deﬁned as a logical pathname host name by <b><a 
+href="symbols.html#x190-382845r845">setf</a></b> of
+<b><a 
+href="symbols.html#x190-382565r565">logical-pathname-translations</a></b>, this function signals an error of type
+<b><a 
+href="symbols.html#x190-382973r973">type-error</a></b>; otherwise, it returns the list of translations for the speciﬁed <em>host</em>.
+Each translation is a list of at least two elements, from-wildname and
+to-wildname. Any additional elements are implementation-deﬁned. A
+from-wildname is a logical pathname whose host is the speciﬁed <em>host</em>. A
+to-wildname is any pathname. Translations are searched in the order listed, so
+more speciﬁc from-wildnames must precede more general ones.
+<b>
+<!--l. 1137--><p class="indent" >   (setf (logical-pathname-translations <em>host</em>) <em>translations</em>)</b> sets
+the list of translations for the logical pathname <em>host</em> to <em>translations</em>. If
+                                                                          
+
+                                                                          
+<em>host</em> is a string that has not previously been used as logical pathname
+host, a new logical pathname host is deﬁned; otherwise an existing host&#x2019;s
+translations are replaced. Logical pathname host names are compared with
+<b><a 
+href="symbols.html#x190-382913r913">string-equal</a></b>.
+<!--l. 1144--><p class="indent" >   When setting the translations list, each from-wildname can be a logical
+pathname whose host is <em>host</em> or a logical pathname namestring <em>s</em> parseable by
+<b>(parse-namestring <em>s</em> <em>host-object</em>)</b>, where <em>host-object</em> is an appropriate object
+for representing the speciﬁed <em>host</em> to <b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b>. (This circuitous
+speciﬁcation dodges the fact that <b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b> does not necessarily accept
+as its second argument any old string that names a logical host.) Each
+to-wildname can be anything coercible to a pathname by application of
+the function <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b>. If to-wildname coerces to a logical pathname,
+<b><a 
+href="symbols.html#x190-382966r966">translate-logical-pathname</a></b> will retranslate the result, repeatedly if
+necessary.
+<!--l. 1157--><p class="indent" >   Implementations may deﬁne additional functions that operate on logical
+pathname hosts (for example, to specify additional translation rules or
+options).
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-208004"></a>
+<em>
+<!--l. 1163--><p class="noindent" >[Function]</em> <b>load-logical-pathname-translations</b> <i>host</i>
+</div>
+<!--l. 1165--><p class="indent" >   If a logical pathname host named <em>host</em> (a string) is already deﬁned, this
+function returns <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>. Otherwise, it searches for a logical pathname host
+deﬁnition in an implementation-deﬁned manner. If none is found, it signals
+an error. If a deﬁnition is found, it installs the deﬁnition and returns
+<b><a 
+href="symbols.html#x190-382953r953">t</a></b>.
+<!--l. 1170--><p class="indent" >   The search used by <b><a 
+href="symbols.html#x190-382554r554">load-logical-pathname-translations</a></b> should be
+documented, as logical pathname deﬁnitions will be created by users as
+well as by Lisp implementors. A typical search technique is to look in an
+implementation-deﬁned directory for a ﬁle whose name is derived from the host
+name in an implementation-deﬁned fashion.
+<hr></div>
+<div class="defun">
+                                                                          
+
+                                                                          
+<div class="defunheader">
+<a 
+ id="dx146-208005"></a>
+<em>
+<!--l. 1178--><p class="noindent" >[Function]</em> <b>compile-ﬁle-pathname</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:output-ﬁle</i>
+</div>
+<!--l. 1180--><p class="indent" >   Returns the pathname that <b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b> would write into, if given the
+same arguments. If the pathname argument is a logical pathname and the
+<b>:output-ﬁle</b> argument is unspeciﬁed, the result is a logical pathname. If an
+implementation supports additional keyword arguments to <b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b>,
+<b><a 
+href="symbols.html#x190-382262r262">compile-ﬁle-pathname</a></b> must accept the same arguments.
+<hr></div>
+<!--l. 1187--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x146-20900024.1.5" id="x146-20900024.1.5">Examples of the Use of Logical Pathnames</a></h5>
+<!--l. 1189--><p class="noindent" >Here is a very simple example of setting up a logical pathname host named <b>FOO</b>.
+Suppose that no translations are necessary to get around ﬁle system restrictions,
+so all that is necessary is to specify the root of the physical directory tree that
+contains the logical ﬁle system. The namestring syntax in the to-wildname is
+implementation-speciﬁc. <div class="lisp"><tt><div class="tabbing">
+(setf (logical-pathname-translations &#x0022;foo&#x0022;)
+   <br>            &#x2019;((&#x0022;**;*.*.*&#x0022;          &#x0022;MY-LISPM:&#x003E;library&#x003E;foo&#x003E;**&#x003E;&#x0022;)))<br>
+<!--l. 1198--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1199--><p class="indent" >   The following is a sample use of that logical pathname. All return values are of
+course implementation-speciﬁc; all of the examples in this section are of course
+meant to be illustrative and not prescriptive. <div class="lisp"><tt><div class="tabbing">
+(translate-logical-pathname &#x0022;foo:bar;baz;mum.quux.3&#x0022;)
+   <br>               <span class="math"> ⇒</span> #P&#x0022;MY-LISPM:&#x003E;library&#x003E;foo&#x003E;bar&#x003E;baz&#x003E;mum.quux.3&#x0022;<br>
+                                                                          
+
+                                                                          
+<!--l. 1205--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1207--><p class="indent" >   Next we have a more complex example, dividing the ﬁles among two ﬁle
+servers (<b>U</b>, supporting a UNIX ﬁle system, and <b>V</b>, supporting a VAX/VMS ﬁle
+system) and several diﬀerent directories. This UNIX ﬁle system doesn&#x2019;t support
+<b>:wild-inferiors</b> in the directory, so each directory level must be translated
+individually. No ﬁle name or type translations are required except for
+<b>.MAIL</b> to <b>.MBX</b>. The namestring syntax used for the to-wildnames is
+implementation-speciﬁc. <div class="lisp"><tt><div class="tabbing">
+(setf (logical-pathname-translations &#x0022;prog&#x0022;)
+   <br>                       &#x2019;((&#x0022;RELEASED;*.*.*&#x0022;    &#x0022;U:/sys/bin/my-prog/&#x0022;)<br>
+        (&#x0022;RELEASED;*;*.*.*&#x0022;  &#x0022;U:/sys/bin/my-prog/*/&#x0022;)<br>
+        (&#x0022;EXPERIMENTAL;*.*.*&#x0022;<br>                             &#x0022;U:/usr/Joe/development/prog/&#x0022;)<br>
+        (&#x0022;EXPERIMENTAL;DOCUMENTATION;*.*.*&#x0022;<br>
+                             &#x0022;V:SYS$DISK:[JOE.DOC]&#x0022;)<br>
+        (&#x0022;EXPERIMENTAL;*;*.*.*&#x0022;<br>                             &#x0022;U:/usr/Joe/development/prog/*/&#x0022;)<br>
+        (&#x0022;MAIL;**;*.MAIL&#x0022;    &#x0022;V:SYS$DISK:[JOE.MAIL.PROG...]*.MBX&#x0022;)<br>
+        ))<br>
+<!--l. 1226--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1227--><p class="indent" >   Here are sample uses of logical host <b>PROG</b>. All return values are of course
+implementation-speciﬁc. <div class="lisp"><tt><div class="tabbing">
+(translate-logical-pathname &#x0022;prog:mail;save;ideas.mail.3&#x0022;)
+   <br>        <span class="math"> ⇒</span> #P&#x0022;V:SYS$DISK:[JOE.MAIL.PROG.SAVE]IDEAS.MBX.3&#x0022;<br>
+<br>            (translate-logical-pathname &#x0022;prog:experimental;spreadsheet.c&#x0022;)<br>
+   <span class="math"> ⇒</span> #P&#x0022;U:/usr/Joe/development/prog/spreadsheet.c&#x0022;<br>
+<!--l. 1235--><p class="noindent" ></div>
+</tt>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 1237--><p class="indent" >   Suppose now that we have a program that uses three ﬁles logically named
+<b>MAIN.LISP</b>, <b>AUXILIARY.LISP</b>, and <b>DOCUMENTATION.LISP</b>.
+The following translations might be provided by a software supplier as
+examples.
+<!--l. 1241--><p class="indent" >   For a UNIX ﬁle system with long ﬁle names: <div class="lisp"><tt><div class="tabbing">
+(setf (logical-pathname-translations &#x0022;prog&#x0022;)
+   <br>                                     &#x2019;((&#x0022;CODE;*.*.*&#x0022;        &#x0022;/lib/prog/&#x0022;)))<br>
+<br>               (translate-logical-pathname &#x0022;prog:code;documentation.lisp&#x0022;)<br>
+   <span class="math"> ⇒</span> #P&#x0022;/lib/prog/documentation.lisp&#x0022;<br>
+<!--l. 1248--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1249--><p class="indent" >   For a UNIX ﬁle system with 14-character ﬁle names, using <b>.lisp</b> as the type:
+<div class="lisp"><tt><div class="tabbing">
+(setf (logical-pathname-translations &#x0022;prog&#x0022;)
+   <br>             &#x2019;((&#x0022;CODE;DOCUMENTATION.*.*&#x0022; &#x0022;/lib/prog/docum.*&#x0022;)<br>
+        (&#x0022;CODE;*.*.*&#x0022;             &#x0022;/lib/prog/&#x0022;)))<br>
+<br>               (translate-logical-pathname &#x0022;prog:code;documentation.lisp&#x0022;)<br>
+   <span class="math"> ⇒</span> #P&#x0022;/lib/prog/docum.lisp&#x0022;<br>
+<!--l. 1257--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1258--><p class="indent" >   For a UNIX ﬁle system with 14-character ﬁle names, using <b>.l</b> as the type (the
+second translation shortens the compiled ﬁle type to <b>.b</b>): <div class="lisp"><tt><div class="tabbing">
+(setf (logical-pathname-translations &#x0022;prog&#x0022;)
+   <br>          ‘((&#x0022;**;*.LISP.*&#x0022;      ,(logical-pathname &#x0022;PROG:**;*.L.*&#x0022;))<br>
+        (,(compile-ﬁle-pathname<br>
+            (logical-pathname &#x0022;PROG:**;*.LISP.*&#x0022;))<br>
+                            ,(logical-pathname &#x0022;PROG:**;*.B.*&#x0022;))<br>
+                                                                          
+
+                                                                          
+        (&#x0022;CODE;DOCUMENTATION.*.*&#x0022; &#x0022;/lib/prog/documentatio.*&#x0022;)<br>
+        (&#x0022;CODE;*.*.*&#x0022;             &#x0022;/lib/prog/&#x0022;)))<br>
+<br>               (translate-logical-pathname &#x0022;prog:code;documentation.lisp&#x0022;)<br>
+   <span class="math"> ⇒</span> #P&#x0022;/lib/prog/documentatio.l&#x0022;<br>
+<!--l. 1271--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1273--><p class="noindent" >
+   <h5 class="subsubsectionHead"><a 
+href="#x146-21000024.1.5" id="x146-21000024.1.5">Discussion of Logical Pathnames</a></h5>
+<!--l. 1275--><p class="noindent" >Large programs can be moved between sites without changing any pathnames,
+provided all pathnames used are logical. A portable system construction tool can
+be created that operates on programs deﬁned as sets of ﬁles named by logical
+pathnames.
+<!--l. 1280--><p class="indent" >   Logical pathname syntax was chosen to be easily translated into the formats of
+most popular ﬁle systems, while still being powerful enough for storing large
+programs. Although they have hierarchical directories, extended wildcard
+matching, versions, and no limit on the length of names, logical pathnames can be
+mapped onto a less capable real ﬁle system by translating each directory that is
+used into a ﬂat directory name, processing wildcards in the Lisp implementation
+rather than in the ﬁle system, treating all versions as <b>:newest</b>, and using
+translations to shorten long names.
+<!--l. 1289--><p class="indent" >   Logical pathname words are restricted to non-case-sensitive letters, digits, and
+hyphens to avoid creating problems with real ﬁle systems that support limited
+character sets for ﬁle naming. (If logical pathnames were case-sensitive, it would
+be very diﬃcult to map them into a ﬁle system that is not sensitive to case in its
+ﬁle names.)
+<!--l. 1296--><p class="indent" >   It is not a goal of logical pathnames to be able to represent all possible ﬁle
+names. Their goal is rather to represent just enough ﬁle names to be useful for
+storing software. Real pathnames, in contrast, need to provide a uniform interface
+to all possible ﬁle names, including names and naming conventions that are not
+under the control of Common Lisp.
+<!--l. 1303--><p class="indent" >   The choice of logical pathname syntax, using colon, semicolon, and period, was
+guided by the goals of being visually distinct from real ﬁle systems and
+minimizing the use of special characters.
+<!--l. 1307--><p class="indent" >   The <b><a 
+href="symbols.html#x190-382564r564">logical-pathname</a></b> function is separate from the <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> function so
+                                                                          
+
+                                                                          
+that the syntax of logical pathname namestrings does not constrain the syntax of
+physical pathname namestrings in any way. Logical pathname syntax must be
+deﬁned by Common Lisp so that logical pathnames can be conveniently
+exchanged between implementations, but physical pathname syntax is dictated by
+the operating environments.
+<!--l. 1316--><p class="indent" >   The <b><a 
+href="symbols.html#x190-382262r262">compile-ﬁle-pathname</a></b> function and the speciﬁcation of <b>LISP</b> as the
+type of a logical pathname for a Common Lisp source ﬁle together provide enough
+information about compilation to make possible a portable system construction
+tool. Suppose that it is desirable to call <b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b> only if the source ﬁle is
+newer than the compiled ﬁle. For this to succeed, it must be possible to know
+the name of the compiled ﬁle without actually calling <b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b>. In
+some implementations the compiler produces one of several ﬁle types,
+depending on a variety of implementation-dependent circumstances, so it is not
+suﬃcient simply to prescribe a standard logical ﬁle type for compiled ﬁles;
+<b><a 
+href="symbols.html#x190-382262r262">compile-ﬁle-pathname</a></b> provides access to the defaulting that is performed by
+<b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b> “in a manner appropriate to the implementation&#x2019;s ﬁle system
+conventions.”
+<!--l. 1333--><p class="indent" >   The use of the logical pathname host name <b>SYS</b> for the implementation is
+current practice. Standardizing on this name helps users choose logical
+pathname host names that avoid conﬂicting with implementation-deﬁned
+names.
+<!--l. 1340--><p class="indent" >   Loading of logical pathname translations from a site-dependent ﬁle allows
+software to be distributed using logical pathnames. The assumed model of
+software distribution is a division of labor between the supplier of the software
+and the user installing it. The supplier chooses logical pathnames to name all the
+ﬁles used or created by the software, and supplies examples of logical pathname
+translations for a few popular ﬁle systems. Each example uses an assumed
+directory and/or device name, assumes local ﬁle naming conventions, and provides
+translations that will translate all the logical pathnames used or generated by the
+particular software into valid physical pathnames. For a powerful ﬁle system these
+translations can be quite simple. For a more restricted ﬁle system, it may be
+necessary to list an explicit translation for every logical pathname used (for
+example, when dealing with restrictions on the maximum length of a ﬁle
+name).
+<!--l. 1357--><p class="indent" >   The user installing the software decides on which device and directory to store
+the ﬁles and edits the example logical pathname translations accordingly. If
+necessary, the user also adjusts the translations for local ﬁle naming conventions
+and any other special aspects of the user&#x2019;s local ﬁle system policy and local
+                                                                          
+
+                                                                          
+Common Lisp implementation. For example, the ﬁles might be divided among
+several ﬁle server hosts to share the load. The process of deﬁning site-customized
+logical pathname translations is quite easy for a user of a popular ﬁle system for
+which the software supplier has provided an example. A user of a more
+unusual ﬁle system might have to take more time; the supplier can help by
+providing a list of all the logical pathnames used or generated by the
+software.
+<!--l. 1370--><p class="indent" >   Once the user has created and executed a suitable <b><a 
+href="symbols.html#x190-382845r845">setf</a></b> form for setting the
+<b><a 
+href="symbols.html#x190-382565r565">logical-pathname-translations</a></b> of the relevant logical host, the software can be
+loaded and run. It may be necessary to use the translations again, or on another
+workstation at the same site, so it is best to save the <b><a 
+href="symbols.html#x190-382845r845">setf</a></b> form in the standard
+place where it can be found later by <b><a 
+href="symbols.html#x190-382554r554">load-logical-pathname-translations</a></b>.
+Often a software supplier will include a program for restoring software from the
+distribution medium to the ﬁle system and a program for loading the software
+from the ﬁle system into a Common Lisp; these programs will start by calling
+<b><a 
+href="symbols.html#x190-382554r554">load-logical-pathname-translations</a></b> to make sure that the logical pathname
+host is deﬁned.
+<!--l. 1382--><p class="indent" >   Note that the <b><a 
+href="symbols.html#x190-382845r845">setf</a></b> of <b><a 
+href="symbols.html#x190-382565r565">logical-pathname-translations</a></b> form isn&#x2019;t part of the
+program; it is separate and is written by the user, not by the software supplier.
+That separation and a uniform convention for doing the separation are the key
+aspects of logical pathnames. For small programs involving only a handful of ﬁles,
+it doesn&#x2019;t matter much. The real beneﬁts come with large programs with
+hundreds or thousands of ﬁles and more complicated situations such as
+program-generated ﬁle names or porting a program developed on a system with
+long ﬁle names onto a system with a very restrictive limit on the length of ﬁle
+names.
+<!--l. 1392--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">24.1.6   </span> <a 
+href="frontmatter.html#QQ2-146-251" id="x146-21100024.1.6">Pathname Functions</a></h4>
+<!--l. 1395--><p class="noindent" >These functions are what programs use to parse and default ﬁle names that have
+been typed in or otherwise supplied by the user.
+<div class="obsolete">
+<!--l. 1399--><p class="indent" >   Any argument called <em>pathname</em> in this book may actually be a pathname, a
+string or symbol, or a stream. Any argument called <em>defaults</em> may likewise be a
+pathname, a string or symbol, or a stream.
+</div>
+                                                                          
+
+                                                                          
+<div class="new">
+<!--l. 1405--><p class="indent" >   X3J13 voted in March 1988 <a 
+ id="dx146-211001"></a>to change the language so that a symbol is <em>never</em>
+allowed as a pathname argument. More speciﬁcally, the following functions are
+changed to disallow a symbol as a <em>pathname</em> argument:
+<div class="flushleft" 
+>
+<!--l. 1411--><p class="noindent" >
+ <!--tex4ht:inline--><div class="tabular"><table width="100%" class="tabular"><tr><td align="left" > <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b>          </td><td align="left" ><b><a 
+href="symbols.html#x190-382719r719">pathname-device</a></b>    </td><td align="left" ><b><a 
+href="symbols.html#x190-382664r664">namestring</a></b>             </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382969r969">truename</a></b>           </td><td align="left" ><b><a 
+href="symbols.html#x190-382720r720">pathname-directory</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-382405r405">ﬁle-namestring</a></b>        </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b> </td><td align="left" ><b><a 
+href="symbols.html#x190-382723r723">pathname-name</a></b>     </td><td align="left" ><b><a 
+href="symbols.html#x190-382344r344">directory-namestring</a></b></td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382631r631">merge-pathnames</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-382724r724">pathname-type</a></b>      </td><td align="left" ><b><a 
+href="symbols.html#x190-382486r486">host-namestring</a></b>      </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382721r721">pathname-host</a></b>    </td><td align="left" ><b><a 
+href="symbols.html#x190-382725r725">pathname-version</a></b>   </td><td align="left" ><b><a 
+href="symbols.html#x190-382372r372">enough-namestring</a></b>   </td></tr></table></div></div>
+<!--l. 1420--><p class="noindent" >(The function <b>require</b> was also changed by this vote but was deleted from the
+language by a vote in January 1989 <a 
+ id="dx146-211002"></a>.) Furthermore, the vote reaﬃrmed that the
+following functions do not accept symbols as <em>ﬁle</em>, <em>ﬁlename</em>, or <em>pathname</em>
+arguments:
+<div class="flushleft" 
+>
+<!--l. 1426--><p class="noindent" >
+ <!--tex4ht:inline--><div class="tabular"><table width="100%" class="tabular"><tr><td align="left" > <b><a 
+href="symbols.html#x190-382701r701">open</a></b>            </td><td align="left" ><b><a 
+href="symbols.html#x190-382808r808">rename-ﬁle</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-382408r408">ﬁle-write-date</a></b></td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-383020r1020">with-open-ﬁle</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-382331r331">delete-ﬁle</a></b>  </td><td align="left" ><b><a 
+href="symbols.html#x190-382401r401">ﬁle-author</a></b>     </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382553r553">load</a></b>             </td><td align="left" ><b><a 
+href="symbols.html#x190-382756r756">probe-ﬁle</a></b>  </td><td align="left" ><b><a 
+href="symbols.html#x190-382343r343">directory</a></b>      </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382261r261">compile-ﬁle</a></b>   </td></tr></table></div></div>
+<!--l. 1434--><p class="noindent" >In older implementations of Lisp that did not have strings, for example MacLisp,
+symbols were the only means for specifying pathnames. This was convenient only
+because the ﬁle systems of the time allowed only uppercase letters in ﬁle names.
+Typing <b>(load &#x2019;foo)</b> caused the function <b><a 
+href="symbols.html#x190-382553r553">load</a></b> to receive the symbol <b>FOO</b> (with
+uppercase letters because of the way symbols are parsed) and therefore to load the
+ﬁle named <b>FOO</b>. Now that many ﬁle systems, most notably UNIX, support
+case-sensitive ﬁle names, the use of symbols is less convenient and more
+error-prone.
+</div>
+<div class="new">
+<!--l. 1447--><p class="indent" >   X3J13 voted in March 1988 <a 
+ id="dx146-211003"></a>to specify that a stream may be used as a
+<b><a 
+href="symbols.html#x190-382718r718">pathname</a></b>, <b>ﬁle</b>, or <b>ﬁlename</b> argument only if it was created by use of <b><a 
+href="symbols.html#x190-382701r701">open</a></b> or
+<b><a 
+href="symbols.html#x190-383020r1020">with-open-ﬁle</a></b>, or if it is a synonym stream whose symbol is bound to a stream
+that may be used as a pathname.
+<!--l. 1455--><p class="indent" >   If such a stream is used as a pathname, it is as if the <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> function were
+applied to the stream and the resulting pathname used in place of the stream.
+                                                                          
+
+                                                                          
+This represents the name used to open the ﬁle. This may be, but is not required
+to be, the actual name of the ﬁle.
+<!--l. 1460--><p class="indent" >   It is an error to attempt to obtain a pathname from a stream created by any
+of the following:
+<div class="flushleft" 
+>
+<!--l. 1462--><p class="noindent" >
+ <!--tex4ht:inline--><div class="tabular"><table width="100%" class="tabular"><tr><td align="left" > <b><a 
+href="symbols.html#x190-382610r610">make-two-way-stream</a></b>      </td><td align="left" ><b><a 
+href="symbols.html#x190-382606r606">make-string-input-stream</a></b>  </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382593r593">make-echo-stream</a></b>           </td><td align="left" ><b><a 
+href="symbols.html#x190-382607r607">make-string-output-stream</a></b></td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382589r589">make-broadcast-stream</a></b>    </td><td align="left" ><b><a 
+href="symbols.html#x190-383019r1019">with-input-from-string</a></b>      </td>
+</tr><tr><td align="left" > <b><a 
+href="symbols.html#x190-382590r590">make-concatenated-stream</a></b></td><td align="left" ><b><a 
+href="symbols.html#x190-383022r1022">with-output-to-string</a></b>       </td></tr></table></div></div>
+</div>
+<!--l. 1472--><p class="indent" >   In the examples, it is assumed that the host named <b>CMUC</b> runs the
+TOPS-20 operating system, and therefore uses TOPS-20 ﬁle system syntax;
+furthermore, an explicit host name is indicated by following the host
+name with a double colon. Remember, however, that namestring syntax is
+implementation-dependent, and this syntax is used here purely for the sake of
+examples.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211004"></a>
+<em>
+<!--l. 1480--><p class="noindent" >[Function]</em> <b>pathname</b> <i>pathname</i>
+</div>
+<!--l. 1482--><p class="indent" >   The <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> function converts its argument to be a pathname. The
+argument may be a pathname, a string or symbol, or a stream; the result is
+always a pathname.
+<div class="new">
+<!--l. 1487--><p class="indent" >   X3J13 voted in March 1988 not to permit symbols as pathnames <a 
+ id="dx146-211005"></a>and to
+specify exactly which streams may be used as pathnames <a 
+ id="dx146-211006"></a>.
+</div>
+<div class="new">
+<!--l. 1495--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx146-211007"></a>to specify that <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> is unaﬀected by
+whether its argument, if a stream, is open or closed. X3J13 further commented
+that because some implementations cannot provide the “true name” of a ﬁle until
+the ﬁle is closed, in such an implementation <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> might, in principle, return
+a diﬀerent (perhaps more speciﬁc) ﬁle name after the stream is closed. However,
+                                                                          
+
+                                                                          
+such behavior is prohibited; <b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> must return the same pathname
+after a stream is closed as it would have while the stream was open. See
+<b><a 
+href="symbols.html#x190-382969r969">truename</a></b>.
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211008"></a>
+<em>
+<!--l. 1510--><p class="noindent" >[Function]</em> <b>truename</b> <i>pathname</i>
+</div>
+<!--l. 1512--><p class="indent" >   The <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> function endeavors to discover the “true name” of the ﬁle
+associated with the <em>pathname</em> within the ﬁle system. If the <em>pathname</em> is an open
+stream already associated with a ﬁle in the ﬁle system, that ﬁle is used.
+The “true name” is returned as a pathname. An error is signaled if an
+appropriate ﬁle cannot be located within the ﬁle system for the given
+<em>pathname</em>.
+<!--l. 1521--><p class="indent" >   The <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> function may be used to account for any ﬁle name translations
+performed by the ﬁle system, for example.
+<!--l. 1525--><p class="indent" >   For example, suppose that <b>DOC:</b> is a TOPS-20 logical device name that is
+translated by the TOPS-20 ﬁle system to be <b>PS:&#x003C;DOCUMENTATION&#x003E;</b>.
+<div class="lisp"><tt><div class="tabbing">
+(setq ﬁle (open &#x0022;CMUC::DOC:DUMPER.HLP&#x0022;))
+   <br>        (namestring (pathname ﬁle)) <span class="math"> ⇒</span> &#x0022;CMUC::DOC:DUMPER.HLP&#x0022;<br>
+(namestring (truename ﬁle))<br>
+   <span class="math"> ⇒</span> &#x0022;CMUC::PS:&#x003C;DOCUMENTATION&#x003E;DUMPER.HLP.13&#x0022;<br>
+<!--l. 1533--><p class="noindent" ></div>
+</tt>
+</div>
+<div class="new">
+<!--l. 1536--><p class="indent" >   X3J13 voted in March 1988 not to permit symbols as pathnames <a 
+ id="dx146-211009"></a>and to
+specify exactly which streams may be used as pathnames <a 
+ id="dx146-211010"></a>.
+</div>
+                                                                          
+
+                                                                          
+<div class="new">
+<!--l. 1544--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx146-211011"></a>to specify that <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> may be applied to a
+stream whether the stream is open or closed. X3J13 further commented
+that because some implementations cannot provide the “true name” of a
+ﬁle until the ﬁle is closed, in principle it would be possible in such an
+implementation for <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> to return a diﬀerent ﬁle name after the stream is
+closed. Such behavior is permitted; in this respect <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> diﬀers from
+<b><a 
+href="symbols.html#x190-382718r718">pathname</a></b>.
+</div>
+<div class="newer">
+<!--l. 1557--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211012"></a>to clarify that <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> accepts only non-wild
+pathnames; an error is signaled if <b><a 
+href="symbols.html#x190-383013r1013">wild-pathname-p</a></b> would be true of the
+<em>pathname</em> argument.
+</div>
+<div class="newer">
+<!--l. 1564--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211013"></a>to require <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> to accept logical pathnames
+(see section <a 
+href="#x146-20500024.1.5">24.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>). However, <b><a 
+href="symbols.html#x190-382969r969">truename</a></b> never returns a logical pathname.
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211014"></a>
+<em>
+<!--l. 1571--><p class="noindent" >[Function]</em> <b>parse-namestring</b> <i>thing</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>host</i> <i>defaults</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:start</i> <i>:end</i>
+<i>:junk-allowed</i>
+</div>
+<div class="obsolete">
+<!--l. 1573--><p class="noindent" >This turns <em>thing</em> into a pathname. The <em>thing</em> is usually a string (that is, a
+namestring), but it may be a symbol (in which case the print name is used) or a
+pathname or stream (in which case no parsing is needed, but an error check may
+be made for matching hosts).
+</div>
+<div class="new">
+<!--l. 1582--><p class="indent" >   X3J13 voted in March 1988 not to permit symbols as pathnames <a 
+ id="dx146-211015"></a>and to
+specify exactly which streams may be used as pathnames <a 
+ id="dx146-211016"></a>. The <em>thing</em> argument
+may not be a symbol.
+                                                                          
+
+                                                                          
+</div>
+<div class="newer">
+<!--l. 1590--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211017"></a>to require <b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b> to accept logical
+pathname namestrings (see section <a 
+href="#x146-20500024.1.5">24.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
+</div>
+<!--l. 1594--><p class="indent" >   This function does <em>not</em>, in general, do defaulting of pathname components,
+even though it has an argument named <em>defaults</em>; it only does parsing. The <em>host</em>
+and <em>defaults</em> arguments are present because in some implementations it may be
+that a namestring can only be parsed with reference to a particular ﬁle name
+syntax of several available in the implementation. If <em>host</em> is non-<b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, it must be a
+host name that could appear in the host component of a pathname, or <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>; if <em>host</em>
+is <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> then the host name is extracted from the default pathname in <em>defaults</em> and
+used to determine the syntax convention. The <em>defaults</em> argument defaults to the
+value of <b>*default-pathname-defaults*</b>.
+<!--l. 1608--><p class="indent" >   For a string (or symbol) argument, <b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b> parses a ﬁle name
+within it in the range delimited by the <b>:start</b> and <b>:end</b> arguments (which are
+integer indices into <em>string</em>, defaulting to the beginning and end of the
+string).
+<div class="newer">
+<!--l. 1615--><p class="indent" >   See chapter <a 
+href="kseque.html#x96-13600014">14<!--tex4ht:ref: KSEQUE --></a> for a discussion of <b>:start</b> and <b>:end</b> arguments.
+</div>
+<!--l. 1618--><p class="indent" >   If <b>:junk-allowed</b> is not <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, then the ﬁrst value returned is the pathname
+parsed, or <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> if no syntactically correct pathname was seen.
+<!--l. 1622--><p class="indent" >   If <b>:junk-allowed</b> is <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> (the default), then the entire substring is scanned. The
+returned value is the pathname parsed. An error is signaled if the substring does
+not consist entirely of the representation of a pathname, possibly surrounded on
+either side by whitespace characters if that is appropriate to the cultural
+conventions of the implementation.
+<!--l. 1630--><p class="indent" >   In either case, the second value is the index into the string of the
+delimiter that terminated the parse, or the index beyond the substring if the
+parse terminated at the end of the substring (as will always be the case if
+<b>:junk-allowed</b> is false).
+<!--l. 1635--><p class="indent" >   If <em>thing</em> is not a string or symbol, then <em>start</em> (which defaults to zero in any
+case) is always returned as the second value.
+<!--l. 1638--><p class="indent" >   Parsing an empty string always succeeds, producing a pathname with all
+components (except the host) equal to <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>.
+<!--l. 1641--><p class="indent" >   Note that if <em>host</em> is speciﬁed and not <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, and <em>thing</em> contains a manifest host
+name, an error is signaled if the hosts do not match.
+                                                                          
+
+                                                                          
+<!--l. 1645--><p class="indent" >   If <em>thing</em> contains an explicit host name and no explicit device name, then it
+might be appropriate, depending on the implementation environment, for
+<b><a 
+href="symbols.html#x190-382716r716">parse-namestring</a></b> to supply the standard default device for that host as the
+device component of the resulting pathname.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211018"></a>
+<em>
+<!--l. 1654--><p class="noindent" >[Function]</em> <b>merge-pathnames</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>defaults</i> <i>default-version</i>
+</div>
+<div class="new">
+<!--l. 1657--><p class="indent" >   X3J13 voted in March 1988 not to permit symbols as pathnames <a 
+ id="dx146-211019"></a>and to
+specify exactly which streams may be used as pathnames <a 
+ id="dx146-211020"></a>.
+</div>
+<div class="newer">
+<!--l. 1665--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211021"></a>to require <b>merge-namestrings</b> to recognize a
+logical pathname namestring as its ﬁrst argument if its second argument is a
+logical pathname (see section <a 
+href="#x146-20500024.1.5">24.1.5<!--tex4ht:ref: LOGICAL-PATHNAMES-SECTION --></a>).
+</div>
+<div class="new">
+<!--l. 1671--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx146-211022"></a>to specify that <b>merge-pathname</b> is
+unaﬀected by whether the ﬁrst argument, if a stream, is open or closed. If the
+ﬁrst argument is a stream, <b>merge-pathname</b> behaves as if the function
+<b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> were applied to the stream and the resulting pathname used
+instead.
+</div>
+<div class="newer">
+<!--l. 1680--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211023"></a>to require <b><a 
+href="symbols.html#x190-382631r631">merge-pathnames</a></b> to map customary
+case in argument pathnames to the customary case in returned pathnames (see
+section <a 
+href="#x146-20200024.1.2">24.1.2<!--tex4ht:ref: PATHNAME-COMPONENT-CASE-SECTION --></a>).
+</div>
+<em>
+<!--l. 1686--><p class="indent" >   defaults</em> defaults to the value of <b>*default-pathname-defaults*</b>.
+<em>
+<!--l. 1688--><p class="indent" >   default-version</em> defaults to <b>:newest</b>.
+                                                                          
+
+                                                                          
+<!--l. 1690--><p class="indent" >   Here is an example of the use of <b><a 
+href="symbols.html#x190-382631r631">merge-pathnames</a></b>: <div class="lisp"><tt><div class="tabbing">
+(merge-pathnames &#x0022;CMUC::FORMAT&#x0022;
+   <br>                                          &#x0022;CMUC::PS:&#x003C;LISPIO&#x003E;.FASL&#x0022;)<br>
+   <span class="math"> ⇒</span> a pathname object that re-expressed as a namestring would be<br>
+      &#x0022;CMUC::PS:&#x003C;LISPIO&#x003E;FORMAT.FASL.0&#x0022;<br>
+<!--l. 1696--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1698--><p class="indent" >   Defaulting of pathname components is done by ﬁlling in components taken
+from another pathname. This is especially useful for cases such as a program that
+has an input ﬁle and an output ﬁle, and asks the user for the name of
+both, letting the unsupplied components of one name default from the
+other. Unspeciﬁed components of the output pathname will come from the
+input pathname, except that the type should default not to the type
+of the input but to the appropriate default type for output from this
+program.
+<!--l. 1708--><p class="indent" >   The pathname merging operation takes as input a given pathname, a
+defaults pathname, and a default version, and returns a new pathname.
+Basically, the missing components in the given pathname are ﬁlled in from
+the defaults pathname, except that if no version is speciﬁed the default
+version is used. The default version is usually <b>:newest</b>; if no version is
+speciﬁed the newest version in existence should be used. The default version
+can be <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, to preserve the information that it was missing in the input
+pathname.
+<!--l. 1719--><p class="indent" >   If the given pathname explicitly speciﬁes a host and does not supply a device,
+then if the host component of the defaults matches the host component of the
+given pathname, then the device is taken from the defaults; otherwise
+the device will be the default ﬁle device for that host. Next, if the given
+pathname does not specify a host, device, directory, name, or type, each such
+component is copied from the defaults. The merging rules for the version
+are more complicated and depend on whether the pathname speciﬁes a
+name. If the pathname doesn&#x2019;t specify a name, then the version, if not
+provided, will come from the defaults, just like the other components.
+However, if the pathname does specify a name, then the version is not
+aﬀected by the defaults. The reason is that the version “belongs to” some
+                                                                          
+
+                                                                          
+other ﬁle name and is unlikely to have anything to do with the new one.
+Finally, if this process leaves the version missing, the default version is
+used.
+<!--l. 1739--><p class="indent" >   The net eﬀect is that if the user supplies just a name, then the host, device,
+directory, and type will come from the defaults, but the version will come
+from the default version argument to the merging operation. If the user
+supplies nothing, or just a directory, the name, type, and version will come
+over from the defaults together. If the host&#x2019;s ﬁle name syntax provides
+a way to input a version without a name or type, the user can let the
+name and type default but supply a version diﬀerent from the one in the
+defaults.
+<div class="newer">
+<!--l. 1750--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211024"></a>to agree to disagree: <b>merge-pathname</b> might or
+might not perform plausibility checking on its arguments to ensure that the
+resulting pathname can be converted a valid namestring. User beware: this could
+cause portability problems.
+<!--l. 1755--><p class="indent" >   For example, suppose that host <b>LOSER</b> constrains ﬁle types to be three
+characters or fewer but host <b>CMUC</b> does not. Then <b>&#x0022;LOSER::FORMAT&#x0022;</b> is a
+valid namestring and <b>&#x0022;CMUC::PS:&#x003C;LISPIO&#x003E;.FASL&#x0022;</b> is a valid namestring,
+but <div class="lisp"><tt><div class="tabbing">
+(merge-pathnames &#x0022;LOSER::FORMAT&#x0022; &#x0022;CMUC::PS:&#x003C;LISPIO&#x003E;.FASL&#x0022;)
+   <br>
+<!--l. 1760--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1761--><p class="indent" >   might signal an error in some implementations because the hypothetical result
+would be a pathname equivalent to the namestring <b>&#x0022;LOSER::FORMAT.FASL&#x0022;</b>
+which is illegal because the ﬁle type <b>FASL</b> has more than three characters. In
+other implementations <b>merge-pathname</b> might return a pathname but that
+pathname might cause <b><a 
+href="symbols.html#x190-382664r664">namestring</a></b> to signal an error.
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+                                                                          
+
+                                                                          
+<a 
+ id="dx146-211025"></a>
+<em>
+<!--l. 1770--><p class="noindent" >[Variable]</em> <b>*default-pathname-defaults*</b>
+</div>
+<!--l. 1772--><p class="indent" >   This is the default pathname-defaults pathname; if any pathname primitive
+that needs a set of defaults is not given one, it uses this one. As a general rule,
+however, each program should have its own pathname defaults rather than using
+this one.
+<hr></div>
+<!--l. 1778--><p class="indent" >   The following example assumes the use of UNIX syntax and conventions.
+<div class="lisp"><tt><div class="tabbing">
+(make-pathname :host &#x0022;technodrome&#x0022;
+   <br>                                      :directory &#x2019;(:absolute &#x0022;usr&#x0022; &#x0022;krang&#x0022;)<br>
+               :name &#x0022;shredder&#x0022;)<br>
+  <span class="math"> ⇒</span> #P&#x0022;technodrome:/usr/krang/shredder&#x0022;<br>
+<!--l. 1784--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1785--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211026"></a>to add a new keyword argument <b>:case</b> to
+<b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b>. The new argument description is therefore as follows:
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211027"></a>
+<em>
+<!--l. 1790--><p class="noindent" >[Function]</em> <b>make-pathname</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:host</i> <i>:device</i> <i>:directory</i> <i>:name</i> <i>:type</i> <i>:version</i>
+<i>:defaults</i> <i>:case</i>
+</div>
+<!--l. 1792--><p class="indent" >   See section <a 
+href="#x146-20200024.1.2">24.1.2<!--tex4ht:ref: PATHNAME-COMPONENT-CASE-SECTION --></a> for a description of the <b>:case</b> argument.
+<!--l. 1795--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211028"></a>to agree to disagree: <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> might or
+might not check on its arguments to ensure that the resulting pathname can be
+converted to a valid namestring. If <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> does not check its
+arguments and signal an error in problematical cases, <b><a 
+href="symbols.html#x190-382664r664">namestring</a></b> yet might or
+                                                                          
+
+                                                                          
+might not signal an error when given the resulting pathname. User beware: this
+could cause portability problems.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211029"></a>
+<em>
+<!--l. 1805--><p class="noindent" >[Function]</em> <b>pathnamep</b> <i>object</i>
+</div>
+<!--l. 1807--><p class="indent" >   This predicate is true if <em>object</em> is a pathname, and otherwise is false.
+<div class="lisp"><tt><div class="tabbing">
+(pathnamep x) <span class="math"> ≡</span> (typep x &#x2019;pathname)
+   <br>
+<!--l. 1810--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<div class="new">
+<!--l. 1814--><p class="indent" >   X3J13 voted in March 1988 not to permit symbols as pathnames <a 
+ id="dx146-211030"></a>and to
+specify exactly which streams may be used as pathnames <a 
+ id="dx146-211031"></a>.
+</div>
+<div class="new">
+<!--l. 1822--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx146-211032"></a>to specify that these operations are
+unaﬀected by whether the ﬁrst argument, if a stream, is open or closed. If
+the ﬁrst argument is a stream, each operation behaves as if the function
+<b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> were applied to the stream and the resulting pathname used
+instead.
+</div>
+<!--l. 1830--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211033"></a>to add a keyword argument <b>:case</b> to all of the
+pathname accessor functions except <b><a 
+href="symbols.html#x190-382725r725">pathname-version</a></b>. The new argument
+descriptions are therefore as follows:
+<div class="defun">
+                                                                          
+
+                                                                          
+<div class="defunheader">
+<a 
+ id="dx146-211034"></a>
+<em>
+<!--l. 1836--><p class="noindent" >[Function]</em> <b>pathname-host</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:case</i><br />
+<a 
+ id="dx146-211035"></a>
+<em>
+[Function]</em> <b>pathname-device</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:case</i><br />
+<a 
+ id="dx146-211036"></a>
+<em>
+[Function]</em> <b>pathname-directory</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:case</i><br />
+<a 
+ id="dx146-211037"></a>
+<em>
+[Function]</em> <b>pathname-name</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:case</i><br />
+<a 
+ id="dx146-211038"></a>
+<em>
+[Function]</em> <b>pathname-type</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;key</a></tt> <i>:case</i><br />
+<a 
+ id="dx146-211039"></a>
+<em>
+[Function]</em> <b>pathname-version</b> <i>pathname</i>
+</div>
+<!--l. 1843--><p class="indent" >   See section <a 
+href="#x146-20200024.1.2">24.1.2<!--tex4ht:ref: PATHNAME-COMPONENT-CASE-SECTION --></a> for a description of the <b>:case</b> argument.
+<!--l. 1846--><p class="indent" >   X3J13 voted in June 1989 <a 
+ id="dx146-211040"></a>to specify that <b><a 
+href="symbols.html#x190-382720r720">pathname-directory</a></b> always
+returns <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>, <b>:unspeciﬁc</b>, or a list—never a string, never <b>:wild</b> (see section <a 
+href="#x146-20300024.1.3">24.1.3<!--tex4ht:ref: STRUCTURED-DIRECTORY-SECTION --></a>).
+If a list is returned, it is not guaranteed to be freshly consed; the consequences of
+modifying this list are undeﬁned.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211041"></a>
+<em>
+<!--l. 1855--><p class="noindent" >[Function]</em> <b>namestring</b> <i>pathname</i><br />
+<a 
+ id="dx146-211042"></a>
+<em>
+[Function]</em> <b>ﬁle-namestring</b> <i>pathname</i><br />
+<a 
+ id="dx146-211043"></a>
+<em>
+                                                                          
+
+                                                                          
+[Function]</em> <b>directory-namestring</b> <i>pathname</i><br />
+<a 
+ id="dx146-211044"></a>
+<em>
+[Function]</em> <b>host-namestring</b> <i>pathname</i><br />
+<a 
+ id="dx146-211045"></a>
+<em>
+[Function]</em> <b>enough-namestring</b> <i>pathname</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>defaults</i>
+</div>
+<!--l. 1861--><p class="indent" >   The <em>pathname</em> argument may be a pathname, a string or symbol, or a stream
+that is or was open to a ﬁle. The name represented by <em>pathname</em> is returned as a
+namelist in canonical form.
+<!--l. 1866--><p class="indent" >   If <em>pathname</em> is a stream, the name returned represents the name used to <em>open</em>
+the ﬁle, which may not be the <em>actual</em> name of the ﬁle (see <b><a 
+href="symbols.html#x190-382969r969">truename</a></b>).
+<div class="new">
+<!--l. 1871--><p class="indent" >   X3J13 voted in March 1988 not to permit symbols as pathnames <a 
+ id="dx146-211046"></a>and to
+specify exactly which streams may be used as pathnames <a 
+ id="dx146-211047"></a>.
+</div>
+<div class="new">
+<!--l. 1879--><p class="indent" >   X3J13 voted in January 1989 <a 
+ id="dx146-211048"></a>to specify that these operations are
+unaﬀected by whether the ﬁrst argument, if a stream, is open or closed. If
+the ﬁrst argument is a stream, each operation behaves as if the function
+<b><a 
+href="symbols.html#x190-382718r718">pathname</a></b> were applied to the stream and the resulting pathname used
+instead.
+</div>
+<b>
+<!--l. 1887--><p class="indent" >   <a 
+href="symbols.html#x190-382664r664">namestring</a></b> returns the full form of the <em>pathname</em> as a string. <b><a 
+href="symbols.html#x190-382405r405">ﬁle-namestring</a></b>
+returns a string representing just the <em>name</em>, <em>type</em>, and <em>version</em> components of
+the <em>pathname</em>; the result of <b><a 
+href="symbols.html#x190-382344r344">directory-namestring</a></b> represents just the
+<em>directory-name</em> portion; and <b><a 
+href="symbols.html#x190-382486r486">host-namestring</a></b> returns a string for just the
+<em>host-name</em> portion. Note that a valid namestring cannot necessarily be
+constructed simply by concatenating some of the three shorter strings in some
+order.
+<b>
+<!--l. 1896--><p class="indent" >   <a 
+href="symbols.html#x190-382372r372">enough-namestring</a></b> takes another argument, <em>defaults</em>. It returns an
+abbreviated namestring that is just suﬃcient to identify the ﬁle named by
+<em>pathname</em> when considered relative to the <em>defaults</em> (which defaults to the
+value of <b>*default-pathname-defaults*</b>). That is, it is required that
+                                                                          
+
+                                                                          
+<div class="lisp"><tt><div class="tabbing">
+(merge-pathnames (enough-namestring <em>pathname</em> <em>defaults</em>) <em>defaults</em>) <span class="math"> ≡</span>
+   <br>  (merge-pathnames (parse-namestring <em>pathname</em> nil <em>defaults</em>) <em>defaults</em>)<br>
+<!--l. 1905--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1906--><p class="indent" >   in all cases; and the result of <b><a 
+href="symbols.html#x190-382372r372">enough-namestring</a></b> is, roughly speaking, the
+shortest reasonable string that will still satisfy this criterion. <div class="newer"> X3J13 voted in June
+1989 <a 
+ id="dx146-211049"></a>to agree to disagree: <b><a 
+href="symbols.html#x190-382602r602">make-pathname</a></b> and <b><a 
+href="symbols.html#x190-382631r631">merge-pathnames</a></b> might or
+might not be able to produce pathnames that cannot be converted to valid
+namestrings. User beware: this could cause portability problems.
+</div>
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx146-211050"></a>
+<em>
+<!--l. 1917--><p class="noindent" >[Function]</em> <b>user-homedir-pathname</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>host</i>
+</div>
+<!--l. 1919--><p class="indent" >   Returns a pathname for the user&#x2019;s “home directory” on <em>host</em>. The <em>host</em>
+argument defaults in some appropriate implementation-dependent manner. The
+concept of “home directory” is itself somewhat implementation-dependent,
+but from the point of view of Common Lisp it is the directory where
+the user keeps personal ﬁles such as initialization ﬁles and mail. If it is
+impossible to determine this information, then <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> is returned instead of
+a pathname; however, <b><a 
+href="symbols.html#x190-382999r999">user-homedir-pathname</a></b> never returns <b><a 
+href="symbols.html#x190-382670r670">nil</a></b> if
+the <em>host</em> argument is not speciﬁed. This function returns a pathname
+without any name, type, or version component (those components are all
+<b><a 
+href="symbols.html#x190-382670r670">nil</a></b>).
+<hr></div>
+                                                                          
+
+                                                                          
+<!--l. 1934--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
 href="clmse118.html" >Next</a>&#x003E;&#x003C;<a 
-href="clmse116.html" >Prev</a>&#x003E;&#x003C;<a 
-href="clmse116.html#tailclmse116.html" >PrevTail</a>&#x003E;&#x003C;<a 
+href="files.html" >Prev</a>&#x003E;&#x003C;<a 
+href="files.html#tailfiles.html" >PrevTail</a>&#x003E;&#x003C;<a 
 href="clmse117.html" >Front</a>&#x003E;&#x003C;<a 
 href="files.html#clmse117.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
- id="tailclmse117.html"></a>  
+ id="tailclmse117.html"></a>   
 </body></html> 

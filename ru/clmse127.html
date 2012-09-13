@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Parsing Loop Clauses</title> 
+<head><title>How the Loop Facility Works</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-06-19 08:52:00"> 
+<meta name="date" content="2012-09-13 12:40:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 <link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
 >
@@ -16,337 +16,62 @@ href="clmse128.html" >Далее</a>&#x003E;&#x003C;<a
 href="clmse126.html" >Назад</a>&#x003E;&#x003C;<a 
 href="clmse126.html#tailclmse126.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
 href="#tailclmse127.html">В-конец</a>&#x003E;&#x003C;<a 
-href="loop.html#clmse127.html" >Наверх</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">25.3
+href="loop.html#clmse127.html" >Наверх</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">26.2
 </span> <a 
-href="clm.html#QQ2-157-268" id="x157-22900025.3">Parsing Loop Clauses</a></h3>
-<!--l. 104--><p class="noindent" >The syntactic parts of a loop construct are called <em>clauses</em>; the scope of each clause
-is determined by the top-level parsing of that clause&#x2019;s keyword. The following
-example shows a loop construct with six clauses:
-<div class="lisp">
-<tt>
-<!--l. 109--><p class="indent" >   <div class="tabbing">
-(loop for i from 1 to (compute-top-value)         ;First clause
-   <br>           while (not (unacceptable i))                ;Second clause<br>
-      collect (square i)                          ;Third clause<br>
-      do (format t &#x0022;Working on ~D now&#x0022; i)         ;Fourth clause<br>
-      when (evenp i)                              ;Fifth clause<br>
-        do (format t &#x0022;~D is a non-odd number&#x0022; i)<br>
-      ﬁnally (format t &#x0022;About to exit!&#x0022;))        ;Sixth clause<br>
-<!--l. 117--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 120--><p class="indent" >   Each loop keyword introduces either a compound loop clause or a simple
-loop clause that can consist of a loop keyword followed by a single Lisp
-form. The number of forms in a clause is determined by the loop keyword
-that begins the clause and by the auxiliary keywords in the clause. The
-keywords <b><a 
-href="symbols.html#x188-376335r335">do</a></b>, <b><a 
-href="symbols.html#x188-376484r484">initially</a></b>, and <b><a 
-href="symbols.html#x188-376400r400">ﬁnally</a></b> are the only loop keywords that can
-take any number of Lisp forms and group them as if in a single <b><a 
-href="symbols.html#x188-376749r749">progn</a></b>
-form.
-<!--l. 129--><p class="indent" >   Loop clauses can contain auxiliary keywords, which are sometimes called
-<em>prepositions</em>. For example, the ﬁrst clause in the preceding code includes the
-prepositions <b>from</b> and <b>to</b>, which mark the value from which stepping begins and
-the value at which stepping ends.
-                                                                          
-
-                                                                          
-<!--l. 135--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">25.3.1   </span> <a 
-href="frontmatter.html#QQ2-157-269" id="x157-23000025.3.1">Order of Execution</a></h4>
-<!--l. 137--><p class="noindent" >With the exceptions listed below, clauses are executed in the loop body in the
-order in which they appear in the source. Execution is repeated until a clause
-terminates the loop or until a Common Lisp <b><a 
-href="symbols.html#x188-376804r804">return</a></b>, <b><a 
-href="symbols.html#x188-376464r464">go</a></b>, or <b>throw</b> form is
-encountered. The following actions are exceptions to the linear order of
-execution:
+href="clm.html#QQ2-158-271" id="x158-23000026.2">How the Loop Facility Works</a></h3>
+<!--l. 49--><p class="noindent" >The driving element of the Loop Facility is the <b><a 
+href="symbols.html#x190-382577r577">loop</a></b> macro. When Lisp
+encounters a <b><a 
+href="symbols.html#x190-382577r577">loop</a></b> macro call form, it invokes the Loop Facility and passes to it
+the loop clauses as a list of unevaluated forms, as with any macro. The loop
+clauses contain Common Lisp forms and loop keywords. The loop keywords are
+recognized by their symbol name, regardless of the packages that contain them.
+The <b><a 
+href="symbols.html#x190-382577r577">loop</a></b> macro translates the given form into Common Lisp code and returns
+the expanded form.
+<!--l. 58--><p class="indent" >   The expanded loop form is one or more lambda-expressions for the local
+binding of loop variables and a block and a tagbody that express a looping control
+structure. The variables established in the loop construct are bound as if
+by using <b><a 
+href="symbols.html#x190-382543r543">let</a></b> or <b><a 
+href="symbols.html#x190-382516r516">lambda</a></b>. Implementations can interleave the setting of
+initial values with the bindings. However, the assignment of the initial
+values is always calculated in the order speciﬁed by the user. A variable
+is thus sometimes bound to a harmless value of the correct data type,
+and then later in the prologue it is set to the true initial value by using
+<b><a 
+href="symbols.html#x190-382845r845">setq</a></b>.
+<!--l. 69--><p class="indent" >   The expanded form consists of three basic parts in the tagbody:
       <ul class="itemize1">
-      <li class="itemize">All variables are initialized ﬁrst, regardless of where the establishing
-      clauses appear in the source. The order of initialization follows the order
-      of these clauses.
+      <li class="itemize">The <em>loop prologue</em> contains forms that are executed before iteration
+      begins, such as initial settings of loop variables and possibly an initial
+      termination test.
       </li>
-      <li class="itemize">The  code  for  any  <b><a 
-href="symbols.html#x188-376484r484">initially</a></b> clauses  is  collected  into  one  <b><a 
-href="symbols.html#x188-376749r749">progn</a></b> in
-      the  order  in  which  the  clauses  appear  in  the  source.  The  collected
-      code is executed once in the loop prologue after any implicit variable
-      initializations.
+      <li class="itemize">The <em>loop body</em> contains those forms that are executed during iteration,
+      including  application-speciﬁc  calculations,  termination  tests,  and
+      variable stepping. <em>Stepping</em> is the process of assigning a variable the
+      next item in a series of items.
       </li>
-      <li class="itemize">The code for any <b><a 
-href="symbols.html#x188-376400r400">ﬁnally</a></b> clauses is collected into one <b><a 
-href="symbols.html#x188-376749r749">progn</a></b> in the
-      order in which the clauses appear in the source. The collected code is
-      executed once in the loop epilogue before any implicit values from the
-      accumulation clauses are returned. Explicit returns anywhere in the
-      source, however, will exit the loop without executing the epilogue code.
-      </li>
-      <li class="itemize">A <b><a 
-href="symbols.html#x188-377000r1000">with</a></b> clause introduces a variable binding and an optional initial
-      value. The initial values are calculated in the order in which the <b><a 
-href="symbols.html#x188-377000r1000">with</a></b>
-      clauses occur.
-      </li>
-      <li class="itemize">Iteration control clauses implicitly perform the following actions:
-           <ul class="itemize2">
-           <li class="itemize">initializing variables
                                                                           
 
                                                                           
-           </li>
-           <li class="itemize">stepping variables, generally between each execution of the loop
-           body
-           </li>
-           <li class="itemize">performing termination tests, generally just before the execution
-           of the loop body</li></ul>
-      </li></ul>
-<!--l. 185--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">25.3.2   </span> <a 
-href="frontmatter.html#QQ2-157-270" id="x157-23100025.3.2">Kinds of Loop Clauses</a></h4>
-<!--l. 188--><p class="noindent" >Loop clauses fall into one of the following categories:
-      <ul class="itemize1">
-      <li class="itemize">variable initialization and stepping
-           <ul class="itemize2">
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376424r424">for</a></b> and <b><a 
-href="symbols.html#x188-376111r111">as</a></b> constructs provide iteration control clauses that
-           establish a variable to be initialized. You can combine <b><a 
-href="symbols.html#x188-376424r424">for</a></b> and <b><a 
-href="symbols.html#x188-376111r111">as</a></b>
-           clauses with the loop keyword <b><a 
-href="symbols.html#x188-376086r86">and</a></b> to get parallel initialization
-           and stepping.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-377000r1000">with</a></b> construct  is  similar  to  a  single  <b><a 
-href="symbols.html#x188-376531r531">let</a></b> clause.  You  can
-           combine <b><a 
-href="symbols.html#x188-377000r1000">with</a></b> clauses using <b><a 
-href="symbols.html#x188-376086r86">and</a></b> to get parallel initialization.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-376797r797">repeat</a></b>  construct  causes  iteration  to  terminate  after  a
-           speciﬁed number of times. It uses an internal variable to keep track
-           of the number of iterations.</li></ul>
-      <!--l. 213--><p class="noindent" >You can specify data types for loop variables (see section <a 
-href="clmse136.html#x166-24200025.12.1">25.12.1<!--tex4ht:ref: LOOP-TYPES-SECTION --></a>). It is an
-      error to bind the same variable twice in any variable-binding clause of a
-      single loop expression. Such variables include local variables, iteration
-      control variables, and variables found by destructuring.
+      <li class="itemize">The  <em>loop  epilogue</em>  contains  forms  that  are  executed  after  iteration
+      terminates, such as code to return values from the loop.</li></ul>
+<!--l. 90--><p class="indent" >   Expansion of the <b><a 
+href="symbols.html#x190-382577r577">loop</a></b> macro produces an implicit block (named <b><a 
+href="symbols.html#x190-382670r670">nil</a></b>). Thus,
+the Common Lisp macro <b><a 
+href="symbols.html#x190-382816r816">return</a></b> and the special operator <b><a 
+href="symbols.html#x190-382817r817">return-from</a></b> can be
+used to return values from a loop or to exit a loop.
+<!--l. 96--><p class="indent" >   Within the executable parts of loop clauses and around the entire loop form,
+you can still bind variables by using the Common Lisp special operator
+<b><a 
+href="symbols.html#x190-382543r543">let</a></b>.
                                                                           
 
                                                                           
-      </li>
-      <li class="itemize">value accumulation
-           <ul class="itemize2">
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376245r245">collect</a></b> construct takes one form in its clause and adds the
-           value of that form to the end of a list of values. By default, the
-           list of values is returned when the loop ﬁnishes.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376087r87">append</a></b> construct takes one form in its clause and appends
-           the value of that form to the end of a list of values. By default,
-           the list of values is returned when the loop ﬁnishes.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376654r654">nconc</a></b> construct is similar to <b><a 
-href="symbols.html#x188-376087r87">append</a></b>, but its list values
-           are concatenated as if by the Common Lisp function <b><a 
-href="symbols.html#x188-376654r654">nconc</a></b>. By
-           default, the list of values is returned when the loop ﬁnishes.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376927r927">sum</a></b> construct takes one form in its clause that must evaluate
-           to  a  number  and  adds  that  number  into  a  running  total.  By
-           default, the cumulative sum is returned when the loop ﬁnishes.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376287r287">count</a></b> construct takes one form in its clause and counts the
-           number of times that the form evaluates to a non-<b><a 
-href="symbols.html#x188-376658r658">nil</a></b> value. By
-           default, the count is returned when the loop ﬁnishes.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-376627r627">minimize</a></b>  construct  takes  one  form  in  its  clause  and
-           determines the minimum value obtained by evaluating that form.
-           By default, the minimum value is returned when the loop ﬁnishes.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-376613r613">maximize</a></b>  construct  takes  one  form  in  its  clause  and
-           determines the maximum value obtained by evaluating that form.
-           By default, the maximum value is returned when the loop ﬁnishes.</li></ul>
-      </li>
-      <li class="itemize">termination conditions
-                                                                          
-
-                                                                          
-           <ul class="itemize2">
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376566r566">loop-ﬁnish</a></b> Lisp macro terminates iteration and returns any
-           accumulated result. If speciﬁed, any <b><a 
-href="symbols.html#x188-376400r400">ﬁnally</a></b> clauses are evaluated.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-376424r424">for</a></b> and  <b><a 
-href="symbols.html#x188-376111r111">as</a></b> constructs  provide  a  termination  test  that  is
-           determined by the iteration control clause.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376797r797">repeat</a></b> construct causes termination after a speciﬁed number
-           of iterations.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376998r998">while</a></b> construct takes one form, a condition, and terminates
-           the   iteration   if   the   condition   evaluates   to   <b><a 
-href="symbols.html#x188-376658r658">nil</a></b>.   A   <b><a 
-href="symbols.html#x188-376998r998">while</a></b>
-           clause  is  equivalent  to  the  expression  <b>(if (not <em>condition</em>)
-           (loop-ﬁnish))</b>.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-376972r972">until</a></b>  construct  is  the  inverse  of  <b><a 
-href="symbols.html#x188-376998r998">while</a></b>;  it  terminates
-           the  iteration  if  the  condition  evaluates  to  any  non-<b><a 
-href="symbols.html#x188-376658r658">nil</a></b>  value.
-           An <b><a 
-href="symbols.html#x188-376972r972">until</a></b> clause is equivalent to the expression <b>(if <em>condition</em>
-           (loop-ﬁnish))</b>.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376085r85">always</a></b> construct takes one form and terminates the loop
-           if  the  form  ever  evaluates  to  <b><a 
-href="symbols.html#x188-376658r658">nil</a></b>;  in  this  case,  it  returns  <b><a 
-href="symbols.html#x188-376658r658">nil</a></b>.
-           Otherwise, it provides a default return value of <b><a 
-href="symbols.html#x188-376939r939">t</a></b>.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376656r656">never</a></b> construct takes one form and terminates the loop if
-           the form ever evaluates to non-<b><a 
-href="symbols.html#x188-376658r658">nil</a></b>; in this case, it returns <b><a 
-href="symbols.html#x188-376658r658">nil</a></b>.
-           Otherwise, it provides a default return value of <b><a 
-href="symbols.html#x188-376939r939">t</a></b>.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376947r947">thereis</a></b> construct takes one form and terminates the loop if
-           the form ever evaluates to non-<b><a 
-href="symbols.html#x188-376658r658">nil</a></b>; in this case, it returns that
-           value.</li></ul>
-      </li>
-      <li class="itemize">unconditional execution
-                                                                          
-
-                                                                          
-           <ul class="itemize2">
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376335r335">do</a></b> construct simply evaluates all forms in its clause.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376804r804">return</a></b> construct takes one form and returns its value. It is
-           equivalent to the clause <b>do (return <em>value</em>)</b>.</li></ul>
-      </li>
-      <li class="itemize">conditional execution
-           <ul class="itemize2">
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376476r476">if</a></b> construct takes one form as a predicate and a clause that
-           is executed when the predicate is true. The clause can be a value
-           accumulation, unconditional, or another conditional clause; it can
-           also be any combination of such clauses connected by the loop
-           keyword <b><a 
-href="symbols.html#x188-376086r86">and</a></b>.
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376997r997">when</a></b> construct is a synonym for <b><a 
-href="symbols.html#x188-376476r476">if</a></b>.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-376970r970">unless</a></b>  construct  is  similar  to  <b><a 
-href="symbols.html#x188-376997r997">when</a></b>  except  that  it
-           complements the predicate; it executes the following clause if the
-           predicate is false.
-           </li>
-           <li class="itemize">The <b>else</b> construct provides an optional component of <b><a 
-href="symbols.html#x188-376476r476">if</a></b>, <b><a 
-href="symbols.html#x188-376997r997">when</a></b>,
-           and <b><a 
-href="symbols.html#x188-376970r970">unless</a></b> clauses that is executed when the predicate is false.
-           The component is one of the clauses described under <b><a 
-href="symbols.html#x188-376476r476">if</a></b>.
-           </li>
-           <li class="itemize">The <b>end</b> construct provides an optional component to mark the
-           end of a conditional clause.</li></ul>
-      </li>
-      <li class="itemize">miscellaneous operations
-           <ul class="itemize2">
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376651r651">named</a></b> construct assigns a name to a loop construct.
-                                                                          
-
-                                                                          
-           </li>
-           <li class="itemize">The <b><a 
-href="symbols.html#x188-376484r484">initially</a></b> construct causes its forms to be evaluated in the loop
-           prologue, which precedes all loop code except for initial settings
-           speciﬁed by the constructs <b><a 
-href="symbols.html#x188-377000r1000">with</a></b>, <b><a 
-href="symbols.html#x188-376424r424">for</a></b>, or <b><a 
-href="symbols.html#x188-376111r111">as</a></b>.
-           </li>
-           <li class="itemize">The  <b><a 
-href="symbols.html#x188-376400r400">ﬁnally</a></b> construct  causes  its  forms  to  be  evaluated  in  the
-           loop epilogue after normal iteration terminates. An unconditional
-           clause can also follow the loop keyword <b><a 
-href="symbols.html#x188-376400r400">ﬁnally</a></b>.</li></ul>
-      </li></ul>
-<!--l. 357--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">25.3.3   </span> <a 
-href="frontmatter.html#QQ2-157-271" id="x157-23200025.3.3">Loop Syntax</a></h4>
-<!--l. 359--><p class="noindent" >The following syntax description provides an overview of the syntax for
-loop clauses. Detailed syntax descriptions of individual clauses appear in
-sections <a 
-href="clmse130.html#x160-23500025.6">25.6<!--tex4ht:ref: LOOP-ITERATION-SECTION --></a> through <a 
-href="clmse136.html#x166-24100025.12">25.12<!--tex4ht:ref: LOOP-MISC-SECTION --></a>. A loop consists of the following types of
-clauses:
-<!--l. 365--><p class="indent" >   <div class="tabbing">
-<em>initial-ﬁnal</em> ::= <em>initially</em> | <em>ﬁnally</em>
-   <br>                               <em>variables</em> ::= <em>with</em> | <em>initial-ﬁnal</em> | <em>for-as</em> | <em>repeat</em><br>
-<em>main</em> ::= <em>unconditional</em> | <em>accumulation</em> | <em>conditional</em> | <em>termination</em> | <em>initial-ﬁnal</em><br>
-<em>loop</em> ::= <b>(loop  [<i><b>named <em>name</em></b></i>]  {<i><em></em></i>}* variables  {<i><em></em></i>}* main)</b><br>
-<!--l. 371--><p class="noindent" ></div>
-<!--l. 373--><p class="indent" >   Note that a loop must have at least one clause; however, for backward
-compatibility, the following format is also supported: <div class="lisp"><tt><div class="tabbing">
-(loop  {<i><em>tag</em> | <em>expr</em></i>}* )
-   <br>
-<!--l. 377--><p class="noindent" ></div>
-</tt>
-                                                                          
-
-                                                                          
-</div>
-<!--l. 378--><p class="indent" >   where <em>expr</em> is any Common Lisp expression that can be evaluated, and <em>tag</em> is
-any symbol not identiﬁable as a loop keyword. Such a format is roughly equivalent
-to the following one:
-<div class="lisp">
-<tt>
-<!--l. 382--><p class="indent" >   <div class="tabbing">
-(loop do  {<i><em>tag</em> | <em>expr</em></i>}* )
-   <br>
-<!--l. 384--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 386--><p class="indent" >   A loop prologue consists of any automatic variable initializations prescribed by
-the <em>variable</em> clauses, along with any <em>initially</em> clauses in the order they appear in
-the source.
-<!--l. 390--><p class="indent" >   A loop epilogue consists of <em>ﬁnally</em> clauses, if any, along with any implicit
-return value from an <em>accumulation</em> clause or an <em>end-test</em> clause.
-                                                                          
-
-                                                                          
-<!--l. 395--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+<!--l. 102--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
 href="clmse128.html" >Далее</a>&#x003E;&#x003C;<a 
 href="clmse126.html" >Назад</a>&#x003E;&#x003C;<a 
 href="clmse126.html#tailclmse126.html" >Назад-и-вниз</a>&#x003E;&#x003C;<a 
