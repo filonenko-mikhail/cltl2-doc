@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>Survey of Concepts</title> 
+<head><title>Program Interface to the Condition System</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2012-09-13 12:36:00"> 
+<meta name="date" content="2012-09-13 22:59:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 <link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
 >
@@ -16,999 +16,1931 @@ href="clmse149.html" >Next</a>&#x003E;&#x003C;<a
 href="clmse147.html" >Prev</a>&#x003E;&#x003C;<a 
 href="clmse147.html#tailclmse147.html" >PrevTail</a>&#x003E;&#x003C;<a 
 href="#tailclmse148.html">Tail</a>&#x003E;&#x003C;<a 
-href="condition.html#clmse148.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">29.3   </span> <a 
-href="clm.html#QQ2-182-350" id="x182-30800029.3">Survey of Concepts</a></h3>
-<!--l. 172--><p class="noindent" >This section discusses various aspects of the condition system by topic, illustrating
-them with extensive examples. The next section contains deﬁnitions of speciﬁc
-functions, macros, and other facilities.
-<!--l. 176--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.1   </span> <a 
-href="frontmatter.html#QQ2-182-351" id="x182-30900029.3.1">Signaling Errors</a></h4>
-<!--l. 178--><p class="noindent" >Conceptually, signaling an error in a program is an admission by that program
-that it does not know how to continue and requires external intervention. Once an
-error is signaled, any decision about how to continue must come from the
-“outside.”
-<!--l. 183--><p class="indent" >   The simplest way to signal an error is to use the <b><a 
-href="symbols.html#x190-382383r383">error</a></b> function with
+href="condition.html#clmse148.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">28.4   </span> <a 
+href="clm.html#QQ2-181-367" id="x181-32500028.4">Program Interface to the
+Condition System</a></h3>
+<!--l. 1040--><p class="noindent" >This section describes functions, macros, variables, and condition types associated
+with the Common Lisp Condition System.
+<!--l. 1043--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.1   </span> <a 
+href="frontmatter.html#QQ2-181-368" id="x181-32600028.4.1">Signaling Conditions</a></h4>
+<!--l. 1046--><p class="noindent" >The functions in this section provide various mechanisms for signaling warnings,
+breaks, continuable errors, and fatal errors.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-326001"></a>
+<em>
+<!--l. 1050--><p class="noindent" >[Function]</em> <b>error</b> <i>datum</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;rest</a></tt> <i>arguments</i>
+</div>
+<!--l. 1052--><p class="indent" >   Invokes the signal facility on a condition. If the condition is not handled,
+<b>(invoke-debugger <em>condition</em>)</b> is executed. As a consequence of calling
 <b><a 
-href="symbols.html#x190-382438r438">format</a></b>-style arguments describing the error for the sake of the user interface. If
+href="symbols.html#x188-380509r509">invoke-debugger</a></b>, <b><a 
+href="symbols.html#x188-380383r383">error</a></b> never directly returns to its caller; the only exit from
+this function can come by non-local transfer of control in a handler or by use of an
+interactive debugging command.
+<!--l. 1058--><p class="indent" >   If <em>datum</em> is a condition, then that condition is used directly. In this case, it is
+an error for the list of <em>arguments</em> to be non-empty; that is, <b><a 
+href="symbols.html#x188-380383r383">error</a></b> must have been
+called with exactly one argument, the condition.
+<!--l. 1062--><p class="indent" >   If <em>datum</em> is a condition type (a class or class name), then the condition used is
+eﬀectively the result of <b>(apply #&#x2019;make-condition <em>datum</em> <em>arguments</em>)</b>.
+<!--l. 1065--><p class="indent" >   If <em>datum</em> is a string, then the condition used is eﬀectively the result of
+<div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+(make-condition &#x2019;simple-error
+   <br>                                                          :format-string <em>datum</em><br>
+                :format-arguments <em>arguments</em>)<br>
+<!--l. 1070--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-326002"></a>
+<em>
+<!--l. 1074--><p class="noindent" >[Function]</em> <b>cerror</b> <i>continue-format-string</i> <i>datum</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;rest</a></tt> <i>arguments</i>
+</div>
+<!--l. 1076--><p class="indent" >   The function <b><a 
+href="symbols.html#x188-380213r213">cerror</a></b> invokes the error facility on a condition. If the condition
+is not handled, <b>(invoke-debugger <em>condition</em>)</b> is executed. While signaling is
+going on, and while control is in the debugger (if it is reached), it is possible to
+continue program execution (thereby returning from the call to <b><a 
+href="symbols.html#x188-380213r213">cerror</a></b>) using the
 <b><a 
-href="symbols.html#x190-382383r383">error</a></b> is called and there are no active handlers (described in sections <a 
-href="#x182-31000029.3.2">29.3.2<!--tex4ht:ref: TRAPPING-ERRORS --></a>
-and <a 
-href="#x182-31100029.3.3">29.3.3<!--tex4ht:ref: HANDLING-CONDITIONS --></a>), the debugger will be entered and the error message will be typed out.
-For example: <div class="lisp"><tt><div class="tabbing">
-Lisp&#x003E; (defun factorial (x)
-   <br>                             (cond ((or (not (typep x &#x2019;integer)) (minusp x))<br>
-               (error &#x0022;~S is not a valid argument to FACTORIAL.&#x0022;<br>
-                      x))<br>                              ((zerop x) 1)<br>
-              (t (* x (factorial (- x 1))))))<br>             <span class="math"> ⇒</span> FACTORIAL<br>
-Lisp&#x003E; (factorial 20)<br>                             <span class="math"> ⇒</span> 2432902008176640000<br>
-Lisp&#x003E; (factorial -1)<br>      Error: -1 is not a valid argument to FACTORIAL.<br>
+href="symbols.html#x188-380288r288">continue</a></b> restart.
+<!--l. 1084--><p class="indent" >   If <em>datum</em> is a condition, then that condition is used directly. In this case,
+the list of <em>arguments</em> need not be empty, but will be used only with the
+<em>continue-format-string</em> and will not be used to initialize <em>datum</em>.
+<!--l. 1089--><p class="indent" >   If <em>datum</em> is a condition type (a class or class name), then the condition used is
+eﬀectively the result of <b>(apply #&#x2019;make-condition <em>datum</em> <em>arguments</em>)</b>.
+<!--l. 1093--><p class="indent" >   If <em>datum</em> is a string, then the condition used is eﬀectively the result of
+<div class="lisp"><tt><div class="tabbing">
+(make-condition &#x2019;simple-error
+   <br>                                                          :format-string <em>datum</em><br>
+                :format-arguments <em>arguments</em>)<br>
+<!--l. 1098--><p class="noindent" ></div>
+</tt>
+</div>
+                                                                          
+
+                                                                          
+<!--l. 1100--><p class="indent" >   The <em>continue-format-string</em> must be a string. Note that if <em>datum</em> is not a
+string, then the format arguments used by the <em>continue-format-string</em> will
+still be the list of <em>arguments</em> (which is in keyword format if <em>datum</em> is
+a condition type). In this case, some care may be necessary to set up
+the <em>continue-format-string</em> correctly. The <b><a 
+href="symbols.html#x188-380438r438">format</a></b> directive <b>~*</b>, which
+ignores and skips over <b><a 
+href="symbols.html#x188-380438r438">format</a></b> arguments, may be particularly useful in this
+situation.
+<!--l. 1110--><p class="indent" >   The value returned by <b><a 
+href="symbols.html#x188-380213r213">cerror</a></b> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-326003"></a>
+<em>
+<!--l. 1114--><p class="noindent" >[Function]</em> <b>signal</b> <i>datum</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;rest</a></tt> <i>arguments</i>
+</div>
+<!--l. 1116--><p class="indent" >   Invokes the signal facility on a condition. If the condition is not handled,
+<b><a 
+href="symbols.html#x188-380855r855">signal</a></b> returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 1119--><p class="indent" >   If <em>datum</em> is a condition, then that condition is used directly. In this case, it is
+an error for the list of <em>arguments</em> to be non-empty; that is, <b><a 
+href="symbols.html#x188-380855r855">signal</a></b> must have been
+called with exactly one argument, the condition.
+<!--l. 1123--><p class="indent" >   If <em>datum</em> is a condition type (a class or class name), then the condition used is
+eﬀectively the result of <b>(apply #&#x2019;make-condition <em>datum</em> <em>arguments</em>)</b>.
+<!--l. 1126--><p class="indent" >   If <em>datum</em> is a string, then the condition used is eﬀectively the result of
+<div class="lisp"><tt><div class="tabbing">
+(make-condition &#x2019;simple-error
+   <br>                                                          :format-string <em>datum</em><br>
+                :format-arguments <em>arguments</em>)<br>
+<!--l. 1131--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1133--><p class="indent" >   Note that if <b>(typep <em>condition</em> *break-on-signals*)</b> is true, then the
+debugger will be entered prior to beginning the process of signaling. The
+<b><a 
+href="symbols.html#x188-380288r288">continue</a></b> restart function may be used to continue with the signaling
+                                                                          
+
+                                                                          
+process; the restart is associated with the signaled condition as if by use of
+<b><a 
+href="symbols.html#x188-381017r1017">with-condition-restarts</a></b>. This is true also for all other functions and
+macros that signal conditions, such as <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b>, <b><a 
+href="symbols.html#x188-380383r383">error</a></b>, <b><a 
+href="symbols.html#x188-380213r213">cerror</a></b>, <b><a 
+href="symbols.html#x188-380127r127">assert</a></b>, and
+<b><a 
+href="symbols.html#x188-380236r236">check-type</a></b>.
+<!--l. 1142--><p class="indent" >   During the dynamic extent of a call to <b><a 
+href="symbols.html#x188-380855r855">signal</a></b> with a particular condition, the
+eﬀect of calling <b><a 
+href="symbols.html#x188-380855r855">signal</a></b> again on that condition object for a distinct abstract event
+is not deﬁned. For example, although a handler <em>may</em> resignal a condition in order
+to allow outer handlers ﬁrst shot at handling the condition, two distinct
+asynchronous keyboard events must not signal an the same (<b><a 
+href="symbols.html#x188-380378r378">eq</a></b>) condition object
+at the same time.
+<!--l. 1150--><p class="indent" >   For further details about signaling and handling, see the discussion of
+condition handlers in section <a 
+href="clmse147.html#x180-32300028.3.17">28.3.17<!--tex4ht:ref: CONDITION-HANDLERS --></a>.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-326004"></a>
+<em>
+<!--l. 1156--><p class="noindent" >[Variable]</em> <b>*break-on-signals*</b>
+</div>
+<!--l. 1158--><p class="indent" >   This variable is intended primarily for use when the user is debugging
+programs that do signaling. The value of <b>*break-on-signals*</b> should be suitable
+as a second argument to <b><a 
+href="symbols.html#x188-380978r978">typep</a></b>, that is, a type or type speciﬁer.
+<!--l. 1162--><p class="indent" >   When <b>(typep <em>condition</em> *break-on-signals*)</b> is true, then calls to
+<b><a 
+href="symbols.html#x188-380855r855">signal</a></b> (and to other advertised functions such as <b><a 
+href="symbols.html#x188-380383r383">error</a></b> that implicitly
+call <b><a 
+href="symbols.html#x188-380855r855">signal</a></b>) will enter the debugger prior to signaling that <em>condition</em>.
+The <b><a 
+href="symbols.html#x188-380288r288">continue</a></b> restart may be used to continue with the normal signaling
+process; the restart is associated with the signaled condition as if by use of
+<b><a 
+href="symbols.html#x188-381017r1017">with-condition-restarts</a></b>.
+<!--l. 1169--><p class="indent" >   Note that <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> is a valid type speciﬁer. If the value of <b><a 
+href="symbols.html#x188-380015r15">*break-on-signals*</a></b> is
+<b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, then <b><a 
+href="symbols.html#x188-380855r855">signal</a></b> will never enter the debugger in this implicit manner.
+<!--l. 1173--><p class="indent" >   When setting this variable, the user is encouraged to choose the most
+restrictive speciﬁcation that suﬃces. Setting this ﬂag eﬀectively violates the
+modular handling of condition signaling that this chapter seeks to establish. Its
+complete eﬀect may be unpredictable in some cases, since the user may not be
+aware of the variety or number of calls to <b><a 
+href="symbols.html#x188-380855r855">signal</a></b> that are used in programs called
+only incidentally.
+                                                                          
+
+                                                                          
+<!--l. 1180--><p class="indent" >   By default—and certainly in any “production” use—the value of this variable
+should be <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, both for reasons of performance and for reasons of modularity and
+abstraction.
+<hr></div>
+<!--l. 1185--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.2   </span> <a 
+href="frontmatter.html#QQ2-181-369" id="x181-32700028.4.2">Assertions</a></h4>
+<!--l. 1188--><p class="noindent" >These facilities are designed to make it convenient for the user to insert error
+checks into code.
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1192--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>check-type</b> <a 
+ id="dx181-327001"></a>place typespec [string]
+   <br>
+<!--l. 1193--><p class="noindent" ></div>
+</div>
+<!--l. 1194--><p class="indent" >   A <b><a 
+href="symbols.html#x188-380236r236">check-type</a></b> form signals an error of type <b><a 
+href="symbols.html#x188-380973r973">type-error</a></b> if the contents of
+<em>place</em> are not of the desired type.
+<!--l. 1197--><p class="indent" >   If a condition is signaled, handlers of this condition can use the functions
+<b><a 
+href="symbols.html#x188-380974r974">type-error-datum</a></b> and <b><a 
+href="symbols.html#x188-380975r975">type-error-expected-type</a></b> to access the contents of
+<em>place</em> and the <em>typespec</em>, respectively.
+<!--l. 1201--><p class="indent" >   This function can return only if the <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> restart is invoked, either
+explicitly from a handler or implicitly as one of the options oﬀered by the
+debugger. The restart is associated with the signaled condition as if by use of
+<b><a 
+href="symbols.html#x188-381017r1017">with-condition-restarts</a></b>.
+<!--l. 1206--><p class="indent" >   If <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> is called, <b><a 
+href="symbols.html#x188-380236r236">check-type</a></b> will store the new value that is the
+argument to <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> (or that is prompted for interactively by the debugger)
+in <em>place</em> and start over, checking the type of the new value and signaling another
+error if it is still not the desired type. Subforms of <em>place</em> may be evaluated
+multiple times because of the implicit loop generated. <b><a 
+href="symbols.html#x188-380236r236">check-type</a></b> returns
+<b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 1213--><p class="indent" >   The <em>place</em> must be a generalized variable reference acceptable to <b><a 
+href="symbols.html#x188-380845r845">setf</a></b>. The
+<em>typespec</em> must be a type speciﬁer; it is not evaluated. The <b><a 
+href="symbols.html#x188-380910r910">string</a></b> should
+be an English description of the type, starting with an indeﬁnite article
+                                                                          
+
+                                                                          
+(“a” or “an”); it is evaluated. If the <em>string</em> is not supplied, it is computed
+automatically from the <em>typespec</em>. (The optional <em>string</em> argument is allowed because
+some applications of <b><a 
+href="symbols.html#x188-380236r236">check-type</a></b> may require a more speciﬁc description
+of what is wanted than can be generated automatically from the type
+speciﬁer.)
+<!--l. 1222--><p class="indent" >   The error message will mention the <em>place</em>, its contents, and the desired
+type.
+_____________________________________________________________________<div class="implementation">
+<!--l. 1226--><p class="noindent" ><b>Implementation note:</b> An implementation may choose to generate a somewhat
+diﬀerently worded error message if it recognizes that <em>place</em> is of a particular form, such
+as one of the arguments to the function that called <b><a 
+href="symbols.html#x188-380236r236">check-type</a></b>.
+</div>___________________________________________________________________________________________________________
+<div class="lisp">
+<tt>
+<!--l. 1233--><p class="indent" >     <div class="tabbing">
+Lisp&#x003E; (setq aardvarks &#x2019;(sam harry fred))
+     <br>  <span class="math"> ⇒</span> (SAM HARRY FRED)<br> Lisp&#x003E; (check-type aardvarks (array * (3)))<br>
+Error: The value of AARDVARKS, (SAM HARRY FRED),<br>
+       is not a 3-long array.<br>
+To continue, type :CONTINUE followed by an option number:<br>
+ 1: Specify a value to use instead.<br>                   2: Return to Lisp Toplevel.<br>
+Debug&#x003E; :continue 1<br>           Use Value: #(sam fred harry)<br>            <span class="math"> ⇒</span> NIL<br>
+Lisp&#x003E; aardvarks<br>                                           <span class="math"> ⇒</span> #&#x003C;ARRAY-3 13571&#x003E;<br>
+Lisp&#x003E; (map &#x2019;list #&#x2019;identity aardvarks)<br>            <span class="math"> ⇒</span> (SAM FRED HARRY)<br>
+Lisp&#x003E; (setq aacount &#x2019;foo)<br>                                                     <span class="math"> ⇒</span> FOO<br>
+Lisp&#x003E; (check-type aacount (integer 0 *) &#x0022;a non-negative integer&#x0022;)<br>
+Error: The value of AACOUNT, FOO, is not a non-negative integer.<br>
+To continue, type :CONTINUE followed by an option number:<br>
+ 1: Specify a value to use instead.<br>                   2: Return to Lisp Toplevel.<br>
+Debug&#x003E; :continue 2<br>                                                                  Lisp&#x003E;<br>
+<!--l. 1258--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+                                                                          
+
+                                                                          
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1262--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>assert</b> <a 
+ id="dx181-327002"></a>test-form [({place}*) [datum {argument}*]]
+   <br>
+<!--l. 1263--><p class="noindent" ></div>
+</div>
+<!--l. 1264--><p class="indent" >   An <b><a 
+href="symbols.html#x188-380127r127">assert</a></b> form signals an error if the value of the <em>test-form</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>. Continuing
+from this error using the <b><a 
+href="symbols.html#x188-380288r288">continue</a></b> restart will allow the user to alter the values of
+some variables, and <b><a 
+href="symbols.html#x188-380127r127">assert</a></b> will then start over, evaluating the <em>test-form</em>
+again. (The restart is associated with the signaled condition as if by use of
+<b><a 
+href="symbols.html#x188-381017r1017">with-condition-restarts</a></b>.) <b><a 
+href="symbols.html#x188-380127r127">assert</a></b> returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 1271--><p class="indent" >   The <em>test-form</em> may be any form. Each <em>place</em> (there may be any number of
+them, or none) must be a generalized variable reference acceptable to <b><a 
+href="symbols.html#x188-380845r845">setf</a></b>. These
+should be variables on which <em>test-form</em> depends, whose values may sensibly be
+changed by the user in attempting to correct the error. Subforms of each
+<em>place</em> are evaluated only if an error is signaled, and may be re-evaluated
+if the error is re-signaled (after continuing without actually ﬁxing the
+problem).
+<!--l. 1279--><p class="indent" >   The <em>datum</em> and <em>argument</em>s are evaluated only if an error is to be signaled, and
+re-evaluated if the error is to be signaled again.
+<!--l. 1282--><p class="indent" >   If <em>datum</em> is a condition, then that condition is used directly. In this case, it is
+an error to specify any <em>argument</em>s.
+<!--l. 1285--><p class="indent" >   If <em>datum</em> is a condition type (a class or class name), then the condition
+used is eﬀectively the result of <b>(apply #&#x2019;make-condition <em>datum</em> (list
+{<i>argument</i>}* ))</b>.
+<!--l. 1289--><p class="indent" >   If <em>datum</em> is a string, then the condition used is eﬀectively the result of
+<div class="lisp"><tt><div class="tabbing">
+(make-condition &#x2019;simple-error
+   <br>                                                          :format-string <em>datum</em><br>
+                :format-arguments (list  {<i>argument</i>}* ))<br>
+                                                                          
+
+                                                                          
+<!--l. 1295--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1297--><p class="indent" >   If <em>datum</em> is omitted, then a condition of type <b><a 
+href="symbols.html#x188-380861r861">simple-error</a></b> is constructed
+using the <em>test-form</em> as data. For example, the following might be used:
+<div class="lisp"><tt><div class="tabbing">
+(make-condition &#x2019;simple-error
+   <br>                                         :format-string &#x0022;The assertion ~S failed.&#x0022;<br>
+  :format-arguments &#x2019;(<em>test-form</em>))<br>
+<!--l. 1304--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1305--><p class="indent" >   Note that the <em>test-form</em> itself, and not its value, is used as the format
+argument.
+________________________________________________________________<div class="implementation">
+<!--l. 1309--><p class="noindent" ><b>Implementation note:</b> The debugger need not include the <em>test-form</em> in the error
+message, and any <em>places</em> should not be included in the message, but they should be
+made available for the user&#x2019;s perusal. If the user gives the “continue” command, an
+opportunity should be presented to alter the values of any or all of the references.
+The details of this depend on the implementation&#x2019;s style of user interface, of
+course.
+</div>___________________________________________________________________________________________________________
+<!--l. 1319--><p class="indent" >     Here is an example of the use of <b><a 
+href="symbols.html#x188-380127r127">assert</a></b>: <div class="lisp"><tt><div class="tabbing">
+(setq x (make-array &#x2019;(3 5) :initial-element 3))
+     <br>                  (setq y (make-array &#x2019;(3 5) :initial-element 7))<br>                  <br>
+(defun matrix-multiply (a b)<br>                             (let ((*print-array* nil))<br>
+    (assert (and (= (array-rank a) (array-rank b) 2)<br>
+                 (= (array-dimension a 1)<br>                    (array-dimension b 0)))<br>
+            (a b)<br>                      &#x0022;Cannot multiply ~S by ~S.&#x0022; a b)<br>
+    (really-matrix-multiply a b)))<br>             <br>             (matrix-multiply x y)<br>
+Error: Cannot multiply #&#x003C;ARRAY-3-5 12345&#x003E; by #&#x003C;ARRAY-3-5 12364&#x003E;.<br>
+                                                                          
+
+                                                                          
+To continue, type :CONTINUE followed by an option number:<br>
+ 1: Specify new values.<br>   2: Return to Lisp Toplevel.<br>  Debug&#x003E; :continue 1<br>
+Value for A: x<br>            Value for B: (make-array &#x2019;(5 3) :initial-element 6)<br>
+ <span class="math"> ⇒</span>#2A((54 54 54 54 54)<br>                                 (54 54 54 54 54)<br>
+          (54 54 54 54 54)<br>                                 (54 54 54 54 54)<br>
+          (54 54 54 54 54))<br>
+<!--l. 1346--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<!--l. 1349--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.3   </span> <a 
+href="frontmatter.html#QQ2-181-370" id="x181-32800028.4.3">Exhaustive Case Analysis</a></h4>
+<!--l. 1353--><p class="noindent" >The syntax for <b><a 
+href="symbols.html#x188-380384r384">etypecase</a></b> and <b><a 
+href="symbols.html#x188-380303r303">ctypecase</a></b> is the same as for <b><a 
+href="symbols.html#x188-380977r977">typecase</a></b>, except
+that no <b>otherwise</b> clause is permitted. Similarly, the syntax for <b><a 
+href="symbols.html#x188-380361r361">ecase</a></b> and <b><a 
+href="symbols.html#x188-380194r194">ccase</a></b>
+is the same as for <b><a 
+href="symbols.html#x188-380192r192">case</a></b> except for the <b>otherwise</b> clause.
+<b>
+<!--l. 1358--><p class="indent" >   <a 
+href="symbols.html#x188-380384r384">etypecase</a></b> and <b><a 
+href="symbols.html#x188-380361r361">ecase</a></b> are similar to <b><a 
+href="symbols.html#x188-380977r977">typecase</a></b> and <b><a 
+href="symbols.html#x188-380192r192">case</a></b>, respectively, but
+signal a non-continuable error rather than returning <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> if no clause is
+selected.
+<b>
+<!--l. 1362--><p class="indent" >   <a 
+href="symbols.html#x188-380303r303">ctypecase</a></b> and <b><a 
+href="symbols.html#x188-380194r194">ccase</a></b> are also similar to <b><a 
+href="symbols.html#x188-380977r977">typecase</a></b> and <b><a 
+href="symbols.html#x188-380192r192">case</a></b>, respectively, but
+signal a continuable error if no clause is selected.
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1367--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>etypecase</b> <a 
+ id="dx181-328001"></a>keyform {(type {form}*)}*
+   <br>
+<!--l. 1368--><p class="noindent" ></div>
+</div>
+<!--l. 1369--><p class="indent" >   This control construct is similar to <b><a 
+href="symbols.html#x188-380977r977">typecase</a></b>, but no explicit <b>otherwise</b> or <b><a 
+href="symbols.html#x188-380953r953">t</a></b>
+clause is permitted. If no clause is satisﬁed, <b><a 
+href="symbols.html#x188-380384r384">etypecase</a></b> signals an error (of type
+<b><a 
+href="symbols.html#x188-380973r973">type-error</a></b>) with a message constructed from the clauses. It is not permissible to
+                                                                          
+
+                                                                          
+continue from this error. To supply an error message, the user should use
+<b><a 
+href="symbols.html#x188-380977r977">typecase</a></b> with an <b>otherwise</b> clause containing a call to <b><a 
+href="symbols.html#x188-380383r383">error</a></b>. The name of
+this function stands for “exhaustive type case” or “error-checking type
+case.”
+<!--l. 1377--><p class="indent" >   Example: <div class="lisp"><tt><div class="tabbing">
+Lisp&#x003E; (setq x 1/3)
+   <br>                              <span class="math"> ⇒</span> 1/3<br>                             Lisp&#x003E; (etypecase x<br>
+        (integer (* x 4))<br>                     (symbol (symbol-value x)))<br>
+Error: The value of X, 1/3, is neither an integer nor a symbol.<br>
 To continue, type :CONTINUE followed by an option number:<br>
  1: Return to Lisp Toplevel.<br>                                       Debug&#x003E;<br>
-<!--l. 203--><p class="noindent" ></div>
+<!--l. 1388--><p class="noindent" ></div>
 </tt>
 </div>
-                                                                          
-
-                                                                          
-<!--l. 204--><p class="indent" >   In general, a call to <b><a 
-href="symbols.html#x190-382383r383">error</a></b> cannot directly return. Unless special work has been
-done to override this behavior, the debugger will be entered and there will be no
-option to simply continue.
-<!--l. 208--><p class="indent" >   The only exception may be that some implementations may provide debugger
-commands for interactively returning from individual stack frames; even then,
-however, such commands should never be used except by someone who has read
-the erring code and understands the consequences of continuing from that point.
-In particular, the programmer should feel conﬁdent about writing code like this:
-<div class="lisp"><tt><div class="tabbing">
-(defun wargames:no-win-scenario ()
-   <br>              (when (true) (error &#x0022;Pushing the button would be stupid.&#x0022;))<br>
-  (push-the-button))<br>
-<!--l. 218--><p class="noindent" ></div>
-</tt>
+<hr>
 </div>
-<!--l. 219--><p class="indent" >   In this scenario, there should be no chance that the function <b><a 
-href="symbols.html#x190-382383r383">error</a></b> will return
-and the button will be pushed.
-____________________________________________
-<!--l. 223--><p class="noindent" ><b>Remark:</b> It should be noted that the notion of “no chance” that the button will be
-pushed is relative only to the language model; it assumes that the language is accurately
-implemented. In practice, compilers have bugs, computers have glitches, and users have
-been known to interrupt at inopportune moments and use the debugger to return from
-arbitrary stack frames. Such violations of the language model are beyond the scope of
-the condition system but not necessarily beyond the scope of potential failures that the
-programmer should consider and defend against. The possibility of such unusual
-failures may of course also inﬂuence the design of code meant to handle less
-drastic situations, such as maintaining a database uncorrupted.—KMP and GLS__
-<!--l. 238--><p class="indent" >     In some cases, the programmer may have a single, well-deﬁned idea of a
-reasonable recovery strategy for this particular error. In that case, he can use the
-function <b><a 
-href="symbols.html#x190-382213r213">cerror</a></b>, which speciﬁes information about what would happen
-if the user did simply continue from the call to <b><a 
-href="symbols.html#x190-382213r213">cerror</a></b>. For example:
-<div class="lisp"><tt><div class="tabbing">
-                                                                          
-
-                                                                          
-Lisp&#x003E; (defun factorial (x)
-   <br>                                                  (cond ((not (typep x &#x2019;integer))<br>
-               (error &#x0022;~S is not a valid argument to FACTORIAL.&#x0022;<br>
-                      x))<br>
-              ((minusp x)<br>                  (let ((x-magnitude (- x)))<br>
-                 (cerror &#x0022;Compute -(~D!) instead.&#x0022;<br>
-                         &#x0022;(-~D)! is not deﬁned.&#x0022; x-magnitude)<br>
-                 (- (factorial x-magnitude))))<br>
-              ((zerop x) 1)<br>               (t (* x (factorial (- x 1))))))<br>
- <span class="math"> ⇒</span> FACTORIAL<br>      Lisp&#x003E; (factorial -3)<br>      Error: (-3)! is not deﬁned.<br>
-To continue, type :CONTINUE followed by an option number:<br>
- 1: Compute -(3!) instead.<br>  2: Return to Lisp Toplevel.<br> Debug&#x003E; :continue 1<br>
- <span class="math"> ⇒</span> -6<br>
-<!--l. 262--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 264--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.2   </span> <a 
-href="frontmatter.html#QQ2-182-352" id="x182-31000029.3.2">Trapping Errors</a></h4>
-<!--l. 267--><p class="noindent" >By default, a call to <b><a 
-href="symbols.html#x190-382383r383">error</a></b> will force entry into the debugger. You can override
-that behavior in a variety of ways. The simplest (and most blunt) tool for
-inhibiting entry to the debugger on an error is to use <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b>. In the
-normal situation, forms in the body of <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> are evaluated sequentially
-and the last value is returned. If a condition of type <b><a 
-href="symbols.html#x190-382383r383">error</a></b> is signaled,
-<b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> immediately returns two values, namely <b><a 
-href="symbols.html#x190-382670r670">nil</a></b> and the condition that
-was signaled; the debugger is not entered and no error message is printed. For
-example: <div class="lisp"><tt><div class="tabbing">
-Lisp&#x003E; (setq ﬁlename &#x0022;nosuchﬁle&#x0022;)
-   <br> <span class="math"> ⇒</span> &#x0022;nosuchﬁle&#x0022;<br>Lisp&#x003E; (ignore-errors (open ﬁlename :direction :input))<br>
- <span class="math"> ⇒</span> NIL and #&#x003C;FILE-ERROR 3437523&#x003E;<br>
-                                                                          
-
-                                                                          
-<!--l. 280--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 281--><p class="indent" >   The second return value is an object that represents the kind of error. This is
-explained in greater detail in section <a 
-href="#x182-31200029.3.4">29.3.4<!--tex4ht:ref: OBJECT-0RIENTED-BASIS --></a>.
-<!--l. 284--><p class="indent" >   In many cases, however, <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> is not desirable because it deals with
-too many kinds of errors. Contrary to the belief of some, a program that does not
-enter the debugger is not necessarily better than one that does. Excessive
-use of <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> may keep the program out of the debugger, but
-it may not increase the program&#x2019;s reliability, because the program may
-continue to run after encountering errors other than those you meant
-to work past. In general, it is better to attempt to deal only with the
-particular kinds of errors that you believe could legitimately happen. That
-way, if an unexpected error comes along, you will still ﬁnd out about
-it.
-<b>
-<!--l. 294--><p class="indent" >   <a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> is a useful special case built from a more general facility,
-<b><a 
-href="symbols.html#x190-382479r479">handler-case</a></b>, that allows the programmer to deal with particular kinds of
-conditions (including non-error conditions) without aﬀecting what happens when
-other kinds of conditions are signaled. For example, an eﬀect equivalent
-to that of <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> above is achieved in the following example:
-<div class="lisp"><tt><div class="tabbing">
-Lisp&#x003E; (setq ﬁlename &#x0022;nosuchﬁle&#x0022;)
-   <br>  <span class="math"> ⇒</span> &#x0022;nosuchﬁle&#x0022;<br> Lisp&#x003E; (handler-case (open ﬁlename :direction :input)<br>
-        (error (condition)<br>                       (values nil condition)))<br>
- <span class="math"> ⇒</span> NIL and #&#x003C;FILE-ERROR 3437525&#x003E;<br>
-<!--l. 306--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 307--><p class="indent" >   However, using <b><a 
-href="symbols.html#x190-382479r479">handler-case</a></b>, one can indicate a more speciﬁc condition type
-than just “error.” Condition types are explained in detail later, but the syntax
-looks roughly like the following: <div class="lisp"><tt><div class="tabbing">
-                                                                          
-
-                                                                          
-Lisp&#x003E; (makunbound &#x2019;ﬁlename)
-   <br>  <span class="math"> ⇒</span> FILENAME<br> Lisp&#x003E; (handler-case (open ﬁlename :direction :input)<br>
-        (ﬁle-error (condition)<br>                    (values nil condition)))<br>
-Error: The variable FILENAME is unbound.<br>
-To continue, type :CONTINUE followed by an option number:<br>
- 1: Retry getting the value of FILENAME.<br>
- 2: Specify a value of FILENAME to use this time.<br>
- 3: Specify a value of FILENAME to store and use.<br>
- 4: Return to Lisp Toplevel.<br>                                       Debug&#x003E;<br>
-<!--l. 323--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 325--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.3   </span> <a 
-href="frontmatter.html#QQ2-182-353" id="x182-31100029.3.3">Handling Conditions</a></h4>
-<!--l. 328--><p class="noindent" >Blind transfer of control to a <b><a 
-href="symbols.html#x190-382479r479">handler-case</a></b> is only one possible kind of
-recovery action that can be taken when a condition is signaled. The low-level
-mechanism oﬀers great ﬂexibility in how to continue once a condition has been
-signaled.
-<!--l. 333--><p class="indent" >   The basic idea behind condition handling is that a piece of code called the
-<em>signaler</em> recognizes and announces the existence of an exceptional situation using
-<b><a 
-href="symbols.html#x190-382855r855">signal</a></b> or some function built on <b><a 
-href="symbols.html#x190-382855r855">signal</a></b> (such as <b><a 
-href="symbols.html#x190-382383r383">error</a></b>).
-<!--l. 338--><p class="indent" >   The process of signaling involves the search for and invocation of a
-<em>handler</em>, a piece of code that will attempt to deal appropriately with the
-situation.
-<!--l. 342--><p class="indent" >   If a handler is found, it may either <em>handle</em> the situation, by performing
-some non-local transfer of control, or <em>decline</em> to handle it, by failing to
-perform a non-local transfer of control. If it declines, other handlers are
-sought.
-<!--l. 346--><p class="indent" >   Since the lexical environment of the signaler might not be available to
-handlers, a data structure called a <em>condition</em> is created to represent explicitly the
-relevant state of the situation. A condition either is created explicitly using
-<b><a 
-href="symbols.html#x190-382591r591">make-condition</a></b> and then passed to a function such as <b><a 
-href="symbols.html#x190-382855r855">signal</a></b>, or is created
-implicitly by a function such as <b><a 
-href="symbols.html#x190-382855r855">signal</a></b> when given appropriate non-condition
-arguments.
-                                                                          
-
-                                                                          
-<!--l. 353--><p class="indent" >   In order to handle the error, a handler is permitted to use any non-local
-transfer of control such as <b><a 
-href="symbols.html#x190-382476r476">go</a></b> to a tag in a <b><a 
-href="symbols.html#x190-382954r954">tagbody</a></b>, <b><a 
-href="symbols.html#x190-382817r817">return</a></b> from a <b><a 
-href="symbols.html#x190-382148r148">block</a></b>, or
-<b><a 
-href="symbols.html#x190-382963r963">throw</a></b> to a <b><a 
-href="symbols.html#x190-382193r193">catch</a></b>. In addition, structured abstractions of these primitives are
-provided for convenience in exception handling.
-<!--l. 359--><p class="indent" >   A handler can be made dynamically accessible to a program by use of
-<b><a 
-href="symbols.html#x190-382478r478">handler-bind</a></b>. For example, to create a handler for a condition of type
-<b><a 
-href="symbols.html#x190-382106r106">arithmetic-error</a></b>, one might write:  <div class="lisp"><tt><div class="tabbing">
-(handler-bind ((arithmetic-error <em>handler</em>))<em>body</em>)
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1392--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>ctypecase</b> <a 
+ id="dx181-328002"></a>keyplace {(type {form}*)}*
    <br>
-<!--l. 371--><p class="noindent" ></div>
-</tt>
+<!--l. 1393--><p class="noindent" ></div>
 </div>
-<!--l. 372--><p class="indent" >   The handler is a function of one argument, the condition. If a condition of the
-designated type is signaled while the <em>body</em> is executing (and there are no
-intervening handlers), the handler would be invoked on the given condition,
-allowing it the option of transferring control. For example, one might write a
-macro that executes a body, returning either its value(s) or the two values <b><a 
-href="symbols.html#x190-382670r670">nil</a></b> and
-the condition: <div class="lisp"><tt><div class="tabbing">
-(defmacro without-arithmetic-errors (&#x0026;body forms)
-   <br>                                                                  (let ((tag (gensym)))<br>
-    ‘(block ,tag<br>                          (handler-bind ((arithmetic-error<br>
-                         #&#x2019;(lambda (c)     ;Argument <b>c</b> is a condition<br>
-                             (return-from ,tag (values nil c)))))<br>
-         ,@body))))<br>                                                     <br>
-<!--l. 386--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 388--><p class="indent" >   The handler is executed in the dynamic context of the signaler, except
-that the set of available condition handlers will have been rebound to
-the value that was active at the time the condition handler was made
-active. If a handler decline (that is, it does not transfer control), other
+<!--l. 1394--><p class="indent" >   This control construct is similar to <b><a 
+href="symbols.html#x188-380977r977">typecase</a></b>, but no explicit <b>otherwise</b> or <b><a 
+href="symbols.html#x188-380953r953">t</a></b>
+clause is permitted.
+<!--l. 1397--><p class="indent" >   The <em>keyplace</em> must be a generalized variable reference acceptable to <b><a 
+href="symbols.html#x188-380845r845">setf</a></b>. If no
+clause is satisﬁed, <b><a 
+href="symbols.html#x188-380303r303">ctypecase</a></b> signals an error (of type <b><a 
+href="symbols.html#x188-380973r973">type-error</a></b>) with a
+message constructed from the clauses. This error may be continued using the
+<b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> restart. The argument to <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> is stored in <em>keyplace</em> and
+then <b><a 
+href="symbols.html#x188-380303r303">ctypecase</a></b> starts over, making the type tests again. Subforms of
+<em>keyplace</em> may be evaluated multiple times. If the <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> restart
+is invoked interactively, the user will be prompted for the value to be
+used.
                                                                           
 
                                                                           
-handlers are sought. If no handler is found and the condition was signaled by
-<b><a 
-href="symbols.html#x190-382383r383">error</a></b> or <b><a 
-href="symbols.html#x190-382213r213">cerror</a></b> (or some function such as <b><a 
-href="symbols.html#x190-382127r127">assert</a></b> that behaves like these
-functions), the debugger is entered, still in the dynamic context of the
-signaler.
-<!--l. 397--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.4   </span> <a 
-href="frontmatter.html#QQ2-182-354" id="x182-31200029.3.4">Object-Oriented Basis of Condition Handling</a></h4>
-<!--l. 400--><p class="noindent" >Of course, the ability of the handler to usefully handle an exceptional situation is
-related to the quality of the information it is provided. For example, if all errors
-were signaled by <div class="lisp"><tt><div class="tabbing">
-(error &#x0022;<em>some format string</em>&#x0022;)
+<!--l. 1406--><p class="indent" >   The name of this function is mnemonic for “continuable (exhaustive) type
+case.”
+<!--l. 1409--><p class="indent" >   Example: <div class="lisp"><tt><div class="tabbing">
+Lisp&#x003E; (setq x 1/3)
+   <br>                              <span class="math"> ⇒</span> 1/3<br>                             Lisp&#x003E; (ctypecase x<br>
+        (integer (* x 4))<br>                     (symbol (symbol-value x)))<br>
+Error: The value of X, 1/3, is neither an integer nor a symbol.<br>
+To continue, type :CONTINUE followed by an option number:<br>
+ 1: Specify a value to use instead.<br>
+ 2: Return to Lisp Toplevel.<br>                           Debug&#x003E; :continue 1<br>
+Use value: 3.7<br>Error: The value of X, 3.7, is neither an integer nor a symbol.<br>
+To continue, type :CONTINUE followed by an option number:<br>
+ 1: Specify a value to use instead.<br>              2: Return to Lisp Toplevel.<br>
+Debug&#x003E; :continue 1<br>                                          Use value: 12<br>
+ <span class="math"> ⇒</span> 48<br>
+<!--l. 1429--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1434--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>ecase</b> <a 
+ id="dx181-328003"></a>keyform {({({key}*) | key} {form}*)}*
    <br>
-<!--l. 405--><p class="noindent" ></div>
-</tt>
+<!--l. 1435--><p class="noindent" ></div>
 </div>
-<!--l. 406--><p class="indent" >   then the only piece of information that would be accessible to the handler
-would be an object of type <b><a 
-href="symbols.html#x190-382861r861">simple-error</a></b> that had a slot containing the format
-string.
-<!--l. 410--><p class="indent" >   If this were done, <b><a 
-href="symbols.html#x190-382913r913">string-equal</a></b> would be the preferred way to tell one error
-from another, and it would be very hard to allow ﬂexibility in the presentation of
-error messages because existing handlers would tend to be broken by even tiny
-variations in the wording of an error message. This phenomenon has been
-the major failing of most error systems previously available in Lisp. It is
-fundamentally important to decouple the error message string (the human
-interface) from the objects that formally represent the error state (the program
-interface). We therefore have the notion of typed conditions, and of formal
-operations on those conditions that make them inspectable in a structured
-way.
-<!--l. 421--><p class="indent" >   This object-oriented approach to condition handling has the following
-important advantages over a text-based approach:
-      <ul class="itemize1">
-      <li class="itemize">Conditions are classiﬁed according to subtype relationships, making it
-      easy to test for categories of conditions.
-                                                                          
-
-                                                                          
-      </li>
-      <li class="itemize">Conditions  have  named  slot  values  through  which  parameters  are
-      conveyed from the program that signals the condition to the program
-      that handles it.
-      </li>
-      <li class="itemize">Inheritance  of  methods  and  slots  reduces  the  amount  of  explicit
-      speciﬁcation necessary to achieve various interesting eﬀects.</li></ul>
-<!--l. 437--><p class="indent" >   Some condition types are deﬁned by this document, but the set of condition
-types is extensible using <b><a 
-href="symbols.html#x190-382314r314">deﬁne-condition</a></b>. Common Lisp condition types are in
-fact CLOS classes, and condition objects are ordinary CLOS objects;
-<b><a 
-href="symbols.html#x190-382314r314">deﬁne-condition</a></b> merely provides an abstract interface that is a bit more
-convenient than <b><a 
-href="symbols.html#x190-382310r310">defclass</a></b> for deﬁning conditions.
-<!--l. 444--><p class="indent" >   Here, as an example, we deﬁne a two-argument function called <b>divide</b> that is
-patterned after the <b><a 
-href="symbols.html#x190-382065r65">/</a></b> function but does some stylized error checking:
-<div class="lisp"><tt><div class="tabbing">
-(defun divide (numerator denominator)
-   <br>                                           (cond ((or (not (numberp numerator))<br>
-             (not (numberp denominator)))<br>
-         (error &#x0022;(DIVIDE &#x2019;~S &#x2019;~S) - Bad arguments.&#x0022;<br>
-                numerator denominator))<br>        ((zerop denominator)<br>
-         (error &#x2019;division-by-zero<br>                      :operator &#x2019;divide<br>
-                :operands (list numerator denominator)))<br>
-        (t ...)))<br>
-<!--l. 458--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 459--><p class="indent" >   Note that in the ﬁrst clause we have used <b><a 
-href="symbols.html#x190-382383r383">error</a></b> with a string argument and in
-the second clause we have named a particular condition type, <b><a 
-href="symbols.html#x190-382346r346">division-by-zero</a></b>.
-In the case of a string argument, the condition type that will be signaled is
-<b><a 
-href="symbols.html#x190-382861r861">simple-error</a></b>.
-<!--l. 464--><p class="indent" >   The particular kind of error that is signaled may be important in
-cases where handlers are active. For example, <b><a 
-href="symbols.html#x190-382861r861">simple-error</a></b> inherits from
+<!--l. 1436--><p class="indent" >   This control construct is similar to <b><a 
+href="symbols.html#x188-380192r192">case</a></b>, but no explicit <b>otherwise</b> or <b><a 
+href="symbols.html#x188-380953r953">t</a></b>
+clause is permitted. If no clause is satisﬁed, <b><a 
+href="symbols.html#x188-380361r361">ecase</a></b> signals an error (of
 type <b><a 
-href="symbols.html#x190-382383r383">error</a></b>, which in turn inherits from type <b><a 
-href="symbols.html#x190-382282r282">condition</a></b>. On the other
+href="symbols.html#x188-380973r973">type-error</a></b>) with a message constructed from the clauses. It is not
+permissible to continue from this error. To supply an error message, the user
+should use <b><a 
+href="symbols.html#x188-380192r192">case</a></b> with an <b>otherwise</b> clause containing a call to <b><a 
+href="symbols.html#x188-380383r383">error</a></b>.
                                                                           
 
                                                                           
-hand, <b><a 
-href="symbols.html#x190-382346r346">division-by-zero</a></b> inherits from <b><a 
-href="symbols.html#x190-382106r106">arithmetic-error</a></b>, which inherits
-from <b><a 
-href="symbols.html#x190-382383r383">error</a></b>, which inherits from <b><a 
-href="symbols.html#x190-382282r282">condition</a></b>. So if a handler existed for
-<b><a 
-href="symbols.html#x190-382106r106">arithmetic-error</a></b> while a <b><a 
-href="symbols.html#x190-382346r346">division-by-zero</a></b> condition was signaled, that handler
-would be tried; however, if a <b><a 
-href="symbols.html#x190-382861r861">simple-error</a></b> condition were signaled in
-the same context, the handler for type <b><a 
-href="symbols.html#x190-382106r106">arithmetic-error</a></b> would not be
-tried.
-<!--l. 474--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.5   </span> <a 
-href="frontmatter.html#QQ2-182-355" id="x182-31300029.3.5">Restarts</a></h4>
-<!--l. 477--><p class="noindent" >The Common Lisp Condition System creats a clear separation between the act of
-signaling an error of a particular type and the act of saying that a particular way
-of recovery is appropriate. In the <b>divide</b> example above, simply signaling an error
-does not imply a willingness on the part of the signaler to cooperate in any
-corrective action. For example, the following sample interaction illustrates that
-the only recovery action oﬀered for this error is “Return to Lisp Toplevel”:
-<div class="lisp"><tt><div class="tabbing">
-Lisp&#x003E; (+ (divide 3 0) 7)
-   <br>                                                    Error: Attempt to divide 3 by 0.<br>
+The name of this function stands for “exhaustive case” or “error-checking
+case.”
+<!--l. 1444--><p class="indent" >   Example: <div class="lisp"><tt><div class="tabbing">
+Lisp&#x003E; (setq x 1/3)
+   <br>                                                                                     <span class="math"> ⇒</span> 1/3<br>
+Lisp&#x003E; (ecase x<br>                                              (alpha (foo))<br>
+        (omega (bar))<br>                                ((zeta phi) (baz)))<br>
+Error: The value of X, 1/3, is not ALPHA, OMEGA, ZETA, or PHI.<br>
 To continue, type :CONTINUE followed by an option number:<br>
- 1: Return to Lisp Toplevel.<br> Debug&#x003E; :continue 1<br> Returned to Lisp Toplevel.<br>
-Lisp&#x003E;<br>
-<!--l. 492--><p class="noindent" ></div>
+ 1: Return to Lisp Toplevel.<br>                                       Debug&#x003E;<br>
+<!--l. 1456--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 493--><p class="indent" >   When an error is detected and the function <b><a 
-href="symbols.html#x190-382383r383">error</a></b> is called, execution cannot
-continue normally because <b><a 
-href="symbols.html#x190-382383r383">error</a></b> will not directly return. Control can be
-transferred to other points in the program, however, by means of specially
-established “restarts.”
-<!--l. 498--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.6   </span> <a 
-href="frontmatter.html#QQ2-182-356" id="x182-31400029.3.6">Anonymous Restarts</a></h4>
-                                                                          
-
-                                                                          
-<!--l. 500--><p class="noindent" >The simplest kind of restart involves structured transfer of control using a macro
-called <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b>. The <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> form allows execution of a piece of code in
-a context where zero or more restarts are active, and where if one of those restarts
-is “invoked,” control will be transferred to the corresponding clause in the
+<hr>
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1460--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>ccase</b> <a 
+ id="dx181-328004"></a>keyplace {({({key}*) | key} {form}*)}*
+   <br>
+<!--l. 1461--><p class="noindent" ></div>
+</div>
+<!--l. 1462--><p class="indent" >   This control construct is similar to <b><a 
+href="symbols.html#x188-380192r192">case</a></b>, but no explicit <b>otherwise</b> or <b><a 
+href="symbols.html#x188-380953r953">t</a></b> clause
+is permitted.
+<!--l. 1465--><p class="indent" >   The <em>keyplace</em> must be a generalized variable reference acceptable to <b><a 
+href="symbols.html#x188-380845r845">setf</a></b>. If no
+clause is satisﬁed, <b><a 
+href="symbols.html#x188-380194r194">ccase</a></b> signals an error (of type <b><a 
+href="symbols.html#x188-380973r973">type-error</a></b>) with a
+message constructed from the clauses. This error may be continued using the
 <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> form. For example, we could rewrite the previous <b>divide</b> example as
-follows. <div class="lisp"><tt><div class="tabbing">
-(defun divide (numerator denominator)
-   <br>                                 (loop<br>                                   (restart-case<br>
-        (return<br>                  (cond ((or (not (numberp numerator))<br>
-                     (not (numberp denominator)))<br>
-                 (error &#x0022;(DIVIDE &#x2019;~S &#x2019;~S) - Bad arguments.&#x0022;<br>
-                         numerator denominator))<br>
-                ((zerop denominator)<br>                 (error &#x2019;division-by-zero<br>
-                        :operator &#x2019;divide<br>                        :operands (list numerator denominator)))<br>
-                (t ...)))<br>                                (nil (arg1 arg2)<br>
-          :report &#x0022;Provide new arguments for use by DIVIDE.&#x0022;<br>
-          :interactive<br>                                       (lambda ()<br>
-               (list (prompt-for &#x2019;number &#x0022;Numerator: &#x0022;)<br>
-                     (prompt-for &#x2019;number &#x0022;Denominator: &#x0022;)))<br>
-        (setq numerator arg1 denominator arg2))<br>            (nil (result)<br>
-          :report &#x0022;Provide a value to return from DIVIDE.&#x0022;<br>
-          :interactive<br>            (lambda () (list (prompt-for &#x2019;number &#x0022;Result: &#x0022;)))<br>
-        (return result)))))<br>
-<!--l. 532--><p class="noindent" ></div>
-</tt>
-</div>
-__________________________________________________________________________
-<!--l. 535--><p class="noindent" ><b>Remark:</b> The function <b>prompt-for</b> used in this chapter in a number of places is
-not a part of Common Lisp. It is used in the examples in this chapter only
-to keep the presentation simple. It is assumed to accept a type speciﬁer and
-optionally a format string and associated arguments. It uses the format string and
-associated arguments as part of an interactive prompt, and uses <b><a 
-href="symbols.html#x190-382779r779">read</a></b> to read a Lisp
-object; however, only an object of the type indicated by the type speciﬁer is
-accepted.
+href="symbols.html#x188-380904r904">store-value</a></b> restart. The argument to <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> is stored in <em>keyplace</em>
+and then <b><a 
+href="symbols.html#x188-380194r194">ccase</a></b> starts over, making the type tests again. Subforms of
+<em>keyplace</em> may be evaluated multiple times. If the <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> restart
+is invoked interactively, the user will be prompted for the value to be
+used.
                                                                           
 
                                                                           
-<!--l. 544--><p class="indent" >   The question of whether or not <b>prompt-for</b> (or something like it) would be
-a useful addition to Common Lisp is under consideration by X3J13, but as
-of January 1989 no action has been taken. In spite of its use in a number of
-examples, nothing in the Common Lisp Condition System depends on this function.
-__________________________________________________________________________
-<!--l. 551--><p class="indent" >     In the example, the <b><a 
-href="symbols.html#x190-382670r670">nil</a></b> at the head of each clause means that it is
-an “anonymous” restart. Anonymous restarts are typically invoked only
-from within the debugger. As we shall see later, it is possible to have
-“named restarts” that may be invoked from code without the need for user
-intervention.
-<!--l. 557--><p class="indent" >     If the arguments to anonymous restarts are not optional, then special
-information must be provided about what the debugger should use as arguments.
-Here the <b>:interactive</b> keyword is used to specify that information.
-<!--l. 561--><p class="indent" >     The <b>:report</b> keyword introduces information to be used when presenting the
-restart option to the user (by the debugger, for example).
-<!--l. 564--><p class="indent" >     Here is a sample interaction that takes advantage of the restarts provided by
-the revised deﬁnition of <b>divide</b>: <div class="lisp"><tt><div class="tabbing">
-Lisp&#x003E; (+ (divide 3 0) 7)
-     <br>                                                    Error: Attempt to divide 3 by 0.<br>
-To continue, type :CONTINUE followed by an option number:<br>
- 1: Provide new arguments for use by the DIVIDE function.<br>
- 2: Provide a value to return from the DIVIDE function.<br>
- 3: Return to Lisp Toplevel.<br>                 Debug&#x003E; :continue 1<br>                 1<br>
-Numerator: 4<br>                                                              Denominator: 2<br>
- <span class="math"> ⇒</span> 9<br>
-<!--l. 578--><p class="noindent" ></div>
-</tt>
+<!--l. 1474--><p class="indent" >   The name of this function is mnemonic for “continuable (exhaustive)
+case.”
+_____________________________________________________________________<div class="implementation">
+<!--l. 1477--><p class="noindent" ><b>Implementation note:</b> The <b><a 
+href="symbols.html#x188-380973r973">type-error</a></b> signaled by <b><a 
+href="symbols.html#x188-380194r194">ccase</a></b> and <b><a 
+href="symbols.html#x188-380361r361">ecase</a></b> is free to choose
+any representation of the acceptable argument type that it wishes for placement in the
+expected-type slot. It will always work to use type <b>(member . <em>keys</em>)</b>, but in some cases
+it may be more eﬃcient, for example, to use a type that represents an integer subrange
+or a type composed using the <b><a 
+href="symbols.html#x188-380703r703">or</a></b> type speciﬁer.
+</div>___________________________________________________________________________________________________________
+<hr>
 </div>
-<!--l. 580--><p class="noindent" >
-     <h4 class="subsectionHead"><span class="titlemark">29.3.7   </span> <a 
-href="frontmatter.html#QQ2-182-357" id="x182-31500029.3.7">Named Restarts</a></h4>
+<!--l. 1488--><p class="noindent" >
+     <h4 class="subsectionHead"><span class="titlemark">28.4.4   </span> <a 
+href="frontmatter.html#QQ2-181-371" id="x181-32900028.4.4">Handling Conditions</a></h4>
+<!--l. 1490--><p class="noindent" >These macros allow a program to gain control when a condition is signaled.
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1493--><p class="indent" >     <div class="tabbing">
+  <em>[Macro]</em> <b>handler-case</b> <a 
+ id="dx181-329001"></a>expression {(typespec ([var]) {form}*)}*
+     <br>
+<!--l. 1494--><p class="noindent" ></div>
+</div>
+<!--l. 1495--><p class="indent" >     Executes the given <em>expression</em> in a context where various speciﬁed handlers are
+active.
+<!--l. 1498--><p class="indent" >     Each <em>typespec</em> may be any type speciﬁer. If during the execution of the
+<em>expression</em> a condition is signaled for which there is an appropriate clause—that is,
+one for which <b>(typep <em>condition</em> &#x2019;<em>typespec</em>)</b> is true—and if there is no
+intervening handler for conditions of that type, then control is transferred to the
+body of the relevant clause (unwinding the dynamic state appropriately in the
+process) and the given variable <b>var</b> is bound to the condition that was signaled. If
+no such condition is signaled and the computation runs to completion, then the
+values resulting from the <em>expression</em> are returned by the <b><a 
+href="symbols.html#x188-380479r479">handler-case</a></b>
+form.
                                                                           
 
                                                                           
-<!--l. 582--><p class="noindent" >In addition to anonymous restarts, one can have named restarts, which can be
-invoked by name from within code. As a trivial example, one could write
+<!--l. 1508--><p class="indent" >   If more than one case is provided, those cases are made accessible in parallel.
+That is, in <div class="lisp"><tt><div class="tabbing">
+(handler-case <em>expression</em>
+   <br>                                                                (<em>type<span class="math"><sub>1</sub></span></em> (<em>var<span class="math"><sub>1</sub></span></em>) <em>form<span class="math"><sub>1</sub></span></em>)<br>
+  (<em>type<span class="math"><sub>2</sub></span></em> (<em>var<span class="math"><sub>2</sub></span></em>) <em>form<span class="math"><sub>2</sub></span></em>))<br>
+<!--l. 1514--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1515--><p class="indent" >   if the ﬁrst clause (containing <em>form<span class="math"><sub>1</sub></span></em>) has been selected, the handler for the
+second is no longer visible (and vice versa).
+<!--l. 1518--><p class="indent" >   The cases are searched sequentially from top to bottom. If a signaled condition
+matches more than one case (possible if there is type overlap) the earlier of the
+two cases will be selected.
+<!--l. 1522--><p class="indent" >   If the variable <em>var</em> is not needed, it may be omitted. That is, a clause such as
 <div class="lisp"><tt><div class="tabbing">
-(restart-case (invoke-restart &#x2019;foo 3)
-   <br>                                                                       (foo (x) (+ x 1)))<br>
-<!--l. 587--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 588--><p class="indent" >   to add <b>3</b> to <b>1</b>, returning <b>4</b>. This trivial example is conceptually analogous to
-writing: <div class="lisp"><tt><div class="tabbing">
-(+ (catch &#x2019;something (throw &#x2019;something 3)) 1)
+(<em>type</em> (<em>var</em>) (declare (ignore <em>var</em>)) <em>form</em>)
    <br>
-<!--l. 592--><p class="noindent" ></div>
+<!--l. 1526--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 594--><p class="indent" >   For a more realistic example, the code for the function <b><a 
-href="symbols.html#x190-382950r950">symbol-value</a></b> might
-signal an unbound variable error as follows: <div class="lisp"><tt><div class="tabbing">
-(restart-case (error &#x0022;The variable ~S is unbound.&#x0022; variable)
-   <br>                                                                              (continue ()<br>
-      :report<br>                  (lambda (s)     ;Argument <b>s</b> is a stream<br>
-          (format s &#x0022;Retry getting the value of ~S.&#x0022; variable))<br>
-    (symbol-value variable))<br>                            (use-value (value)<br>
-      :report<br>                  (lambda (s)     ;Argument <b>s</b> is a stream<br>
-          (format s &#x0022;Specify a value of ~S to use this time.&#x0022;<br>
-                  variable))<br>          value)<br>        (store-value (value)<br>
-      :report<br>                  (lambda (s)     ;Argument <b>s</b> is a stream<br>
-          (format s &#x0022;Specify a value of ~S to store and use.&#x0022;<br>
-                  variable))<br>        (setf (symbol-value variable) value)<br>
-    value))<br>
-                                                                          
-
-                                                                          
-<!--l. 616--><p class="noindent" ></div>
+<!--l. 1527--><p class="indent" >   may be written using the following shorthand notation: <div class="lisp"><tt><div class="tabbing">
+(<em>type</em> () <em>form</em>)
+   <br>
+<!--l. 1530--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 617--><p class="indent" >   If this were part of the implementation of <b><a 
-href="symbols.html#x190-382950r950">symbol-value</a></b>, then it would be
-possible for users to write a variety of automatic handlers for unbound variable
-errors. For example, to make unbound variables evaluate to themselves, one might
-write <div class="lisp"><tt><div class="tabbing">
-(handler-bind ((unbound-variable
-   <br>                       #&#x2019;(lambda (c)     ;Argument <b>c</b> is a condition<br>
-                     (when (ﬁnd-restart &#x2019;use-value)<br>
-                       (invoke-restart &#x2019;use-value<br>
-                                       (cell-error-name c))))))<br>
-  <em>body</em>)<br>
-<!--l. 628--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 630--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.8   </span> <a 
-href="frontmatter.html#QQ2-182-358" id="x182-31600029.3.8">Restart Functions</a></h4>
-<!--l. 632--><p class="noindent" >For commonly used restarts, it is conventional to deﬁne a program interface that
-hides the use of <b><a 
-href="symbols.html#x190-382510r510">invoke-restart</a></b>. Such program interfaces to restarts are called
-<em>restart functions</em>.
-<!--l. 636--><p class="indent" >   The normal convention is for the function to share the name of the
-restart. The pre-deﬁned functions <b><a 
-href="symbols.html#x190-382081r81">abort</a></b>, <b><a 
-href="symbols.html#x190-382288r288">continue</a></b>, <b><a 
-href="symbols.html#x190-382654r654">muﬄe-warning</a></b>,
-<b><a 
-href="symbols.html#x190-382904r904">store-value</a></b>, and <b><a 
-href="symbols.html#x190-382998r998">use-value</a></b> are restart functions. With <b><a 
-href="symbols.html#x190-382998r998">use-value</a></b> the above
-example of <b><a 
-href="symbols.html#x190-382478r478">handler-bind</a></b> could have been written more concisely as
+<!--l. 1532--><p class="indent" >   If there are no forms in a selected case, the case returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>. Note that
 <div class="lisp"><tt><div class="tabbing">
-(handler-bind ((unbound-variable
-   <br>                      #&#x2019;(lambda (c)     ;Argument <b>c</b> is a condition<br>
-                       (use-value (cell-error-name c)))))<br>         <em>body</em>)<br>
                                                                           
 
                                                                           
-<!--l. 645--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 647--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.9   </span> <a 
-href="frontmatter.html#QQ2-182-359" id="x182-31700029.3.9">Comparison of Restarts and Catch/Throw</a></h4>
-<!--l. 649--><p class="noindent" >One important feature that <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> (or <b><a 
-href="symbols.html#x190-382814r814">restart-bind</a></b>) oﬀers that <b><a 
-href="symbols.html#x190-382193r193">catch</a></b>
-does not is the ability to reason about the available points to which control might
-be transferred without actually attempting the transfer. One could, for example,
-write <div class="lisp"><tt><div class="tabbing">
-(ignore-errors (throw ...))
-   <br>
-<!--l. 655--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 656--><p class="indent" >   which is a sort of poor man&#x2019;s variation of <div class="lisp"><tt><div class="tabbing">
-(when (ﬁnd-restart &#x2019;something)
-   <br>                                                         (invoke-restart &#x2019;something))<br>
-<!--l. 660--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 661--><p class="indent" >   but there is no way to use <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> and <b><a 
-href="symbols.html#x190-382963r963">throw</a></b> to simulate something
-like <div class="lisp"><tt><div class="tabbing">
-(when (and (ﬁnd-restart &#x2019;something)
-   <br>                                                  (ﬁnd-restart &#x2019;something-else))<br>
-  (invoke-restart &#x2019;something))<br>
-                                                                          
-
-                                                                          
-<!--l. 667--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 668--><p class="indent" >   or even just <div class="lisp"><tt><div class="tabbing">
-(when (and (ﬁnd-restart &#x2019;something)
-   <br>                                              (yes-or-no-p &#x0022;Do something? &#x0022;))<br>
-  (invoke-restart &#x2019;something))<br>
-<!--l. 673--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 674--><p class="indent" >   because the degree of inspectability that comes with simply writing
-<div class="lisp"><tt><div class="tabbing">
-(ignore-errors (throw ...))
-   <br>
-<!--l. 677--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 678--><p class="indent" >   is too primitive—getting the desired information also forces transfer of control,
-perhaps at a time when it is not desirable.
-<!--l. 681--><p class="indent" >   Many programmers have previously evolved strategies like the following on a
-case-by-case basis: <div class="lisp"><tt><div class="tabbing">
-(defvar *foo-tag-is-available* nil)
-   <br>                                                                                               <br>
-(defun fn-1 ()<br>                                                  (catch &#x2019;foo<br>
-    (let ((*foo-tag-is-available* t))<br>                         ... (fn-2) ...)))<br>
-<br>                                                             (defun fn-2 ()<br>
-  ...<br>                               (if *foo-tag-is-available* (throw &#x2019;foo t))<br>
+(handler-case <em>expression</em>
+   <br>                  (<em>type<span class="math"><sub>1</sub></span></em> (<em>var<span class="math"><sub>1</sub></span></em>) . <em>body<span class="math"><sub>1</sub></span></em>)<br>                   (<em>type<span class="math"><sub>2</sub></span></em> (<em>var<span class="math"><sub>2</sub></span></em>) . <em>body<span class="math"><sub>2</sub></span></em>)<br>
   ...)<br>
+<!--l. 1538--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1539--><p class="indent" >   is approximately equivalent to <div class="lisp"><tt><div class="tabbing">
+(block #1=#:block-1
+   <br>                                                                      (let (#2=#:var-2)<br>
+    (tagbody<br>                    (handler-bind ((<em>type<span class="math"><sub>1</sub></span></em> #&#x2019;(lambda (temp)<br>
+                                (setq #2# temp)<br>
+                                (go #3=#:tag-3)))<br>
+                     (<em>type<span class="math"><sub>2</sub></span></em> #&#x2019;(lambda (temp)<br>
+                                   (setq #2# temp)<br>
+                                   (go #4=#:tag-4)))<br>
+                     ...)<br>               (return-from #1# <em>expression</em>))<br>
+      #3# (return-from #1# (let ((<em>var<span class="math"><sub>1</sub></span></em> #2#)) . <em>body<span class="math"><sub>1</sub></span></em>))<br>
+      #4# (return-from #1# (let ((<em>var<span class="math"><sub>2</sub></span></em> #2#)) . <em>body<span class="math"><sub>2</sub></span></em>))<br>           ...)))<br>
+<!--l. 1555--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1556--><p class="indent" >   [Note the use of “gensyms” such as <b>#:block-1</b> as block names, variables, and
+<b><a 
+href="symbols.html#x188-380954r954">tagbody</a></b> tags in this example, and the use of <b>#<em>n</em>=</b> and <b>#<em>n</em>#</b> read-macro
+syntax to indicate that the very same gensym appears in multiple places.—GLS]
+<!--l. 1561--><p class="indent" >   As a special case, the <em>typespec</em> can also be the symbol <b>:no-error</b> in the last
+clause. If it is, it designates a clause that will take control if the <em>expression</em> returns
+normally. In that case, a completely general lambda-list may follow the symbol
+<b>:no-error</b>, and the arguments to which the lambda-list parameters are bound are
+like those for <b><a 
+href="symbols.html#x188-380657r657">multiple-value-call</a></b> on the return value of the <em>expression</em>. For
+example, <div class="lisp"><tt><div class="tabbing">
                                                                           
 
                                                                           
-<!--l. 695--><p class="noindent" ></div>
+(handler-case <em>expression</em>
+   <br>                  (<em>type<span class="math"><sub>1</sub></span></em> (<em>var<span class="math"><sub>1</sub></span></em>) . <em>body<span class="math"><sub>1</sub></span></em>)<br>                   (<em>type<span class="math"><sub>2</sub></span></em> (<em>var<span class="math"><sub>2</sub></span></em>) . <em>body<span class="math"><sub>2</sub></span></em>)<br>
+  ...<br>                                                 (<em>type<span class="math"><sub>n</sub></span></em> (<em>var<span class="math"><sub>n</sub></span></em>) . <em>body<span class="math"><sub>n</sub></span></em>)<br>
+  (:no-error (<em>nvar<span class="math"><sub>1</sub></span></em> <em>nvar<span class="math"><sub>2</sub></span></em> ... <em>nvar<span class="math"><sub>m</sub></span></em>) . <em>nbody</em>))<br>
+<!--l. 1574--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 696--><p class="indent" >   The facility provided by <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> and <b><a 
-href="symbols.html#x190-382421r421">ﬁnd-restart</a></b> is intended to provide
-a standardized protocol for this sort of information to be communicated between
-programs that were developed independently so that individual variations from
-program to program do not thwart the overall modularity and debuggability of
-programs.
-<!--l. 702--><p class="indent" >   Another diﬀerence between the restart facility and the <b><a 
-href="symbols.html#x190-382193r193">catch</a></b>/<b><a 
-href="symbols.html#x190-382963r963">throw</a></b> facility is
-that a <b><a 
-href="symbols.html#x190-382193r193">catch</a></b> with any given tag completely shadows any outer pending <b><a 
-href="symbols.html#x190-382193r193">catch</a></b>
-that uses the same tag. Because of the presence of <b><a 
-href="symbols.html#x190-382277r277">compute-restarts</a></b>, however, it
-is possible to see shadowed restarts, which may be very useful in some situations
-(particularly in an interactive debugger).
-<!--l. 709--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.10   </span> <a 
-href="frontmatter.html#QQ2-182-360" id="x182-31800029.3.10">Generalized Restarts</a></h4>
-<b>
-<!--l. 712--><p class="noindent" ><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> is a mechanism that allows only imperative transfer of control for its
-associated restarts. <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> is built on a lower-level mechanism called
-<b><a 
-href="symbols.html#x190-382814r814">restart-bind</a></b>, which does not force transfer of control.
-<b>
-<!--l. 716--><p class="indent" >   <a 
-href="symbols.html#x190-382814r814">restart-bind</a></b> is to <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> as <b><a 
-href="symbols.html#x190-382478r478">handler-bind</a></b> is to <b><a 
-href="symbols.html#x190-382479r479">handler-case</a></b>. The
-syntax is <div class="lisp"><tt><div class="tabbing">
-(restart-bind ((<em>name</em> <em>function</em> . <em>options</em>)) . <em>body</em>)
+<!--l. 1575--><p class="indent" >   is approximately equivalent to <div class="lisp"><tt><div class="tabbing">
+(block #1=#:error-return
+   <br>           (multiple-value-call #&#x2019;(lambda (<em>nvar<span class="math"><sub>1</sub></span></em> <em>nvar<span class="math"><sub>2</sub></span></em> ... <em>nvar<span class="math"><sub>m</sub></span></em>) . <em>nbody</em>)<br>
+    (block #2=#:normal-return<br>                       (return-from #1#<br>
+        (handler-case (return-from #2# <em>expression</em>)<br>
+          (<em>type<span class="math"><sub>1</sub></span></em> (<em>var<span class="math"><sub>1</sub></span></em>) . <em>body<span class="math"><sub>1</sub></span></em>)<br>                    (<em>type<span class="math"><sub>2</sub></span></em> (<em>var<span class="math"><sub>2</sub></span></em>) . <em>body<span class="math"><sub>2</sub></span></em>)<br>
+          ...<br>                                  (<em>type<span class="math"><sub>n</sub></span></em> (<em>var<span class="math"><sub>n</sub></span></em>) . <em>body<span class="math"><sub>n</sub></span></em>))))))<br>
+<!--l. 1586--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1588--><p class="indent" >   Examples of the use of <b><a 
+href="symbols.html#x188-380479r479">handler-case</a></b>: <div class="lisp"><tt><div class="tabbing">
+(handler-case (/ x y)
+   <br>                                                              (division-by-zero () nil))<br>
+<br>                            (handler-case (open *the-ﬁle* :direction :input)<br>
+  (ﬁle-error (condition) (format t &#x0022;~&#x0026;Fooey: ~A~%&#x0022; condition)))<br>
+<br>                                        (handler-case (some-user-function)<br>
+  (ﬁle-error (condition) condition)<br>                   (division-by-zero () 0)<br>
+  ((or unbound-variable undeﬁned-function) () &#x2019;unbound))<br>                <br>
+(handler-case (intern x y)<br>                     (error (condition) condition)<br>
+  (:no-error (symbol status)<br>                     (declare (ignore symbol))<br>
+    status))<br>
+<!--l. 1606--><p class="noindent" ></div>
+</tt>
+</div>
+                                                                          
+
+                                                                          
+<hr>
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1610--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>ignore-errors</b> <a 
+ id="dx181-329002"></a>{form}*
    <br>
-<!--l. 721--><p class="noindent" ></div>
+<!--l. 1611--><p class="noindent" ></div>
+</div>
+<!--l. 1612--><p class="indent" >   Executes its body in a context that handles conditions of type <b><a 
+href="symbols.html#x188-380383r383">error</a></b> by
+returning control to this form. If no such condition is signaled, any values
+returned by the last form are returned by <b><a 
+href="symbols.html#x188-380489r489">ignore-errors</a></b>. Otherwise, two values
+are returned: <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> and the <b><a 
+href="symbols.html#x188-380383r383">error</a></b> condition that was signaled.
+<b>
+<!--l. 1617--><p class="indent" >   <a 
+href="symbols.html#x188-380489r489">ignore-errors</a></b> could be deﬁned by <div class="lisp"><tt><div class="tabbing">
+(defmacro ignore-errors (&#x0026;body forms)
+   <br>                                                     ‘(handler-case (progn ,@forms)<br>
+     (error (c) (values nil c))))<br>
+<!--l. 1622--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 722--><p class="indent" >   The <em>body</em> is executed in a dynamic context within which the <em>function</em> will be
-called whenever <b>(invoke-restart &#x2019;<em>name</em>)</b> is executed. The <em>options</em> are
-keyword-style and are used to pass information such as that provided with the
-<b>:report</b> keyword in <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b>.
-                                                                          
-
-                                                                          
-<!--l. 728--><p class="indent" >   A <b><a 
-href="symbols.html#x190-382815r815">restart-case</a></b> expands into a call to <b><a 
-href="symbols.html#x190-382814r814">restart-bind</a></b> where the function simply
-does an unconditional transfer of control to a particular body of code, passing
-along “argument” information in a structured way.
-<!--l. 732--><p class="indent" >   It is also possible to write restarts that do not transfer control. Such restarts
-may be useful in implementing various special commands for the debugger that
-are of interest only in certain situations. For example, one might imagine a
-situation where ﬁle space was exhausted and the following was done in an attempt
-to free space in directory <b>dir</b>: <div class="lisp"><tt><div class="tabbing">
-(restart-bind ((nil #&#x2019;(lambda () (expunge-directory dir))
-   <br>                                                               :report-function<br>
-                      #&#x2019;(lambda (stream)<br>
-                          (format stream &#x0022;Expunge ~A.&#x0022;<br>
-                                  (directory-namestring dir)))))<br>
-  (cerror &#x0022;Try this ﬁle operation again.&#x0022;<br>
-          &#x2019;directory-full :directory dir))<br>
-<!--l. 745--><p class="noindent" ></div>
-</tt>
+<hr>
 </div>
-<!--l. 746--><p class="indent" >   In this case, the debugger might be entered and the user could ﬁrst perform
-the expunge (which would not transfer control from the debugger context) and
-then retry the ﬁle operation: <div class="lisp"><tt><div class="tabbing">
-Lisp&#x003E; (open &#x0022;FOO&#x0022; :direction :output)
-   <br>                                         Error: The directory PS:&#x003C;JDOE&#x003E; is full.<br>
-To continue, type :CONTINUE followed by an option number:<br>
- 1: Try this ﬁle operation again.<br>                 2: Expunge PS:&#x003C;JDOE&#x003E;.<br>
- 3: Return to Lisp Toplevel.<br>                           Debug&#x003E; :continue 2<br>
-Expunging PS:&#x003C;JDOE&#x003E; ... 3 records freed.<br>            Debug&#x003E; :continue 1<br>
- <span class="math"> ⇒</span> #&#x003C;OUTPUT-STREAM &#x0022;PS:&#x003C;JDOE&#x003E;FOO.LSP&#x0022; 2323473&#x003E;<br>
-<!--l. 760--><p class="noindent" ></div>
-</tt>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1626--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>handler-bind</b> <a 
+ id="dx181-329003"></a>({(typespec handler)}*) {form}*
+   <br>
+<!--l. 1627--><p class="noindent" ></div>
 </div>
                                                                           
 
                                                                           
-<!--l. 762--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.11   </span> <a 
-href="frontmatter.html#QQ2-182-361" id="x182-31900029.3.11">Interactive Condition Handling</a></h4>
-<!--l. 764--><p class="noindent" >When a program does not know how to continue, and no active handler is able to
-advise it, the “interactive condition handler,” or “debugger,” can be entered. This
-happens implicitly through the use of functions such as <b><a 
-href="symbols.html#x190-382383r383">error</a></b> and <b><a 
-href="symbols.html#x190-382213r213">cerror</a></b>, or
-explicitly through the use of the function <b><a 
-href="symbols.html#x190-382509r509">invoke-debugger</a></b>.
-<!--l. 770--><p class="indent" >   The interactive condition handler never returns directly; it returns only
-through structured non-local transfer of control to specially deﬁned restart points
-that can be set up either by the system or by user code. The mechanisms that
-support the establishment of such structured restart points for portable code are
-outlined in sections <a 
-href="#x182-31300029.3.5">29.3.5<!--tex4ht:ref: RESTARTS --></a> through <a 
-href="#x182-31800029.3.10">29.3.10<!--tex4ht:ref: LAST-RESTARTS-SECTION --></a>.
-<!--l. 777--><p class="indent" >   Actually, implementations may also provide extended debugging facilities that
-allow return from arbitrary stack frames. Although such commands are frequently
-useful in practice, their eﬀects are implementation-dependent because they violate
-the Common Lisp program abstraction. The eﬀect of using such commands is
-undeﬁned with respect to Common Lisp.
-<!--l. 783--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.12   </span> <a 
-href="frontmatter.html#QQ2-182-362" id="x182-32000029.3.12">Serious Conditions</a></h4>
-<!--l. 785--><p class="noindent" >The <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b> macro will trap conditions of type <b><a 
-href="symbols.html#x190-382383r383">error</a></b>. There are, however,
-conditions that are not of type <b><a 
-href="symbols.html#x190-382383r383">error</a></b>.
-<!--l. 788--><p class="indent" >   Some conditions are not considered errors but are still very serious, so we call
-them <em>serious conditions</em> and we use the type <b><a 
-href="symbols.html#x190-382836r836">serious-condition</a></b> to represent
-them. Conditions such as those that might be signaled for “stack overﬂow” or
-“storage exhausted” are in this category.
-<!--l. 793--><p class="indent" >   The type <b><a 
-href="symbols.html#x190-382383r383">error</a></b> is a subtype of <b><a 
-href="symbols.html#x190-382836r836">serious-condition</a></b>, and it would technically
-be correct to use the term “serious condition” to refer to all serious conditions
-whether errors or not. However, normally we use the term “serious condition” to
-refer to things of type <b><a 
-href="symbols.html#x190-382836r836">serious-condition</a></b> but not of type <b><a 
-href="symbols.html#x190-382383r383">error</a></b>.
-<!--l. 799--><p class="indent" >   The point of the distinction between errors and other serious conditions is
-that some conditions are known to occur for reasons that are beyond the
-scope of Common Lisp to specify clearly. For example, we know that a
-stack will generally be used to implement function calling, and we know
-that stacks tend to be of ﬁnite size and are prone to overﬂow. Since the
-available stack size may vary from implementation to implementation,
-from session to session, or from function call to function call, it would be
+<!--l. 1628--><p class="indent" >   Executes body in a dynamic context where the given handler bindings are in
+eﬀect. Each <em>typespec</em> may be any type speciﬁer. Each <em>handler</em> form should
+evaluate to a function to be used to handle conditions of the given type(s) during
+execution of the <em>form</em>s. This function should take a single argument, the condition
+being signaled.
+<!--l. 1634--><p class="indent" >   If more than one binding is speciﬁed, the bindings are searched sequentially
+from top to bottom in search of a match (by visual analogy with <b><a 
+href="symbols.html#x188-380977r977">typecase</a></b>). If an
+appropriate <em>typespec</em> is found, the associated handler is run in a context where
+none of the handler bindings are visible (to avoid recursive errors). For example,
+in the case of <div class="lisp"><tt><div class="tabbing">
+(handler-bind ((unbound-variable #&#x2019;(lambda ...))
+   <br>                                                         (error #&#x2019;(lambda ...)))<br>
+  ...)<br>
+<!--l. 1643--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1644--><p class="indent" >   if an unbound variable error is signaled in the body (and not handled by an
+intervening handler), the ﬁrst function will be called. If any other kind
+of error is signaled, the second function will be called. In either case,
+neither handler will be active while executing the code in the associated
+function.
+<hr></div>
+<!--l. 1650--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.5   </span> <a 
+href="frontmatter.html#QQ2-181-372" id="x181-33000028.4.5">Deﬁning Conditions</a></h4>
+<!--l. 1652--><p class="noindent" >[The contents of this section are still a subject of some debate within X3J13. The
+reader may wish to take this section with a grain of salt, two aspirin tablets, and
+call a hacker in the morning.—GLS]
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1657--><p class="indent" >   <div class="tabbing">
                                                                           
 
                                                                           
-confusing to have expressions such as <b>(ignore-errors (+ a b))</b> return a
-number sometimes and <b><a 
-href="symbols.html#x190-382670r670">nil</a></b> other times if <b>a</b> and <b>b</b> were always bound to
-numbers and the stack just happened to overﬂow on a particular call.
-For this reason, only conditions of type <b><a 
-href="symbols.html#x190-382383r383">error</a></b> and not all conditions of
-type <b><a 
-href="symbols.html#x190-382836r836">serious-condition</a></b> are trapped by <b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b>. To trap other
-conditions, a lower-level facility must be used (such as <b><a 
-href="symbols.html#x190-382478r478">handler-bind</a></b> or
-<b><a 
-href="symbols.html#x190-382479r479">handler-case</a></b>).
-<!--l. 813--><p class="indent" >   By convention, the function <b><a 
-href="symbols.html#x190-382383r383">error</a></b> is preferred over <b><a 
-href="symbols.html#x190-382855r855">signal</a></b> to signal conditions
-of type <b><a 
-href="symbols.html#x190-382836r836">serious-condition</a></b> (including those of type <b><a 
-href="symbols.html#x190-382383r383">error</a></b>). It is the use of the
-function <b><a 
-href="symbols.html#x190-382383r383">error</a></b>, and not the type of the condition being signaled, that actually
-causes the debugger to be entered.
-<!--l. 818--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.13   </span> <a 
-href="frontmatter.html#QQ2-182-363" id="x182-32100029.3.13">Non-Serious Conditions</a></h4>
-<!--l. 820--><p class="noindent" >Some conditions are neither errors nor serious conditions. They are signaled to
-give other programs a chance to intervene, but if no action is taken, computation
-simply continues normally.
-<!--l. 824--><p class="indent" >   For example, an implementation might choose to signal a non-serious (and
-implementation-dependent) condition called <b>end-of-line</b> when output reaches the
-last character position on a line of character output. In such an implementation,
-the signaling of this condition might allow a convenient way for other
-programs to intervene, producing output that is truncated at the end of a
-line.
-<!--l. 831--><p class="indent" >   By convention, the function <b><a 
-href="symbols.html#x190-382855r855">signal</a></b> is used to signal conditions that are not
-serious. It would be possible to signal serious conditions using <b><a 
-href="symbols.html#x190-382855r855">signal</a></b>, and the
-debugger would not be entered if the condition went unhandled. However, by
-convention, handlers will generally tend to assume that serious conditions and
-errors were signaled by calling the <b><a 
-href="symbols.html#x190-382383r383">error</a></b> function (and will therefore force entry
-to the interactive condition handler) and that they should work to avoid
-this.
-<!--l. 840--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.14   </span> <a 
-href="frontmatter.html#QQ2-182-364" id="x182-32200029.3.14">Condition Types</a></h4>
-<!--l. 842--><p class="noindent" >Some types of conditions are predeﬁned by the system. All types of conditions are
-subtypes of <b><a 
-href="symbols.html#x190-382282r282">condition</a></b>. That is, <b>(typep <em>x</em> &#x2019;condition)</b> is true if and only if the
-                                                                          
-
-                                                                          
-value of <em>x</em> is a condition.
-<!--l. 846--><p class="indent" >   Implementations supporting multiple (or non-hierarchical) type inheritance are
-expressly permitted to exploit multiple inheritance in the tree of condition types
-as implementation-dependent extensions, as long as such extensions are
-compatible with the speciﬁcations in this chapter. [X3J13 voted in March 1989 <a 
- id="dx182-322001"></a>to
-integrate the Condition System and the Object System, so multiple inheritance is
-always available for condition types.—GLS]
-<!--l. 854--><p class="indent" >   In order to avoid problems in portable code that runs both in systems with
-multiple type inheritance and in systems without it, programmers are
-explicitly warned that while all correct Common Lisp implementations
-will ensure that <b>(typep <em>c</em> &#x2019;condition)</b> is true for all conditions <em>c</em> (and
-all subtype relationships indicated in this chapter will also be true), it
-should <em>not</em> be assumed that two condition types speciﬁed to be subtypes of
-the same third type are disjoint. (In some cases, disjoint subtypes are
-identiﬁed explicitly, but such disjointness is not to be assumed by default.)
-For example, it follows from the subtype descriptions contained in this
-chapter that in all implementations <b>(typep <em>c</em> &#x2019;control-error)</b> implies
-<b>(typep <em>c</em> &#x2019;error)</b>, but note that <b>(typep <em>c</em> &#x2019;control-error)</b> does <em>not</em> imply
-<b>(not (typep <em>c</em> &#x2019;cell-error))</b>.
-<!--l. 871--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.15   </span> <a 
-href="frontmatter.html#QQ2-182-365" id="x182-32300029.3.15">Signaling Conditions</a></h4>
-<!--l. 873--><p class="noindent" >When a condition is signaled, the system tries to locate the most appropriate
-handler for the condition and to invoke that handler.
-<!--l. 876--><p class="indent" >   Handlers are established dynamically using <b><a 
-href="symbols.html#x190-382478r478">handler-bind</a></b> or abstractions
-built on <b><a 
-href="symbols.html#x190-382478r478">handler-bind</a></b>.
-<!--l. 879--><p class="indent" >   If an appropriate handler is found, it is called. In some circumstances, the
-handler may <em>decline</em> simply by returning without performing a non-local transfer
-of control. In such cases, the search for an appropriate handler is picked up where
-it left oﬀ, as if the called handler had never been present.
-<!--l. 885--><p class="indent" >   If no handler is found, or if all handlers that were found decline, <b><a 
-href="symbols.html#x190-382855r855">signal</a></b>
-returns <b><a 
-href="symbols.html#x190-382670r670">nil</a></b>.
-<!--l. 888--><p class="indent" >   Although it follows from the description above, it is perhaps worth noting
-explicitly that the lookup procedure described here will prefer a general but more
-(dynamically) local handler over a speciﬁc but less (dynamically) local handler.
-Experience with existing condition systems suggests that this is a reasonable
-                                                                          
-
-                                                                          
-approach and works adequately in most situations. Some care should be taken
-when binding handlers for very general kinds of conditions, such as is done in
-<b><a 
-href="symbols.html#x190-382489r489">ignore-errors</a></b>. Often, binding for a more speciﬁc condition type than <b><a 
-href="symbols.html#x190-382383r383">error</a></b> is
-more appropriate.
-<!--l. 897--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.16   </span> <a 
-href="frontmatter.html#QQ2-182-366" id="x182-32400029.3.16">Resignaling Conditions</a></h4>
-<!--l. 899--><p class="noindent" >[The contents of this section are still a subject of some debate within X3J13. The
-reader may wish to take this section with a grain of salt.—GLS]
-<!--l. 902--><p class="indent" >   Note that signaling a condition has no side eﬀect on that condition,
-and that there is no dynamic state contained in a condition object. As
-such, it may at times be reasonable and appropriate to consider caching
-condition objects for repeated use, re-signaling conditions from within
-handlers, or saving conditions away somewhere and re-signaling them
-later.
-<!--l. 908--><p class="indent" >   For example, it may be desirable for the system to pre-allocate objects of type
-<b><a 
-href="symbols.html#x190-382903r903">storage-condition</a></b> so that they can be signaled when needed without attempting
-to allocate more storage.
-<!--l. 912--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.17   </span> <a 
-href="frontmatter.html#QQ2-182-367" id="x182-32500029.3.17">Condition Handlers</a></h4>
-<!--l. 915--><p class="noindent" >A <em>handler</em> is a function of one argument, the condition to be handled. The
-handler may inspect the object to be sure it is “interested” in handling the
-condition.
-<!--l. 919--><p class="indent" >   A handler is executed in the dynamic context of the signaler, except that the
-set of available condition handlers will have been rebound to the value that was
-active at the time the condition handler was made active. The intent
-of this is to prevent inﬁnite recursion because of errors in a condition
-handler.
-<!--l. 924--><p class="indent" >   After inspecting the condition, the handler should take one of the following
-actions:
-      <ul class="itemize1">
-      <li class="itemize">It might <em>decline</em> to handle the condition (by simply returning). When
-      this happens, the returned values are ignored and the eﬀect is the same
-                                                                          
-
-                                                                          
-      as if the handler had been invisible to the mechanism seeking to ﬁnd
-      a handler. The next handler in line will be tried, or if no such handler
-      exists, the condition will go unhandled.
-      </li>
-      <li class="itemize">It might <em>handle</em> the condition (by performing some non-local transfer
-      of control). This may be done either primitively using <b><a 
-href="symbols.html#x190-382476r476">go</a></b>, <b><a 
-href="symbols.html#x190-382817r817">return</a></b>,
-      or  <b><a 
-href="symbols.html#x190-382963r963">throw</a></b>,  or  more  abstractly  using  a  function  such  as  <b><a 
-href="symbols.html#x190-382081r81">abort</a></b>  or
+ <em>[Macro]</em> <b>deﬁne-condition</b> <a 
+ id="dx181-330001"></a>name ({parent-type}*)[({slot-speciﬁer}*) {option}*]
+   <br>
+<!--l. 1659--><p class="noindent" ></div>
+</div>
+<!--l. 1660--><p class="indent" >   Deﬁnes a new condition type called <em>name</em>, which is a subtype of each given
+<em>parent-type</em>. Except as otherwise noted, the arguments are not evaluated.
+<!--l. 1664--><p class="indent" >   Objects of this condition type will have all of the indicated <em>slot</em>s, plus any
+additional slots inherited from the parent types (its superclasses). If the <em>slot</em>s list
+is omitted, the empty list is assumed.
+<!--l. 1668--><p class="indent" >   A <em>slot</em> must have the form <div class="tabbing">
+<em>slot-speciﬁer</em> ::= <em>slot-name</em> | (<em>slot-name</em> <span class="math">[[↓<em>slot-option</em> ]]</span>)
+   <br>
+<!--l. 1671--><p class="noindent" ></div>For the syntax of a <em>slot-option</em>, see <b><a 
+href="symbols.html#x188-380310r310">defclass</a></b>. The slots of a condition object are
+normal CLOS slots. Note that <b><a 
+href="symbols.html#x188-381025r1025">with-slots</a></b> may be used instead of accessor
+functions to access slots of a condition object.
+<b>
+<!--l. 1677--><p class="indent" >   <a 
+href="symbols.html#x188-380591r591">make-condition</a></b> will accept keywords (in the keyword package) with the
+print name of any of the designated slots, and will initialize the corresponding
+slots in conditions it creates.
+<!--l. 1681--><p class="indent" >   Accessors are created according to the same rules as used by <b><a 
+href="symbols.html#x188-380310r310">defclass</a></b>.
+<!--l. 1683--><p class="indent" >   The valid <em>options</em> are as follows:
+<div class="flushdesc">
+      <ul><li><b>
+<b>(:documentation <em>doc-string</em>)</b> </b></li>
+      <!--l. 1688--><p class="noindent" >The  <em>doc-string</em>  should  be  either  <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or  a  string  that  describes  the
+      purpose of the condition type. If this option is omitted, <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> is assumed.
+      Calling <b>(documentation &#x2019;<em>name</em> &#x2019;type)</b> will retrieve this information.
+      <li><b>
+<b>(:report <em>exp</em>)</b> </b></li>
+      <!--l. 1695--><p class="noindent" >If <em>exp</em> is not a literal string, it must be a suitable argument to the
       <b><a 
-href="symbols.html#x190-382510r510">invoke-restart</a></b>.
-      </li>
-      <li class="itemize">It might signal another condition.
-      </li>
-      <li class="itemize">It might invoke the interactive debugger.</li></ul>
-<!--l. 945--><p class="noindent" >In fact, the latter two actions (signaling another condition or entering the debugger)
-are really just ways of putting oﬀ the decision to either handle or decline, or
-trying to get someone else to make such a decision. Ultimately, all a handler can
-do is to handle or decline to handle.
-<!--l. 950--><p class="noindent" >
-   <h4 class="subsectionHead"><span class="titlemark">29.3.18   </span> <a 
-href="frontmatter.html#QQ2-182-368" id="x182-32600029.3.18">Printing Conditions</a></h4>
-<!--l. 952--><p class="noindent" >When <b><a 
-href="symbols.html#x190-382037r37">*print-escape*</a></b> is <b><a 
-href="symbols.html#x190-382670r670">nil</a></b> (for example, when the <b><a 
-href="symbols.html#x190-382748r748">princ</a></b> function or the
-<b>~A</b> directive is used with <b><a 
-href="symbols.html#x190-382438r438">format</a></b>), the report method for the condition
-will be invoked. This will be done automatically by functions such as
+href="symbols.html#x188-380446r446">function</a></b> special  operator.  The  expression  <b>(function <em>exp</em>)</b> will  be
+                                                                          
+
+                                                                          
+      evaluated  in  the  current  lexical  environment.  It  should  produce  a
+      function of two arguments, a condition and a stream, that prints on the
+      stream a description of the condition. This function is called whenever
+      the condition is printed while <b><a 
+href="symbols.html#x188-380037r37">*print-escape*</a></b> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+      <!--l. 1702--><p class="noindent" >If <em>exp</em> is a literal string, it is shorthand for <div class="lisp"><tt><div class="tabbing">
+      (lambda (c s)
+      <br>                                                                  (declare (ignore c))<br>
+             (write-string <em>exp</em> s))<br>
+      <!--l. 1707--><p class="noindent" ></div>
+</tt>
+</div>
+      <!--l. 1708--><p class="noindent" >[That is, a function is provided that will simply write the given string
+      literally to the stream, regardless of the particular condition object
+      supplied.—GLS]
+      <!--l. 1712--><p class="noindent" >The <b>:report</b> option is processed <em>after</em> the new condition type has been
+      deﬁned, so use of the slot accessors within the report function is permitted.
+      If this option is not speciﬁed, information about how to report this type of
+      condition will be inherited from the <em>parent-type</em>.</ul>
+</div>
+<!--l. 1718--><p class="indent" >   [X3J13 voted in March 1989 <a 
+ id="dx181-330002"></a>to integrate the Condition System and the Object
+System. In the original Condition System proposal, <b><a 
+href="symbols.html#x188-380314r314">deﬁne-condition</a></b> allowed
+only one <em>parent-type</em> (the inheritance structure was a simple hierarchy). Slot
+descriptions were much simpler, even simpler than those for <b><a 
+href="symbols.html#x188-380325r325">defstruct</a></b>:
+<div class="tabbing">
+<em>slot</em> ::= <em>slot-name</em> | (<em>slot-name</em>) | (<em>slot-name</em> <em>default-value</em>)
+   <br>
+<!--l. 1726--><p class="noindent" ></div>Similarly, <b><a 
+href="symbols.html#x188-380314r314">deﬁne-condition</a></b> allowed a <b>:conc-name</b> option similar to that of
 <b><a 
-href="symbols.html#x190-382509r509">invoke-debugger</a></b>, <b><a 
-href="symbols.html#x190-382168r168">break</a></b>, and <b><a 
-href="symbols.html#x190-383009r1009">warn</a></b>, but there may still be situations in which
-it is desirable to have a condition report under explicit user control. For example,
+href="symbols.html#x188-380325r325">defstruct</a></b>: <div class="flushdesc">
+                                                                          
+
+                                                                          
+      <ul><li><b>
+<b>(:conc-name <em>symbol-or-string</em>)</b> </b></li>
+<b>
+      <!--l. 1732--><p class="noindent" >Not now part of Common Lisp.</b> As with <b><a 
+href="symbols.html#x188-380325r325">defstruct</a></b>, this sets up
+      automatic preﬁxing of the names of slot accessors. Also as in <b><a 
+href="symbols.html#x188-380325r325">defstruct</a></b>,
+      the default behavior is to use the name of the new type, <em>name</em>, followed
+      by a hyphen. (Generated names are interned in the package that is
+      current at the time that the <b><a 
+href="symbols.html#x188-380314r314">deﬁne-condition</a></b> is processed).</ul>
+</div>
+<!--l. 1739--><p class="noindent" >One consequence of the vote was to make <b><a 
+href="symbols.html#x188-380314r314">deﬁne-condition</a></b> slot descriptions like
+those of <b><a 
+href="symbols.html#x188-380310r310">defclass</a></b>.—GLS]
+<!--l. 1742--><p class="indent" >   Here are some examples of the use of <b><a 
+href="symbols.html#x188-380314r314">deﬁne-condition</a></b>.
+<!--l. 1744--><p class="indent" >   The following form deﬁnes a condition of type <b>peg/hole-mismatch</b> that
+inherits from a condition type called <b>blocks-world-error</b>: <div class="lisp"><tt><div class="tabbing">
+(deﬁne-condition peg/hole-mismatch (blocks-world-error)
+   <br>                                                      (peg-shape hole-shape)<br>
+  (:report<br>                                     (lambda (condition stream)<br>
+      (with-slots (peg-shape hole-shape) condition<br>
+        (format stream &#x0022;A ~A peg cannot go in a ~A hole.&#x0022;<br>
+                peg-shape hole-shape))))<br>
+<!--l. 1754--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1755--><p class="indent" >   The new type has slots <b>peg-shape</b> and <b>hole-shape</b>, so <b><a 
+href="symbols.html#x188-380591r591">make-condition</a></b> will
+accept <b>:peg-shape</b> and <b>:hole-shape</b> keywords. The <b><a 
+href="symbols.html#x188-381025r1025">with-slots</a></b> macro may be
+used to access the <b>peg-shape</b> and <b>hole-shape</b> slots, as illustrated in the <b>:report</b>
+information.
+<!--l. 1760--><p class="indent" >   Here is another example. This deﬁnes a condition called <b>machine-error</b> that
+inherits from <b><a 
+href="symbols.html#x188-380383r383">error</a></b>: <div class="lisp"><tt><div class="tabbing">
+(deﬁne-condition machine-error (error)
+                                                                          
+
+                                                                          
+   <br>                                                                ((machine-name<br>
+                    :reader machine-error-machine-name))<br>
+  (:report (lambda (condition stream)<br>
+             (format stream &#x0022;There is a problem with ~A.&#x0022;<br>
+                     (machine-error-machine-name condition)))))<br>
+<!--l. 1769--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1770--><p class="indent" >   Building on this deﬁnition, we can deﬁne a new error condition that is
+a subtype of <b>machine-error</b> for use when machines are not available:
 <div class="lisp"><tt><div class="tabbing">
-(let ((form &#x2019;(open &#x0022;nosuchﬁle&#x0022;)))
-   <br>              (handler-case (eval form)<br>                (serious-condition (c)<br>
-      (format t &#x0022;~&#x0026;Evaluation of ~S failed:~%~A&#x0022; form c))))<br>
-<!--l. 963--><p class="noindent" ></div>
+(deﬁne-condition machine-not-available-error (machine-error) ()
+   <br>                                               (:report (lambda (condition stream)<br>
+             (format stream &#x0022;The machine ~A is not available.&#x0022;<br>
+                     (machine-error-machine-name condition)))))<br>
+<!--l. 1777--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1778--><p class="indent" >   We may now deﬁne a still more speciﬁc condition, built upon
+<b>machine-not-available-error</b>, that provides a default for <b>machine-name</b> but
+does not provide any new slots or report information. It just gives the
+<b>machine-name</b> slot a default initialization: <div class="lisp"><tt><div class="tabbing">
+(deﬁne-condition my-favorite-machine-not-available-error
+   <br>                                               (machine-not-available-error)<br>
+                  ((machine-name :initform &#x0022;MC.LCS.MIT.EDU&#x0022;)))<br>
+<!--l. 1786--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1787--><p class="indent" >   Note that since no <b>:report</b> clause was given, the information inherited
+from <b>machine-not-available-error</b> will be used to report this type of
+condition.
+<hr></div>
+                                                                          
+
+                                                                          
+<!--l. 1791--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.6   </span> <a 
+href="frontmatter.html#QQ2-181-373" id="x181-33100028.4.6">Creating Conditions</a></h4>
+<!--l. 1793--><p class="noindent" >The function <b><a 
+href="symbols.html#x188-380591r591">make-condition</a></b> is the basic means for creating condition
+objects.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-331001"></a>
+<em>
+<!--l. 1797--><p class="noindent" >[Function]</em> <b>make-condition</b> <i>type</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;rest</a></tt> <i>slot-initializations</i>
+</div>
+<!--l. 1799--><p class="indent" >   Constructs a condition object of the given <em>type</em> using <em>slot-initializations</em> as a
+speciﬁcation of the initial value of the slots. The newly created condition is
+returned.
+<!--l. 1803--><p class="indent" >   The <em>slot-initializations</em> are alternating keyword/value pairs. For example:
+<div class="lisp"><tt><div class="tabbing">
+(make-condition &#x2019;peg/hole-mismatch
+   <br>                                   :peg-shape &#x2019;square :hole-shape &#x2019;round)<br>
+<!--l. 1808--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<!--l. 1811--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.7   </span> <a 
+href="frontmatter.html#QQ2-181-374" id="x181-33200028.4.7">Establishing Restarts</a></h4>
+<!--l. 1813--><p class="noindent" >The lowest-level form that creates restart points is called <b><a 
+href="symbols.html#x188-380814r814">restart-bind</a></b>.
+The <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b> macro is an abstraction that addresses many common
+needs for <b><a 
+href="symbols.html#x188-380814r814">restart-bind</a></b> while oﬀering a more palatable syntax. See also
+<b><a 
+href="symbols.html#x188-381024r1024">with-simple-restart</a></b>. The function that transfers control to a restart point
+established by one of these macros is called <b><a 
+href="symbols.html#x188-380510r510">invoke-restart</a></b>.
+                                                                          
+
+                                                                          
+<!--l. 1819--><p class="indent" >   All restarts have dynamic extent; a restart does not survive execution of the
+form that establishes it.
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1823--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>with-simple-restart</b> <a 
+ id="dx181-332001"></a>(name format-string {format-argument}*){form}*
+   <br>
+<!--l. 1825--><p class="noindent" ></div>
+</div>
+<!--l. 1826--><p class="indent" >   This is shorthand for one of the most common uses of <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b>.
+<!--l. 1828--><p class="indent" >   If the restart designated by <em>name</em> is not invoked while executing the <em>form</em>s, all
+values returned by the last <em>form</em> are returned. If that restart is invoked, control is
+transferred to the <b><a 
+href="symbols.html#x188-381024r1024">with-simple-restart</a></b> form, which immediately returns the two
+values <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> and <b><a 
+href="symbols.html#x188-380953r953">t</a></b>.
+<!--l. 1833--><p class="indent" >   The <em>name</em> may be <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, in which case an anonymous restart is established.
+<b>
+<!--l. 1836--><p class="indent" >   <a 
+href="symbols.html#x188-381024r1024">with-simple-restart</a></b> could be deﬁned by <div class="lisp"><tt><div class="tabbing">
+(defmacro with-simple-restart ((restart-name format-string
+   <br>                                            &#x0026;rest format-arguments)<br>
+                               &#x0026;body forms)<br>
+  ‘(restart-case (progn ,@forms)<br>                         (,restart-name ()<br>
+       :report<br>                                         (lambda (stream)<br>
+           (format stream format-string ,@format-arguments))<br>
+       (values nil t))))<br>
+<!--l. 1847--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1849--><p class="indent" >   Here is an example of the use of <b><a 
+href="symbols.html#x188-381024r1024">with-simple-restart</a></b>. <div class="lisp"><tt><div class="tabbing">
+Lisp&#x003E; (defun read-eval-print-loop (level)
+                                                                          
+
+                                                                          
+   <br>                                                                (with-simple-restart<br>
+            (abort &#x0022;Exit command level ~D.&#x0022; level)<br>
+          (loop<br>                                    (with-simple-restart<br>
+                (abort &#x0022;Return to command level ~D.&#x0022; level)<br>
+              (let ((form (prog2 (fresh-line)<br>
+                                 (read)<br>
+                                 (fresh-line))))<br>
+                (prin1 (eval form)))))))<br>
+ <span class="math"> ⇒</span> READ-EVAL-PRINT-LOOP<br>           Lisp&#x003E; (read-eval-print-loop 1)<br>
+(+ &#x2019;a 3)<br> Error: The argument, A, to the function + was of the wrong type.<br>
+       The function expected a number.<br>
+To continue, type :CONTINUE followed by an option number:<br>
+ 1: Specify a value to use this time.<br>         2: Return to command level 1.<br>
+ 3: Exit command level 1.<br>                      4: Return to Lisp Toplevel.<br>
+Debug&#x003E;<br>
+<!--l. 1872--><p class="noindent" ></div>
+</tt>
+</div>
+__________________________________________________________________________
+<!--l. 1875--><p class="noindent" ><b>Remark:</b> Some readers may wonder what ought to be done by the “abort” key (or
+whatever the implementation&#x2019;s interrupt key is—Control-C or Control-G, for example).
+Such interrupts, whether synchronous or asynchronous in nature, are beyond the scope
+of this chapter and indeed are not currently addressed by Common Lisp at all. This may
+be a topic worth standardizing under separate cover. Here is some speculation about
+some possible things that might happen.
+<!--l. 1883--><p class="indent" >     An implementation might simply call <b><a 
+href="symbols.html#x188-380081r81">abort</a></b> or <b><a 
+href="symbols.html#x188-380168r168">break</a></b> directly without signaling any
+condition.
+<!--l. 1886--><p class="indent" >     Another implementation might signal some condition related to the fact that a key
+had been pressed rather than to the action that should be taken. This is one way to
+allow user customization. Perhaps there would be an implementation-dependent
+<b>keyboard-interrupt</b> condition type with a slot containing the key that was
+pressed—or perhaps there would be such a condition type, but rather than its
+having slots, diﬀerent subtypes of that type with names like <b>keyboard-abort</b>,
+<b>keyboard-break</b>, and so on might be signaled. That implementation would
+then document the action it would take if user programs failed to handle the
+condition, and perhaps ways for user programs to usefully dismiss the interrupt.__
+<div class="implementation">
+                                                                          
+
+                                                                          
+<!--l. 1898--><p class="noindent" ><b>Implementation note:</b> Implementors are encouraged to make sure that there is
+always a restart named <b><a 
+href="symbols.html#x188-380081r81">abort</a></b> around any user code so that user code can
+call <b><a 
+href="symbols.html#x188-380081r81">abort</a></b> at any time and expect something reasonable to happen; exactly
+what the reasonable thing is may vary somewhat. Typically, in an interactive
+program, invoking <b><a 
+href="symbols.html#x188-380081r81">abort</a></b> should return the user to top level, though in some
+batch or multi-processing situations killing the running process might be more
+appropriate.
+</div>
+__________________________________________________________________________________
+<hr>
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 1911--><p class="indent" >     <div class="tabbing">
+  <em>[Macro]</em> <b>restart-case</b> <a 
+ id="dx181-332002"></a>expression {(case-name arglist{keyword value}*{form}*)}*
+     <br>
+<!--l. 1914--><p class="noindent" ></div>
+</div>
+<!--l. 1915--><p class="indent" >     The <em>expression</em> is evaluated in a dynamic context where the clauses have
+special meanings as points to which control may be transferred. If the <em>expression</em>
+ﬁnishes executing and returns any values, all such values are simply returned by
+the <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b> form. While the <em>expression</em> is running, any code may
+transfer control to one of the clauses (see <b><a 
+href="symbols.html#x188-380510r510">invoke-restart</a></b>). If a transfer
+occurs, the <em>form</em>s in the body of that clause will be evaluated and any
+values returned by the last such <em>form</em> will be returned by the <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b>
+form.
+<!--l. 1924--><p class="indent" >     As a special case, if the <em>expression</em> is a list whose <em>car</em> is <b><a 
+href="symbols.html#x188-380855r855">signal</a></b>, <b><a 
+href="symbols.html#x188-380383r383">error</a></b>,
+<b><a 
+href="symbols.html#x188-380213r213">cerror</a></b>, or <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b>, then <b><a 
+href="symbols.html#x188-381017r1017">with-condition-restarts</a></b> is implicitly used to
+associate the restarts with the condition to be signaled. For example,
+<div class="lisp"><tt><div class="tabbing">
+(restart-case (signal weird-error)
+     <br>                 (become-confused ...)<br>                 (rewind-line-printer ...)<br>
+  (halt-and-catch-ﬁre ...))<br>
+                                                                          
+
+                                                                          
+<!--l. 1933--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1934--><p class="indent" >   is equivalent to <div class="lisp"><tt><div class="tabbing">
+(restart-case (with-condition-restarts
+   <br>                                                                       weird-error<br>
+                (list (ﬁnd-restart &#x2019;become-confused)<br>
+                      (ﬁnd-restart &#x2019;rewind-line-printer)<br>
+                      (ﬁnd-restart &#x2019;halt-and-catch-ﬁre))<br>
+                (signal weird-error))<br>               (become-confused ...)<br>
+  (rewind-line-printer ...)<br>                          (halt-and-catch-ﬁre ...))<br>
+<!--l. 1945--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 1947--><p class="indent" >   If there are no <em>form</em>s in a selected clause, <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b> returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 1950--><p class="indent" >   The <em>case-name</em> may be <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or a symbol naming this restart.
+<!--l. 1952--><p class="indent" >   It is possible to have more than one clause use the same <em>case-name</em>. In this
+case, the ﬁrst clause with that name will be found by <b><a 
+href="symbols.html#x188-380421r421">ﬁnd-restart</a></b>. The other
+clauses are accessible using <b><a 
+href="symbols.html#x188-380277r277">compute-restarts</a></b>. [In this respect, <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b> is
+rather diﬀerent from <b><a 
+href="symbols.html#x188-380192r192">case</a></b>!—GLS]
+<!--l. 1958--><p class="indent" >   Each <em>arglist</em> is a normal lambda-list containing parameters to be bound during
+the execution of its corresponding <em>form</em>s. These parameters are used to pass
+any necessary data from a call to <b><a 
+href="symbols.html#x188-380510r510">invoke-restart</a></b> to the <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b>
+clause.
+<!--l. 1963--><p class="indent" >   By default, <b><a 
+href="symbols.html#x188-380511r511">invoke-restart-interactively</a></b> will pass no arguments and all
+parameters must be optional in order to accommodate interactive restarting.
+However, the parameters need not be optional if the <b>:interactive</b> keyword has
+been used to inform <b><a 
+href="symbols.html#x188-380511r511">invoke-restart-interactively</a></b> about how to compute a
+proper argument list.
+<!--l. 1969--><p class="indent" >   The valid <em>keyword value</em> pairs are the following: <div class="flushdesc">
+      <ul><li><b>
+<b>:test <em>fn</em></b> </b></li>
+      <!--l. 1973--><p class="noindent" >The <em>fn</em> must be a suitable argument for the <b><a 
+href="symbols.html#x188-380446r446">function</a></b> special operator. The
+      expression <b>(function <em>fn</em>)</b> will be evaluated in the current lexical
+                                                                          
+
+                                                                          
+      environment. It should produce a function of one argument, a condition. If
+      this function returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> when given some condition, functions such as
+      <b><a 
+href="symbols.html#x188-380421r421">ﬁnd-restart</a></b>, <b>compute-restart</b>, and <b><a 
+href="symbols.html#x188-380510r510">invoke-restart</a></b> will not consider this
+      restart when searching for restarts associated with that condition. If this
+      pair is not supplied, it is as if <div class="lisp"><tt><div class="tabbing">
+      (lambda (c) (declare (ignore c)) t)
+      <br>
+      <!--l. 1983--><p class="noindent" ></div>
+</tt>
+</div>
+      <!--l. 1984--><p class="noindent" >were used for the <em>fn</em>.
+      <li><b>
+<b>:interactive <em>fn</em></b> </b></li>
+      <!--l. 1988--><p class="noindent" >The <em>fn</em> must be a suitable argument for the <b><a 
+href="symbols.html#x188-380446r446">function</a></b> special operator. The
+      expression <b>(function <em>fn</em>)</b> will be evaluated in the current lexical
+      environment. It should produce a function of no arguments that returns
+      arguments to be used by <b><a 
+href="symbols.html#x188-380511r511">invoke-restart-interactively</a></b> when invoking this
+      function. This function will be called in the dynamic environment available
+      prior to any restart attempt. It may interact with the user on the stream in
+      <b><a 
+href="symbols.html#x188-380048r48">*query-io*</a></b>.
+      <!--l. 1996--><p class="noindent" >If a restart is invoked interactively but no <b>:interactive</b> option was supplied,
+      the argument list used in the invocation is the empty list.
+      <li><b>
+<b>:report <em>exp</em></b> </b></li>
+      <!--l. 2001--><p class="noindent" >If <em>exp</em> is not a literal string, it must be a suitable argument to the <b><a 
+href="symbols.html#x188-380446r446">function</a></b>
+      special operator. The expression <b>(function <em>exp</em>)</b> will be evaluated in the
+      current lexical environment. It should produce a function of one argument, a
+      stream, that prints on the stream a description of the restart. This function
+      is called whenever the restart is printed while <b><a 
+href="symbols.html#x188-380037r37">*print-escape*</a></b> is
+      <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+      <!--l. 2008--><p class="noindent" >If <em>exp</em> is a literal string, it is shorthand for <div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+      (lambda (s) (write-string <em>exp</em> s))
+      <br>
+      <!--l. 2011--><p class="noindent" ></div>
+</tt>
+</div>
+      <!--l. 2012--><p class="noindent" >[That is, a function is provided that will simply write the given string
+      literally to the stream.—GLS]
+      <!--l. 2015--><p class="noindent" >If a named restart is asked to report but no report information has been
+      supplied, the name of the restart is used in generating default report
+      text.
+      <!--l. 2018--><p class="noindent" >When <b><a 
+href="symbols.html#x188-380037r37">*print-escape*</a></b> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, the printer will use the report information for
+      a restart. For example, a debugger might announce the action of typing
+      “<b>:continue</b>” by executing the equivalent of <div class="lisp"><tt><div class="tabbing">
+      (format *debug-io* &#x0022;~&#x0026;~S – ~A~%&#x0022; &#x2019;:continue some-restart)
+      <br>
+      <!--l. 2023--><p class="noindent" ></div>
+</tt>
+</div>
+      <!--l. 2024--><p class="noindent" >which might then display as something like <div class="lisp"><tt><div class="tabbing">
+      :CONTINUE – Return to command level.
+      <br>
+      <!--l. 2027--><p class="noindent" ></div>
 </tt>
                                                                           
 
                                                                           
 </div>
-<!--l. 964--><p class="indent" >   might print something like <div class="lisp"><tt><div class="tabbing">
-Evaluation of (OPEN &#x0022;nosuchﬁle&#x0022;) failed:
-   <br>                                                The ﬁle &#x0022;nosuchﬁle&#x0022; was not found.<br>
-<!--l. 968--><p class="noindent" ></div>
+      <!--l. 2029--><p class="noindent" >It is an error if an unnamed restart is used and no report information is
+      provided.
+____________________________________________________________<div class="rationale">
+        <!--l. 2033--><p class="noindent" ><b>Rationale:</b> Unnamed restarts are required to have report information on the
+        grounds that they are generally only useful interactively, and an interactive option
+        that has no description is of little value.
+        </div>___________________________________________________________________________________________________<div class="implementation">
+        <!--l. 2039--><p class="noindent" ><b>Implementation note:</b> Implementations are encouraged to warn about this error
+        at compilation time.
+        <!--l. 2043--><p class="noindent" >At run time, this error might be noticed when entering the debugger. Since
+        signaling an error would probably cause recursive entry into the debugger (causing
+        yet another recursive error, and so on), it is suggested that the debugger print
+        some indication of such problems when they occur, but not actually signal
+        errors.
+        </div>___________________________________________________________________________________________________
+        </ul>
+</div>
+<!--l. 2053--><p class="indent" >     Note that <div class="lisp"><tt><div class="tabbing">
+(restart-case <em>expression</em>
+    <br>    (<em>name<span class="math"><sub>1</sub></span></em> <em>arglist<span class="math"><sub>1</sub></span></em> <em>options<span class="math"><sub>1</sub></span></em> . <em>body<span class="math"><sub>1</sub></span></em>)<br>    (<em>name<span class="math"><sub>2</sub></span></em> <em>arglist<span class="math"><sub>2</sub></span></em> <em>options<span class="math"><sub>2</sub></span></em> . <em>body<span class="math"><sub>2</sub></span></em>)<br>
+  ...)<br>
+<!--l. 2059--><p class="noindent" ></div>
 </tt>
 </div>
-<!--l. 969--><p class="indent" >   Some suggestions about the form of text typed by report methods:
-      <ul class="itemize1">
-      <li class="itemize">The message should generally be a complete sentence, beginning with
-      a capital letter and ending with appropriate punctuation (usually a
-      period).
-      </li>
-      <li class="itemize">The message should <em>not</em> include any introductory text such as “<b>Error:</b>”
-      or “<b>Warning:</b>” and should not be followed by a trailing newline. Such
-      text will be added as may be appropriate to context by the routine
-      invoking the report method.
-      </li>
-      <li class="itemize">Except   where   unavoidable,   the   tab   character   (which   is   only
-      semi-standard anyway) should not be used in error messages. Its eﬀect
-      may vary from one implementation to another and may cause problems
-      even  within  an  implementation  because  it  may  do  diﬀerent  things
-      depending on the column at which the error report begins.
-      </li>
-      <li class="itemize">Single-line messages are preferred, but newlines in the middle of long
-      messages are acceptable.
-      </li>
-      <li class="itemize">If any program (for example, the debugger) displays messages indented
-      from the prevailing left margin (for example, indented seven spaces
-      because they are preﬁxed by the seven-character herald “<b>Error: </b>”),
-      then  that  program  will  take  care  of  inserting  the  appropriate
+<!--l. 2060--><p class="indent" >     is essentially equivalent to <div class="lisp"><tt><div class="tabbing">
+(block #1=#:block-1
                                                                           
 
                                                                           
-      indentation into the extra lines of a multi-line error message. Similarly,
-      a program that preﬁxes error messages with semicolons so that they
-      appear to be comments should take care of inserting a semicolon at
-      the beginning of each line in a multi-line error message. (These rules
-      are important because, even within a single implementation, there may
-      be more than one program that presents error messages to the user,
-      and they may use diﬀerent styles of presentation. The caller of <b><a 
-href="symbols.html#x190-382383r383">error</a></b>
-      cannot anticipate all such possible styles, and so it is incumbent upon
-      the presenter of the message to make any necessary adjustments.)</li></ul>
-<!--l. 1010--><p class="indent" >   When <b><a 
-href="symbols.html#x190-382037r37">*print-escape*</a></b> is not <b><a 
-href="symbols.html#x190-382670r670">nil</a></b>, the object should print in some
-useful (but usually fairly abbreviated) fashion according to the style of the
-implementation. It is not expected that a condition will be printed in a form
-suitable for <b><a 
-href="symbols.html#x190-382779r779">read</a></b>. Something like <b>#&#x003C;ARITHMETIC-ERROR 1734&#x003E;</b> is
-ﬁne.
-<!--l. 1016--><p class="indent" >   X3J13 voted in March 1989 <a 
- id="dx182-326001"></a>to integrate the Condition System and the Object
-System. In the original Condition System proposal, no function was provided for
-directly accessing or setting the printer for a condition type, or for invoking it; the
-techniques described above were the sole interface to reporting. The vote speciﬁed
-that, in CLOS terms, condition reporting is mediated through the <b><a 
-href="symbols.html#x190-382752r752">print-object</a></b>
-method for the condition type (that is, class) in question, with <b><a 
-href="symbols.html#x190-382037r37">*print-escape*</a></b>
+   <br>                                                               (let ((#2=#:var-2 nil))<br>
+    (tagbody<br>              (restart-bind ((<em>name<span class="math"><sub>1</sub></span></em> #&#x2019;(lambda (&#x0026;rest temp)<br>
+                                 (setq #2# temp)<br>
+                                 (go #3=#:tag-3))<br>
+                             <span class="math">⟨</span>slightly transformed <em>options<span class="math"><sub>1</sub></span></em><span class="math">⟩</span>)<br>
+                     (<em>name<span class="math"><sub>2</sub></span></em> #&#x2019;(lambda (&#x0026;rest temp)<br>
+                                     (setq #2# temp)<br>
+                                     (go #4=#:tag-4))<br>
+                                 <span class="math">⟨</span>slightly transformed <em>options<span class="math"><sub>2</sub></span></em><span class="math">⟩</span>)<br>
+                     ...)<br>
+        (return-from #1# expression))<br>          #3# (return-from #1#<br>
+                (apply #&#x2019;(lambda <em>arglist<span class="math"><sub>1</sub></span></em> . <em>body<span class="math"><sub>1</sub></span></em>) #2#))<br>
+      #4# (return-from #1#<br>
+                (apply #&#x2019;(lambda <em>arglist<span class="math"><sub>2</sub></span></em> . <em>body<span class="math"><sub>2</sub></span></em>) #2#))<br>         ...)))<br>
+<!--l. 2080--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 2081--><p class="indent" >   [Note the use of “gensyms” such as <b>#:block-1</b> as block names, variables, and
+<b><a 
+href="symbols.html#x188-380954r954">tagbody</a></b> tags in this example, and the use of <b>#<em>n</em>=</b> and <b>#<em>n</em>#</b> read-macro
+syntax to indicate that the very same gensym appears in multiple places.—GLS]
+<!--l. 2087--><p class="indent" >   Here are some examples of the use of <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b>. <div class="lisp"><tt><div class="tabbing">
+(loop
+   <br>                              (restart-case (return (apply function some-args))<br>
+    (new-function (new-function)<br>
+        :report &#x0022;Use a diﬀerent function.&#x0022;<br>
+        :interactive<br>                                          (lambda ()<br>
+            (list (prompt-for &#x2019;function &#x0022;Function: &#x0022;)))<br>
+      (setq function new-function))))<br>                                     <br>
+(loop<br>                     (restart-case (return (apply function some-args))<br>
+    (nil (new-function)<br>                :report &#x0022;Use a diﬀerent function.&#x0022;<br>
+        :interactive<br>                                          (lambda ()<br>
+            (list (prompt-for &#x2019;function &#x0022;Function: &#x0022;)))<br>
+      (setq function new-function))))<br>                                     <br>
+(restart-case (a-command-loop)<br>             (return-from-command-level ()<br>
+      :report<br>                  (lambda (s)     ;Argument <b>s</b> is a stream<br>
+                                                                          
+
+                                                                          
+          (format s &#x0022;Return from command level ~D.&#x0022; level))<br>     nil))<br> <br>
+(loop<br>                          (restart-case (another-random-computation)<br>
+    (continue () nil)))<br>
+<!--l. 2117--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 2118--><p class="indent" >   The ﬁrst and second examples are equivalent from the point of view of
+someone using the interactive debugger, but they diﬀer in one important aspect
+for non-interactive handling. If a handler “knows about” named restarts, as in, for
+example, <div class="lisp"><tt><div class="tabbing">
+(when (ﬁnd-restart &#x2019;new-function)
+   <br>                                (invoke-restart &#x2019;new-function the-replacement))<br>
+<!--l. 2125--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 2126--><p class="indent" >   then only the ﬁrst example, and not the second, will have control transferred
+to its correction clause, since only the ﬁrst example uses a restart named
+<b>new-function</b>.
+<!--l. 2130--><p class="indent" >   Here is a more complete example: <div class="lisp"><tt><div class="tabbing">
+(let ((my-food &#x2019;milk)
+   <br>                                                          (my-color &#x2019;greenish-blue))<br>
+  (do ()<br>                      ((not (bad-food-color-p my-food my-color)))<br>
+    (restart-case (error &#x2019;bad-food-color<br>
+                         :food my-food :color my-color)<br>
+      (use-food (new-food)<br>
+          :report &#x0022;Use another food.&#x0022;<br>         (setq my-food new-food))<br>
+      (use-color (new-color)<br>                 :report &#x0022;Use another color.&#x0022;<br>
+        (setq my-color new-color))))<br>
+  ;; We won&#x2019;t get to here until MY-FOOD<br>
+  ;; and MY-COLOR are compatible.<br>             (list my-food my-color))<br>
+                                                                          
+
+                                                                          
+<!--l. 2147--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 2148--><p class="indent" >   Assuming that <b>use-food</b> and <b>use-color</b> have been deﬁned as <div class="lisp"><tt><div class="tabbing">
+(defun use-food (new-food)
+   <br>                                               (invoke-restart &#x2019;use-food new-food))<br>
+<br>                                               (defun use-color (new-color)<br>
+  (invoke-restart &#x2019;use-color new-color))<br>
+<!--l. 2155--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 2156--><p class="indent" >   a handler can then restart from the error in either of two ways. It may correct
+the color or correct the food. For example: <div class="lisp"><tt><div class="tabbing">
+#&#x2019;(lambda (c) ... (use-color &#x2019;white) ...)   ;Corrects <b>color</b>
+   <br>                                                                                   <br>
+#&#x2019;(lambda (c) ... (use-food &#x2019;cheese) ...)   ;Corrects <b>food</b><br>
+<!--l. 2162--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 2164--><p class="indent" >   Here is an example using <b><a 
+href="symbols.html#x188-380478r478">handler-bind</a></b> and <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b> that refers to a
+condition type <b>foo-error</b>, presumably deﬁned elsewhere: <div class="lisp"><tt><div class="tabbing">
+(handler-bind ((foo-error #&#x2019;(lambda (ignore) (use-value 7))))
+   <br>          (restart-case (error &#x2019;foo-error)<br>            (use-value (x) (* x x))))<br>
+ <span class="math"> ⇒</span> 49<br>
+<!--l. 2171--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+                                                                          
+
+                                                                          
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 2176--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>restart-bind</b> <a 
+ id="dx181-332003"></a>({(name function {keyword value}*)}*) {form}*
+   <br>
+<!--l. 2177--><p class="noindent" ></div>
+</div>
+<!--l. 2178--><p class="indent" >   Executes a body of forms in a dynamic context where the given restart
+bindings are in eﬀect.
+<!--l. 2181--><p class="indent" >   Each <em>name</em> may be <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> to indicate an anonymous restart, or some other
+symbol to indicate a named restart.
+<!--l. 2184--><p class="indent" >   Each <em>function</em> is a form that should evaluate to a function to be used
+to perform the restart. If invoked, this function may either perform a
+non-local transfer of control or it may return normally. The function may take
+whatever arguments the programmer feels are appropriate; it will be invoked
+only if <b><a 
+href="symbols.html#x188-380510r510">invoke-restart</a></b> is used from a program, or if a user interactively
+asks the debugger to invoke it. In the case of interactive invocation, the
+<b>:interactive-function</b> option is used.
+<!--l. 2192--><p class="indent" >   The valid <em>keyword value</em> pairs are as follows: <div class="flushdesc">
+      <ul><li><b>
+<b>:test-function <em>form</em></b> </b></li>
+      <!--l. 2196--><p class="noindent" >The <em>form</em> will be evaluated in the current lexical environment and should
+      return a function of one argument, a condition. If this function returns
+      <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> when given some condition, functions such as <b><a 
+href="symbols.html#x188-380421r421">ﬁnd-restart</a></b>,
+      <b>compute-restart</b>, and <b><a 
+href="symbols.html#x188-380510r510">invoke-restart</a></b> will not consider this restart when
+      searching for restarts associated with that condition. If this pair is not
+      supplied, it is as if <div class="lisp"><tt><div class="tabbing">
+      #&#x2019;(lambda (c) (declare (ignore c)) t)
+      <br>
+                                                                          
+
+                                                                          
+      <!--l. 2204--><p class="noindent" ></div>
+</tt>
+</div>
+      <!--l. 2205--><p class="noindent" >were used for the <em>form</em>.
+      <li><b>
+<b>:interactive-function <em>form</em></b> </b></li>
+      <!--l. 2209--><p class="noindent" >The <em>form</em> will be evaluated in the current lexical environment and should
+      return a function of no arguments that constructs a list of arguments
+      to be used by <b><a 
+href="symbols.html#x188-380511r511">invoke-restart-interactively</a></b> when invoking this
+      restart. The function may prompt interactively using <b><a 
+href="symbols.html#x188-380048r48">*query-io*</a></b> if
+      necessary.
+      <li><b>
+<b>:report-function <em>form</em></b> </b></li>
+      <!--l. 2217--><p class="noindent" >The <em>form</em> will be evaluated in the current lexical environment and should
+      return a function of one argument, a stream, that prints on the
+      stream a summary of the action this restart will take. This function
+      is called whenever the restart is printed while <b><a 
+href="symbols.html#x188-380037r37">*print-escape*</a></b> is
+      <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.</ul>
+</div>
+<hr>
+</div>
+<div class="defmac">
+<div class="defmacheader">
+<!--l. 2225--><p class="indent" >   <div class="tabbing">
+ <em>[Macro]</em> <b>with-condition-restarts</b> <a 
+ id="dx181-332004"></a>condition-form restarts-form{declaration}* {form}*
+   <br>
+<!--l. 2227--><p class="noindent" ></div>
+</div>
+<!--l. 2228--><p class="indent" >   The value of <em>condition-form</em> should be a condition <em>C</em> and the value of
+<em>restarts-form</em> should be a list of restarts <b>(<em>R1</em> <em>R2</em> ...)</b>. The <em>form</em>s of the body are
+evaluated as an implicit <b><a 
+href="symbols.html#x188-380762r762">progn</a></b>. While in the dynamic context of the body, an
+attempt to ﬁnd a restart associated with a particular condition <span class="math">C′</span> will consider
+the restarts <em>R1</em>, <em>R2</em>, <span class="math">…</span> if <span class="math">C′</span> is <b><a 
+href="symbols.html#x188-380378r378">eq</a></b> to <em>C</em>.
+                                                                          
+
+                                                                          
+<!--l. 2235--><p class="indent" >   Usually this macro is not used explicitly in code, because <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b>
+handles most of the common uses in a way that is syntactically more
+concise.
+<!--l. 2238--><p class="indent" >   [The X3J13 vote <a 
+ id="dx181-332005"></a>left it unclear whether <b><a 
+href="symbols.html#x188-381017r1017">with-condition-restarts</a></b> permits
+declarations to appear at the heads of its body. I believe that was the intent, but
+this is only my interpretation.—GLS]
+<hr></div>
+<!--l. 2243--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.8   </span> <a 
+href="frontmatter.html#QQ2-181-375" id="x181-33300028.4.8">Finding and Manipulating Restarts</a></h4>
+<!--l. 2245--><p class="noindent" >The following functions determine what restarts are active and invoke
+restarts.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-333001"></a>
+<em>
+<!--l. 2249--><p class="noindent" >[Function]</em> <b>compute-restarts</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>condition</i>
+</div>
+<!--l. 2251--><p class="indent" >   Uses the dynamic state of the program to compute a list of the restarts that
+are currently active. See <b><a 
+href="symbols.html#x188-380814r814">restart-bind</a></b>.
+<!--l. 2254--><p class="indent" >   If <em>condition</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or not supplied, all outstanding restarts are returned.
+If <em>condition</em> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, only restarts associated with that condition are
+returned.
+<!--l. 2259--><p class="indent" >   Each restart represents a function that can be called to perform some
+form of recovery action, usually a transfer of control to an outer point
+in the running program. Implementations are free to implement these
+objects in whatever manner is most convenient; the objects need have only
+dynamic extent (relative to the scope of the binding form that instantiates
+them).
+<!--l. 2265--><p class="indent" >   The list that results from a call to <b><a 
+href="symbols.html#x188-380277r277">compute-restarts</a></b> is ordered so that the
+inner (that is, more recently established) restarts are nearer the head of the
+list.
+<!--l. 2269--><p class="indent" >   Note, too, that <b><a 
+href="symbols.html#x188-380277r277">compute-restarts</a></b> returns all valid restarts, including
+anonymous ones, even if some of them have the same name as others
+and would therefore not be found by <b><a 
+href="symbols.html#x188-380421r421">ﬁnd-restart</a></b> when given a symbol
+                                                                          
+
+                                                                          
+argument.
+<!--l. 2273--><p class="indent" >   Implementations are permitted, but not required, to return diﬀerent (that is,
+non-<b><a 
+href="symbols.html#x188-380378r378">eq</a></b>) lists from repeated calls to <b><a 
+href="symbols.html#x188-380277r277">compute-restarts</a></b> while in the same
+dynamic environment. It is an error to modify the list that is returned by
+<b><a 
+href="symbols.html#x188-380277r277">compute-restarts</a></b>.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-333002"></a>
+<em>
+<!--l. 2281--><p class="noindent" >[Function]</em> <b>restart-name</b> <i>restart</i>
+</div>
+<!--l. 2283--><p class="indent" >   Returns the name of the given <em>restart</em>, or <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> if it is not named.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-333003"></a>
+<em>
+<!--l. 2287--><p class="noindent" >[Function]</em> <b>ﬁnd-restart</b> <i>restart-identiﬁer</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>condition</i>
+</div>
+<!--l. 2289--><p class="indent" >   Searches for a particular restart in the current dynamic environment.
+<!--l. 2291--><p class="indent" >   If <em>condition</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or not supplied, all outstanding restarts are considered.
+If <em>condition</em> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, only restarts associated with that condition are
+considered.
+<!--l. 2296--><p class="indent" >   If the <em>restart-identiﬁer</em> is a non-<b><a 
+href="symbols.html#x188-380670r670">nil</a></b> symbol, then the innermost (that is, most
+recently established) restart with that name is returned; <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> is returned if no such
+restart is found.
+<!--l. 2300--><p class="indent" >   If <em>restart-identiﬁer</em> is a restart object, then it is simply returned, unless it is
+not currently active, in which case <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> is returned.
+<!--l. 2303--><p class="indent" >   Although anonymous restarts have a name of <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, it is an error for the symbol
+<b><a 
+href="symbols.html#x188-380670r670">nil</a></b> to be given as the <em>restart-identiﬁer</em>. Applications that would seem to require
+this should be rewritten to make appropriate use of <b><a 
+href="symbols.html#x188-380277r277">compute-restarts</a></b>
+instead.
+<hr></div>
+                                                                          
+
+                                                                          
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-333004"></a>
+<em>
+<!--l. 2310--><p class="noindent" >[Function]</em> <b>invoke-restart</b> <i>restart-identiﬁer</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;rest</a></tt> <i>arguments</i>
+</div>
+<!--l. 2312--><p class="indent" >   Calls the function associated with the given <em>restart-identiﬁer</em>, passing any
+given <em>arguments</em>. The <em>restart-identiﬁer</em> must be a restart or the non-null name of
+a restart that is valid in the current dynamic context. If the argument is not valid,
+an error of type <b><a 
+href="symbols.html#x188-380289r289">control-error</a></b> will be signaled.
+___________________________<div class="implementation">
+<!--l. 2319--><p class="noindent" ><b>Implementation note:</b> Restart functions call this function, not vice versa.
+</div>___________________________________________________________________________________________________________
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-333005"></a>
+<em>
+<!--l. 2326--><p class="noindent" >[Function]</em> <b>invoke-restart-interactively</b> <i>restart-identiﬁer</i>
+</div>
+<!--l. 2328--><p class="indent" >    Calls the function associated with the given <em>restart-identiﬁer</em>, prompting
+for any necessary arguments. The <em>restart-identiﬁer</em> must be a restart
+or the non-null name of a restart that is valid in the current dynamic
+context. If the argument is not valid, an error of type <b><a 
+href="symbols.html#x188-380289r289">control-error</a></b> will be
+signaled.
+<!--l. 2334--><p class="indent" >     The function <b><a 
+href="symbols.html#x188-380511r511">invoke-restart-interactively</a></b> will prompt for arguments by
+executing the code provided in the <b>:interactive</b> keyword to <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b> or
+<b>:interactive-function</b> keyword to <b><a 
+href="symbols.html#x188-380814r814">restart-bind</a></b>.
+<!--l. 2338--><p class="indent" >     If no <b>:interactive</b> or <b>:interactive-function</b> option has been supplied in the
+corresponding <b><a 
+href="symbols.html#x188-380815r815">restart-case</a></b> or <b><a 
+href="symbols.html#x188-380814r814">restart-bind</a></b>, then it is an error if the restart
+takes required arguments. If the arguments are optional, an empty argument list
+will be used in this case.
+                                                                          
+
+                                                                          
+<!--l. 2343--><p class="indent" >   Once <b><a 
+href="symbols.html#x188-380511r511">invoke-restart-interactively</a></b> has calculated the arguments, it simply
+performs <b>(apply #&#x2019;invoke-restart <em>restart-identi er</em> <em>arguments</em>)</b>.
+<b>
+<!--l. 2347--><p class="indent" >   <a 
+href="symbols.html#x188-380511r511">invoke-restart-interactively</a></b> is used internally by the debugger and
+may also be useful in implementing other portable, interactive debugging
+tools.
+<hr></div>
+<!--l. 2352--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.9   </span> <a 
+href="frontmatter.html#QQ2-181-376" id="x181-33400028.4.9">Warnings</a></h4>
+<!--l. 2355--><p class="noindent" >Warnings are a subclass of errors that are conventionally regarded as
+“mild.”
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-334001"></a>
+<em>
+<!--l. 2358--><p class="noindent" >[Function]</em> <b>warn</b> <i>datum</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;rest</a></tt> <i>arguments</i>
+</div>
+<!--l. 2360--><p class="indent" >   Warns about a situation, by signaling a condition of type <b><a 
+href="symbols.html#x188-381010r1010">warning</a></b>.
+<!--l. 2362--><p class="indent" >   If <em>datum</em> is a condition, then that condition is used directly. In this case, if the
+condition is not of type <b><a 
+href="symbols.html#x188-381010r1010">warning</a></b> or arguments is non-<b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, an error of type
+<b><a 
+href="symbols.html#x188-380973r973">type-error</a></b> is signaled.
+<!--l. 2366--><p class="indent" >   If <em>datum</em> is a condition type (a class or class name), then the condition used is
+eﬀectively the result of <b>(apply #&#x2019;make-condition <em>datum</em> <em>arguments</em>)</b>.
+This result must be of type <b><a 
+href="symbols.html#x188-381010r1010">warning</a></b> or an error of type <b><a 
+href="symbols.html#x188-380973r973">type-error</a></b> is
+signaled.
+<!--l. 2371--><p class="indent" >   If <em>datum</em> is a string, then the condition used is eﬀectively the result of
+<div class="lisp"><tt><div class="tabbing">
+(make-condition &#x2019;simple-error
+   <br>                                                          :format-string <em>datum</em><br>
+                :format-arguments <em>arguments</em>)<br>
+                                                                          
+
+                                                                          
+<!--l. 2377--><p class="noindent" ></div>
+</tt>
+</div>
+<!--l. 2379--><p class="indent" >   The precise mechanism for warning is as follows.
+      <ol  class="enumerate1" >
+      <li 
+  class="enumerate" id="x181-334003x1">The warning condition is signaled.
+      <!--l. 2384--><p class="noindent" >While the <b><a 
+href="symbols.html#x188-381010r1010">warning</a></b> condition is being signaled, the <b><a 
+href="symbols.html#x188-380654r654">muﬄe-warning</a></b>
+      restart is established for use by a handler to bypass further action by
+      <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b> (that is, to cause <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b> to immediately return <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>).
+      <!--l. 2388--><p class="noindent" >As                          part                          of                          the
+      signaling process, if <b>(typep <em>condition</em> *break-on-signals*)</b> is true,
+      then a <b><a 
+href="symbols.html#x188-380168r168">break</a></b> will occur prior to beginning the signaling process.
+      </li>
+      <li 
+  class="enumerate" id="x181-334005x2">If no handlers for the warning condition are found, or if all such handlers
+      decline, then the condition will be reported to <b><a 
+href="symbols.html#x188-380023r23">*error-output*</a></b> by
+      the <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b> function (with possible implementation-speciﬁc extra output
+      such  as  motion  to  a  fresh  line  before  or  after  the  display  of  the
+      warning, or supplying some introductory text mentioning the name of
+      the function that called <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b> or the fact that this is a warning).
+      </li>
+      <li 
+  class="enumerate" id="x181-334007x3">The value returned by <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b> (if it returns) is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.</li></ol>
+<hr>
+</div>
+<!--l. 2403--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.10   </span> <a 
+href="frontmatter.html#QQ2-181-377" id="x181-33500028.4.10">Restart Functions</a></h4>
+<!--l. 2405--><p class="noindent" >Common Lisp has the following restart functions built in.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-335001"></a>
+<em>
+                                                                          
+
+                                                                          
+<!--l. 2408--><p class="noindent" >[Function]</em> <b>abort</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>condition</i>
+</div>
+<!--l. 2410--><p class="indent" >   This function transfers control to the restart named <b><a 
+href="symbols.html#x188-380081r81">abort</a></b>. If no such restart
+exists, <b><a 
+href="symbols.html#x188-380081r81">abort</a></b> signals an error of type <b><a 
+href="symbols.html#x188-380289r289">control-error</a></b>.
+<!--l. 2413--><p class="indent" >   If <em>condition</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or not supplied, all outstanding restarts are considered.
+If <em>condition</em> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, only restarts associated with that condition are
+considered.
+<!--l. 2417--><p class="indent" >   The purpose of the <b><a 
+href="symbols.html#x188-380081r81">abort</a></b> restart is generally to allow control to return to the
+innermost “command level.”
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-335002"></a>
+<em>
+<!--l. 2422--><p class="noindent" >[Function]</em> <b>continue</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>condition</i>
+</div>
+<!--l. 2424--><p class="indent" >   This function transfers control to the restart named <b><a 
+href="symbols.html#x188-380288r288">continue</a></b>. If no such
+restart exists, <b><a 
+href="symbols.html#x188-380288r288">continue</a></b> returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 2427--><p class="indent" >   If <em>condition</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or not supplied, all outstanding restarts are considered.
+If <em>condition</em> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, only restarts associated with that condition are
+considered.
+<!--l. 2431--><p class="indent" >   The <b><a 
+href="symbols.html#x188-380288r288">continue</a></b> restart is generally part of simple protocols where there is a
+single “obvious” way to continue, as with <b><a 
+href="symbols.html#x188-380168r168">break</a></b> and <b><a 
+href="symbols.html#x188-380213r213">cerror</a></b>. Some user-deﬁned
+protocols may also wish to incorporate it for similar reasons. In general, however,
+it is more reliable to design a special-purpose restart with a name that better suits
+the particular application.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-335003"></a>
+<em>
+<!--l. 2439--><p class="noindent" >[Function]</em> <b>muﬄe-warning</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>condition</i>
+</div>
+<!--l. 2441--><p class="indent" >   This function transfers control to the restart named <b><a 
+href="symbols.html#x188-380654r654">muﬄe-warning</a></b>. If no
+                                                                          
+
+                                                                          
+such restart exists, <b><a 
+href="symbols.html#x188-380654r654">muﬄe-warning</a></b> signals an error of type <b><a 
+href="symbols.html#x188-380289r289">control-error</a></b>.
+<!--l. 2445--><p class="indent" >   If <em>condition</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or not supplied, all outstanding restarts are considered.
+If <em>condition</em> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, only restarts associated with that condition are
+considered.
+<b>
+<!--l. 2449--><p class="indent" >   <a 
+href="symbols.html#x188-381009r1009">warn</a></b> sets up this restart so that handlers of <b><a 
+href="symbols.html#x188-381010r1010">warning</a></b> conditions have a way
+to tell <b><a 
+href="symbols.html#x188-381009r1009">warn</a></b> that a <b><a 
+href="symbols.html#x188-381010r1010">warning</a></b> has already been dealt with and that no further
+action is warranted.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-335004"></a>
+<em>
+<!--l. 2455--><p class="noindent" >[Function]</em> <b>store-value</b> <i>value</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>condition</i>
+</div>
+<!--l. 2457--><p class="indent" >   This function transfers control (and one value) to the restart named
+<b><a 
+href="symbols.html#x188-380904r904">store-value</a></b>. If no such restart exists, <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 2461--><p class="indent" >   If <em>condition</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or not supplied, all outstanding restarts are considered.
+If <em>condition</em> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, only restarts associated with that condition are
+considered.
+<!--l. 2465--><p class="indent" >   The <b><a 
+href="symbols.html#x188-380904r904">store-value</a></b> restart is generally used by handlers trying to recover from
+errors of types such as <b><a 
+href="symbols.html#x188-380211r211">cell-error</a></b> or <b><a 
+href="symbols.html#x188-380973r973">type-error</a></b>, where the handler may wish to
+supply a replacement datum to be stored permanently.
+<hr></div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-335005"></a>
+<em>
+<!--l. 2471--><p class="noindent" >[Function]</em> <b>use-value</b> <i>value</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>condition</i>
+</div>
+<!--l. 2473--><p class="indent" >   This function transfers control (and one value) to the restart named
+<b><a 
+href="symbols.html#x188-380998r998">use-value</a></b>. If no such restart exists, <b><a 
+href="symbols.html#x188-380998r998">use-value</a></b> returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 2476--><p class="indent" >   If <em>condition</em> is <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or not supplied, all outstanding restarts are considered.
+If <em>condition</em> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, only restarts associated with that condition are
+considered.
+                                                                          
+
+                                                                          
+<!--l. 2480--><p class="indent" >   The <b><a 
+href="symbols.html#x188-380998r998">use-value</a></b> restart is generally used by handlers trying to recover from
+errors of types such as <b><a 
+href="symbols.html#x188-380211r211">cell-error</a></b>, where the handler may wish to supply a
+replacement datum for one-time use.
+<hr></div>
+<!--l. 2485--><p class="noindent" >
+   <h4 class="subsectionHead"><span class="titlemark">28.4.11   </span> <a 
+href="frontmatter.html#QQ2-181-378" id="x181-33600028.4.11">Debugging Utilities</a></h4>
+<!--l. 2488--><p class="noindent" >Common Lisp does not specify exactly what a debugger is or does, but it does
+provide certain means for indicating intent to transfer control to a supervisory or
+debugging facility.
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-336001"></a>
+<em>
+<!--l. 2493--><p class="noindent" >[Function]</em> <b>break</b> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;optional</a></tt> <i>format-string</i> <tt><a 
+href="clmse29.html#x39-620005.2.2">&#x0026;rest</a></tt> <i>format-arguments</i>
+</div>
+<!--l. 2495--><p class="indent" >   The function <b><a 
+href="symbols.html#x188-380168r168">break</a></b> prints the message described by the <em>format-string</em>
+and <em>format-arguments</em> and then goes directly into the debugger without
+allowing any possibility of interception by programmed error-handling
+facilities.
+<!--l. 2500--><p class="indent" >   If no <em>format-string</em> is supplied, a suitable default will be generated.
+<!--l. 2502--><p class="indent" >   If continued, <b><a 
+href="symbols.html#x188-380168r168">break</a></b> returns <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>.
+<!--l. 2504--><p class="indent" >   Note that <b><a 
+href="symbols.html#x188-380168r168">break</a></b> is presumed to be used as a way of inserting temporary
+debugging “breakpoints” in a program, not as a way of signaling errors; it is
+expected that continuing from a <b><a 
+href="symbols.html#x188-380168r168">break</a></b> will not trigger any unusual recovery
+action. For this reason, <b><a 
+href="symbols.html#x188-380168r168">break</a></b> does not take the additional format control string
+that <b><a 
+href="symbols.html#x188-380213r213">cerror</a></b> takes as its ﬁrst argument. This and the lack of any possibility of
+interception by programmed error handling are the only program-visible
+diﬀerences between <b><a 
+href="symbols.html#x188-380168r168">break</a></b> and <b><a 
+href="symbols.html#x188-380213r213">cerror</a></b>. The user interface aspects of these
+functions are permitted to vary more widely; for example, it is permissible for a
+read-eval-print loop to be entered by <b><a 
+href="symbols.html#x188-380168r168">break</a></b> rather than by the conventional
+debugger.
+<b>
+<!--l. 2515--><p class="indent" >   <a 
+href="symbols.html#x188-380168r168">break</a></b> could be deﬁned by <div class="lisp"><tt><div class="tabbing">
+                                                                          
+
+                                                                          
+(defun break (&#x0026;optional (format-string &#x0022;Break&#x0022;)
+   <br>                                                      &#x0026;rest format-arguments)<br>
+  (with-simple-restart (continue &#x0022;Return from BREAK.&#x0022;)<br>
+    (invoke-debugger<br>                   (make-condition &#x2019;simple-condition<br>
+                      :format-string format-string<br>
+                      :format-arguments format-arguments)))<br>      nil)<br>
+<!--l. 2525--><p class="noindent" ></div>
+</tt>
+</div>
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-336002"></a>
+<em>
+<!--l. 2529--><p class="noindent" >[Function]</em> <b>invoke-debugger</b> <i>condition</i>
+</div>
+<!--l. 2531--><p class="indent" >   Attempts interactive handling of its argument, which must be a condition.
+<!--l. 2533--><p class="indent" >   If the variable <b><a 
+href="symbols.html#x188-380021r21">*debugger-hook*</a></b> is not <b><a 
+href="symbols.html#x188-380670r670">nil</a></b>, it will be called as a
+function on two arguments: the <em>condition</em> being handled and the value of
+<b><a 
+href="symbols.html#x188-380021r21">*debugger-hook*</a></b>. If a hook function returns normally, the standard debugger
+will be tried.
+<!--l. 2538--><p class="indent" >   The standard debugger will never directly return. Return can occur only by a
+special transfer of control, such as the use of a restart.
+_____________________
+<!--l. 2542--><p class="noindent" ><b>Remark:</b> The exact way in which the debugger interacts with users is expected to vary
+considerably from system to system. For example, some systems may use a
+keyboard interface, while others may use a mouse interface. Of those systems using
+keyboard commands, some may use single-character commands and others may
+use parsed line-at-a-time commands. The exact set of commands will vary as
+well. The important properties of a debugger are that it makes information
+about the error accessible and that it makes the set of apparent restarts easily
+accessible.
+                                                                          
+
+                                                                          
+<!--l. 2552--><p class="indent" >   It is desirable to have a mode where the debugger allows other features,
+such as the ability to inspect data, stacks, etc. However, it may sometimes be
+appropriate to have this kind of information hidden from users. Experience
+on the Lisp Machines has shown that some users who are not programmers
+develop a terrible phobia of debuggers. The reason for this usually may be
+traced to the fact that the debugger is very foreign to them and provides an
+overwhelming amount of information of interest only to programmers. With the
+advent of restarts, there is a clear mechanism for the construction of “friendly”
+debuggers. Programmers can be taught how to get to the information they need for
+debugging, but it should be possible to construct user interfaces to the debugger that
+are natural, convenient, intelligible, and friendly even to non-programmers.
+______
+<hr>
+</div>
+<div class="defun">
+<div class="defunheader">
+<a 
+ id="dx181-336003"></a>
+<em>
+<!--l. 2569--><p class="noindent" >[Variable]</em> <b>*debugger-hook*</b>
+</div>
+<!--l. 2571--><p class="indent" >    This variable should hold either <b><a 
+href="symbols.html#x188-380670r670">nil</a></b> or a function of two arguments, a
+condition and the value of <b><a 
+href="symbols.html#x188-380021r21">*debugger-hook*</a></b>. This function may either handle
+the condition (transfer control) or return normally (allowing the standard
+debugger to run).
+<!--l. 2576--><p class="indent" >     Note that, to minimize recursive errors while debugging, <b><a 
+href="symbols.html#x188-380021r21">*debugger-hook*</a></b> is
 bound to <b><a 
-href="symbols.html#x190-382670r670">nil</a></b>.
-<!--l. 1026--><p class="indent" >   Specifying <b>(:report <em>fn</em>)</b> to <b><a 
-href="symbols.html#x190-382314r314">deﬁne-condition</a></b> when deﬁning condition type <em>C</em>
-is equivalent to a separate method deﬁnition: <div class="lisp"><tt><div class="tabbing">
-(defmethod print-object ((x <em>C</em>) stream)
-   <br>                    (if *print-escape*<br>                        (call-next-method)<br>
-      (funcall #&#x2019;<em>fn</em> x stream)))<br>
-<!--l. 1034--><p class="noindent" ></div>
-</tt>
-</div>
-<!--l. 1035--><p class="indent" >   Note that the method uses <em>fn</em> to print the condition only when <b><a 
-href="symbols.html#x190-382037r37">*print-escape*</a></b>
-has the value <b><a 
-href="symbols.html#x190-382670r670">nil</a></b>.
+href="symbols.html#x188-380670r670">nil</a></b> when calling this function. When evaluating code typed in by the
+user interactively, the hook function may want to bind <b><a 
+href="symbols.html#x188-380021r21">*debugger-hook*</a></b> to the
+function that was its second argument so that recursive errors can be handled
+using the same interactive facility.
+<hr></div>
                                                                           
 
                                                                           
-<!--l. 1038--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+<!--l. 2584--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
 href="clmse149.html" >Next</a>&#x003E;&#x003C;<a 
 href="clmse147.html" >Prev</a>&#x003E;&#x003C;<a 
 href="clmse147.html#tailclmse147.html" >PrevTail</a>&#x003E;&#x003C;<a 
