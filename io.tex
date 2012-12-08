@@ -32,18 +32,18 @@ Common Lisp содержит богатый функционал для выпо
 Потоки обсуждаются в главе~\ref{STREAM}, а способы работы с файлами
 через потоки в главе~\ref{FILES}.
 
-Большинство операций ввода/вывода в Common Lisp'е читают и записывают строковые
-символы, но также есть функции и для бинарных данных.
-Есть простые примитивы для чтения и записи одного символа
-или строк данных. Функция \cdf{format} функции может выполнять сложное
-форматирование выходных данных, направленных управляющей строкой как в выражении
-\cdf{FORMAT} в Fortran'е или в \cd{PUT EDIT} в \cd{PL/I}.
-Однако, самые полезные операции ввода/вывода читают и записывает выводимые
+Большинство операций ввода/вывода в Common Lisp'е читают и записывают
+строковые символы, но также есть функции и для бинарных данных.  Есть
+простые примитивы для чтения и записи одного символа или строк
+данных. Функция \cdf{format} может выполнять сложное форматирование
+выходных данных, с помощью управляющей строки как в выражении
+\cdf{FORMAT} в Fortran'е или в \cd{PUT EDIT} в \cd{PL/I}.  Однако,
+самые полезные операции ввода/вывода читают и записывает выводимые
 представления произвольных Lisp'овых объектов.
 
 \section{Printed Representation of Lisp Objects}
 
-%\section{Выводимое представление Lisp'овых объектов}
+%\section{Строковое представление Lisp'овых объектов}
 
 Lisp objects in general are not text strings but complex data structures.
 They have very different properties from text strings as a consequence of
@@ -66,9 +66,9 @@ that does this is called the (Lisp) \emph{reader}.
 данных.  Как следствие их внутреннего представления, свойства этих объектов
 очень отличается от свойств строк. Однако, для того, чтобы можно было
 повествовать о Lisp'овых объектах, Lisp большинство объектов отображает в форме
-текста. Это называется \emph{выводимое представление}, которое используется для
+текста. Это называется \emph{строковое представление}, которое используется для
 ввода/вывода, а также в примерах в данной книге. Такие функции, как \cdf{print},
-принимают Lisp'овый объект и посылают строковые символы выводимого представления
+принимают Lisp'овый объект и посылают строку представления
 в поток. Коллекция этих функций называется (Lisp'овым) \emph{принтером}. Функция
 \cdf{read} принимает строковые символы из потока, интерпретирует их как
 представление некоторого Lisp'ового объекта, создаёт этот объект и возвращает
@@ -143,6 +143,10 @@ representation for any Lisp object and also describes how \cdf{read} operates.
 \label{READER}
 \indexterm{reader}
 
+%\subsection{Что принимает функция read}
+%\label{READER}
+%\indexterm{reader}
+
 The purpose of the Lisp reader is to accept characters, interpret them
 as the printed representation of a Lisp object, and construct and
 return such an object.  The reader cannot accept everything that the
@@ -154,15 +158,17 @@ abbreviations for frequently used but unwieldy constructs.  The reader is
 also parameterized in such a way that it can be used as a lexical
 analyzer for a more general user-written parser.
 
-Целью Lisp'ового считывателя (ридера) является чтение символов, интерпретация их
-как Lisp'ового объекта, создание и возврат этого объекта.
-Считыватель (ридер) не может прочесть все возможные выводимые представления
-объектов, например невозможно прочесть представление скомпилированного
-кода. Однако считыватель (ридер) содержит много таких возможностей, которые не
-используются при выводе. К ним относятся комментарии, альтернативные
-представления и удобные аббревиатуры для частоиспользуемых но тяжеловесных
-конструкций. Считыватель также может быть настроен так, чтобы использоваться в
-качестве лексического анализатора для более общих пользовательских парсеров.
+Целью Lisp'ового считывателя (ридера) является чтение строки,
+интерпретация как Lisp'ового объекта, создание и возврат этого
+объекта. Считыватель (ридер) не может прочесть все возможные
+выводимые представления объектов, например невозможно прочесть
+представление скомпилированного кода. Однако считыватель (ридер)
+содержит много таких возможностей, которые не используются при
+выводе. К ним относятся комментарии, альтернативные представления и
+удобные аббревиатуры для часто используемых, но тяжеловесных
+конструкций. Считыватель также может быть настроен так, чтобы
+использоваться в качестве лексического анализатора для более общих
+пользовательских парсеров.
 
 The reader is organized as a recursive-descent parser.
 Broadly speaking,
@@ -309,7 +315,7 @@ any other desired purpose.
 \end{table}
 
 \begin{table}
-\caption{Стандартные типы символьного синтакса}
+\caption{Стандартные типы символьного синтаксиса}
 \label{Standard-Character-Syntax-Table}
 
 \begin{tabular*}{\textwidth}{@{}l@{\extracolsep{\fill}}ll@{}}
@@ -351,13 +357,15 @@ $\langle$backspace$\rangle$\cd{~~}\emph{обычный}&$\langle$return$\rangle$
 \vfill
 \begin{small}
 \noindent
-Символы помеченный звездочкой первоначально являются составной частью, но
+Символы помеченные звездочкой первоначально являются составной частью, но
 зарезервированы для пользователя в качестве использования макросимволов или для
 других целей.
 \end{small}
 \end{table}
 
 The algorithm performed by the Common Lisp reader is roughly as follows:
+
+Алгоритм, выполняемый Common Lisp'овым считывателем, примерно такой:
 \begingroup\leftmargini 1.5em
 \begin{enumerate}
 \item
@@ -369,13 +377,28 @@ dispatch according to the syntactic type of \emph{x} to one
 of steps~\ref{READER-ILLEGAL} to~\ref{READER-CONSTITUENT}.
 \label{READER-START}
 
+\item Если достигнут конец файл, обработать эту ситуацию так как
+  указал вызвавший функцию \cdf{read}.  В противном случае, прочесть
+  один символ из входящего потока, назвать его \emph{x}, и обработать
+  в соответствии с синтаксическим типом \emph{x} одним из
+  способов~\ref{READER-ILLEGAL} или~\ref{READER-CONSTITUENT}.
+\label{READER-START}
+
 \item
 If \emph{x} is an \emph{illegal} character, signal an error.
+\label{READER-ILLEGAL}
+
+\item Если \emph{x} является \emph{некорректным} символом,
+  сигнализировать ошибку.
 \label{READER-ILLEGAL}
 
 \item
 If \emph{x} is a \emph{whitespace} character,
 then discard it and go back to step~\ref{READER-START}.
+\label{READER-WHITESPACE}
+
+\item Если \emph{x} является \emph{пробелом}, игнорировать его и
+  вернуться на шаг~\ref{READER-START}.
 \label{READER-WHITESPACE}
 
 \item
@@ -395,6 +418,23 @@ If one value is returned, then return that value as the result of the
 read operation; the algorithm is done.
 If zero values are returned, then go back to step~\ref{READER-START}.
 
+\item Если \emph{x} является \emph{макросимволом} (в данном случае
+  различие между \emph{терминальным} и \emph{нетерминальным})
+  макросимволами не имеет значения), тогда вызвать функцию связанную с
+  этим макросимволом. Функция может вернуть ноль или одно значение
+  (смотрите \cdf{values}).
+
+  Функция связанная с макросимволом, конечно, может считывать символы из
+  входящего потока, в этом случае она увидит символы, идущие после
+  данного макросимвола. Функция даже может рекурсивно вызвать
+  считыватель. Это например способ, которым создаётся список для
+  макросимвола \cd{(}: рекурсивным вызовом считывателя для каждого
+  элемента списка.
+
+  Если функция вернула одно значение, тогда это значение возвращается
+  в качестве результата операции чтения, алгоритм выполнен.  Если
+  функция не вернула значений, тогда приходит шаг~\ref{READER-START}.
+
 \item
 If \emph{x} is a \emph{single escape} character (normally \cd{{\Xbackslash}}),
 then read the next character and call it \emph{y}
@@ -407,10 +447,25 @@ For the purposes of \cdf{readtable-case}, \emph{y} is not replaceable.
 
 Use \emph{y} to begin a token, and go to step~\ref{READER-PLAIN-TOKEN}.
 
+\item Если \emph{x} является \emph{одиночным экранирующим символом}
+  (обычно это \cd{{\Xbackslash}}), тогда считать следующий символ и
+  называеть его \emph{y} (но если был конец файла, сигнализировать
+  ошибка). Игнорировать обычный синтаксис \emph{y}, и трактовать его
+  как \emph{обычный}, у которого только \emph{алфавитный} атрибут.
+
+  В целях использования \cdf{readtable-case}, \emph{y} является незамещаемым.
+  
+  Использовать \emph{y} для начала токена, и перейти к
+  шагу~\ref{READER-PLAIN-TOKEN}.
+
 \item
 If \emph{x} is a \emph{multiple escape} character (normally \cd{|}),
 then begin a token (initially
 containing no characters) and go to step~\ref{READER-MULTI-TOKEN}.
+
+\item Если \emph{x} является \emph{много экранирующим символом}
+  (обычно \cd{|}), тогда начать запись токена (первоначально нулевой
+  длины) и перейти к шагу~\ref{READER-MULTI-TOKEN}.
 
 \item
 If \emph{x} is a \emph{constituent} character, then it begins an extended token.
@@ -425,12 +480,30 @@ The case of \emph{x\/} should not be altered; instead,
 
 Use \emph{x} to begin a token, and go on to step~\ref{READER-PLAIN-TOKEN}.
 
+\item Если \emph{x} \emph{обычный} символ, тогда начать запись расширенного токена.
+\label{READER-CONSTITUENT}\relax
+После того как токен был считан, он будет интерпретирован как
+представление Lisp'ового объекта: или символа, или числа (в этом
+случае объект будет возвращён как результат функции чтения), или как
+некорректный синтаксис (в этом случае будет сигнализирована ошибка).
+
+Регистр символа \emph{x} не должен меняться, вместо этого \emph{x}
+помечается как замещаемый.
+
+Использовать \emph{x} для токена, и перейти к шагу~\ref{READER-PLAIN-TOKEN}.
+
 \item
 (At this point a token is being accumulated, and an even number
 of \emph{multiple escape} characters have been encountered.)
 If at end of file, go to step~\ref{READER-TOKEN-END}.
 Otherwise, read a character (call it \emph{y}), and
 perform one of the following actions according to its syntactic type:
+\label{READER-PLAIN-TOKEN}
+
+\item (В данной точке начинается запись токена, и FIXME ) Если конец файла, перейти к
+  шагу~\ref{READER-TOKEN-END}.  Иначе прочесть символ (назвать его
+  \emph{y}), и выполнить одно из следующих действий в зависимости от
+  синтаксического типа:
 \label{READER-PLAIN-TOKEN}
 \begin{itemize}
 \item
@@ -442,6 +515,15 @@ The case of \emph{y\/} should not be altered; instead,
 
 Append \emph{y} to the token being built,
 and repeat step~\ref{READER-PLAIN-TOKEN}.
+
+\item Если \emph{y} обычный или \emph{нетерминальный макросимвол},
+  тогда выполнить следующее.
+
+  Регистр \emph{y} не должен быть изменён, вместо этого \emph{y}
+  помечается как замещаемый.
+  
+  Добавить \emph{y} в конец записываемого токена и повторить
+  шаг~\ref{READER-PLAIN-TOKEN}.
 
 \item
 If \emph{y} is a \emph{single escape} character, then read the next character
@@ -456,23 +538,49 @@ For the purposes of \cdf{readtable-case}, \emph{z} is not replaceable.
 Append \emph{z} to the token being built,
 and repeat step~\ref{READER-PLAIN-TOKEN}.
 
+\item Если \emph{y} является \emph{одинарным экранирующим символом},
+  тогда прочесть следующий символ и назвать его \emph{z} (но если это
+  конец файла, сигнализировать ошибку).  Игнорировать обычный
+  синтаксис \emph{z} и трактовать его как \emph{обычный} символ, а
+  которого только \emph{алфавитный} атрибут.
+
+  В целях функции \cdf{readtable-case}, \emph{z} не является замещаемым.
+
+  Добавить \emph{z} в конец записываемого токена и повторить
+  шаг~\ref{READER-PLAIN-TOKEN}.
+
 \item
 If \emph{y} is a \emph{multiple escape} character,
 then go to step~\ref{READER-MULTI-TOKEN}.
 
+\item Если \emph{y} это \emph{много экранирующий символ}, тогда
+  перейти к шагу~\ref{READER-MULTI-TOKEN}.
+
 \item
 If \emph{y} is an \emph{illegal} character, signal an error.
+
+\item Если \emph{y} это \emph{некорректный символ}, сигнализировать
+  ошибку.
 
 \item
 If \emph{y} is a \emph{terminating macro} character, it terminates
 the token.  First ``unread'' the character \emph{y}
 (see \cdf{unread-char}), then go to step~\ref{READER-TOKEN-END}.
 
+\item Если \emph{y} это \emph{терминальный макросимвол}, он завершает
+  запись токена. Сначала <<отменить>> чтение символа \emph{y}
+  (смотрите \cdf{unread-char}), затем перейти к шагу~\ref{READER-TOKEN-END}.
+
 \item
 If \emph{y} is a \emph{whitespace} character, it terminates
 the token.  First ``unread'' \emph{y}
 if appropriate (see \cdf{read-preserving-whitespace}),
 then go to step~\ref{READER-TOKEN-END}.
+
+\item Если \emph{y} это \emph{пробел}, он завершает запись
+  токена. Сначала, если необходимо (смотрите
+  \cdf{read-preserving-whitespace}) <<отменить>> чтение \emph{y},
+  затем перейти к шагу~\ref{READER-TOKEN-END}.
 \end{itemize}
 
 \item
@@ -481,6 +589,12 @@ of \emph{multiple escape} characters have been encountered.)
 If at end of file, signal an error.
 Otherwise, read a character (call it \emph{y}), and
 perform one of the following actions according to its syntactic type:
+\label{READER-MULTI-TOKEN}
+
+\item (В данной точке начинается запись токена, и FIXME ) Если конец
+  файла, сигнализировать ошибку. Иначе прочесть символ (назвать его
+  \emph{y}), и выполнить одно из следующих действий в зависимости от
+  синтаксического типа:
 \label{READER-MULTI-TOKEN}
 \begin{itemize}
 \item
@@ -494,6 +608,11 @@ For the purposes of \cdf{readtable-case}, \emph{y} is not replaceable.
 Append \emph{y} to the token being built,
 and repeat step~\ref{READER-MULTI-TOKEN}.
 
+\item Если \emph{y} \emph{обычный}, \emph{макросимвол} или
+  \emph{пробел}, тогда игнорировать обычный синтаксис данного символа
+  и трактовать его как \emph{обычный}, у которого есть только
+  \emph{алфавитный} атрибут.
+
 \item
 If \emph{y} is a \emph{single escape} character, then read the next character
 and call it \emph{z}
@@ -507,12 +626,28 @@ For the purposes of \cdf{readtable-case}, \emph{z} is not replaceable.
 Append \emph{z} to the token being built,
 and repeat step~\ref{READER-MULTI-TOKEN}.
 
+\item Если \emph{y} \emph{одинарный экранирующий символ}, тогда
+  прочесть следующий символ и назвать его \emph{z} (но если конец
+  файла, сигнализировать ошибку). Игнорировать обычный синтаксис
+  \emph{z} и трактовать его как \emph{обычный} символ, у которого
+  только \emph{алфавитный атрибут}.
+
+  Для функции \cdf{readtable-case} \emph{z} незамещаемый.
+
+  Добавить \emph{z} в конец записываемого токена и повторить
+  шаг~\ref{READER-MULTI-TOKEN}.
+
 \item
 If \emph{y} is a \emph{multiple escape} character,
 then go to step~\ref{READER-PLAIN-TOKEN}.
 
+\item Если \emph{y} \emph{много экранирующий символ}, тогда перейти к
+  шагу~\ref{READER-PLAIN-TOKEN}.
+
 \item
 If \emph{y} is an \emph{illegal} character, signal an error.
+
+\item Если \emph{y} \emph{некорректный символ}, сигнализировать ошибку.
 \end{itemize}
 
 \item
@@ -523,7 +658,7 @@ X3J13 voted in June 1989 \issue{READ-CASE-SENSITIVITY} to introduce
 is to be interpreted as a symbol, any case conversion of replaceable
 characters should be performed at this point according to the value
 of the \cdf{readtable-case} slot of the current readtable (the value
-of \cd{*readtable*}).
+of \cdf{*readtable*}).
 \end{newer}
 Interpret the token as representing
 a Lisp object and return that object as the result
@@ -537,6 +672,17 @@ when constructing the print name.
 It is implementation-dependent which attributes are removed.
 \end{newer}
 \label{READER-TOKEN-END}
+
+\item Данный токен был записан.  Если записанный токен трактуется как
+  символ, в данной точке, если указано в слоте \cdf{readtable-case}
+  текущей таблицы чтения из переменной \cdf{*readtable*}, все
+  заменяемые символы должны быть возведены в верхний регистр.
+
+  Интерпретировать токен как представление Lisp'ового объекта и
+  вернуть этот объект в качестве результата операции чтения, или
+  сигнализировать ошибку, если у токена некорректный синтаксис.
+\label{READER-TOKEN-END}
+
 \end{enumerate}
 \endgroup
 
@@ -545,14 +691,29 @@ serves to cause the following character to be treated as a simple alphabetic
 character.  A \emph{single escape} character can be included in a token only
 if preceded by another \emph{single escape} character.
 
+Как правило. \emph{одинарный экранирующий символ} никогда не стоит сам
+по себе, а всегда указывает, что следующий символ нужно трактовать,
+как \emph{обычный алфавитный символ}. \emph{Одинарный экранирующий
+  символ} можно включить в токен только с помощью другого
+\emph{одинарного экранирующего символа}.
+
 A \emph{multiple escape} character also never stands for itself.  The characters
 between a pair of \emph{multiple escape} characters are all treated as
 simple alphabetic characters, except that \emph{single escape} and
 \emph{multiple escape} characters must nevertheless be preceded by
 a \emph{single escape} character to be included.
 
+\emph{Много экранирующий символ} также никогда не стоит сам по
+себе. Все символы между парой \emph{много экранирующих символов}
+трактуются как \emph{обычный алфавитные символы}, за исключением
+\emph{одинарного экранирующего символа}, и \emph{много экранирующий
+  символ} FIXME
+
 \subsection{Parsing of Numbers and Symbols}
 \label{PARSE-TOKENS-SECTION}
+
+%\subsection{Считывание чисел и символов}
+%\label{PARSE-TOKENS-SECTION}
 
 When an extended token is read, it is interpreted as a number or symbol.
 In general, the token is interpreted as a number if it satisfies
