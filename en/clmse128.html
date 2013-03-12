@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//RU"  
   "http://www.w3.org/TR/html4/loose.dtd">  
 <html > 
-<head><title>User Extensibility</title> 
+<head><title>Как работает Loop</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
 <meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
 <!-- 3,next,fn-in,charset=utf-8,sections+,minitoc<,html --> 
 <meta name="src" content="clm.tex"> 
-<meta name="date" content="2013-01-10 13:48:00"> 
+<meta name="date" content="2013-03-12 14:37:00"> 
 <link rel="stylesheet" type="text/css" href="clm.css"> 
 <link rel="stylesheet" type="text/css" href="../cltl2ed.css"></head><body 
 >
@@ -16,19 +16,110 @@ href="clmse129.html" >Next</a>&#x003E;&#x003C;<a
 href="clmse127.html" >Prev</a>&#x003E;&#x003C;<a 
 href="clmse127.html#tailclmse127.html" >PrevTail</a>&#x003E;&#x003C;<a 
 href="#tailclmse128.html">Tail</a>&#x003E;&#x003C;<a 
-href="loop.html#clmse128.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">25.4   </span> <a 
-href="clm.html#QQ2-158-273" id="x158-23300025.4">User Extensibility</a></h3>
-<!--l. 397--><p class="noindent" >There is currently no speciﬁed portable method for users to add extensions to the
-Loop Facility. The names <b>deﬂoop</b> and <b>deﬁne-loop-method</b> have been suggested
-as candidates for such a method.
+href="clmch26.html#clmse128.html" >Up</a>&#x003E;</div><h3 class="sectionHead"><span class="titlemark">26.4   </span> <a 
+href="clm.html#QQ2-159-271" id="x159-23100026.4">Как работает Loop</a></h3>
+<!--l. 69--><p class="noindent" >The driving element of the Loop Facility is the <b><a 
+href="symbols.html#x200-396577r577">loop</a></b> macro. When Lisp
+encounters a <b><a 
+href="symbols.html#x200-396577r577">loop</a></b> macro call form, it invokes the Loop Facility and passes to it
+the loop clauses as a list of unevaluated forms, as with any macro. The loop
+clauses contain Common Lisp forms and loop keywords. The loop keywords are
+recognized by their symbol name, regardless of the packages that contain them.
+The <b><a 
+href="symbols.html#x200-396577r577">loop</a></b> macro translates the given form into Common Lisp code and returns
+the expanded form.
+<!--l. 78--><p class="indent" >   Главным элементом Loop является макрос <b><a 
+href="symbols.html#x200-396577r577">loop</a></b>. Как только Common Lisp
+видит вызов макроса <b><a 
+href="symbols.html#x200-396577r577">loop</a></b>, он разворачивает его без вычисления аргументов,
+что собственно происходит и с любым другим макросом. Loop содержит
+формы и ключевые символы. Ключевые символы обозначаются символами не
+обращая внимание на их принадлежность к пакету. Макрос <b><a 
+href="symbols.html#x200-396577r577">loop</a></b> транслирует
+полученную форму в Common Lisp&#x2019;овый код и возвращает развёрнутую
+форму.
+<!--l. 86--><p class="indent" >   The expanded loop form is one or more lambda-expressions for the local
+binding of loop variables and a block and a tagbody that express a looping control
+structure. The variables established in the loop construct are bound as if
+by using <b><a 
+href="symbols.html#x200-396543r543">let</a></b> or <b><a 
+href="symbols.html#x200-396516r516">lambda</a></b>. Implementations can interleave the setting of
+initial values with the bindings. However, the assignment of the initial
+values is always calculated in the order speciﬁed by the user. A variable
+is thus sometimes bound to a harmless value of the correct data type,
+and then later in the prologue it is set to the true initial value by using
+<b><a 
+href="symbols.html#x200-396846r846">setq</a></b>.
+<!--l. 97--><p class="indent" >   Развернутая форма представляется собой одно или более лямбда-выражений
+для связываний переменных цикла и формы block или tagbody, которые
+содержат тело цикла. Переменные для цикла создаются как если бы с
+помощью <b><a 
+href="symbols.html#x200-396543r543">let</a></b> или <b><a 
+href="symbols.html#x200-396516r516">lambda</a></b>. Связывание локальных переменных происходит в
+том порядке, в каком указал пользователь.
+<!--l. 103--><p class="indent" >   The expanded form consists of three basic parts in the tagbody:
+<!--l. 105--><p class="indent" >   Развёрнутая форма состоит из трёх основных частей в tagbody:
                                                                           
 
                                                                           
-<!--l. 403--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
+      <ul class="itemize1">
+      <li class="itemize">The <em>loop prologue</em> contains forms that are executed before iteration
+      begins, such as initial settings of loop variables and possibly an initial
+      termination test.
+      </li>
+      <li class="itemize"><em>Пролог</em>  содержит  формы,  которые  вычисляется  перед  началом
+      итераций,  например,  первоначальные  связывания  переменных
+      цикла и возможно первая проверка на завершение цикла.
+      </li>
+      <li class="itemize">The <em>loop body</em> contains those forms that are executed during iteration,
+      including  application-speciﬁc  calculations,  termination  tests,  and
+      variable stepping. <em>Stepping</em> is the process of assigning a variable the
+      next item in a series of items.
+      </li>
+      <li class="itemize"><em>Тело</em>  содержит  формы,  которые  вычисляются  на  каждом  шаге
+      цикла,   включая   непосредственно   пользовательские   операции,
+      проверки завершения цикла, и пошаговое изменение переменных
+      цикла.   <em>Пошаговое   изменение</em>   это   присваивание   переменное
+      следующего значения из последовательности значений.
+      </li>
+      <li class="itemize">The  <em>loop  epilogue</em>  contains  forms  that  are  executed  after  iteration
+      terminates, such as code to return values from the loop.
+      </li>
+      <li class="itemize"><em>Эпилог</em> содержит формы, которые вычисляются после завершения
+      цикла, например, форма возврата значений из цикла.</li></ul>
+<!--l. 138--><p class="indent" >   Expansion of the <b><a 
+href="symbols.html#x200-396577r577">loop</a></b> macro produces an implicit block (named <b><a 
+href="symbols.html#x200-396670r670">nil</a></b>). Thus,
+the Common Lisp macro <b><a 
+href="symbols.html#x200-396817r817">return</a></b> and the special operator <b><a 
+href="symbols.html#x200-396818r818">return-from</a></b> can be
+used to return values from a loop or to exit a loop.
+<!--l. 144--><p class="indent" >   Раскрытие макроса <b><a 
+href="symbols.html#x200-396577r577">loop</a></b> порождает неявный block (с именем <b><a 
+href="symbols.html#x200-396670r670">nil</a></b>).
+Таким образом, внутри цикла для возврата значений или выхода
+можно пользоваться макросом <b><a 
+href="symbols.html#x200-396817r817">return</a></b> или специальным оператором
+<b><a 
+href="symbols.html#x200-396818r818">return-from</a></b>.
+<!--l. 149--><p class="indent" >   Within the executable parts of loop clauses and around the entire loop form,
+you can still bind variables by using the Common Lisp special operator
+                                                                          
+
+                                                                          
+<b><a 
+href="symbols.html#x200-396543r543">let</a></b>.
+<!--l. 153--><p class="indent" >   В любой части выражения цикла можно использовать обычную
+конструкцию связывания переменных <b><a 
+href="symbols.html#x200-396543r543">let</a></b>.
+                                                                          
+
+                                                                          
+<!--l. 157--><p class="indent" >   <div id="bottomlinks">&#x003C;<a 
 href="clmse129.html" >Next</a>&#x003E;&#x003C;<a 
 href="clmse127.html" >Prev</a>&#x003E;&#x003C;<a 
 href="clmse127.html#tailclmse127.html" >PrevTail</a>&#x003E;&#x003C;<a 
 href="clmse128.html" >Front</a>&#x003E;&#x003C;<a 
-href="loop.html#clmse128.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
+href="clmch26.html#clmse128.html" >Up</a>&#x003E;<br>&lt;<a href="../index.html">Main Page</a>&gt; &lt;<a href="symbols.html">Symbols</a>&gt; </div><a 
  id="tailclmse128.html"></a>  
 </body></html> 

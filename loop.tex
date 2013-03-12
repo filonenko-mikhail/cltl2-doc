@@ -7,7 +7,12 @@
 \chapter{Loop}
 \label{LOOP}
 
+\chapter{Цикл loop}
+\label{LOOP}
+
 Author: Jon L White
+
+Автор: Jon L White
 
 \begin{new}
 \prefaceword
@@ -28,6 +33,8 @@ Guy L. Steele Jr.
 
 \section{Introduction}
 
+\section{Введение}
+
 A \emph{loop\/} is a series of expressions that are executed one or more times,
 a process known as \emph{iteration}.
 The \emph{Loop Facility\/} defines a
@@ -35,6 +42,11 @@ variety of useful methods, indicated by
 \emph{loop keywords}, to iterate and to
 accumulate values in a loop.
 
+\emph{Цикл} представляет собой группу выражений, которые выполняются
+один или более раз, такой процесс известен как \emph{итерация}.
+Цикл \emph{Loop} включает в себя различную функциональность, которая
+обозначается \emph{ключевыми символами loop}, для итерации и для
+накопления значений в цикле.
 
 Loop keywords are not true Common Lisp keywords; they are symbols that
 are recognized by the Loop Facility and that provide such capabilities
@@ -43,8 +55,16 @@ the body of a loop, and evaluating expressions that precede or follow
 the loop body.  If you do not use any loop keywords, the Loop Facility
 simply executes the loop body repeatedly.
 
+Ключевые символы \emph{loop} это не те ключевые символы Common
+Lisp'а. Они являются просто символами, которые имеют специальное
+значение в теле этой формы. Символы указывают на: направление
+итерации, накопление значения внутри тела, на действия для выполнения
+в начале/конце цикла.  Если вы не используете эти ключевые символы, то
+\cdf{loop} просто циклически выполняет тело.
 
 \section{How the Loop Facility Works}
+
+\section{Как работает Loop}
 
 The driving element of the Loop Facility is the \cdf{loop} macro.
 When Lisp encounters a \cdf{loop} macro call
@@ -55,18 +75,34 @@ loop keywords are recognized by their symbol name, regardless of the
 packages that contain them.  The \cdf{loop} macro translates the
 given form into Common Lisp code and returns the expanded form.
 
-The expanded loop form is
-one or more lambda-expressions for the local binding of loop variables
-and a block and a tagbody that express a looping control structure.   
-  The variables established in the loop construct are bound as
-  if by using \cdf{let} or \cdf{lambda}.  Implementations can interleave the
-  setting of initial values with the bindings.  However, the assignment
-  of the initial values is always calculated in the order specified by
-  the user.  A variable is thus sometimes bound to a harmless value of the
-  correct data type, and then later in the prologue it is set to the true
-  initial value by using \cdf{setq}.
+Главным элементом Loop является макрос \cdf{loop}.  Как только Common
+Lisp видит вызов макроса \cdf{loop}, он разворачивает его без
+вычисления аргументов, что собственно происходит и с любым другим
+макросом. Loop содержит формы и ключевые символы. Ключевые символы
+обозначаются символами не обращая внимание на их принадлежность к
+пакету. Макрос \cdf{loop} транслирует полученную форму в Common
+Lisp'овый код и возвращает развёрнутую форму.
+
+The expanded loop form is one or more lambda-expressions for the local
+binding of loop variables and a block and a tagbody that express a
+looping control structure.  The variables established in the loop
+construct are bound as if by using \cdf{let} or \cdf{lambda}.
+Implementations can interleave the setting of initial values with the
+bindings.  However, the assignment of the initial values is always
+calculated in the order specified by the user.  A variable is thus
+sometimes bound to a harmless value of the correct data type, and then
+later in the prologue it is set to the true initial value by using
+\cdf{setq}.
+
+Развернутая форма представляется собой одно или более лямбда-выражений
+для связываний переменных цикла и формы block или tagbody, которые
+содержат тело цикла. Переменные для цикла создаются как если бы с
+помощью \cdf{let} или \cdf{lambda}. Связывание локальных переменных
+происходит в том порядке, в каком указал пользователь.
 
 The expanded form consists of three basic parts in the tagbody:
+
+Развёрнутая форма состоит из трёх основных частей в tagbody:
 
 \begin{itemize}
 \item
@@ -74,18 +110,30 @@ The \emph{loop prologue\/} contains forms that are executed before iteration beg
 such as initial settings of loop variables and possibly an initial
 termination test.
 
+\item \emph{Пролог} содержит формы, которые вычисляется перед началом
+  итераций, например, первоначальные связывания переменных цикла и
+  возможно первая проверка на завершение цикла.
+
 \item
 The \emph{loop body\/}  contains those forms that are executed during iteration, 
 including application-specific calculations, termination tests,
 and variable stepping.  \emph{Stepping\/} is the process of assigning a
 variable the next item in a series of items.
 
+\item \emph{Тело} содержит формы, которые вычисляются на каждом шаге
+  цикла, включая непосредственно пользовательские операции, проверки
+  завершения цикла, и пошаговое изменение переменных
+  цикла. \emph{Пошаговое изменение} это присваивание переменное
+  следующего значения из последовательности значений.
+
 \item
 The \emph{loop epilogue} contains forms that are executed after iteration 
 terminates,
 such as code to return values from the loop.
-\end{itemize}
 
+\item \emph{Эпилог} содержит формы, которые вычисляются после
+  завершения цикла, например, форма возврата значений из цикла.
+\end{itemize}
 
 Expansion of the \cdf{loop} macro produces an implicit block 
 (named \cdf{nil}).
@@ -93,363 +141,609 @@ Thus, the Common Lisp macro \cdf{return} and the special operator
 \cdf{return-from} can be 
 used to return values from a loop or to exit a loop.
 
-  Within the executable parts of loop clauses and around the entire
-  loop form, you can still bind variables by using the Common Lisp
-  special operator \cdf{let}.
+Раскрытие макроса \cdf{loop} порождает неявный block (с именем
+\cdf{nil}). Таким образом, внутри цикла для возврата значений или
+выхода можно пользоваться макросом \cdf{return} или специальным
+оператором \cdf{return-from}.
+
+Within the executable parts of loop clauses and around the entire loop
+form, you can still bind variables by using the Common Lisp special
+operator \cdf{let}.
+
+В любой части выражения цикла можно использовать обычную конструкцию
+связывания переменных \cdf{let}.
 
 
+\section{Parsing Loop Clauses}
 
-  \section{Parsing Loop Clauses}
+\section{Парсинг выражений Loop}
 
-  The syntactic parts of a loop construct are called \emph{clauses}; the scope
-  of each clause is determined by the top-level parsing of that clause's
-  keyword.  The following example shows a loop construct with six
-  clauses:
+The syntactic parts of a loop construct are called \emph{clauses}; the
+scope of each clause is determined by the top-level parsing of that
+clause's keyword.  The following example shows a loop construct with
+six clauses:
 
-\begin{lisp}
-(loop for i from 1 to (compute-top-value)~~~~~~~~~;\textrm{First clause} \\*
+Синтаксические части конструкции loop называются
+\emph{выражениями}. Область действия каждого выражения определяется
+парсером данного типа выражения. Следующий пример показывает loop с
+шестью выражениями:
+
+\begin{lisp} (loop for i from 1 to (compute-top-value)~~~~~~~~~;\textrm{First clause} \\*
 ~~~~~~while (not (unacceptable i))~~~~~~~~~~~~~~~~;\textrm{Second clause} \\*
-~~~~~~collect (square i)~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Third clause} \\*
-~~~~~~do (format t "Working on {\Xtilde}D now" i)~~~~~~~~~;\textrm{Fourth clause} \\*
-~~~~~~when (evenp i)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Fifth clause} \\*
-~~~~~~~~do (format t "{\Xtilde}D is a non-odd number" i) \\*
+~~~~~~collect (square i)~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Third clause} \\* 
+~~~~~~do (format t "Working on {\Xtilde}D now" i)~~~~~~~~~;\textrm{Fourth clause} \\* 
+~~~~~~when (evenp i)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Fifth clause} \\* 
+~~~~~~~~do (format t "{\Xtilde}D is a non-odd number" i) \\* 
 ~~~~~~finally (format t "About to exit!"))~~~~~~~~;\textrm{Sixth clause}
 \end{lisp}
 
+\begin{lisp} (loop for i from 1 to (compute-top-value)~~~~~~~~~;\textrm{Первое выражение} \\*
+~~~~~~while (not (unacceptable i))~~~~~~~~~~~~~~~~;\textrm{Второе} \\*
+~~~~~~collect (square i)~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Третье} \\*
+~~~~~~do (format t "Обрабтка {\Xtilde}D " i)~~~~~~~~~;\textrm{Четвёртое} \\*
+~~~~~~when (evenp i)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;\textrm{Пятое} \\* 
+~~~~~~~~do (format t "{\Xtilde}D чётное" i) \\* 
+~~~~~~finally (format t "Почти у выхода!"))~~~~~~~~;\textrm{Шестое}
+\end{lisp}
 
-  Each loop keyword introduces either a compound loop clause or a simple
-  loop clause that can consist of a loop keyword followed by a 
-  single Lisp form.  The number of
-  forms in a clause is determined by the loop keyword that begins the
-  clause and by the auxiliary keywords in the clause.  The keywords
-  \cdf{do}, \cdf{initially}, and \cdf{finally} are the only loop
-  keywords that can take any number of Lisp forms and group them as if
-  in a single \cdf{progn} form.
+Each loop keyword introduces either a compound loop clause or a simple
+loop clause that can consist of a loop keyword followed by a single
+Lisp form.  The number of forms in a clause is determined by the loop
+keyword that begins the clause and by the auxiliary keywords in the
+clause.  The keywords \cdf{do}, \cdf{initially}, and \cdf{finally} are
+the only loop keywords that can take any number of Lisp forms and
+group them as if in a single \cdf{progn} form.
 
-  Loop clauses can contain auxiliary keywords, which are sometimes
-  called \emph{prepositions}.  For example, the first clause in the preceding code
-  includes the prepositions \cdf{from} and \cdf{to}, which mark
-  the value from which stepping begins and the value at which stepping
-  ends.
+Каждое ключевое слово представляет или составное выражение, или
+простое выражение, которое может состоять из этого ключевого слова и
+одиночное Lisp'овой формы. Количество форм в выражении определяется
+первым ключевым символом или вспомогательными ключевыми символами в
+выражении. Только такие ключевые символы, как \cdf{do},
+\cdf{initially} и \cdf{finally}, могут принимать любое количество
+Lisp'овых форм и группировать в одиночную форму \cdf{progn}.
 
-  \subsection{Order of Execution}
+Loop clauses can contain auxiliary keywords, which are sometimes
+called \emph{prepositions}.  For example, the first clause in the
+preceding code includes the prepositions \cdf{from} and \cdf{to},
+which mark the value from which stepping begins and the value at which
+stepping ends.
 
-  With the exceptions listed below, clauses are executed in the loop body
-  in the order in which they appear in the source.  Execution is repeated 
-  until a clause
-  terminates the loop or until a Common Lisp \cdf{return},
-  \cdf{go}, or \cdf{throw} form is encountered.  The following actions are
-  exceptions to the linear order of execution:
+Выражения loop могут содержать вспомогательные ключевые символы,
+которые иногда называются \emph{предлоги}. Например, первое выражение
+в предыдущем коде включает предлоги \cdf{from} и \cdf{to}, которые
+указывают на начальное и конечное значения для переменной.
 
-  \begin{itemize}
+\subsection{Order of Execution}
 
-  \item
-  All variables are initialized first, regardless of where the establishing
-  clauses appear in the source.  The order of initialization follows the
-  order of these clauses.
+\subsection{Порядок вычисления}
 
-  \item
-  The code for any \cdf{initially} clauses is collected
-  into one \cdf{progn} in the order in which the clauses appear in
-  the source.  The collected code is executed once in the loop prologue
-  after any implicit variable initializations.
+With the exceptions listed below, clauses are executed in the loop
+body in the order in which they appear in the source.  Execution is
+repeated until a clause terminates the loop or until a Common Lisp
+\cdf{return}, \cdf{go}, or \cdf{throw} form is encountered.  The
+following actions are exceptions to the linear order of execution:
 
-  \item
-  The code for any \cdf{finally} clauses is collected 
-  into one \cdf{progn} in the order in which the clauses appear in
-  the source.  The collected code is executed once in the loop epilogue
-  before any implicit values from the accumulation clauses are returned.
+Выражения в теле loop вычисляются в том порядке, в котором задал
+пользователь, с некоторыми исключениями перечисленными
+ниже. Вычисление повторяется пока не сработает выражение, завершающее
+цикл, или не будет вызвана одна из Common Lisp'овых форм \cdf{return},
+\cdf{go}, \cdf{throw}. Для последовательного выполнения существуют
+следующие исключения:
+
+\begin{itemize}
+
+\item All variables are initialized first, regardless of where the
+  establishing clauses appear in the source.  The order of
+  initialization follows the order of these clauses.
+
+\item Перво-наперво выполняется инициализация всех переменных, вне
+  зависимости от их позиции в исходном коде.
+  Порядок инициализации сохраняется.
+
+\item The code for any \cdf{initially} clauses is collected into one
+  \cdf{progn} in the order in which the clauses appear in the source.
+  The collected code is executed once in the loop prologue after any
+  implicit variable initializations.
+
+\item Код из всех \cdf{initially} выражений в исходном порядке
+  собирается в один большой \cdf{progn}. Собранный код вычисляется
+  единожды в прологе после инициализации всех переменных.
+
+\item The code for any \cdf{finally} clauses is collected into one
+  \cdf{progn} in the order in which the clauses appear in the source.
+  The collected code is executed once in the loop epilogue before any
+  implicit values from the accumulation clauses are returned.
   Explicit returns anywhere in the source, however, will exit the loop
   without executing the epilogue code.
 
-  \item 
-  A \cdf{with} clause introduces a variable binding and an optional
-  initial value.  The initial values are calculated in the order in
-  which the \cdf{with} clauses occur.
+\item Код для всех \cdf{finally} выражение в исходном порядке
+  собирается в один большой \cdf{progn}. Собранный код вычисляется
+  единожды в эпилоге, перед тем как будут неявно возвращены значения
+  из цикла. Однако явный выход где-либо в исходнике, будет завершать
+  цикл без выполнения эпилога.
 
-  \item 
-  Iteration control clauses implicitly perform the following actions:
+\item A \cdf{with} clause introduces a variable binding and an
+  optional initial value.  The initial values are calculated in the
+  order in which the \cdf{with} clauses occur.
+
+\item \cdf{with} выражение обозначает связывание переменной и
+  опционально первоначальное значение. Первоначальные значение
+  вычисляются в исходном порядке.
+
+\item Iteration control clauses implicitly perform the following
+  actions:
   \begin{itemize}
-  \item
-  initializing variables
+  \item initializing variables
 
-  \item
-  stepping variables, generally between each execution of the loop body
+  \item stepping variables, generally between each execution of the
+    loop body
 
-  \item
-  performing termination tests, generally just before the execution of the
-  loop body
-  \end{itemize}
+  \item performing termination tests, generally just before the
+    execution of the loop body
   \end{itemize}
 
-  \subsection{Kinds of Loop Clauses}
+\item Выражения для итераций неявно выполняют следующие действия:
+  \begin{itemize}
+  \item присваивание переменных
+  \item наращивание переменных на каждой итерации
+
+  \item проверка условия завершения цикла, обычно перед выполнение итерации
+  \end{itemize}
+  
+\end{itemize}
+
+\subsection{Kinds of Loop Clauses}
 \label{LOOP-KINDS-SECTION}
 
-  Loop clauses fall into one of the following categories:
+\subsection{Разновидности Loop выражений}
+
+Loop clauses fall into one of the following categories:
+
+Выражения делятся на следующие категории:
+
+\begin{itemize}
+  
+\item variable initialization and stepping
+
+\item инициализация и пошаговое изменение
 
   \begin{itemize}
+  \item The \cdf{for} and \cdf{as} constructs provide iteration
+    control clauses that establish a variable to be initialized.  You
+    can combine \cdf{for} and \cdf{as} clauses with the loop keyword
+    \cdf{and} to get parallel initialization and stepping.
 
-  \item 
-  variable initialization and stepping
+  \item Конструкции \cdf{for} и \cdf{as} служат для установки
+    переменных. Для параллельной инициализации и изменения, выражения
+    \cdf{for} и \cdf{as} могут комбинироваться с помощью символа
+    \cdf{and}.
 
-  \begin{itemize}
-  \item
-  The \cdf{for} and \cdf{as} constructs provide iteration control clauses
-  that establish a variable to be initialized.
-  You can combine \cdf{for} and \cdf{as} clauses with the loop
-  keyword \cdf{and} to get parallel initialization and stepping.
+  \item The \cdf{with} construct is similar to a single \cdf{let}
+    clause. You can combine \cdf{with} clauses using \cdf{and} to get
+    parallel initialization.
 
-  \item
-  The \cdf{with} construct is similar to a single \cdf{let} clause.
-  You can combine \cdf{with} clauses using
-  \cdf{and} to get parallel initialization.
+  \item Конструкция \cdf{with} похожа на выражение \cdf{let}. Для
+    параллельной инициализации вы можете комбинировать \cdf{with} с
+    помощью \cdf{and}.
 
-  \item
-  The \cdf{repeat} construct causes iteration to terminate after a specified
-   number of times.  It uses an internal variable to keep track of the
-   number of iterations.
+  \item The \cdf{repeat} construct causes iteration to terminate after
+    a specified number of times.  It uses an internal variable to keep
+    track of the number of iterations.
+
+
+  \item Конструкция \cdf{repeat} указывает на количество итераций. Она
+    использует внутреннюю переменную для подсчёта шагов.
   \end{itemize}
 
   You can specify data types for loop variables (see
-  section~\ref{LOOP-TYPES-SECTION}).
-  It is an error to bind the same variable twice in any variable-binding
-  clause of a single loop expression.  Such variables include
-  local variables, iteration control variables, and variables found by
-  destructuring.
+  section~\ref{LOOP-TYPES-SECTION}).  It is an error to bind the same
+  variable twice in any variable-binding clause of a single loop
+  expression. Such variables include local variables, iteration
+  control variables, and variables found by destructuring.
 
+  Вы можете указать типы данных для переменных циклы (смотрите
+  раздел~\ref{LOOP-TYPES-SECTION}). Связывать переменные два раза в
+  одном цикле нельзя. Такие переменные включают локальные переменные,
+  переменные для управления циклом и переменные созданные при
+  деструктуризации.
 
-  \item value accumulation
+\item value accumulation
+
+\item накопление значения
 
   \begin{itemize}
-  \item The \cdf{collect} construct takes one form in its clause
-  and adds the value of that form to the end of a list of values.  By
-  default, the list of values is returned when the loop finishes.
+  \item The \cdf{collect} construct takes one form in its clause and
+    adds the value of that form to the end of a list of values.  By
+    default, the list of values is returned when the loop finishes.
 
-  \item
-  The \cdf{append} construct  takes one form in its clause
-  and appends the value of that form to the end of a list of values.  By
-  default, the list of values is returned when the loop finishes.
+  \item Конструкция \cdf{collect} принимает одну форму и добавляет
+    значение этой формы в конец списка значений. По-умолчанию в конце
+    цикла этот список возвращается.
 
-  \item The \cdf{nconc} construct is similar to \cdf{append}, but
-  its list values are concatenated as if by the Common Lisp function
-  \cdf{nconc}.  By
-  default, the list of values is returned when the loop finishes.
+  \item The \cdf{append} construct takes one form in its clause and
+    appends the value of that form to the end of a list of values.  By
+    default, the list of values is returned when the loop finishes.
 
-  \item The \cdf{sum} construct takes one form in its clause that
-  must evaluate to a number and adds that number into a running total.
-  By default, the cumulative sum is returned when the loop finishes.
+  \item Конструкция \cdf{append} принимает одну форму и добавляет
+    значение этой формы в конец списка значений. По-умолчанию в конце
+    цикла этот список возвращается.
 
-  \item 
-  The \cdf{count} construct takes one form in its clause and counts the
-  number of times that the form evaluates to a non-\cdf{nil} value.  By
-  default, the count is returned when the loop finishes.
+  \item The \cdf{nconc} construct is similar to \cdf{append}, but its
+    list values are concatenated as if by the Common Lisp function
+    \cdf{nconc}.  By default, the list of values is returned when the
+    loop finishes.
 
-  \item
-  The \cdf{minimize} construct takes one form in its clause and determines
-  the minimum value obtained by evaluating that form.  By default, the
-  minimum value is returned when the loop finishes.
+  \item Конструкция \cdf{nconc} похожа на \cdf{append}, но список
+    соединяется с помощью функции \cdf{nconc}. По-умолчанию в конце
+    цикла этот список возвращается.
 
-  \item
-  The \cdf{maximize} construct takes one form in its clause and 
-  determines the maximum value obtained by evaluating that form.  By
-  default, the maximum value is returned when the loop finishes.
+  \item The \cdf{sum} construct takes one form in its clause that must
+    evaluate to a number and adds that number into a running total.
+    By default, the cumulative sum is returned when the loop finishes.
+
+  \item Конструкция \cdf{sum} принимает одну форму, которая должна
+    вернуть число, и добавляет это число в общую сумму. По-умолчанию
+    накопленная сумма возвращается из цикла.
+
+  \item The \cdf{count} construct takes one form in its clause and
+    counts the number of times that the form evaluates to a
+    non-\cdf{nil} value.  By default, the count is returned when the
+    loop finishes.
+
+  \item Конструкция \cdf{count} принимает одну форму и подсчитывает
+    сколько раз эта форма вернула не-\cdf{nil} значение. По-умолчанию
+    это количество возвращается из цикла.
+
+  \item The \cdf{minimize} construct takes one form in its clause and
+    determines the minimum value obtained by evaluating that form.  By
+    default, the minimum value is returned when the loop finishes.
+
+  \item Конструкция \cdf{minimize} принимает одну форму и сохраняет
+    минимальное значение, которое вернула эта форма. По-умолчанию,
+    минимальное значение возвращается из цикла.
+
+  \item The \cdf{maximize} construct takes one form in its clause and
+    determines the maximum value obtained by evaluating that form.  By
+    default, the maximum value is returned when the loop finishes.
+
+  \item Конструкция \cdf{maximize} принимает одну форму и сохраняет
+    максимальное значение, которое вернула эта форма. По-умолчанию,
+    максимальное значение возвращается из цикла.
   \end{itemize}
 
-  \item
-  termination conditions
+  \item termination conditions
+
+  \item условия для завершения
 
   \begin{itemize}
-  \item
-  The \cdf{loop-finish} Lisp macro terminates iteration and returns any
-  accumulated result.  If specified, any \cdf{finally} clauses are evaluated.
+  \item The \cdf{loop-finish} Lisp macro terminates iteration and
+    returns any accumulated result.  If specified, any \cdf{finally}
+    clauses are evaluated.
 
-  \item
-  The \cdf{for} and \cdf{as} constructs provide a termination test
-  that is determined by the iteration control clause.
+  \item Lisp'овые макрос \cdf{loop-finish} прекращает цикл и
+    возвращает накопленный результат. Вычисляется выражение
+    \cdf{finally}, если было указано.
 
-  \item
-   The \cdf{repeat} construct causes termination after a specified
-  number of iterations.
+  \item The \cdf{for} and \cdf{as} constructs provide a termination
+    test that is determined by the iteration control clause.
 
-  \item 
-  The \cdf{while} construct takes one form, a condition, and terminates
-  the iteration if
-  the condition evaluates to \cdf{nil}.  A \cdf{while} clause is
-  equivalent to the expression \cd{(if~(not~\emph{condition}) (loop-finish))}.  
+  \item Конструкции \cdf{for} и \cdf{as} завершают цикл после
+    выполнения указанных условий.
 
-  \item 
-   The \cdf{until} construct is the inverse of \cdf{while};
-   it terminates the iteration if the condition evaluates to any non-\cdf{nil}
-   value.  An \cdf{until} clause is equivalent to the expression
-  \cd{(if~\emph{condition} (loop-finish))}.
+  \item The \cdf{repeat} construct causes termination after a
+    specified number of iterations.
 
-  \item
-  The \cdf{always} construct takes one form and terminates the loop 
-  if the form ever evaluates to \cdf{nil}; in this case, it returns
-  \cdf{nil}.  Otherwise, it provides a default return value of \cdf{t}.
+  \item Конструкция \cdf{repeat} завершает цикл после выполнения
+    указанного количества итераций.
 
-  \item
-  The \cdf{never} construct takes one form and terminates the loop
-  if the form ever evaluates to non-\cdf{nil}; in this case, it returns
-  \cdf{nil}.  Otherwise, it provides a default return value of \cdf{t}.
+  \item The \cdf{while} construct takes one form, a condition, and
+    terminates the iteration if the condition evaluates to \cdf{nil}.
+    A \cdf{while} clause is equivalent to the expression
+    \cd{(if~(not~\emph{condition}) (loop-finish))}.
 
-  \item
-  The \cdf{thereis} construct takes one form and terminates the loop
-  if the form ever evaluates to non-\cdf{nil}; in this case, it returns
-  that value.
+  \item Конструкция \cdf{while} принимает одну форму --- условие, и
+    завершает цикл когда условие возвращает \cdf{nil}. Выражение
+    \cdf{while} эквивалентно \cd{(if~(not~\emph{condition})
+      (loop-finish))}.
+
+  \item The \cdf{until} construct is the inverse of \cdf{while}; it
+    terminates the iteration if the condition evaluates to any
+    non-\cdf{nil} value.  An \cdf{until} clause is equivalent to the
+    expression \cd{(if~\emph{condition} (loop-finish))}.
+
+  \item Конструкция \cdf{until} антоним конструкции \cdf{while}. Она
+    завершает цикл, когда условие возвращает не-\cdf{nil}
+    значение. Выражение \cdf{until} эквивалентно
+    \cd{(if~\emph{condition} (loop-finish))}.
+
+  \item The \cdf{always} construct takes one form and terminates the
+    loop if the form ever evaluates to \cdf{nil}; in this case, it
+    returns \cdf{nil}.  Otherwise, it provides a default return value
+    of \cdf{t}.
+
+  \item Конструкция \cdf{always} принимает одну форму и завершает
+    цикл, если форма возвращает \cdf{nil}, в этом случае возвращается
+    \cdf{nil}. Иначе возвращается результат по-умолчанию \cdf{t}.
+
+  \item The \cdf{never} construct takes one form and terminates the
+    loop if the form ever evaluates to non-\cdf{nil}; in this case, it
+    returns \cdf{nil}.  Otherwise, it provides a default return value
+    of \cdf{t}.
+
+  \item Конструкция \cdf{never} принимает одну форму и завершает
+    цикл, если форма возвращает \cdf{nil}, в этом случае возвращается
+    \cdf{nil}. Иначе возвращается результат по-умолчанию \cdf{t}.
+
+  \item The \cdf{thereis} construct takes one form and terminates the
+    loop if the form ever evaluates to non-\cdf{nil}; in this case, it
+    returns that value.
+
+  \item Конструкция \cdf{thereis} принимает одну форму и завершает
+    цикле, если форма возвращает не-\cdf{nil}, в этом случае
+    возвращается значение формы.
   \end{itemize}
 
   \item unconditional execution
 
-  \begin{itemize}
-  \item
-  The \cdf{do} construct simply evaluates all forms in its clause.
+  \item безусловное выполнение
 
-  \item
-  The \cdf{return} construct takes one form and returns its value.  It is 
-  equivalent to the clause \cd{do (return \emph{value})}.
+  \begin{itemize}
+  \item The \cdf{do} construct simply evaluates all forms in its
+clause.
+
+  \item Конструкция \cdf{do} просто выполняет все переданные формы.
+
+  \item The \cdf{return} construct takes one form and returns its
+    value.  It is equivalent to the clause \cd{do (return \emph{value})}.
+
+  \item Конструкция \cdf{return} принимает одну форму и возвращает её
+    значение.  Эквивалентное выражение \cd{do (return \emph{value})}.
   \end{itemize}
 
   \item conditional execution
 
+  \item условное выполнение
+
   \begin{itemize}
-  \item
-  The \cdf{if} construct takes one form as a predicate and a clause that 
-  is executed when the predicate is true. The clause can be a value 
-  accumulation, unconditional, or another conditional clause; it can also
-  be any combination of such clauses connected by the loop keyword \cdf{and}.
+  \item The \cdf{if} construct takes one form as a predicate and a
+    clause that is executed when the predicate is true. The clause can
+    be a value accumulation, unconditional, or another conditional
+    clause; it can also be any combination of such clauses connected
+    by the loop keyword \cdf{and}.
 
-  \item
-  The \cdf{when} construct is a synonym for \cdf{if}.
+  \item Конструкция \cdf{if} принимает форму в качестве предиката и
+    выражение, которое выполняется в случае истинности
+    предиката. Выражение может быть накоплением значения, безусловным
+    или другим условным выражением.
 
-  \item
-  The \cdf{unless} construct is similar to \cdf{when} except that it complements
-  the predicate; it executes the following clause if the predicate is false.
+  \item The \cdf{when} construct is a synonym for \cdf{if}.
 
-  \item
-  The \cdf{else} construct provides an optional component of \cdf{if},
-  \cdf{when}, and \cdf{unless} clauses that is executed when the
-  predicate is false.  The component is one of the clauses described under
-  \cdf{if}.
+  \item Конструкция \cdf{when} это синоним для конструкции \cdf{if}.
 
-  \item
-  The \cdf{end} construct provides an optional component to mark the
-  end of a conditional clause.
+  \item The \cdf{unless} construct is similar to \cdf{when} except
+    that it complements the predicate; it executes the following
+    clause if the predicate is false.
+
+  \item Конструкция \cdf{unless} похожа на \cdf{when} кроме того, что
+    она выполняет форму при условии что предикат ложен.
+
+  \item The \cdf{else} construct provides an optional component of
+    \cdf{if}, \cdf{when}, and \cdf{unless} clauses that is executed
+    when the predicate is false.  The component is one of the clauses
+    described under \cdf{if}.
+
+  \item Конструкция \cdf{else} содержит компонент, который будет
+    выполнен при невыполнении веток \cdf{if}, \cdf{when} и
+    \cdf{unless}. 
+
+  \item The \cdf{end} construct provides an optional component to mark
+    the end of a conditional clause.
+
+  \item Конструкция \cdf{end} указывает на конец условного выражения.
   \end{itemize}
 
   \item miscellaneous operations
 
+  \item дополнительные операции
+
   \begin{itemize}
   \item The \cdf{named} construct assigns a name to a loop construct.
 
+
+  \item Конструкция \cdf{named} присваивает имя блоку цикла.
+
   \item The \cdf{initially} construct causes its forms to be evaluated
-   in the loop prologue, which precedes all loop code except for initial 
-   settings specified by the constructs \cdf{with}, \cdf{for}, or \cdf{as}.
+    in the loop prologue, which precedes all loop code except for
+    initial settings specified by the constructs \cdf{with},
+    \cdf{for}, or \cdf{as}.
 
-  \item  The \cdf{finally} construct causes its forms to be evaluated
-   in the loop epilogue after normal iteration terminates.  An unconditional
-   clause can also follow the loop keyword \cdf{finally}.
+  \item Конструкция \cdf{initially} вычисляет формы в прологе цикла,
+    который следует перед телом цикла, но после первоначальных
+    связываний в конструкциях \cdf{with}, \cdf{for} и \cdf{as}.
+
+  \item The \cdf{finally} construct causes its forms to be evaluated
+    in the loop epilogue after normal iteration terminates.  An
+    unconditional clause can also follow the loop keyword
+    \cdf{finally}.
+
+  \item Конструкция \cdf{finally} выполняет формы в эпилоге цикла
+    после завершения итераций. Кроме того после слова \cdf{finally}
+    могут следовать безусловные выражения.
   \end{itemize}
   \end{itemize}
-
 
 
   \subsection{Loop Syntax}
 
-  The following syntax description provides an overview of the syntax
-  for loop clauses.  Detailed syntax descriptions of individual clauses
-  appear in sections~\ref{LOOP-ITERATION-SECTION} through~\ref{LOOP-MISC-SECTION}.
-  A loop consists of the
-  following types of clauses:
+  \subsection{Синтаксис Loop}
 
-\begin{tabbing}
-\emph{initial-final\/} ::= \emph{initially\/} {\Mor} \emph{finally\/} \\*
-\emph{variables\/} ::= \emph{with\/} {\Mor} \emph{initial-final\/} {\Mor} \emph{for-as\/} {\Mor} \emph{repeat} \\*
-\emph{main\/} ::= \emph{unconditional\/} {\Mor} \emph{accumulation\/} {\Mor} \emph{conditional\/} 
-      {\Mor} \emph{termination\/} {\Mor} \emph{initial-final\/} \\*
-\emph{loop\/} ::= \cd{(loop \Mopt{\cd{named \emph{name\/}}} \Mstar\emph{variables\/} \Mstar\emph{main\/})}
+  The following syntax description provides an overview of the syntax
+for loop clauses.  Detailed syntax descriptions of individual clauses
+appear in sections~\ref{LOOP-ITERATION-SECTION}
+through~\ref{LOOP-MISC-SECTION}.  A loop consists of the following
+types of clauses:
+
+\begin{tabbing} \emph{initial-final\/} ::= \emph{initially\/} {\Mor}
+\emph{finally\/} \\* \emph{variables\/} ::= \emph{with\/} {\Mor}
+\emph{initial-final\/} {\Mor} \emph{for-as\/} {\Mor} \emph{repeat} \\*
+\emph{main\/} ::= \emph{unconditional\/} {\Mor} \emph{accumulation\/}
+{\Mor} \emph{conditional\/} {\Mor} \emph{termination\/} {\Mor}
+\emph{initial-final\/} \\* \emph{loop\/} ::= \cd{(loop \Mopt{\cd{named
+\emph{name\/}}} \Mstar\emph{variables\/} \Mstar\emph{main\/})}
 \end{tabbing}
 
-Note that a loop must have at least one clause; however, for
-backward compatibility, the following format is also supported:
-\begin{lisp}
-(loop \Mstar{\emph{tag} {\Mor} \emph{expr}})
-\end{lisp}
-where \emph{expr} is any Common Lisp expression that can be evaluated, and 
-\emph{tag} is any symbol not identifiable as a loop keyword.  Such a format
-is roughly equivalent to the following one:
+Вот небольшой обзор синтаксиса для выражений цикла. Детальные описания
+конкретных подвыражений находятся в разделах начиная
+с~\ref{LOOP-ITERATION-SECTION} и
+заканчивая~\ref{LOOP-MISC-SECTION}. Цикл содержит следующие типы
+выражений:
+\begin{tabbing} \emph{initial-final\/} ::= \emph{initially\/} {\Mor}
+\emph{finally\/} \\* \emph{variables\/} ::= \emph{with\/} {\Mor}
+\emph{initial-final\/} {\Mor} \emph{for-as\/} {\Mor} \emph{repeat} \\*
+\emph{main\/} ::= \emph{unconditional\/} {\Mor} \emph{accumulation\/}
+{\Mor} \emph{conditional\/} {\Mor} \emph{termination\/} {\Mor}
+\emph{initial-final\/} \\* \emph{loop\/} ::= \cd{(loop \Mopt{\cd{named
+\emph{name\/}}} \Mstar\emph{variables\/} \Mstar\emph{main\/})}
+\end{tabbing}
 
-\begin{lisp}
-(loop do \Mstar{\emph{tag} {\Mor} \emph{expr}})
+Note that a loop must have at least one clause; however, for backward
+compatibility, the following format is also supported:
+\begin{lisp} (loop \Mstar{\emph{tag} {\Mor} \emph{expr}})
+\end{lisp} where \emph{expr} is any Common Lisp expression that can be
+evaluated, and \emph{tag} is any symbol not identifiable as a loop
+keyword.  Such a format is roughly equivalent to the following one:
+
+\begin{lisp} (loop do \Mstar{\emph{tag} {\Mor} \emph{expr}})
 \end{lisp}
 
-  A loop prologue consists of any automatic variable initializations prescribed 
-  by the \emph{variable\/} clauses, along with any \emph{initially\/} clauses
-  in the order they appear in the source.
+Заметьте, что цикл должен содержать как минимум одно выражение, однако
+для обратной совместимости также поддерживается и следующий формат:
+\begin{lisp} (loop \Mstar{\emph{tag} {\Mor} \emph{expr}})
+\end{lisp}
+где \emph{expr} является любым Common Lisp'овым выражением, которое
+может быть вычислено, и \emph{tag} это любой символ не из множества
+символов loop. Такой формат примерно эквивалентен следующему:
+
+\begin{lisp} (loop do \Mstar{\emph{tag} {\Mor} \emph{expr}})
+\end{lisp}
+
+  A loop prologue consists of any automatic variable initializations
+prescribed by the \emph{variable\/} clauses, along with any
+\emph{initially\/} clauses in the order they appear in the source.
+
+Пролог состоит из инициализации переменных описанных в соответствующих
+выражения, и \cdf{initially} выражений в том порядке, в котором они
+были записаны.
 
   A loop epilogue consists of \emph{finally\/} clauses, if any, along
-  with any implicit return value from an \emph{accumulation\/} clause or
-  an \emph{end-test\/} clause.
+with any implicit return value from an \emph{accumulation\/} clause or
+an \emph{end-test\/} clause.
 
+Эпилог состоит из выражений \cdf{finally} (если они были), и неявного
+возврата значения из выражений собирающих результат или из выражений
+проверки выхода из цикла.
 
   \section{User Extensibility}
 
   There is currently no specified portable method for users to add
-  extensions to the Loop Facility.  The names \cdf{defloop} and
-  \cdf{define-loop-method} have been suggested as candidates for such a method.
+extensions to the Loop Facility.  The names \cdf{defloop} and
+\cdf{define-loop-method} have been suggested as candidates for such a
+method.
 
+\section{Пользовательские расширения}
 
+Пользователю не предоставляется способа расширить функционал Loop.
 
 \section{Loop Constructs}
 
-The remaining sections of this chapter describe the constructs that the Loop Facility
-provides.  The descriptions are organized according to the functionality
-of the constructs.  Each section begins with a general discussion of
-a particular operation; it then presents the constructs that perform the 
-operation.
+\section{Конструкции Loop}
+
+The remaining sections of this chapter describe the constructs that
+the Loop Facility provides.  The descriptions are organized according
+to the functionality of the constructs.  Each section begins with a
+general discussion of a particular operation; it then presents the
+constructs that perform the operation.
+
+Следующие разделы раскрывают конструкции цикла Loop. Описания
+сгруппированы по типам данных конструкций. Каждый раздел начинается с
+общего описания конкретной операции, затем раскрывается конструкция,
+которая выполняет данную операцию.
 
 \begin{itemize}
 
-\item Section~\ref{LOOP-ITERATION-SECTION},
-``Iteration Control,'' describes iteration
-control clauses that allow directed loop iteration.  
+\item Section~\ref{LOOP-ITERATION-SECTION}, ``Iteration Control,''
+  describes iteration control clauses that allow directed loop
+  iteration.
 
-\item Section~\ref{LOOP-TEST-SECTION}, ``End-Test Control,'' 
-describes clauses that stop iteration by providing a conditional expression
-that can be tested after each execution of the loop body.  
+\item Раздел~\ref{LOOP-ITERATION-SECTION}, <<Управление итерациями>>
+  описывает выражения для управления итерациями.
 
-\item Section~\ref{LOOP-ACCUM-SECTION},
-``Value Accumulation,'' describes constructs
-that accumulate values during iteration and return them from a loop.  This section also
-discusses ways in which accumulation clauses can be combined within the
-Loop Facility.  
+\item Section~\ref{LOOP-TEST-SECTION}, ``End-Test Control,'' describes
+  clauses that stop iteration by providing a conditional expression
+  that can be tested after each execution of the loop body.
 
-\item Section~\ref{LOOP-VAR-SECTION},
-``Variable Initializations,'' describes the \cdf{with} 
-construct, which provides local variables for use within the loop
-body, and other constructs that provide local variables.
+\item Раздел~\ref{LOOP-TEST-SECTION}, <<Проверка завершения>>
+  описывает выражения, которые прекращают итерации, в случае если того
+  требует тестовое выражение, которые выполняется на каждой итерации.
 
-\item Section~\ref{LOOP-COND-SECTION},
-``Conditional Execution,'' describes how to execute loop
-clauses conditionally.
+\item Section~\ref{LOOP-ACCUM-SECTION}, ``Value Accumulation,''
+  describes constructs that accumulate values during iteration and
+  return them from a loop.  This section also discusses ways in which
+  accumulation clauses can be combined within the Loop Facility.
 
-\item Section~\ref{LOOP-UNCOND-SECTION},
-``Unconditional Execution,'' describes the \cdf{do}
-and \cdf{return} constructs.  It also describes constructs that are
-used in the loop prologue and loop epilogue.
+\item Раздел~\ref{LOOP-ACCUM-SECTION}, <<Накопление значения>>
+  описывает конструкции, которые накапливают значение во время
+  итераций и возвращают их из цикла. Данный раздел также содержит
+  методы комбинирования данных выражений с другим функционалом.
 
-\item Section~\ref{LOOP-MISC-SECTION},
-``Miscellaneous Features,'' discusses loop data types
-and destructuring.  It also presents constructs for naming a loop and
-for specifying initial and final actions.
+\item Section~\ref{LOOP-VAR-SECTION}, ``Variable Initializations,''
+  describes the \cdf{with} construct, which provides local variables
+  for use within the loop body, and other constructs that provide
+  local variables.
+
+\item Раздел~\ref{LOOP-VAR-SECTION}, <<Инициализация переменных>>
+  описывает конструкцию \cdf{with}, которая позволяет создавать
+  локальные переменные для использования в теле цикла, а также другие
+  конструкции, которые создают локальные переменные.
+
+\item Section~\ref{LOOP-COND-SECTION}, ``Conditional Execution,''
+  describes how to execute loop clauses conditionally.
+
+\item Раздел~\ref{LOOP-COND-SECTION}, <<Условное выполнение>>
+  описывает то, как выполнять выражения цикла в зависимости от
+  условия.
+
+\item Section~\ref{LOOP-UNCOND-SECTION}, ``Unconditional Execution,''
+  describes the \cdf{do} and \cdf{return} constructs.  It also
+  describes constructs that are used in the loop prologue and loop
+  epilogue.
+
+\item Раздел~\ref{LOOP-UNCOND-SECTION}, <<Безусловное выполнение>>
+  описывает конструкции \cdf{do} и \cdf{return}. Раздел также содержит
+  информацию о прологе и эпилоге цикла Loop.
+
+\item Section~\ref{LOOP-MISC-SECTION}, ``Miscellaneous Features,''
+  discusses loop data types and destructuring.  It also presents
+  constructs for naming a loop and for specifying initial and final
+  actions.
+
+\item Раздел~\ref{LOOP-MISC-SECTION} <<Дополнительные возможности>>
+  описывает типы данных и деструктуризацию в контексте цикла
+  loop. Раздел также содержит информацию о задании имени цикла и
+  прологе и эпилоге.
 \end{itemize}
 
 
 \section{Iteration Control}
 \label{LOOP-ITERATION-SECTION}
 
+\section{Управление итерациями}
+\label{LOOP-ITERATION-SECTION}
+
 Iteration control clauses allow you to direct loop iteration.  The
 loop keywords \cdf{as}, \cdf{for}, and \cdf{repeat} designate iteration control clauses.
+
+Для управления итерациями используются выражения \cdf{as}, \cdf{for} и \cdf{repeat}.
 
 Iteration control clauses differ with respect to the specification of
 termination conditions and the initialization and stepping
@@ -458,6 +752,12 @@ do not cause the Loop Facility to return values, but they
 can be used in conjunction with value-accumulation clauses to
 return values (see section~\ref{LOOP-ACCUM-SECTION}).
 
+Управление итерациями отличается от условий завершения цикла и
+инициализации и наращивания переменных цикла. Управление итерациями
+само по себе не выполняет возврат значение, но оно может
+использоваться в сочетании с выражениями накопления значения для
+возврата значений (смотрите раздел~\ref{LOOP-ACCUM-SECTION}).
+
 All variables are initialized in the loop prologue.  The scope of
 the variable binding is \emph{lexical} unless it is proclaimed
 special; thus, the variable can be
@@ -465,10 +765,21 @@ accessed only by expressions that lie textually within the loop.
 Stepping assignments are made in the loop body before any other expressions
 are evaluated in the body.
 
+Все переменные инициализируются в прологе цикла. Область видимости
+переменных \emph{лексическая}, если только они не объявлены как
+\emph{специальные}. Таким образом переменные доступны только в
+выражениях, которые текстово находятся в цикле. Наращивание переменных
+выполняется в теле цикла перед другими выражениями.
+
 The variable argument in iteration control clauses can be a 
 \emph{destructuring list}.  A destructuring list
 is a tree whose non-null atoms are symbols that
 can be assigned a value (see section~\ref{LOOP-DESTRUCTURING-SECTION}).
+
+На месте переменное может стоять \emph{список переменных для
+  деструктуризации}. Данный список представляет из себя дерево, в
+котором не-null атомы это символы, которые могут быть связаны со
+значениями (смотрите раздел~\ref{LOOP-DESTRUCTURING-SECTION}).
 
 The iteration control clauses \cdf{for}, \cdf{as}, and \cdf{repeat} 
 must precede any other loop clauses except
@@ -476,6 +787,12 @@ must precede any other loop clauses except
 since they establish variable bindings.  When iteration control clauses are
 used in a loop, termination tests in the loop body are evaluated
 before any other loop body code is executed.
+
+Выражения для управления итерациями \cdf{for}, \cdf{as} и \cdf{repeat}
+должны быть указаны прежде других выражений за исключением
+\cdf{initially}, \cdf{with} и \cdf{named}, так как последние служат
+для создания переменных. При использовании выражений управления
+итерациями, проверка завершения выполняется перед самим телом цикла.
 
 If you use multiple iteration clauses to control iteration, variable
 initialization and stepping occur sequentially by default.  
@@ -485,35 +802,12 @@ The iteration behavior of clauses joined by \cdf{and}
 is analogous to the behavior of the Common Lisp macro \cdf{do}
 relative to \cdf{do*}.
 
-[X3J13 voted in March 1989 \issue{LOOP-AND-DISCREPANCY} to correct a minor
-inconsistency in the original syntactic specification for \cdf{loop}.  Only \cdf{for}
-and \cdf{as} clauses (not \cdf{repeat} clauses) may be joined by the \cdf{and} construct. The
-precise syntax is as follows.
-\begin{tabbing}
-\emph{for-as\/} ::= \Mgroup{\cdf{for} {\Mor} \cdf{as}} \emph{for-as-subclause\/} \Mstar{\cdf{and} \emph{for-as-subclause\/}} \\*
-\emph{for-as-subclause\/} ::= \=\emph{for-as-arithmetic\/} {\Mor} \emph{for-as-in-list\/} \\*
-\>\hbox to 0pt{\hss\Mor~}\emph{for-as-on-list\/} {\Mor} \emph{for-as-equals-then\/}  \\*
-\>\hbox to 0pt{\hss\Mor~}\emph{for-as-across\/} {\Mor} \emph{for-as-hash\/} {\Mor} \emph{for-as-package\/}  \\
-\emph{for-as-arithmetic\/} ::= \=\emph{var\/} \Mopt{type-spec} \Mopt{\Mgroup{\cdf{from} {\Mor} \cdf{downfrom} {\Mor} \cdf{upfrom}} expr1} \\*
-\>\Mopt{\Mgroup{\cdf{to} {\Mor} \cdf{downto} {\Mor} \cdf{upto} {\Mor} \cdf{below} {\Mor} \cdf{above}} expr2} \\*
-\>\Mopt{\cdf{by} expr3}  \\
-\emph{for-as-in-list\/} ::= \emph{var\/} \Mopt{type-spec} \cdf{in} \emph{expr1\/} \Mopt{\cdf{by} step-fun} \\
-\emph{for-as-on-list\/} ::= \emph{var\/} \Mopt{type-spec} \cdf{on} \emph{expr1\/} \Mopt{\cdf{by} step-fun} \\
-\emph{for-as-equals-then\/} ::= \emph{var\/} \Mopt{type-spec} \cdf{=} \emph{expr1\/} \Mopt{\cdf{then} step-fun} \\
-\emph{for-as-across\/} ::= \emph{var\/} \Mopt{type-spec} \cdf{across} \emph{vector\/} \\
-\emph{for-as-hash\/} ::= \=\emph{var\/} \Mopt{type-spec} \cdf{being} \Mgroup{\cdf{each} {\Mor} \cdf{the}} \\*
-\>\Mgroup{\cdf{hash-key} {\Mor} \cdf{hash-keys} {\Mor} \cdf{hash-value} {\Mor} \cdf{hash-values}} \\*
-\>\Mgroup{\cdf{in} {\Mor} \cdf{of}} \emph{hash-table\/} \\*
-\>\Mopt{\cdf{using} \cd{(}\Mgroup{\cdf{hash-value} {\Mor} \cdf{hash-key}} other-var\/\cd{)}}  \\
-\emph{for-as-package\/} ::= \=\emph{var\/} \Mopt{type-spec} \cdf{being} \Mgroup{\cdf{each} {\Mor} \cdf{the}} \\*
-\>\emph{for-as-package-keyword\/} \\*
-\>\Mgroup{\cdf{in} {\Mor} \cdf{of}} \emph{package\/}  \\
-\emph{for-as-package-keyword\/} ::= \=\cdf{symbol} {\Mor} \cdf{present-symbol} {\Mor} \cdf{external-symbol} \\*
-\>\hbox to 0pt{\hss\Mor~}\cdf{symbols} {\Mor} \cdf{present-symbols} {\Mor} \cdf{external-symbols} 
-\end{tabbing}
-This correction made \cdf{for} and \cdf{as} clauses syntactically
-similar to \cdf{with} clauses.  I have changed all examples in this
-chapter to reflect the corrected syntax.---GLS]
+Если вы используете несколько выражений для управления итерациями,
+по-умолчанию связывания и наращивания переменных выполняются
+последовательно. Если последовательное выполнение необязательно, вы
+можете объединить выражения с помощью конструкции \cdf{and}.  Различия
+при неиспользовании и использовании конструкции \cdf{and} аналогичны
+различиям между \cdf{do} и \cdf{do*}
 
 In the following example, the variable \cdf{x} is stepped
 before \cdf{y} is stepped; thus, the value of \cdf{y}
@@ -533,8 +827,26 @@ In the following example, \cdf{x} and \cdf{y} are stepped in parallel:
 ~~~\EV~((1 NIL) (2 1) (3 2) (4 3) (5 4) (6 5) (7 6) (8 7) (9 8))
 \end{lisp}
 
+В следующем примере переменная \cdf{x} наращивается прежде чем
+\cdf{y}, таким образом \cdf{y} содержит новое значение \cdf{x}.
+\begin{lisp}
+(loop for x from 1 to 9 \\*
+~~~~~~for y = nil then x  \\*
+~~~~~~collect (list x y)) \\*
+~~~\EV~((1 NIL) (2 2) (3 3) (4 4) (5 5) (6 6) (7 7) (8 8) (9 9))
+\end{lisp}
+
+В следующем примере переменные \cdf{x} и \cdf{y} наращиваются
+параллельно:
+\begin{lisp}
+(loop for x from 1 to 9 \\*
+~~~~~~and y = nil then x \\*
+~~~~~~collect (list x y)) \\*
+~~~\EV~((1 NIL) (2 1) (3 2) (4 3) (5 4) (6 5) (7 6) (8 7) (9 8))
+\end{lisp}
+
 The \cdf{for} and \cdf{as} clauses iterate by using one or more local 
-loop  variables that are initialized to some value and that 
+loop variables that are initialized to some value and that 
 can be modified or stepped after each iteration.  
 For these clauses, iteration terminates when a local
 variable reaches some specified value or when some other loop clause
@@ -543,6 +855,16 @@ increment or a decrement or can be assigned a new value by
 the evaluation of 
 an expression.  Destructuring can be used to assign initial values to 
 variables during iteration.
+
+Выражения \cdf{for} и \cdf{as} выполняют тело цикла для одной или
+нескольких переменных, которые вначале инициализируются некоторым
+значением, затем наращиваются после каждой итерации.  Для этих
+выражений цикл завершается после того, как локальная переменная
+достигает последнего указанного значения, или срабатывает какое-либо
+другое завершающее выражение. На каждой итерации переменная может быть
+увеличена, уменьшена, или ей может быть связана с значением некоторого
+выражения. Для присваивания первоначальных значений может
+использоваться деструктуризация.
 
 The \cdf{for} and \cdf{as} keywords are synonyms and may be used
 interchangeably.  There are
@@ -553,6 +875,14 @@ argument.  If \emph{var\/} is a destructuring list, the data type
 specified by the \emph{type-spec\/} argument must appropriately match
 the elements of the list (see sections~\ref{LOOP-TYPES-SECTION}
 and~\ref{LOOP-DESTRUCTURING-SECTION}).
+
+Ключевые символы \cdf{for} и \cdf{as} являются синонимами,
+соответственно взаимозаменяемы. Для этих конструкций существует семь
+синтаксических представлений. В каждой из них для переменной
+\emph{var} опционально можно задать тип \emph{type-spec}. Если
+\emph{var} является списком для деструктуризации, \emph{type-spec}
+должен соответственно описывать элементы списка (смотрите
+разделы~\ref{LOOP-TYPES-SECTION} и~\ref{LOOP-DESTRUCTURING-SECTION})
 
 \begin{defloop}
 for var [type-spec] [{\!from! | \!downfrom! | \!upfrom!} expr1]
@@ -986,15 +1316,25 @@ of the expression \emph{expr}.  The \emph{expr} argument is evaluated one time
 in the loop prologue.  If the expression evaluates to zero or 
 to a negative number, the loop body is not evaluated.
 
+Конструкция \cdf{repeat} завершает цикл после указанного количества
+итераций.  Тело цикла выполняется \emph{n} раз, где \emph{n} является
+значением выражения \emph{expr}. Аргумент \emph{expr} вычисляется
+единожды в прологе цикла. Если выражение возвращает ноль или
+отрицательное число, тело цикла не выполняется.
 
-  The clause \cdf{repeat} \emph{n} is roughly equivalent to a clause
-  such as 
+The clause \cdf{repeat} \emph{n} is roughly equivalent to a clause
+such as
 \begin{lisp}
 for \emph{internal-variable} downfrom (- \emph{n} 1) to 0
 \end{lisp}
-but, in some implementations, the \cdf{repeat} construct might 
-   be more efficient.
+but, in some implementations, the \cdf{repeat} construct might be more
+efficient.
 
+Выражение \cdf{repeat} \emph{n} примерно похоже на выражение
+\begin{lisp}
+for \emph{internal-variable} downfrom (- \emph{n} 1) to 0
+\end{lisp}
+но на некоторых реализациях \cdf{repeat} может быть более эффективна.
 
 Examples:
 \begin{lisp}
@@ -1009,16 +1349,36 @@ What I say three times is true \\*
 ~~~~~~do (format t "What you see is what you expect{\Xtilde}\%")) \\*
 ~~~\EV~NIL
 \end{lisp}
-\end{defloop}
 
+Примеры:
+\begin{lisp}
+(loop repeat 3 \`;\textrm{Напечатает 3 строки}\\*
+~~~~~~do (format t "То, что я скажу три раза является истиной{\Xtilde}\%")) \\*
+То, что я скажу три раза является истиной \\*
+То, что я скажу три раза является истиной \\*
+То, что я скажу три раза является истиной \\*
+~~~\EV~NIL \\
+ \\
+(loop repeat -15 \`;\textrm{Ничего не напечатает}\\*
+~~~~~~do (format t "То что вы видите, это то, что вы ожидаете{\Xtilde}\%")) \\*
+~~~\EV~NIL
+\end{lisp}
+\end{defloop}
 
 
 \section{End-Test Control}
 \label{LOOP-TEST-SECTION}
 
+\section{Проверка завершения}
+\label{LOOP-TEST-SECTION}
+
 The loop keywords \cdf{always}, \cdf{never}, \cdf{thereis},
 \cdf{until}, and \cdf{while} designate constructs that use a single test 
 condition to determine when loop iteration should terminate.
+
+Ключевые символы \cdf{always}, \cdf{never}, \cdf{thereis}, \cdf{until}
+и \cdf{while} обозначают конструкции, которые с помощью условия
+проверяют должен ли быть завершён цикл.
 
 The constructs \cdf{always}, \cdf{never}, and \cdf{thereis} provide
 specific values to be returned when a loop terminates.  
@@ -1082,17 +1442,17 @@ always expr \\
 never expr \\
 thereis expr
 
-The \cdf{always} construct takes one form and terminates the loop 
-  if the form ever evaluates to \cdf{nil}; in this case, it returns
-  \cdf{nil}.  Otherwise, it provides a default return value of \cdf{t}.
+The \cdf{always} construct takes one form and terminates the loop if
+the form ever evaluates to \cdf{nil}; in this case, it returns
+\cdf{nil}.  Otherwise, it provides a default return value of \cdf{t}.
 
-  The \cdf{never} construct takes one form and terminates the loop
-  if the form ever evaluates to non-\cdf{nil}; in this case, it returns
-  \cdf{nil}.  Otherwise, it provides a default return value of \cdf{t}.
+The \cdf{never} construct takes one form and terminates the loop if
+the form ever evaluates to non-\cdf{nil}; in this case, it returns
+\cdf{nil}.  Otherwise, it provides a default return value of \cdf{t}.
 
-  The \cdf{thereis} construct takes one form and terminates the loop
-  if the form ever evaluates to non-\cdf{nil}; in this case, it returns
-  that value.
+The \cdf{thereis} construct takes one form and terminates the loop if
+the form ever evaluates to non-\cdf{nil}; in this case, it returns
+that value.
 
 If the \cdf{while} or \cdf{until} construct causes termination,
 control is passed to the loop epilogue, where any \cdf{finally}
@@ -1204,9 +1564,8 @@ Since \cdf{loop-finish} transfers control to the loop epilogue,
 using \cdf{loop-finish} within a \cdf{finally} expression can cause
 infinite looping.
 
-
-  Implementations are allowed to provide this construct as a local macro
-  by using \cdf{macrolet}.
+Implementations are allowed to provide this construct as a local macro
+by using \cdf{macrolet}.
 
 Examples:
 \begin{lisp}
@@ -1515,8 +1874,10 @@ Examples:
 \end{defloop}
 
 
-
 \section{Variable Initializations}
+\label{LOOP-VAR-SECTION}
+
+\section{Инициализация переменных}
 \label{LOOP-VAR-SECTION}
 
 A local loop variable is one that exists only when the Loop Facility
@@ -1525,7 +1886,6 @@ initialized to some value.  These local variables exist until loop
 iteration terminates, at which point they cease to exist.  Implicitly
 variables are also established by iteration control clauses and the
 \cdf{into} preposition of accumulation clauses.
-
 
 The loop keyword \cdf{with} designates a loop clause that allows you to 
 declare and initialize variables
@@ -1553,6 +1913,18 @@ and \cdf{c} in sequence:
 ~~~\EV~(1 3 6 10)
 \end{lisp}
 
+Если инициализация переменных зависит от предыдущих переменных,
+используйте последовательное связывание. Например, вы хотите
+последовательно связать переменные \cdf{a}, \cdf{b} и \cdf{c}:
+\begin{lisp}
+(loop with a = 1  \\*
+~~~~~~with b = (+ a 2)  \\*
+~~~~~~with c = (+ b 3) \\*
+~~~~~~with d = (+ c 4) \\*
+~~~~~~return (list a b c d)) \\*
+~~~\EV~(1 3 6 10)
+\end{lisp}
+
 The execution of the preceding loop is equivalent to the execution of
 the following code:
 \begin{lisp}
@@ -1567,10 +1939,32 @@ the following code:
 ~~~~~~end-loop)))
 \end{lisp}
 
+Предыдущий код эквивалентен такому:
+\begin{lisp}
+(let* ((a 1) \\*
+~~~~~~~(b (+ a 2)) \\*
+~~~~~~~(c (+ b 3)) \\*
+~~~~~~~(d (+ c 4))) \\
+~~(block nil \\*
+~~~~(tagbody \\*
+~~~~~~next-loop (return (list a b c d)) \\*
+~~~~~~~~~~~~~~~~(go next-loop) \\*
+~~~~~~end-loop)))
+\end{lisp}
 
 If you are not depending on the value of previously bound variables
 for the initialization of other local variables, you can use
 parallel bindings as follows:
+\begin{lisp}
+(loop with a = 1  \\*
+~~~~~~~and b = 2  \\*
+~~~~~~~and c = 3 \\*
+~~~~~~~and d = 4 \\*
+~~~~~~return (list a b c d)) \\*
+~~~\EV~(1 2 3 4)
+\end{lisp}
+
+Если последовательная инициализация не требуется, используйте параллельную:
 \begin{lisp}
 (loop with a = 1  \\*
 ~~~~~~~and b = 2  \\*
@@ -1595,11 +1989,28 @@ the following code:
 ~~~~~~end-loop)))
 \end{lisp}
 
+Предыдущий код эквивалентен такому:
+
+\begin{lisp}
+(let ((a 1) \\*
+~~~~~~(b 2) \\*
+~~~~~~(c 3) \\*
+~~~~~~(d 4)) \\
+~~(block nil \\*
+~~~~(tagbody \\*
+~~~~~~next-loop (return (list a b c)) \\*
+~~~~~~~~~~~~~~~~(go next-loop) \\*
+~~~~~~end-loop)))
+\end{lisp}
+
 \begin{defloop}
 with var [type-spec] [\!\Xequal! expr] {\!and! var [type-spec] [\!\Xequal! expr]}*
 
 The \cdf{with} construct initializes variables that are local to 
 a loop.  The variables are initialized one time only.
+
+Конструкция \cdf{with} инициализирует локальные переменные. Переменные
+инициализируются только один раз.
 
 If the optional \emph{type-spec\/} argument is specified for any variable 
 \emph{var\/}, but there is no related expression \emph{expr} to be evaluated, \emph{var\/}
@@ -1610,7 +2021,6 @@ It is an error to specify a \emph{type-spec\/} argument for \emph{var\/} if
 the related expression returns a value that is not of the specified type.
 The optional \cdf{and} clause forces parallel rather than sequential 
 initializations.
-
 
 Examples:
 \begin{lisp}
@@ -1649,9 +2059,16 @@ Examples:
 \section{Conditional Execution}
 \label{LOOP-COND-SECTION}
 
+\section{Условное выполнение}
+\label{LOOP-COND-SECTION}
+
 The loop keywords \cdf{if}, \cdf{when}, and \cdf{unless} designate constructs that 
 are useful when you want some loop clauses to operate under a specified
 condition.
+
+Ключевые символы \cdf{if}, \cdf{when} и \cdf{unless} обозначают
+конструкцию, которая полезна, когда вы хотите выполнить некоторые
+действия только при выполнении некоторого условия.
 
 If the specified condition is true, the succeeding loop clause
 is executed.  If the specified condition is not true, the succeeding clause is
@@ -1661,6 +2078,13 @@ keyword \cdf{else}.  If the specified condition is not true and no
 is skipped.  Several clauses can be connected into
 one compound clause with the loop keyword \cdf{and}.
 The end of the conditional clause can be marked with the keyword \cdf{end}.
+
+Если условие истинно, выполняется следующее выражение. Если условие
+ложно, следующее выражение пропускается и выполнение переходит к
+выражению в ветке \cdf{else}. Если условие ложно и ветка \cdf{else}
+отсутствует, всё выражение просто пропускается. Несколько выражений
+могут объединены в одно с помощью \cdf{and}. Конец условного выражения
+можно обозначить символом \cdf{end}.
 
 \begin{defloop}
 if expr clause {\!and! clause}*
@@ -1672,13 +2096,20 @@ unless expr clause {\!and! clause}*
 
 The constructs \cdf{when} and \cdf{if} allow conditional execution of
 loop clauses.  These constructs are synonyms and
-can be used interchangeably.  [Compare this to the \emph{macro} \cdf{when},
-which does not allow an ``else'' part.---GLS]
+can be used interchangeably.
+
+Конструкции \cdf{when} и \cdf{if} выполняют действия в зависимости от
+условия. Эти конструкции являются синонимами и соответственно взаимозаменяемы.
 
 If the value of the test expression \emph{expr\/} is non-\cdf{nil}, the expression
 \emph{clause1\/} is evaluated. If the test expression evaluates to \cdf{nil}
 and an \cdf{else} construct is specified, the statements that follow the
 \cdf{else} are evaluated; otherwise, control passes to the next clause.
+
+Если значение условия \emph{expr} не-\cdf{nil}, выполняется выражение
+\emph{clause1}. Если условие возвращает \cdf{nil} и указана ветка
+\cdf{else} выполняются выражения в этой ветке, иначе выполнение
+переходит к следующему выражению.
 
 The \cdf{unless} construct is equivalent to \cdf{when} (\cdf{not} 
 \emph{expr\/}) and \cdf{if} (\cdf{not} \emph{expr\/}).
@@ -1692,11 +2123,22 @@ which does not allow an ``else'' part---or do I mean a ``then'' part?!  Ugh.
 To prevent confusion, I strongly recommend as a matter of style
 that \cdf{else} not be used with \cdf{unless} loop clauses.---GLS]
 
+Конструкция \cdf{unless} эквивалентна конструкциям \cdf{when}
+(\cdf{not} \emph{expr}) и \cdf{if} (\cdf{not} \emph{expr}). Если
+значение условия \cdf{nil}, выполняется выражение \emph{clause1}. Если
+условие не-\cdf{nil} выполняется ветка \cdf{else}, иначе выполнение
+переходит к следующей конструкции.
+
 The \emph{clause\/} arguments must be either accumulation, unconditional,
 or conditional clauses (see section~\ref{LOOP-KINDS-SECTION}).
 Clauses that follow the test expression can be grouped by using the 
 loop keyword \cdf{and} to produce a compound 
 clause.
+
+Аргументы \emph{clause} должны быть или накоплением значения,
+безусловным или условным выполнением (смотрите
+раздел~\ref{LOOP-KINDS-SECTION}). Выражения, которые следуют после
+условия, могут группироваться с помощью \cdf{and}.
 
 The loop keyword \cdf{it} can be used to refer to the result of
 the test expression in a clause.  If multiple clauses are connected with \cdf{and},
@@ -1704,9 +2146,19 @@ the \cdf{it} construct must be used in the first
 clause in the block.  Since \cdf{it} is a loop keyword, \cdf{it} may not be used
 as a local variable within a loop.
 
+Для ссылки на результат условия может использоваться символ
+\cdf{it}. Если выражения были сгруппированы с помощью \cdf{and},
+\cdf{it} должна использоваться только в первом выражении в
+блоке. Таким образом \cdf{it} не может использоваться в качестве
+локальной переменной внутри \cdf{loop}.
+
 If \cdf{when} or \cdf{if} clauses are nested, each \cdf{else} is
 paired with the closest preceding \cdf{when} or \cdf{if} construct that has
 no associated \cdf{else}.
+
+Если \cdf{when} или \cdf{if} вложены, каждый \cdf{else} относится к
+ближайшему предшествующему \cdf{when} или \cdf{if}, у которого ещё не
+было \cdf{else}.
 
 The optional loop keyword \cdf{end} marks the end of the clause.  If this
 keyword is not specified, the next loop keyword marks the end.  You can use
@@ -1780,18 +2232,101 @@ keyword is not specified, the next loop keyword marks the end.  You can use
 ~~~~~~~~~~~~~~end \\*
 ~~~~~~~~~~and do (princ " c"))
 \end{lisp}
+
+Конец можно обозначить необязательным символом \cdf{end}. Если этот
+символ не указан, конструкция заканчивается там, где начинается
+следующая, обозначенная символом. Вы можете использовать \cdf{end} для
+ограничения пространство составных выражений.
+\begin{lisp}
+;;; Группирует условные выражение в блок. \\*
+(loop for i in numbers-list \\*
+~~~~~~when (oddp i) \\*
+~~~~~~~~do (print i) \\*
+~~~~~~~~and collect i into odd-numbers \\*
+~~~~~~~~and do (terpri) \\
+~~~~~~else~~~~~;\textrm{\cdf{I} is even} \\*
+~~~~~~~~collect i into even-numbers \\*
+~~~~~~finally \\*
+~~~~~~~~(return (values odd-numbers even-numbers)))
+\end{lisp}
+\begin{lisp}
+;;; Накапливает числа, большие чем 3. \\*
+(loop for i in '(1 2 3 4 5 6) \\*
+~~~~~~when (and (> i 3) i) \\*
+~~~~~~collect it)~~~~~;\textrm{\cdf{it} ссылается на \cd{(and (> i 3) i)}} \\*
+~~~\EV~(4 5 6)
+\end{lisp}
+\begin{lisp}
+;;; Ищет числа в списке. \\*
+(loop for i in '(1 2 3 4 5 6) \\*
+~~~~~~when (and (> i 3) i) \\*
+~~~~~~return it) \\*
+~~~\EV~4
+\end{lisp}
+\begin{lisp}
+;;; То же что и в предыдущем примере. \\*
+(loop for i in '(1 2 3 4 5 6) \\*
+~~~~~~thereis (and (> i 3) i)) \\*
+~~~\EV~4
+\end{lisp}
+\begin{lisp}
+;;; Пример использования UNLESS с ELSE.\`\textrm{---GLS} \\*
+(loop for turtle in teenage-mutant-ninja-turtles do\\*
+~~(loop for x in '(joker brainiac shredder krazy-kat) \\*
+~~~~~~~~unless (evil x) \\*
+~~~~~~~~~~do (eat (make-pizza :anchovies t)) \\*
+~~~~~~~~else unless (and (eq x 'shredder) (attacking-p x))\\*
+~~~~~~~~~~~~~~~do (cut turtle slack)\,;\textrm{Когда злой Шрёдер атакует,} \\*
+~~~~~~~~~~~~~else (fight turtle x)))\,;\,\textrm{эти черепашки-ниндзя дают ему отпор.}
+\end{lisp}
+\goodbreak
+\begin{lisp}
+;;; Вложенные условные выражения. \\*
+(loop for i in list \\*
+~~~~~~when (numberp i) \\*
+~~~~~~~~when (bignump i) \\*
+~~~~~~~~~~collect i into big-numbers \\*
+~~~~~~~~else~~~~~;\textrm{Not \cd{(bignump i)}} \\*
+~~~~~~~~~~collect i into other-numbers \\
+~~~~~~else~~~~~;\textrm{Not \cd{(numberp i)}} \\*
+~~~~~~~~when (symbolp i)  \\*
+~~~~~~~~~~collect i into symbol-list \\*
+~~~~~~~~else~~~~~;\textrm{Not \cd{(symbolp i)}} \\*
+~~~~~~~~~~(error "нашёл интересное значение в списке {\Xtilde}S, значение {\Xtilde}S{\Xtilde}\%" \\*
+~~~~~~~~~~~~~~~~"list i)) \\
+ \\
+;;; Без маркера END последнее AND должно примениться к \\*
+;;; внутреннему IF, а не к внешнему. \\*
+(loop for x from 0 to 3  \\*
+~~~~~~do (print x) \\*
+~~~~~~if (zerop (mod x 2)) \\*
+~~~~~~~~do (princ " a") \\*
+~~~~~~~~~~and if (zerop (floor x 2)) \\*
+~~~~~~~~~~~~~~~~do (princ " b") \\*
+~~~~~~~~~~~~~~end \\*
+~~~~~~~~~~and do (princ " c"))
+\end{lisp}
 \end{defloop}
 
 
 \section{Unconditional Execution}
 \label{LOOP-UNCOND-SECTION}
 
+\section{Безусловное выполнение}
+\label{LOOP-UNCOND-SECTION}
 
 The loop construct \cdf{do} (or \cdf{doing}) takes one or more expressions
 and simply evaluates them in order.
 
 The loop construct \cdf{return} takes one expression and returns its value.  It 
 is equivalent to the clause \cd{do~(return \emph{value\/})}.
+
+Конструкция \cdf{do} (или \cdf{doing}) принимает одно или более
+выражений и просто их выполняет в исходном порядке.
+
+Конструкция \cdf{return} принимает одно выражение и возвращает его
+значение. Оно эквивалентно такому выражению: \cd{do~(return
+  \emph{value\/})}.
 
 \begin{defloop}
 do {expr}* \\
@@ -1800,8 +2335,14 @@ doing {expr}*
 The \cdf{do} construct simply evaluates the specified expressions
 wherever they occur in the expanded form of \cdf{loop}.
 
+Конструкция \cdf{do} просто выполняет указанные выражения. Конструкция
+может быть использована в любом месте формы \cdf{loop}.
+
 The \emph{expr\/} argument can be any non-atomic Common Lisp form.
 Each \emph{expr\/} is evaluated in every iteration.
+
+Аргумент \emph{expr} может быть любой неатомной Common Lisp'овой формой.
+Каждое выражение \emph{expr} вычисляется на каждой итерации цикла.
 
 The constructs \cdf{do}, \cdf{initially}, and \cdf{finally} are the
 only loop keywords that take an arbitrary number of forms and group
@@ -1809,6 +2350,12 @@ them as if using an implicit \cdf{progn}.
 Because every loop clause must begin with a loop keyword, you would use
 the keyword \cdf{do} when no control action other than execution is 
 required.
+
+Только конструкции \cdf{do}, \cdf{initially} и \cdf{finally} принимают
+несколько форм и группируют их как неявный \cdf{progn}.  Так как
+каждое выражение цикла \cdf{loop} начинается с ключевого символа,
+когда требуется просто выполнение некоторых действий, вы должны
+использовать ключевой символ \cdf{do}.
 
 Examples:
 \begin{lisp}
@@ -1827,6 +2374,34 @@ Examples:
 (loop for i from 1 to 4 \\*
 ~~~~~~do (print i) \\*
 ~~~~~~~~~(print (* i i))) \`;\textrm{Prints 8 lines} \\
+1  \\*
+1  \\*
+2  \\*
+4  \\*
+3  \\*
+9  \\*
+4  \\*
+16  \\*
+~~~\EV~NIL
+\end{lisp}
+
+Примеры:
+\begin{lisp}
+;;; Напечатает несколько чисел \\*
+(loop for i from 1 to 5 \\*
+~~~~~~do (print i)) \`;\textrm{Напечатает 5 строк} \\*
+1 \\*
+2 \\*
+3 \\*
+4 \\*
+5 \\*
+~~~\EV~NIL \\
+ \\
+;;; Напечатает числа и их квадраты. \\*
+;;; Конструкция DO применяется к нескольким формам. \\*
+(loop for i from 1 to 4 \\*
+~~~~~~do (print i) \\*
+~~~~~~~~~(print (* i i))) \`;\textrm{Напечатает 8 строк} \\
 1  \\*
 1  \\*
 2  \\*
@@ -1879,26 +2454,46 @@ Examples:
 \section{Miscellaneous Features}
 \label{LOOP-MISC-SECTION}
 
+\section{Дополнительные возможности}
+\label{LOOP-MISC-SECTION}
+
 The Loop Facility provides the \cdf{named} construct to name a loop so that
 the Common Lisp special operator \cdf{return-from} can be used.
+
+Для задания имени цикла используется конструкция \cdf{named}. Данное
+имя впоследствии можно использовать в \cdf{return-from}.
 
 The loop keywords \cdf{initially} and \cdf{finally} designate loop constructs that cause
 expressions to be evaluated before and after the loop body, respectively.
 
+Символы \cdf{initially} и \cdf{finally} обозначают выражения, которые
+будут выполнены перед и после тела цикла соответственно.
 
-  The code for any \cdf{initially} clauses is collected
-  into one \cdf{progn} in the order in which the clauses appeared in
-  the loop.  The collected code is executed once in the loop prologue
-  after any implicit variable initializations.
+The code for any \cdf{initially} clauses is collected into one
+\cdf{progn} in the order in which the clauses appeared in the loop.
+The collected code is executed once in the loop prologue after any
+implicit variable initializations.
 
-  The code for any \cdf{finally} clauses is collected 
-  into one \cdf{progn} in the order in which the clauses appeared in
-  the loop.  The collected code is executed once in the loop epilogue
-  before any implicit values are returned from the accumulation clauses.
-  Explicit returns in the loop body, however, will exit the loop
-  without executing the epilogue code.
+Выражения после всех \cdf{initially} собираются в один \cdf{progn} в
+исходном порядке. Сгруппированный код выполняется единожды перед
+началом итераций.
+
+The code for any \cdf{finally} clauses is collected into one
+\cdf{progn} in the order in which the clauses appeared in the loop.
+The collected code is executed once in the loop epilogue before any
+implicit values are returned from the accumulation clauses.  Explicit
+returns in the loop body, however, will exit the loop without
+executing the epilogue code.
+
+Выражения после всех \cdf{finally} собираются в один \cdf{progn} в
+исходном порядке. Сгруппированный код выполняется единожды после
+выполнения всех итераций в эпилоге перед неявным возвратом значений. В
+случае явного выхода из цикла, эпилог не выполняется.
 
 \subsection{Data Types}
+\label{LOOP-TYPES-SECTION}
+
+\subsection{Типы данных}
 \label{LOOP-TYPES-SECTION}
 
 Many loop constructs take a \emph{type-spec\/} argument that
@@ -1910,9 +2505,13 @@ more efficient \cdf{loop}
 expansion. 
 In some implementations,
 fixnum and float declarations are especially
-useful; the compiler notices them and emits more efficient code.  
+useful; the compiler notices them and emits more efficient code.
 
-
+Многие конструкции принимают аргумент \emph{type-spec}, который
+позволяет задать тип для переменной. Конечно в этом нет прямой
+необходимости, но декларации типов упрощают дальнейшую работу с
+программой. Декларация типов также помогает компилятору оптимизировать
+программу. Особенно это касается типов fixnum и float.
 
 The \emph{type-spec\/} argument has the following syntax:
 \begin{tabbing}
@@ -1926,12 +2525,31 @@ as described in section~\ref{LOOP-DESTRUCTURING-SECTION}.  If the
 \cdf{float}, \cdf{t}, or \nil, the \cdf{of-type} keyword is optional.  The
 \cdf{of-type} construct is optional in these cases to provide backward
 compatibility; thus the following two expressions are the same:
-
 \begin{lisp}
 ;;; This expression uses the old syntax for type specifiers. \\*
 (loop for i fixnum upfrom 3 ...) \\
  \\
 ;;; This expression uses the new syntax for type specifiers. \\*
+(loop for i of-type fixnum upfrom 3 ...)
+\end{lisp}
+
+Аргумент \emph{type-spec} выглядит так:
+\begin{tabbing}
+\emph{type-spec\/} ::= \cdf{of-type} \emph{d-type-spec} \\
+\emph{d-type-spec\/} ::= \emph{type-specifier\/} {\Mor} \cd{(\emph{d-type-spec} . \emph{d-type-spec})}
+\end{tabbing}
+На месте \emph{type-specifier} может быть любой спецификатор
+типа. Аргумент \emph{d-type-spec} используется для деструктуризации,
+как написано в разделе~\ref{LOOP-DESTRUCTURING-SECTION}. Если аргумент
+\emph{d-type-spec} состоит только из ключевых слов \cdf{fixnum},
+\cdf{float}, \cdf{t} или \nil, символ \cdf{of-type} необязателен. Это
+оставлено для обратной совместимости.
+
+\begin{lisp}
+;;; Старый стиль кода. \\*
+(loop for i fixnum upfrom 3 ...) \\
+ \\
+;;; Новый стиль кода. \\*
 (loop for i of-type fixnum upfrom 3 ...)
 \end{lisp}
 
@@ -1945,7 +2563,6 @@ is matched with the values in the values list.  If there are more variables
 in the variable list than there are values in the values list, the 
 remaining variables are given a value of \cdf{nil}.  If there are more
 values than variables listed, the extra values are discarded.
-
 
 Suppose you want to assign values from a list to the variables \cdf{a},
 \cdf{b}, and \cdf{c}.  You could use one \cdf{for} clause to
@@ -1994,27 +2611,25 @@ to simplify the process further.
 ~~~\EV~(1.0 2.0 3 4 NIL NIL)
 \end{lisp}
 
-  A data type specifier for a destructuring pattern is a tree of type
-  specifiers with the same shape as the tree of variables, with the
-  following exceptions:
+A data type specifier for a destructuring pattern is a tree of type
+specifiers with the same shape as the tree of variables, with the
+following exceptions:
 
-  \begin{itemize}
+\begin{itemize}
 
-  \item  When aligning the trees, an atom in the type specifier tree that
+\item When aligning the trees, an atom in the type specifier tree that
   matches a cons in the variable tree declares the same type for each
   variable.
 
-  \item  A cons in the type specifier tree that matches an atom in the
+\item A cons in the type specifier tree that matches an atom in the
   variable tree is a non-atomic type specifer.
 
-  \end{itemize}
+\end{itemize}
    
 \begin{lisp}
 ;;; Declare X and Y to be of type VECTOR and FIXNUM, respectively. \\*
 (loop for (x y) of-type (vector fixnum) in my-list do ...)
 \end{lisp}
-
-
 
 If \cdf{nil} is used in a destructuring list, no variable is provided for
 its place.

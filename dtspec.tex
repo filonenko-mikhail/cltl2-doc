@@ -1145,36 +1145,6 @@ double-float&number&simple-bit-vector&vector
 \cdf{make-array} и подобных ей функций: то, что вы просите, необязательно
 является тем, что вы получите.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
-to eliminate the differing treatment of types
-when used ``for discrimination'' rather than ``for declaration'' on the grounds
-that implementors have not treated the distinction consistently
-and (which is more important) users have found the distinction confusing.
-
-As a consequence of this change, the behavior of \cdf{typep} and \cdf{subtypep}
-on \cdf{array} and \cdf{complex} type specifiers must be modified.
-See the descriptions of those functions.  In particular, under their new
-behavior, implementation B would say ``yes,'' agreeing with implementation A,
-in the discussion above.
-
-Note that the distinction between declaration and discrimination remains
-useful, if only so that we may remark that the specialized (list)
-form of the
-\cdf{function} type specifier may still be used only for declaration and
-not for discrimination.
-\end{new}
-
-\begin{new}
-X3J13 voted in June 1988 \issue{FUNCTION-TYPE} to clarify that
-while the specialized form of the \cdf{function} type specifier
-(a list of the symbol \cdf{function} possibly followed by
-argument and value type specifiers)
-may be used only for declaration, the symbol form (simply the name
-\cdf{function}) may be used for discrimination.
-\end{new}
-
 Далее перечислены возможные имена типов, которые задаются списком:
 
 \begin{flushdesc}
@@ -1206,10 +1176,10 @@ may be used only for declaration, the symbol form (simply the name
   массивов, включая, например, массивы, которые могут хранить только строковые
   символы. Сейчас \cd{(array character)} не является подмножеством \cd{(array~t)};
   два множества фактически непересекаются, потому что \cd{(array character)} не
-  является множеством всех массивов, которые могут хранить строковые символы, а
+  является множеством всех массивов, которые могут хранить буквы, а
   является множеством массивов, которые специализированы хранить именно символы и
   никакие другие объекты FIXME. Поэтому проверка, может ли массив \cdf{foo} хранить
-  строковые символы, не может быть такой:
+  буквы, не может быть такой:
   \begin{lisp}
     (typep foo '(array character))
   \end{lisp}
@@ -1218,115 +1188,6 @@ may be used only for declaration, the symbol form (simply the name
     (subtypep 'character (array-element-type foo))
   \end{lisp}
   Смотрите \cdf{array-element-type}.
-\begin{new}
-X3J13 voted in January 1989
-\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
-to change \cdf{typep} and \cdf{subtypep}
-so that the specialized \cdf{array} type specifier
-means the same thing for discrimination
-as for declaration: it encompasses those arrays
-that can result by specifying \emph{element-type} as the element type
-to the function \cdf{make-array}.
-Under this interpretation \cd{(array character)} might be
-the same type as \cd{(array t)}
-(although it also might not be the same).
-See \cdf{upgraded-array-element-type}.
-However,
-\begin{lisp}
-(typep foo '(array character))
-\end{lisp}
-is still not a legitimate test of whether the array
-\cdf{foo} can hold a character; one must still say
-\begin{lisp}
-(subtypep 'character (array-element-type foo))
-\end{lisp}
-to determine that question.
-
-X3J13 also voted in January 1989
-\issue{DECLARE-ARRAY-TYPE-ELEMENT-REFERENCES}
-to specify that within the lexical scope of an array type declaration,
-it is an error for an array element, when referenced, not to be
-of the exact declared element type.  A compiler may, for example,
-treat every reference to an element of a declared array as if
-the reference were surrounded by a \cdf{the} form mentioning the
-declared array element type (\emph{not} the upgraded array element type).  Thus
-\begin{lisp}
-(defun snarf-hex-digits (the-array) \\*
-~~(declare (type (array (unsigned-byte 4) 1) the-array)) \\*
-~~(do ((j (- (length array) 1) (- j 1)) \\*
-~~~~~~~(val 0 (logior (ash val 4) \\*
-~~~~~~~~~~~~~~~~~~~~~~(aref the-array j)))) \\*
-~~~~~~((< j 0) val)))
-\end{lisp}
-may be treated as
-\begin{lisp}
-(defun snarf-hex-digits (the-array) \\*
-~~(declare (type (array (unsigned-byte 4) 1) the-array)) \\*
-~~(do ((j (- (length array) 1) (- j 1)) \\*
-~~~~~~~(val 0 (logior (ash val 4) \\*
-~~~~~~~~~~~~~~~~~~~~~~(the (unsigned-byte 4) \\*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~(aref the-array j))))) \\*
-~~~~~~((< j 0) val)))
-\end{lisp}
-The declaration amounts to a promise by the user that the \cdf{aref}
-will never produce a value outside the interval 0 to 15, even if
-in that particular implementation the array element type
-\cd{(unsigned-byte 4)} is upgraded to, say, \cd{(unsigned-byte 8)}.
-If~such upgrading does occur, then values outside that range may in fact
-be stored in \cdf{the-array}, as long as the code in \cdf{snarf-hex-digits}
-never sees them.
-
-As a general rule, a compiler would be justified in transforming
-\begin{lisp}
-(aref (the (array \emph{elt-type} ...) \emph{a}) ...)
-\end{lisp}
-into
-\begin{lisp}
-(the \emph{elt-type} (aref (the (array \emph{elt-type} ...) \emph{a}) ...)
-\end{lisp}
-It may also make inferences involving more complex functions,
-such as \cdf{position} or \cdf{find}.
-For example, \cdf{find} applied to an array always returns either \cdf{nil}
-or an object whose type is the element type of the array.
-\end{new}
-
-\begin{new}
-X3J13 voted in January 1989
-\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
-to change \cdf{typep} and \cdf{subtypep}
-so that the specialized \cdf{array} type specifier
-means the same thing for discrimination
-as for declaration: it encompasses those arrays
-that can result by specifying \emph{element-type} as the element type
-to the function \cdf{make-array}.
-Under this interpretation \cd{(array character)} might be
-the same type as \cd{(array t)}
-(although it also might not be the same).
-See \cdf{upgraded-array-element-type}.
-However,
-\begin{lisp}
-(typep foo '(array character))
-\end{lisp}
-is still not a legitimate test of whether the array
-\cdf{foo} can hold a character; one must still say
-\begin{lisp}
-(subtypep 'character (array-element-type foo))
-\end{lisp}
-to determine that question.
-
-As a general rule, a compiler would be justified in transforming
-\begin{lisp}
-(aref (the (array \emph{elt-type} ...) \emph{a}) ...)
-\end{lisp}
-into
-\begin{lisp}
-(the \emph{elt-type} (aref (the (array \emph{elt-type} ...) \emph{a}) ...)
-\end{lisp}
-It may also make inferences involving more complex functions,
-such as \cdf{position} or \cdf{find}.
-For example, \cdf{find} applied to an array always returns either \cdf{nil}
-or an object whose type is the element type of the array.
-\end{new}
 
 \item[\cd{(simple-array \emph{element-type} \emph{sizes})}]
   Данная запись эквивалентна \cd{(array \emph{element-type} \emph{sizes})} за
@@ -1365,17 +1226,6 @@ or an object whose type is the element type of the array.
   where giving two integers to the function \cdf{complex} results
   in an object of type \cd{(complex rational)}.
 
-\begin{new}
-X3J13 voted in January 1989
-\issue{ARRAY-TYPE-ELEMENT-TYPE-SEMANTICS}
-to change \cdf{typep} and \cdf{subtypep}
-so that the specialized \cdf{complex}
-type specifier means the same thing for discrimination purposes
-as for declaration purposes.
-See \cdf{upgraded-complex-part-type}.
-\end{new}
-
-
 \item[\cd{(function (\emph{argument-type-1} \emph{argument-type-2} ...) \emph{value-type})}]
   \relax Этот тип может использоваться только для декларации и не может для
   распознавания; \cdf{typep} будет сигнализировать ошибку, если ей будет передан
@@ -1388,7 +1238,7 @@ See \cdf{upgraded-complex-part-type}.
 
 \item[\cd{(values \emph{value-type-1} \emph{value-type-2} ...)}]
   Данный тип используется только в двух случаях: только как \emph{value-type}
-  для спецификатора типа \emph{функции} и в специальной форме \cdf{the}. Данный
+  для спецификатора типа \emph{функции} и в операторе \cdf{the}. Данный
   спецификатор используется для задания типов в случаях возврата нескольких
   значений.
   В списке с типами могут использоваться маркеры \cd{\&optional}, \cd{\&rest} и
@@ -1492,8 +1342,7 @@ See \cdf{upgraded-complex-part-type}.
 спецификаторов типов.
 
 \begin{defmac}
-deftype name lambda-list
-  <{declaration}* | doc-string> {form}*
+deftype name lambda-list <{declaration}* | doc-string> {form}*
 
 Данный макрос весьма схож с формой \cdf{defmacro}: \emph{name} является
 символом, который будет определять имя будущего спецификатора типа,
@@ -1577,39 +1426,39 @@ coerce object result-type
 В целом, невозможно преобразовать любой объект в объект любого другого
 типа. Допускаются только следующие преобразования.
 \begin{itemize}
-\item
-  Любой тип последовательности может быть преобразован в другой тип
-  последовательности. Новый тип последовательности будет содержать все
-  объекты из старой последовательности (если это невозможно, тогда возникнет
-  ошибка). Если \cdf{result-type} задан как \cdf{array}, тогда будет использоваться
-  \cd{(array t)}. Также может использоваться специализированный тип такой, как
-  \cdf{string} или \cd{(vector (complex short-float))}; конечно, результат в
-  зависимости от реализации может быть более общим типом.
-  Элементы новой последовательности будут равны \cdf{eql} соответствующим
-  элементам старой последовательности.
-  Если последовательность уже принадлежит заданному типу, она может быть просто
-  возвращена без копирования. В таком случае \cd{(coerce
-    \emph{последовательность} \emph{тип})} отличается от \cd{(concatenate
-    \emph{тип} \emph{последовательность})}, так как последняя требует
-  копирования аргумента \emph{последовательность}.
+\item Любой тип последовательности может быть преобразован в другой
+  тип последовательности. Новый тип последовательности будет содержать
+  все объекты из старой последовательности (если это невозможно, тогда
+  возникнет ошибка). Если \cdf{result-type} задан как \cdf{array},
+  тогда будет использоваться \cd{(array t)}. Также может
+  использоваться специализированный тип такой, как \cdf{string} или
+  \cd{(vector (complex short-float))}; конечно, результат в
+  зависимости от реализации может быть более общим типом.  Элементы
+  новой последовательности будут равны \cdf{eql} соответствующим
+  элементам старой последовательности.  Если последовательность уже
+  принадлежит заданному типу, она может быть просто возвращена без
+  копирования. В таком случае \cd{(coerce \emph{последовательность}
+    \emph{тип})} отличается от \cd{(concatenate \emph{тип}
+    \emph{последовательность})}, так как последняя требует копирования
+  аргумента \emph{последовательность}.
 
   \begin{lisp}
     (coerce '(a b c) 'vector) \EV\ \#(a b c)
   \end{lisp}
 
-\cdf{coerce} должен сигнализировать ошибку, если новая тип новой
-последовательности определеяет некоторое количество элементов, а длина старой
-последовательности от него отличается.
+  \cdf{coerce} должен сигнализировать ошибку, если новая тип новой
+  последовательности определеяет некоторое количество элементов, а
+  длина старой последовательности от него отличается.
 
-Если \emph{result-type} является строкой (\cdf{string}), тогда под ним
-понимается \cd{(vector character)}, и под \cdf{simple-string} понимается
-\cd{(simple-array character (*))}.
+  Если \emph{result-type} является строкой (\cdf{string}), тогда под
+  ним понимается \cd{(vector character)}, и под \cdf{simple-string}
+  понимается \cd{(simple-array character (*))}.
 
-\item
-  Любое некомплексное число может быть приведено к \cdf{short-float},
-  \cdf{single-float}, \cdf{double-float} или \cdf{long-float}. Если тип указан с
-  плавающей точкой и \emph{объект} не является числом с плавающей точкой, тогда
-  объект преобразовывается в \cdf{single-float}.
+\item Любое некомплексное число может быть приведено к
+  \cdf{short-float}, \cdf{single-float}, \cdf{double-float} или
+  \cdf{long-float}. Если тип указан с плавающей точкой и \emph{объект}
+  не является числом с плавающей точкой, тогда объект
+  преобразовывается в \cdf{single-float}.
 
   \begin{lisp}
     (coerce 0 'short-float) \EV\ 0.0S0 \\
@@ -1617,12 +1466,12 @@ coerce object result-type
     (coerce 7/2 'float) \EV\ 3.5
   \end{lisp}
 
-\item
-  Любое число может быть приведено к комплексному. Если число ещё не является
-  комплексным, тогда мнимая часть будет равна нулю, который будет преобразован в
-  тип, соответствующий типу действительной части. (Если полученная
-  действительная часть является рациональным числом, тогда результат немедленно
-  будет преобразован из комплексного обратно в рациональный.)
+\item Любое число может быть приведено к комплексному. Если число ещё
+  не является комплексным, тогда мнимая часть будет равна нулю,
+  который будет преобразован в тип, соответствующий типу
+  действительной части. (Если полученная действительная часть является
+  рациональным числом, тогда результат немедленно будет преобразован
+  из комплексного обратно в рациональный.)
 
   \begin{lisp}
     (coerce 4.5s0 'complex) \EV\ \#C(4.5S0 0.0S0) \\
@@ -1631,28 +1480,26 @@ coerce object result-type
     ~~~\EV\ \#C(3.5D0 0.0D0)
   \end{lisp}
 
-\item
-  Любой объект может быть приведён к типу \cdf{t}.
+\item Любой объект может быть приведён к типу \cdf{t}.
   \begin{lisp}
     (coerce x 't) \EQ\ (identity x) \EQ\ x
   \end{lisp}
 
-\item
-  Символ или лямбда-выражение может быть преобразовано к функции.
-  Символ приводится к типу \cdf{function}, как если бы к нему была применена
-  функция \cdf{symbol-function}. Если символ не связан (\cdf{fboundp} symbol ->
-  false), или символ связан с макросом или специальной формой сигнализируется
-  ошибка.
-  Список \emph{x}, чей \emph{car} является символом \cdf{lambda} приводится к
-  функции, как если бы было вычислено выражение \cd{(eval {\Xbq}\#',\emph{x})},
-  или \cd{(eval (list 'function~\emph{x}))}.
+\item Символ или лямбда-выражение может быть преобразовано к функции.
+  Символ приводится к типу \cdf{function}, как если бы к нему была
+  применена функция \cdf{symbol-function}. Если символ не связан
+  (\cdf{fboundp} symbol -> false), или символ связан с макросом или
+  оператором, сигнализируется ошибка.  Список \emph{x}, чей \emph{car}
+  является символом \cdf{lambda} приводится к функции, как если бы
+  было вычислено выражение \cd{(eval {\Xbq}\#',\emph{x})}, или
+  \cd{(eval (list 'function~\emph{x}))}.
 \end{itemize}
 
 Приведение чисел с плавающей точкой к рациональным и рациональных целым
 \emph{не} предоставляется в связи с проблемами округления. Для этого могут
 использоваться функции \cdf{rational}, \cdf{rationalize},
 \cdf{floor}, \cdf{ceiling}, \cdf{truncate} и \cdf{round}. Также не предоставляется
-приведение строковых символов к целым числам. В этих целях можно использовать
+приведение букв к целым числам. В этих целях можно использовать
 \cdf{char-code} или \cdf{char-int}.
 \end{defun}
 
@@ -1745,17 +1592,6 @@ upgraded-array-element-type type
 Способ того, как обновляется тип элемента массива, зависит только от запрашиваемого
 типа элемента и не зависит от других свойств массива, таких как размер, ранг, 
 расширяемость, наличия или отсутствия указателя заполнения, или относительности.
-
-\beforenoterule
-\begin{rationale}
-If upgrading were allowed to depend on any of these properties,
-all of which can be referred to, directly or indirectly, in the
-language of type specifiers, then it would not be possible
-to displace an array in a consistent and dependable manner
-to another array created with the same \cd{:element-type} argument
-but differing in one of these properties.
-\end{rationale}
-\afternoterule
 
 Следует отметить, что \cdf{upgraded-array-element-type} может быть определён,
 как
